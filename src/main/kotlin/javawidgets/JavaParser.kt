@@ -6,6 +6,8 @@ import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.NodeList
 import com.github.javaparser.ast.observer.AstObserver
 import com.github.javaparser.ast.observer.AstObserverAdapter
+import com.github.javaparser.ast.observer.Observable
+import com.github.javaparser.ast.observer.ObservableProperty
 import com.github.javaparser.ast.stmt.BlockStmt
 import com.github.javaparser.ast.stmt.IfStmt
 import com.github.javaparser.ast.stmt.Statement
@@ -47,24 +49,7 @@ fun substituteControlBlocks(model: CompilationUnit) {
     }
 }
 
-class CommandExecutor {
-    val stack = ArrayDeque<Command>()
 
-    fun execute(c: Command) {
-        c.run()
-        stack.addLast(c)
-    }
-
-    fun undo() {
-        if (stack.isNotEmpty())
-            stack.removeLast().undo()
-    }
-}
-
-interface Command {
-    fun run()
-    fun undo()
-}
 
 abstract class ListAddRemoveObserver : AstObserverAdapter() {
     override fun listChange(
@@ -83,6 +68,23 @@ abstract class ListAddRemoveObserver : AstObserverAdapter() {
 
     abstract fun elementRemove(index: Int, node: Node)
 }
+
+abstract class PropertyObserver<T>(val prop: ObservableProperty) : AstObserverAdapter() {
+    override fun propertyChange(observedNode: Node?, property: ObservableProperty, oldValue: Any?, newValue: Any?) {
+        if(property == prop)
+            modified(oldValue as T, newValue as T)
+    }
+
+    abstract fun modified(oldValue: T?, newValue: T?)
+}
+
+fun <T> Observable.observeProperty(prop: ObservableProperty, event: (T?) -> Unit) =
+    register(object : PropertyObserver<T>(prop) {
+         override fun modified(oldValue: T?, newValue: T?) {
+            event(newValue)
+    }
+})
+
 
 class AddStatementCommand(val stmt: Statement, val block: BlockStmt, val index: Int) : Command {
     override fun run() {

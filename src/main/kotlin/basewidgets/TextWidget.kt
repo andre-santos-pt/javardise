@@ -78,8 +78,10 @@ interface TextWidget {
     fun addKeyEvent(c: Char, action: (KeyEvent) -> Unit): KeyListener {
         val l = object : KeyAdapter() {
             override fun keyPressed(e: KeyEvent) {
-                if (e.character == c)
+                if (e.character == c) {
                     action(e)
+                    e.doit = false
+                }
             }
         }
         widget.addKeyListener(l)

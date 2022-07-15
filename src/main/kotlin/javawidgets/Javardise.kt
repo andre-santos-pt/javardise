@@ -3,9 +3,9 @@ package javawidgets
 import button
 import column
 import com.github.javaparser.StaticJavaParser
-import com.github.javaparser.ast.CompilationUnit
 import com.github.javaparser.ast.Modifier
 import com.github.javaparser.ast.NodeList
+import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration
 import com.github.javaparser.ast.body.FieldDeclaration
 import com.github.javaparser.ast.body.VariableDeclarator
 import org.eclipse.swt.SWT
@@ -14,6 +14,7 @@ import org.eclipse.swt.layout.FillLayout
 import org.eclipse.swt.widgets.*
 import row
 import java.io.File
+import java.io.PrintWriter
 
 
 fun main(args: Array<String>) {
@@ -24,18 +25,22 @@ fun main(args: Array<String>) {
     require(file.exists()) {
         "file $file does not exist"
     }
-    val model = loadModel(file)
-    val window = JavardiseWindow(model)
+
+    val window = JavardiseWindow(file)
     window.open()
 }
 
 
-class JavardiseWindow(model: CompilationUnit) {
+class JavardiseWindow(file: File) {
+
+    var model = loadModel(file)
 
     private val display = Display()
     private val shell = Shell(display)
 
     private lateinit var table: Table
+
+    lateinit var classWidget: ClassWidget
 
     lateinit var srcText: Text
     val executor = CommandExecutor()
@@ -59,18 +64,31 @@ class JavardiseWindow(model: CompilationUnit) {
                     )
                 }
                 button("save") {
-                    srcText.text = model.toString()
+                    val pw = PrintWriter(file)
+                    pw.print(model.toString())
+                   pw.close()
                 }
+
+                button("load") {
+                    classWidget.dispose()
+                    model = loadModel(file)
+                    classWidget = ClassWidget(this@column, model.types[0] as ClassOrInterfaceDeclaration, executor)
+                    requestLayout()
+                }
+
                 button("undo") {
                     executor.undo()
                 }
             }
-            val w = ClassWidget(this, model.types[0], executor)
+            classWidget = ClassWidget(this, model.types[0] as ClassOrInterfaceDeclaration, executor) // TODO cast!
         }
 
         val textArea = Composite(form, SWT.NONE)
         textArea.layout = FillLayout()
         srcText = Text(textArea, SWT.MULTI)
+
+
+        executor.observers.add {  srcText.text = model.toString() }
 
 //        display.addFilter(SWT.KeyDown) {
 //            println(it)
@@ -91,5 +109,31 @@ class JavardiseWindow(model: CompilationUnit) {
     }
 }
 
+class CommandExecutor {
+    val stack = ArrayDeque<Command>()
+    val observers = mutableListOf<(Command) -> Unit>()
+    fun execute(c: Command) {
+        c.run()
+        stack.addLast(c)
+        observers.forEach {
+            it(c)
+        }
+    }
+
+    fun undo() {
+        if (stack.isNotEmpty()) {
+            val cmd = stack.removeLast()
+            cmd.undo()
+            observers.forEach {
+                it(cmd)
+            }
+        }
+    }
+}
+
+interface Command {
+    fun run()
+    fun undo()
+}
 
 
