@@ -6,6 +6,7 @@ import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.NodeList
 import com.github.javaparser.ast.body.*
 import com.github.javaparser.ast.expr.AssignExpr
+import com.github.javaparser.ast.expr.MethodCallExpr
 import com.github.javaparser.ast.expr.SimpleName
 import com.github.javaparser.ast.nodeTypes.NodeWithModifiers
 import com.github.javaparser.ast.observer.AstObserver
@@ -15,6 +16,7 @@ import com.github.javaparser.ast.stmt.ExpressionStmt
 import com.github.javaparser.ast.stmt.IfStmt
 import com.github.javaparser.ast.stmt.ReturnStmt
 import com.github.javaparser.ast.stmt.WhileStmt
+import javassist.expr.MethodCall
 import org.eclipse.swt.SWT
 import org.eclipse.swt.events.FocusAdapter
 import org.eclipse.swt.events.FocusEvent
@@ -227,7 +229,12 @@ class MethodWidget(parent: Composite, dec: CallableDeclaration<*>, executor: Com
                     is IfStmt -> IfWidget(body, node, executor)
                     is WhileStmt -> WhileWidget(body, node, executor)
                     is ReturnStmt -> ReturnWidget(body, node, executor)
-                    is ExpressionStmt -> AssignWidget(body, node.expression as AssignExpr, executor)
+                    is ExpressionStmt ->
+                        if(node.expression is AssignExpr) AssignWidget(body, node.expression as AssignExpr, executor)
+                        else
+                            if (node.expression is MethodCallExpr) CallWidget(body, node.expression as MethodCallExpr, executor)
+                            else TODO()
+
                     else -> TODO("NA")
                 }
                 w.moveAbove(body.insertWidget)
@@ -236,7 +243,7 @@ class MethodWidget(parent: Composite, dec: CallableDeclaration<*>, executor: Com
             }
 
             override fun elementRemove(index: Int, node: Node) {
-                body.children.find { it is ControlWidget<*> && it.stmt == node }
+                body.children.find { it is StatementWidget<*> && it.statement == node }
                     ?.let { it.dispose() }
                 body.requestLayout()
             }

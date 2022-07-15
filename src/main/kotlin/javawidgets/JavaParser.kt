@@ -1,9 +1,12 @@
 package javawidgets
 
+import com.github.javaparser.ParseProblemException
 import com.github.javaparser.StaticJavaParser
 import com.github.javaparser.ast.CompilationUnit
 import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.NodeList
+import com.github.javaparser.ast.expr.Expression
+import com.github.javaparser.ast.expr.NameExpr
 import com.github.javaparser.ast.observer.AstObserver
 import com.github.javaparser.ast.observer.AstObserverAdapter
 import com.github.javaparser.ast.observer.Observable
@@ -103,5 +106,15 @@ class AddElseBlock(val ifStmt: IfStmt) : Command {
 
     override fun undo() {
         ifStmt.setElseStmt(null)
+    }
+}
+
+fun <E: Expression> tryParse(exp: String) : Boolean {
+    try {
+        val e = StaticJavaParser.parseExpression<E>(exp)
+        return e is E
+    }
+    catch(_:ParseProblemException) {
+        return false
     }
 }

@@ -6,9 +6,11 @@ import com.github.javaparser.StaticJavaParser
 import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.NodeList
 import com.github.javaparser.ast.comments.BlockComment
+import com.github.javaparser.ast.expr.ArrayAccessExpr
 import com.github.javaparser.ast.expr.AssignExpr
 import com.github.javaparser.ast.expr.BooleanLiteralExpr
 import com.github.javaparser.ast.expr.Expression
+import com.github.javaparser.ast.expr.FieldAccessExpr
 import com.github.javaparser.ast.expr.MethodCallExpr
 import com.github.javaparser.ast.expr.NameExpr
 import com.github.javaparser.ast.observer.AstObserverAdapter
@@ -24,7 +26,7 @@ import org.eclipse.swt.widgets.Display
 import pt.iscte.javardise.api.column
 import pt.iscte.javardise.api.row
 
-fun createWidget(stmt: Statement, parent: Composite, executor: CommandExecutor): ControlWidget<*> =
+fun createWidget(stmt: Statement, parent: Composite, executor: CommandExecutor): StatementWidget<*> =
     when (stmt) {
         is ReturnStmt -> ReturnWidget(parent, stmt, executor)
         is WhileStmt -> WhileWidget(parent, stmt, executor)
@@ -41,33 +43,45 @@ fun createWidget(stmt: Statement, parent: Composite, executor: CommandExecutor):
 
 fun createInsert(w: SequenceWidget, executor: CommandExecutor, block: BlockStmt): TextWidget {
     val insert = TextWidget.create(w) { c, s ->
-        c.toString().matches(Regex("[a-zA-Z]|\\[|\\]")) || c == SWT.BS || c == SWT.SPACE
+        c.toString().matches(Regex("[a-zA-Z0-9]|\\[|\\]|\\.")) || c == SWT.BS || c == SWT.SPACE
     }
 
-    insert.addKeyEvent(SWT.SPACE) {
-        if (!insert.text.matches(Regex("if|else|while|return")))
-            return@addKeyEvent
+    insert.addKeyEvent(SWT.SPACE, '(', precondition = { it.matches(Regex("if|while"))}) {
         val insertIndex = w.findChildIndex(insert.widget)
+        val stmt = if (insert.text == "if")
+            IfStmt(BooleanLiteralExpr(true), BlockStmt(), null)
+        else
+            WhileStmt(BooleanLiteralExpr(true), BlockStmt())
 
-        if (insert.text == "else") {
-            if (insertIndex > 0 && w.children[insertIndex - 1] is IfWidget)
-                executor.execute(AddElseBlock((w.children[insertIndex - 1] as IfWidget).stmt))
-        } else {
-            val stmt = when (insert.text) {
-                "if" -> IfStmt(BooleanLiteralExpr(true), BlockStmt(), null)
-                "while" -> WhileStmt(BooleanLiteralExpr(true), BlockStmt())
-                "return" -> ReturnStmt()
-                else -> TODO()
-            }
-            executor.execute(AddStatementCommand(stmt, block, insertIndex))
+        executor.execute(AddStatementCommand(stmt, block, insertIndex))
+    }
+
+    insert.addKeyEvent(SWT.SPACE, '{', precondition = {it =="else"}) {
+        val insertIndex = w.findChildIndex(insert.widget)
+        if (insert.text == "else" && insertIndex > 0) {
+            val prev = w.children[insertIndex - 1]
+            if (prev is IfWidget && !prev.statement.hasElseBranch())
+                executor.execute(AddElseBlock((w.children[insertIndex - 1] as IfWidget).statement))
         }
     }
-    insert.addKeyEvent('=') {
+    insert.addKeyEvent(SWT.SPACE, ';', precondition = {it == "return"}) {
+        val insertIndex = w.findChildIndex(insert.widget)
+        val stmt = if (it.character == SWT.SPACE)
+            ReturnStmt(NameExpr("expression"))
+        else
+            ReturnStmt()
+
+        executor.execute(AddStatementCommand(stmt, block, insertIndex))
+    }
+
+    // TODO array exp
+    insert.addKeyEvent('=', precondition = { insert.isAtEnd && (tryParse<NameExpr>(it) || tryParse<ArrayAccessExpr>(it) || tryParse<FieldAccessExpr>(it)) }) {
         val insertIndex = w.findChildIndex(insert.widget)
         val stmt = ExpressionStmt(AssignExpr(NameExpr(insert.text), NameExpr("exp"), AssignExpr.Operator.ASSIGN))
         executor.execute(AddStatementCommand(stmt, block, insertIndex))
     }
-    insert.addKeyEvent('.') {
+
+    insert.addKeyEvent('(', precondition = { insert.isAtEnd && (tryParse<NameExpr>(it) || tryParse<FieldAccessExpr>(it)) }) {
         val insertIndex = w.findChildIndex(insert.widget)
         var e: Expression? = null
         try {
@@ -76,13 +90,18 @@ fun createInsert(w: SequenceWidget, executor: CommandExecutor, block: BlockStmt)
         }
 
         if (e != null) {
-            val stmt = ExpressionStmt(MethodCallExpr(e, "method", NodeList()))
+            val stmt = if(e is NameExpr)
+                ExpressionStmt(MethodCallExpr(null, e.name, NodeList()))
+//            else if(e is ArrayAccessExpr)
+//                ExpressionStmt(MethodCallExpr(e, e.name, NodeList()))
+            else
+                ExpressionStmt(MethodCallExpr((e as FieldAccessExpr).scope, (e as FieldAccessExpr).nameAsString, NodeList()))
             executor.execute(AddStatementCommand(stmt, block, insertIndex))
         }
-
     }
     return insert
 }
+
 
 
 fun populateSequence(seq: SequenceWidget, executor: CommandExecutor, block: BlockStmt) {
@@ -111,51 +130,64 @@ fun createSequence(parent: Composite, executor: CommandExecutor, block: BlockStm
     return seq
 }
 
-interface ControlWidget<T> {
-    val stmt: T
+interface StatementWidget<T> {
+    val statement: T
 
     fun setFocusOnCreation()
 }
 
-class IfWidget(parent: Composite, override val stmt: IfStmt, val executor: CommandExecutor) :
-    Composite(parent, SWT.NONE), ControlWidget<IfStmt> {
+class IfWidget(parent: Composite, override val statement: IfStmt, val executor: CommandExecutor) :
+    Composite(parent, SWT.NONE), StatementWidget<IfStmt> {
 
+    lateinit var column: Composite
     lateinit var exp: ExpWidget
     lateinit var thenBody: SequenceWidget
-    lateinit var elseBody: SequenceWidget
+    var elseBody: SequenceWidget? = null
 
     init {
         layout = RowLayout()
-        column {
+        column = column {
             row {
                 TokenWidget(this, "if")
                 FixedToken(this, "(")
-                exp = ExpWidget(this, stmt.condition) {
+                exp = ExpWidget(this, statement.condition) {
                     executor.execute(object : Command {
-                        val old = stmt.condition
+                        val old = statement.condition
                         override fun run() {
-                            stmt.condition = it
+                            statement.condition = it
                         }
 
                         override fun undo() {
-                           stmt.condition = old
+                            statement.condition = old
                         }
                     })
                 }
                 FixedToken(this, ") {")
             }
-            thenBody = createSequence(this, executor, stmt.thenBlock)
+            thenBody = createSequence(this, executor, statement.thenBlock)
             FixedToken(this, "}")
-
-            if (stmt.hasElseBranch()) {
-                row {
-                    TokenWidget(this, "else")
-                    FixedToken(this, "{")
-                }
-                elseBody = createSequence(this, executor, stmt.elseBlock)
-                FixedToken(this, "}")
-            }
         }
+
+        if (statement.hasElseBranch())
+            createElse(statement.elseBlock)
+
+        statement.observeProperty<Statement>(ObservableProperty.ELSE_STMT) {
+            if (it == null)
+                elseBody?.dispose()
+            else
+                createElse(it)
+        }
+    }
+
+    private fun Composite.createElse(elseStatement: Statement) {
+        column.row {
+            TokenWidget(this, "else")
+            FixedToken(this, "{")
+        }
+        elseBody = createSequence(column, executor, elseStatement as BlockStmt)
+        FixedToken(column, "}")
+        requestLayout()
+
     }
 
     override fun setFocus(): Boolean = exp.setFocus()
@@ -165,8 +197,8 @@ class IfWidget(parent: Composite, override val stmt: IfStmt, val executor: Comma
 }
 
 
-class WhileWidget(parent: Composite, override val stmt: WhileStmt, val executor: CommandExecutor) :
-    Composite(parent, SWT.NONE), ControlWidget<WhileStmt> {
+class WhileWidget(parent: Composite, override val statement: WhileStmt, val executor: CommandExecutor) :
+    Composite(parent, SWT.NONE), StatementWidget<WhileStmt> {
 
     lateinit var keyword: TokenWidget
     lateinit var exp: Id
@@ -178,14 +210,14 @@ class WhileWidget(parent: Composite, override val stmt: WhileStmt, val executor:
             row {
                 keyword = TokenWidget(this, "while")
                 FixedToken(this, "(")
-                exp = Id(this, stmt.condition.toString())
+                exp = Id(this, statement.condition.toString())
                 FixedToken(this, ") {")
             }
-            body = createSequence(this, executor, stmt.block)
+            body = createSequence(this, executor, statement.block)
             FixedToken(this, "}")
         }
 
-        stmt.register(object : AstObserverAdapter() {
+        statement.register(object : AstObserverAdapter() {
             override fun propertyChange(
                 observedNode: Node?,
                 property: ObservableProperty?,
@@ -204,26 +236,59 @@ class WhileWidget(parent: Composite, override val stmt: WhileStmt, val executor:
     }
 }
 
+class ForEachWidget(parent: Composite, override val statement: ForEachStmt, val executor: CommandExecutor) :
+    Composite(parent, SWT.NONE), StatementWidget<ForEachStmt> {
 
-class CallWidget(parent: Composite, override val stmt: MethodCallExpr, executor: CommandExecutor) :
-    Composite(parent, SWT.NONE), ControlWidget<MethodCallExpr> {
+    lateinit var keyword: TokenWidget
+    lateinit var iterable: ExpWidget
+    lateinit var body: SequenceWidget
+
+    init {
+        layout = RowLayout()
+        column {
+            row {
+                keyword = TokenWidget(this, "for")
+                FixedToken(this, "(")
+
+                FixedToken(this, ":")
+                iterable = ExpWidget(this, statement.iterable) {
+
+                }
+                FixedToken(this, ") {")
+            }
+            body = createSequence(this, executor, statement.asBlockStmt())
+            FixedToken(this, "}")
+        }
+    }
+
+    override fun setFocusOnCreation() {
+        iterable.setFocus()
+    }
+
+}
+
+class CallWidget(parent: Composite, override val statement: MethodCallExpr, executor: CommandExecutor) :
+    Composite(parent, SWT.NONE), StatementWidget<MethodCallExpr> {
     lateinit var target: Id
     lateinit var value: Id
 
     init {
         layout = FillLayout()
         row {
-            target = Id(this, stmt.scope.get().toString())
-            FixedToken(this, ".")
-            value = Id(this, stmt.name.asString())
+            if(statement.scope.isPresent) {
+                target = Id(this, statement.scope.get().toString())
+                FixedToken(this, ".")
+            }
+            value = Id(this, statement.name.asString())
             FixedToken(this, "(")
+            // TODO args
             FixedToken(this, ")")
             FixedToken(this, ";")
         }
     }
 
     override fun setFocus(): Boolean {
-        return target.setFocus()
+        return value.setFocus()
     }
 
     override fun setFocusOnCreation() {
@@ -231,38 +296,38 @@ class CallWidget(parent: Composite, override val stmt: MethodCallExpr, executor:
     }
 }
 
-class AssignWidget(parent: Composite, override val stmt: AssignExpr, executor: CommandExecutor) :
-    Composite(parent, SWT.NONE), ControlWidget<AssignExpr> {
+class AssignWidget(parent: Composite, override val statement: AssignExpr, executor: CommandExecutor) :
+    Composite(parent, SWT.NONE), StatementWidget<AssignExpr> {
     lateinit var target: Id
     lateinit var expression: ExpWidget
 
     init {
         layout = FillLayout()
         row {
-            target = Id(this, stmt.target.toString())
+            target = Id(this, statement.target.toString())
             FixedToken(this, "=")
-            expression = ExpWidget(this, stmt.value) {
+            expression = ExpWidget(this, statement.value) {
                 executor.execute(object : Command {
-                    val old = stmt.value
+                    val old = statement.value
                     override fun run() {
-                        stmt.value = it
+                        statement.value = it
                     }
 
                     override fun undo() {
-                        stmt.value = old
+                        statement.value = old
                     }
                 })
             }
             FixedToken(this, ";")
         }
 
-        stmt.observeProperty<Expression>(ObservableProperty.TARGET) {
+        statement.observeProperty<Expression>(ObservableProperty.TARGET) {
             TODO()
         }
-        stmt.observeProperty<AssignExpr.Operator>(ObservableProperty.OPERATOR) {
+        statement.observeProperty<AssignExpr.Operator>(ObservableProperty.OPERATOR) {
             TODO()
         }
-        stmt.observeProperty<Expression>(ObservableProperty.VALUE) {
+        statement.observeProperty<Expression>(ObservableProperty.VALUE) {
             expression.update(it!!)
         }
     }
@@ -277,8 +342,8 @@ class AssignWidget(parent: Composite, override val stmt: AssignExpr, executor: C
 }
 
 // TODO empty return
-class ReturnWidget(parent: Composite, override val stmt: ReturnStmt, executor: CommandExecutor) :
-    Composite(parent, SWT.NONE), ControlWidget<ReturnStmt> {
+class ReturnWidget(parent: Composite, override val statement: ReturnStmt, executor: CommandExecutor) :
+    Composite(parent, SWT.NONE), StatementWidget<ReturnStmt> {
     lateinit var keyword: TokenWidget
     var exp: ExpWidget? = null
     lateinit var semiColon: FixedToken
@@ -287,22 +352,22 @@ class ReturnWidget(parent: Composite, override val stmt: ReturnStmt, executor: C
         layout = FillLayout()
         row {
             keyword = TokenWidget(this, "return")
-            if (stmt.expression.isPresent)
-                exp = createExpWidget(stmt.expression.get(), executor)
+            if (statement.expression.isPresent)
+                exp = createExpWidget(statement.expression.get(), executor)
             semiColon = FixedToken(this, ";")
         }
         keyword.addKeyEvent(' ') {
             executor.execute(object : Command {
                 override fun run() {
-                    stmt.setExpression(NameExpr("expression"))
+                    statement.setExpression(NameExpr("expression"))
                 }
 
                 override fun undo() {
-                    stmt.removeExpression()
+                    statement.removeExpression()
                 }
             })
         }
-        stmt.observeProperty<Expression>(ObservableProperty.EXPRESSION) {
+        statement.observeProperty<Expression>(ObservableProperty.EXPRESSION) {
             if (it != null && exp == null) {
                 exp = createExpWidget(it, executor)
                 exp!!.textWidget.moveAboveInternal(semiColon.label)
@@ -317,13 +382,13 @@ class ReturnWidget(parent: Composite, override val stmt: ReturnStmt, executor: C
     private fun Composite.createExpWidget(exp: Expression, executor: CommandExecutor): ExpWidget {
         val w = ExpWidget(this, exp) {
             executor.execute(object : Command {
-                val old = if (stmt.expression.isPresent) stmt.expression.get() else null
+                val old = if (statement.expression.isPresent) statement.expression.get() else null
                 override fun run() {
-                    stmt.setExpression(it)
+                    statement.setExpression(it)
                 }
 
                 override fun undo() {
-                    stmt.setExpression(old)
+                    statement.setExpression(old)
                 }
             })
         }
@@ -355,7 +420,7 @@ class ExpWidget(parent: Composite, var expression: Expression, editEvent: (Expre
             expression.toString()
 
         textWidget = TextWidget.create(parent, text) { c, s ->
-            c.toString().matches(Regex("[a-zA-Z]|\\d|\\[|\\]|\\.|\"\'|\\+|\\-")) || c == SWT.BS || c == SWT.SPACE
+            c.toString().matches(Regex("[a-zA-Z\\d\\[\\]\\.\"'\\+\\-\\*\\\\=!]")) || c == SWT.BS || c == SWT.SPACE
         }
         if (noparse)
             textWidget.widget.background = Display.getDefault().getSystemColor(SWT.COLOR_RED)
@@ -381,6 +446,6 @@ class ExpWidget(parent: Composite, var expression: Expression, editEvent: (Expre
         textWidget.widget.text = expression.toString()
     }
 
-    fun setFocus() : Boolean = textWidget.setFocus()
+    fun setFocus(): Boolean = textWidget.setFocus()
 
 }
