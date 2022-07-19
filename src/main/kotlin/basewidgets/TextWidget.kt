@@ -78,7 +78,7 @@ interface TextWidget {
     fun addKeyEvent(vararg chars: Char, precondition: (String) -> Boolean = {true}, action: (KeyEvent) -> Unit): KeyListener {
         val l = object : KeyAdapter() {
             override fun keyPressed(e: KeyEvent) {
-                if (precondition(widget.text) && chars.contains(e.character)) {
+                if (!widget.isDisposed && precondition(widget.text) && chars.contains(e.character)) {
                     action(e)
                     e.doit = false
                 }

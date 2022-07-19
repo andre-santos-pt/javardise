@@ -6,6 +6,7 @@ import com.github.javaparser.StaticJavaParser
 import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.NodeList
 import com.github.javaparser.ast.comments.BlockComment
+import com.github.javaparser.ast.comments.Comment
 import com.github.javaparser.ast.expr.ArrayAccessExpr
 import com.github.javaparser.ast.expr.AssignExpr
 import com.github.javaparser.ast.expr.BooleanLiteralExpr
@@ -24,6 +25,7 @@ import org.eclipse.swt.layout.FillLayout
 import org.eclipse.swt.layout.RowLayout
 import org.eclipse.swt.widgets.Composite
 import org.eclipse.swt.widgets.Display
+import org.eclipse.swt.widgets.Label
 import pt.iscte.javardise.api.column
 import pt.iscte.javardise.api.row
 
@@ -38,9 +40,9 @@ fun addWidget(
         is WhileStmt -> WhileWidget(parent, stmt, block)
         is ExpressionStmt ->
             if (stmt.expression is AssignExpr)
-                AssignWidget(parent, stmt.expression as AssignExpr)
+                AssignWidget(parent, stmt, block)
             else if (stmt.expression is MethodCallExpr)
-                CallWidget(parent, stmt.expression as MethodCallExpr)
+                CallWidget(parent, stmt, block)
             else
                 throw UnsupportedOperationException()
         else -> throw UnsupportedOperationException("NA $stmt ${stmt::class}")
@@ -128,15 +130,17 @@ fun populateSequence(seq: SequenceWidget, block: BlockStmt) {
         override fun elementAdd(list: NodeList<Statement>, index: Int, node: Statement) {
             val prev = seq.findByModelIndex(index)
             val w = addWidget(node, block, seq)
-            if(prev != null)
+            if (prev != null)
                 (w as Composite).moveAbove(prev)
             seq.requestLayout()
             w.setFocusOnCreation()
         }
 
         override fun elementRemove(list: NodeList<Statement>, index: Int, node: Statement) {
+            val next = seq.findByModelIndex(index + 1)
             seq.find(node)?.dispose()
             seq.requestLayout()
+            next?.setFocus()
         }
     })
 }
@@ -168,10 +172,22 @@ fun createSequence(parent: Composite, block: BlockStmt): SequenceWidget {
 }
 
 
+class CommentWidget(parent: Composite, comment: Comment) {
+    init {
+        val label = Label(parent, SWT.NONE)
+        label.text = "//" + comment.content
+        label.foreground = Display.getDefault().getSystemColor(SWT.COLOR_YELLOW)
+    }
+}
+
 abstract class StatementWidget<T : Statement>(parent: SequenceWidget) : NodeWidget<T>(parent) {
 
     abstract val block: BlockStmt
 
+    init {
+
+
+    }
 }
 
 class IfWidget(
@@ -184,11 +200,16 @@ class IfWidget(
     lateinit var column: Composite
     lateinit var exp: ExpWidget
     lateinit var thenBody: SequenceWidget
+
+    var elseWidget: ElseWidget? = null
     var elseBody: SequenceWidget? = null
 
     init {
         layout = RowLayout()
         column = column {
+            if (node.comment.isPresent)
+                CommentWidget(this, node.comment.get())
+
             row {
                 val keyword = TokenWidget(this, "if")
                 keyword.addDelete(node, block)
@@ -212,25 +233,42 @@ class IfWidget(
         }
 
         if (node.hasElseBranch())
-            createElse(node.elseBlock)
+            elseWidget = ElseWidget(column, node.elseBlock)
 
         node.observeProperty<Statement>(ObservableProperty.ELSE_STMT) {
             if (it == null)
-                elseBody?.dispose()
+                elseWidget?.dispose()
             else
-                createElse(it)
+                elseWidget = ElseWidget(column, it)
+
+            requestLayout()
         }
     }
 
-    private fun Composite.createElse(elseStatement: Statement) {
-        column.row {
-            TokenWidget(this, "else")
-            FixedToken(this, "{")
-        }
-        elseBody = createSequence(column, elseStatement as BlockStmt)
-        FixedToken(column, "}")
-        requestLayout()
+    inner class ElseWidget(parent: Composite, elseStatement: Statement) : Composite(parent, SWT.NONE){
+        init {
+            layout = FillLayout()
+            column {
+                row {
+                    val keyword = TokenWidget(this, "else")
+                    keyword.addKeyEvent(SWT.BS) {
+                        Commands.execute(object : Command {
+                            override fun run() {
+                                node.removeElseStmt()
+                            }
 
+                            override fun undo() {
+                                node.setElseStmt(elseStatement.clone())
+                            }
+                        })
+                    }
+
+                    FixedToken(this, "{")
+                }
+                elseBody = createSequence(this, elseStatement as BlockStmt)
+                FixedToken(this, "}")
+            }
+        }
     }
 
     override fun setFocus(): Boolean = exp.setFocus()
@@ -316,19 +354,23 @@ class ForEachWidget(parent: SequenceWidget, override val node: ForEachStmt, over
 
 }
 
-class CallWidget(parent: Composite, override val node: MethodCallExpr) :
-    NodeWidget<MethodCallExpr>(parent) {
+class CallWidget(parent: SequenceWidget, override val node: ExpressionStmt, override val block: BlockStmt) :
+    StatementWidget<ExpressionStmt>(parent) {
     lateinit var target: Id
     lateinit var value: Id
 
     init {
+        require(node.expression is MethodCallExpr)
+        val call = node.expression as MethodCallExpr
+
         layout = FillLayout()
         row {
-            if (node.scope.isPresent) {
-                target = Id(this, node.scope.get().toString())
+            if (call.scope.isPresent) {
+                target = Id(this, call.scope.get().toString())
+                target.addKeyEvent(SWT.BS, precondition = { it.isEmpty() }, action = createDeleteEvent(node, block))
                 FixedToken(this, ".")
             }
-            value = Id(this, node.name.asString())
+            value = Id(this, call.name.asString())
             FixedToken(this, "(")
             // TODO args
             FixedToken(this, ")")
@@ -345,25 +387,32 @@ class CallWidget(parent: Composite, override val node: MethodCallExpr) :
     }
 }
 
-class AssignWidget(parent: Composite, override val node: AssignExpr) :
-    NodeWidget<AssignExpr>(parent) {
+class AssignWidget(
+    parent: SequenceWidget,
+    override val node: ExpressionStmt,
+    override val block: BlockStmt
+) : StatementWidget<ExpressionStmt>(parent) {
     lateinit var target: Id
     lateinit var expression: ExpWidget
 
     init {
+        require(node.expression is AssignExpr)
+        val assignment = node.expression as AssignExpr
+
         layout = FillLayout()
         row {
-            target = Id(this, node.target.toString())
+            target = Id(this, assignment.target.toString())
+            target.addKeyEvent(SWT.BS, precondition = { it.isEmpty() }, action = createDeleteEvent(node, block))
             FixedToken(this, "=")
-            expression = ExpWidget(this, node.value) {
+            expression = ExpWidget(this, assignment.value) {
                 Commands.execute(object : Command {
-                    val old = node.value
+                    val old = assignment.value
                     override fun run() {
-                        node.value = it
+                        assignment.value = it
                     }
 
                     override fun undo() {
-                        node.value = old
+                        assignment.value = old
                     }
                 })
             }
@@ -401,6 +450,7 @@ class ReturnWidget(parent: SequenceWidget, override val node: ReturnStmt, overri
         layout = FillLayout()
         row {
             keyword = TokenWidget(this, "return")
+            // BUG widget disposed
             keyword.addDelete(node, block)
 
             if (node.expression.isPresent)
