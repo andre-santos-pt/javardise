@@ -5,18 +5,13 @@ import com.github.javaparser.ast.Modifier
 import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.NodeList
 import com.github.javaparser.ast.body.*
-import com.github.javaparser.ast.expr.AssignExpr
-import com.github.javaparser.ast.expr.MethodCallExpr
 import com.github.javaparser.ast.expr.SimpleName
 import com.github.javaparser.ast.nodeTypes.NodeWithModifiers
 import com.github.javaparser.ast.observer.AstObserver
 import com.github.javaparser.ast.observer.AstObserverAdapter
 import com.github.javaparser.ast.observer.ObservableProperty
-import com.github.javaparser.ast.stmt.ExpressionStmt
-import com.github.javaparser.ast.stmt.IfStmt
-import com.github.javaparser.ast.stmt.ReturnStmt
-import com.github.javaparser.ast.stmt.WhileStmt
-import javassist.expr.MethodCall
+import com.github.javaparser.ast.type.PrimitiveType
+import com.github.javaparser.ast.type.PrimitiveType.Primitive
 import org.eclipse.swt.SWT
 import org.eclipse.swt.events.FocusAdapter
 import org.eclipse.swt.events.FocusEvent
@@ -26,11 +21,18 @@ import org.eclipse.swt.widgets.Composite
 import pt.iscte.javardise.api.column
 import pt.iscte.javardise.api.row
 
+abstract class NodeWidget<T>(parent: Composite) : Composite(parent, SWT.NONE) {
+    abstract val node: T
+
+    abstract fun setFocusOnCreation()
+}
+
+
+
 abstract class MemberWidget<T : NodeWithModifiers<*>>(
     parent: Composite,
-    val member: T,
-    val executor: CommandExecutor
-) : Composite(parent, SWT.NONE) {
+    override val node: T
+) : NodeWidget<NodeWithModifiers<*>>(parent) {
     val modifiers = mutableListOf<TokenWidget>()
 
     lateinit var column: Composite
@@ -40,13 +42,13 @@ abstract class MemberWidget<T : NodeWithModifiers<*>>(
         layout = FillLayout()
         column = column {
             firstRow = row {
-                member.modifiers.forEach {
+                node.modifiers.forEach {
                     val mod = TokenWidget(this, it.keyword.asString())
-                    mod.addDeleteListener(member, it)
+                    mod.addDeleteListener(node, it)
                     modifiers.add(mod)
                 }
 
-                member.modifiers.register(object : AstObserverAdapter() {
+                node.modifiers.register(object : AstObserverAdapter() {
                     override fun listChange(
                         observedNode: NodeList<*>,
                         type: AstObserver.ListChangeType,
@@ -82,7 +84,7 @@ abstract class MemberWidget<T : NodeWithModifiers<*>>(
 
     private fun TokenWidget.addDeleteListener(node: NodeWithModifiers<*>, modifier: Modifier) {
         addDeleteListener {
-            executor.execute(object : Command {
+            Commands.execute(object : Command {
                 override fun run() {
                     node.modifiers.remove(modifier)
                 }
@@ -95,20 +97,20 @@ abstract class MemberWidget<T : NodeWithModifiers<*>>(
     }
 }
 
-class ClassWidget(parent: Composite, type: ClassOrInterfaceDeclaration, executor: CommandExecutor) :
-    MemberWidget<ClassOrInterfaceDeclaration>(parent, type, executor) {
-    private lateinit var id: Id
-    private lateinit var body: SequenceWidget
+class ClassWidget(parent: Composite, type: ClassOrInterfaceDeclaration) :
+    MemberWidget<ClassOrInterfaceDeclaration>(parent, type) {
+    private val keyword: TokenWidget
+    private val id: Id
+    private var body: SequenceWidget
 
     init {
         layout = FillLayout()
-
-        TokenWidget(firstRow, "class")
+        keyword = TokenWidget(firstRow, "class")
         id = Id(firstRow, type.name.id)
         id.addFocusListenerInternal(object : FocusAdapter() {
             override fun focusLost(e: FocusEvent?) {
                 if (id.text.isNotEmpty())
-                    executor.execute(object : Command {
+                    Commands.execute(object : Command {
                         val existingName = type.name
                         override fun run() {
                             type.name = SimpleName(id.text)
@@ -159,16 +161,20 @@ class ClassWidget(parent: Composite, type: ClassOrInterfaceDeclaration, executor
 
     fun createMember(dec: BodyDeclaration<*>) =
         when (dec) {
-            is FieldDeclaration -> FieldWidget(body, dec, executor)
-            is MethodDeclaration -> MethodWidget(body, dec, executor)
-            is ConstructorDeclaration -> MethodWidget(body, dec, executor)
+            is FieldDeclaration -> FieldWidget(body, dec)
+            is MethodDeclaration -> MethodWidget(body, dec)
+            is ConstructorDeclaration -> MethodWidget(body, dec)
             else -> TODO("unsupported - $dec")
         }
 
+    override fun setFocusOnCreation() {
+        id.setFocus()
+    }
+
 }
 
-class FieldWidget(parent: Composite, val dec: FieldDeclaration, executor: CommandExecutor) :
-    MemberWidget<FieldDeclaration>(parent, dec, executor) {
+class FieldWidget(parent: Composite, val dec: FieldDeclaration) :
+    MemberWidget<FieldDeclaration>(parent, dec) {
 
     val typeId: Id
 
@@ -178,85 +184,162 @@ class FieldWidget(parent: Composite, val dec: FieldDeclaration, executor: Comman
         FixedToken(firstRow, ";")
     }
 
+    override fun setFocusOnCreation() {
+        typeId.setFocus()
+    }
+
 }
 
 
-class MethodWidget(parent: Composite, dec: CallableDeclaration<*>, executor: CommandExecutor) :
-    MemberWidget<CallableDeclaration<*>>(parent, dec, executor) {
+class MethodWidget(parent: Composite, dec: CallableDeclaration<*>) :
+    MemberWidget<CallableDeclaration<*>>(parent, dec) {
 
     var typeId: Id? = null
-    lateinit var body: SequenceWidget
+    val name: Id
+    var body: SequenceWidget
     val bodyModel =
-        if (dec is MethodDeclaration) dec.body.get()!!  // TODO watch out for signature only
+        if (dec is MethodDeclaration) dec.body.get()  // TODO watch out for signature only
         else (dec as ConstructorDeclaration).body
 
     init {
-        if (member.isMethodDeclaration)
-            typeId = Id(firstRow, (member as MethodDeclaration).type.toString())
-        val name = Id(firstRow, member.name.asString())
-        if (member.isConstructorDeclaration) {
+        if (node.isMethodDeclaration)
+            typeId = Id(firstRow, (node as MethodDeclaration).type.toString())
+
+        name = Id(firstRow, node.name.asString())
+
+        if (node.isConstructorDeclaration) {
             name.setReadOnly()
-            (member.parentNode.get() as TypeDeclaration<*>)
+            (node.parentNode.get() as TypeDeclaration<*>)
                 .observeProperty<SimpleName>(ObservableProperty.NAME) {
                     name.set((it as SimpleName).asString())
-                    (member as ConstructorDeclaration).name = it
+                    (node as ConstructorDeclaration).name = it
                 }
         }
         FixedToken(firstRow, "(")
-        member.parameters.forEachIndexed { index, parameter ->
-            if (index != 0)
-                FixedToken(firstRow, ",")
-
-            Id(firstRow, parameter.type.asString())
-            Id(firstRow, parameter.name.asString())
-        }
+        ParamListWidget(firstRow, node.parameters)
         FixedToken(firstRow, ")")
         FixedToken(firstRow, "{")
-
-
-        body = SequenceWidget(column, 1) { w, e ->
-            createInsert(w, executor, bodyModel)
-        }
-        bodyModel.statements.forEach {
-            createWidget(it, body, executor)
-        }
+        body = createSequence(column, bodyModel)
         FixedToken(column, "}")
+    }
 
+    inner class ParamListWidget(parent: Composite, val parameters: NodeList<Parameter>) : Composite(parent, SWT.NONE) {
+        init {
+            layout = RowLayout()
+            (layout as RowLayout).marginTop = 0
 
-        bodyModel.statements.register(object : ListAddRemoveObserver() {
-            override fun elementAdd(index: Int, node: Node) {
-                val w = when (node) {
-                    is IfStmt -> IfWidget(body, node, executor)
-                    is WhileStmt -> WhileWidget(body, node, executor)
-                    is ReturnStmt -> ReturnWidget(body, node, executor)
-                    is ExpressionStmt ->
-                        if(node.expression is AssignExpr) AssignWidget(body, node.expression as AssignExpr, executor)
-                        else
-                            if (node.expression is MethodCallExpr) CallWidget(body, node.expression as MethodCallExpr, executor)
-                            else TODO()
+            val insert = Id(this, " ")
+            insert.addKeyEvent(SWT.SPACE, precondition = { it.isNotBlank() }) {
+                Commands.execute(object : Command {
+                    val param = Parameter(PrimitiveType(Primitive.INT),SimpleName("parameter"))
+                    override fun run() {
+                        // TODO type in ID
+                        parameters.add(0, param)
+                    }
 
-                    else -> TODO("NA")
+                    override fun undo() {
+                       parameters.remove(param)
+                    }
+                })
+                insert.set(" ")
+            }
+            addParams()
+
+            parameters.register(object : ListAddRemoveObserver<Parameter>() {
+                override fun elementAdd(list: NodeList<Parameter>, index: Int, node: Parameter) {
+                    val p = ParamWidget(this@ParamListWidget, index, node)
+                    if (index == 0 && list.isEmpty()) {
+                        //ParamWidget(this@ParamListWidget, index, node)
+                    }
+                    else if (index == list.size) {
+                        val c = FixedToken(this@ParamListWidget, ",")
+                        c.moveAbove(p)
+                    } else {
+                        val n = children.find { it is ParamWidget && it.node == list[index] }
+                        n?.let {
+                            p.moveAbove(n)
+                            val c = FixedToken(this@ParamListWidget, ",")
+                            c.moveAbove(n)
+                        }
+                    }
+                    p.setFocusOnCreation()
+                    requestLayout()
                 }
-                w.moveAbove(body.insertWidget)
-                w.setFocus()
-                body.requestLayout()
+
+                override fun elementRemove(list: NodeList<Parameter>, index: Int, node: Parameter) {
+                    val index = children.indexOfFirst { it is ParamWidget && it.node == node }
+                    if (index != -1) {
+                        children[index].dispose()
+
+                        // comma
+                        if (index == 0 && list.size > 1)
+                            children[index].dispose()
+                        else if(index != 0)
+                            children[index - 1].dispose()
+                    }
+                    requestLayout()
+                }
+            })
+        }
+
+
+        private fun addParams() {
+            parameters.forEachIndexed { index, parameter ->
+                if (index != 0)
+                    FixedToken(this, ",")
+
+                ParamWidget(this, index, parameter)
+            }
+        }
+
+        // TODO name listeners
+        inner class ParamWidget(parent: Composite, val index: Int, override val node: Parameter) : NodeWidget<Parameter>(parent) {
+            val type: Id
+            val name: Id
+
+            init {
+                layout = RowLayout()
+                (layout as RowLayout).marginTop = 0
+                type = Id(this, node.type.asString())
+                type.addKeyEvent(SWT.BS, precondition = { it.isEmpty() }) {
+                    Commands.execute(object : Command {
+                        val index = parameters.indexOf(node)
+
+                        override fun run() {
+                            parameters.remove(node)
+                        }
+
+                        override fun undo() {
+                            parameters.add(index, node)
+                        }
+                    })
+                }
+
+                name = Id(this, node.name.asString())
+                name.addKeyEvent(',') {
+                    Commands.execute(object : Command {
+                        val param = Parameter(PrimitiveType(Primitive.INT), SimpleName("parameter"))
+                        override fun run() {
+                            parameters.add(index+1, param)
+                        }
+
+                        override fun undo() {
+                            parameters.remove(param)
+                        }
+                    })
+                }
             }
 
-            override fun elementRemove(index: Int, node: Node) {
-                body.children.find { it is StatementWidget<*> && it.statement == node }
-                    ?.let { it.dispose() }
-                body.requestLayout()
+            override fun setFocusOnCreation() {
+                type.setFocus()
             }
-        })
+        }
     }
 
 
-    inner class ParamWidget(parent: Composite, val param: Parameter) : Composite(parent, SWT.NONE) {
-        init {
-            layout = RowLayout()
-            Id(this, param.type.asString())
-            Id(this, param.name.asString())
-        }
+
+    override fun setFocusOnCreation() {
+        name.setFocus()
     }
 
 }

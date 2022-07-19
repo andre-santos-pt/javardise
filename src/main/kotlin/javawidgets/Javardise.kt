@@ -2,12 +2,7 @@ package javawidgets
 
 import button
 import column
-import com.github.javaparser.StaticJavaParser
-import com.github.javaparser.ast.Modifier
-import com.github.javaparser.ast.NodeList
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration
-import com.github.javaparser.ast.body.FieldDeclaration
-import com.github.javaparser.ast.body.VariableDeclarator
 import org.eclipse.swt.SWT
 import org.eclipse.swt.custom.SashForm
 import org.eclipse.swt.layout.FillLayout
@@ -43,7 +38,6 @@ class JavardiseWindow(file: File) {
     lateinit var classWidget: ClassWidget
 
     lateinit var srcText: Text
-    val executor = CommandExecutor()
 
     init {
         shell.text = model.types[0].name.id
@@ -53,15 +47,17 @@ class JavardiseWindow(file: File) {
         form.column {
             row {
                 button("test") {
-                    model.types[0].addMethod("testM")
-                    model.types[0].addField("int", "f", Modifier.Keyword.PRIVATE, Modifier.Keyword.FINAL)
-                    model.types[0].members.add(
-                        0, FieldDeclaration(
-                            NodeList(Modifier.publicModifier(), Modifier.finalModifier()), NodeList(), NodeList(
-                                VariableDeclarator(StaticJavaParser.parseType("String"), "s")
-                            )
-                        )
-                    )
+                    model.types[0].methods[1].parameters.removeAt(2)
+                  //  model.types[0].methods[1].parameters.add(1, Parameter(PrimitiveType(PrimitiveType.Primitive.CHAR), SimpleName("character")))
+//                    model.types[0].addMethod("testM")
+//                    model.types[0].addField("int", "f", Modifier.Keyword.PRIVATE, Modifier.Keyword.FINAL)
+//                    model.types[0].members.add(
+//                        0, FieldDeclaration(
+//                            NodeList(Modifier.publicModifier(), Modifier.finalModifier()), NodeList(), NodeList(
+//                                VariableDeclarator(StaticJavaParser.parseType("String"), "s")
+//                            )
+//                        )
+//                    )
                 }
                 button("save") {
                     val pw = PrintWriter(file)
@@ -72,23 +68,24 @@ class JavardiseWindow(file: File) {
                 button("load") {
                     classWidget.dispose()
                     model = loadModel(file)
-                    classWidget = ClassWidget(this@column, model.types[0] as ClassOrInterfaceDeclaration, executor)
+                    // TODO several types
+                    classWidget = ClassWidget(this@column, model.types[0] as ClassOrInterfaceDeclaration)
                     requestLayout()
                 }
 
                 button("undo") {
-                    executor.undo()
+                    Commands.undo()
                 }
             }
-            classWidget = ClassWidget(this, model.types[0] as ClassOrInterfaceDeclaration, executor) // TODO cast!
+            classWidget = ClassWidget(this, model.types[0] as ClassOrInterfaceDeclaration) // TODO cast!
         }
 
         val textArea = Composite(form, SWT.NONE)
         textArea.layout = FillLayout()
         srcText = Text(textArea, SWT.MULTI)
+        srcText.text = model.toString()
 
-
-        executor.observers.add {  srcText.text = model.toString() }
+        Commands.observers.add { srcText.text = model.toString() }
 
 //        display.addFilter(SWT.KeyDown) {
 //            println(it)
@@ -109,7 +106,7 @@ class JavardiseWindow(file: File) {
     }
 }
 
-class CommandExecutor {
+object Commands {
     val stack = ArrayDeque<Command>()
     val observers = mutableListOf<(Command) -> Unit>()
     fun execute(c: Command) {

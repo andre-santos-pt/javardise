@@ -53,8 +53,7 @@ fun substituteControlBlocks(model: CompilationUnit) {
 }
 
 
-
-abstract class ListAddRemoveObserver : AstObserverAdapter() {
+abstract class ListAddRemoveObserver<T : Node> : AstObserverAdapter() {
     override fun listChange(
         observedNode: NodeList<*>,
         type: AstObserver.ListChangeType,
@@ -62,31 +61,34 @@ abstract class ListAddRemoveObserver : AstObserverAdapter() {
         nodeAddedOrRemoved: Node
     ) {
         if (type == AstObserver.ListChangeType.ADDITION)
-            elementAdd(index, nodeAddedOrRemoved)
+            elementAdd(observedNode as NodeList<T>, index, nodeAddedOrRemoved as T)
         else
-            elementRemove(index, nodeAddedOrRemoved)
+            elementRemove(observedNode as NodeList<T>, index, nodeAddedOrRemoved as T)
     }
 
-    abstract fun elementAdd(index: Int, node: Node)
+    abstract fun elementAdd(list: NodeList<T>, index: Int, node: T)
 
-    abstract fun elementRemove(index: Int, node: Node)
+    abstract fun elementRemove(list: NodeList<T>, index: Int, node: T)
 }
 
 abstract class PropertyObserver<T>(val prop: ObservableProperty) : AstObserverAdapter() {
     override fun propertyChange(observedNode: Node?, property: ObservableProperty, oldValue: Any?, newValue: Any?) {
-        if(property == prop)
+        if (property == prop)
             modified(oldValue as T, newValue as T)
     }
 
     abstract fun modified(oldValue: T?, newValue: T?)
 }
 
-fun <T> Observable.observeProperty(prop: ObservableProperty, event: (T?) -> Unit) =
-    register(object : PropertyObserver<T>(prop) {
-         override fun modified(oldValue: T?, newValue: T?) {
+fun <T> Observable.observeProperty(prop: ObservableProperty, event: (T?) -> Unit): AstObserver {
+    val obs = object : PropertyObserver<T>(prop) {
+        override fun modified(oldValue: T?, newValue: T?) {
             event(newValue)
+        }
     }
-})
+    register(obs)
+    return obs
+}
 
 
 class AddStatementCommand(val stmt: Statement, val block: BlockStmt, val index: Int) : Command {
@@ -101,7 +103,7 @@ class AddStatementCommand(val stmt: Statement, val block: BlockStmt, val index: 
 
 class AddElseBlock(val ifStmt: IfStmt) : Command {
     override fun run() {
-       ifStmt.setElseStmt(BlockStmt())
+        ifStmt.setElseStmt(BlockStmt())
     }
 
     override fun undo() {
@@ -109,12 +111,11 @@ class AddElseBlock(val ifStmt: IfStmt) : Command {
     }
 }
 
-fun <E: Expression> tryParse(exp: String) : Boolean {
+fun <E : Expression> tryParse(exp: String): Boolean {
     try {
         val e = StaticJavaParser.parseExpression<E>(exp)
         return e is E
-    }
-    catch(_:ParseProblemException) {
+    } catch (_: ParseProblemException) {
         return false
     }
 }

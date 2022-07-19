@@ -67,6 +67,7 @@ open class SequenceWidget(
         return insert as TextWidget;
     }
 
+
     fun findIndexExcluding(location: Control, type: Class<*>): Int {
         var i = 0
         for (c in children) {
