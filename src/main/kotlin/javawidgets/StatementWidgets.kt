@@ -211,7 +211,7 @@ class IfWidget(
                 CommentWidget(this, node.comment.get())
 
             row {
-                val keyword = TokenWidget(this, "if")
+                val keyword = Factory.newTokenWidget(this, "if")
                 keyword.addDelete(node, block)
                 FixedToken(this, "(")
                 exp = ExpWidget(this, node.condition) {
@@ -222,7 +222,7 @@ class IfWidget(
                         }
 
                         override fun undo() {
-                            node.condition = old
+                            node.condition = old.clone()
                         }
                     })
                 }
@@ -230,6 +230,10 @@ class IfWidget(
             }
             thenBody = createSequence(this, node.thenBlock)
             FixedToken(this, "}")
+        }
+
+        node.observeProperty<Expression>(ObservableProperty.EXPRESSION) {
+           exp.update(it)
         }
 
         if (node.hasElseBranch())
@@ -250,7 +254,7 @@ class IfWidget(
             layout = FillLayout()
             column {
                 row {
-                    val keyword = TokenWidget(this, "else")
+                    val keyword = Factory.newTokenWidget(this, "else")
                     keyword.addKeyEvent(SWT.BS) {
                         Commands.execute(object : Command {
                             override fun run() {
@@ -286,16 +290,26 @@ class WhileWidget(
     StatementWidget<WhileStmt>(parent) {
 
     lateinit var keyword: TokenWidget
-    lateinit var exp: Id
+    lateinit var exp: ExpWidget
     lateinit var body: SequenceWidget
 
     init {
         layout = RowLayout()
         column {
             row {
-                keyword = TokenWidget(this, "while")
+                keyword = Factory.newTokenWidget(this, "while")
                 FixedToken(this, "(")
-                exp = Id(this, node.condition.toString())
+                exp = ExpWidget(this, node.condition) {
+                    Commands.execute(object : Command {
+                        val old = node.condition
+                        override fun run() {
+                            node.condition = it
+                        }
+                        override fun undo() {
+                            node.condition = old.clone()
+                        }
+                    })
+                }
                 FixedToken(this, ") {")
             }
             body = createSequence(this, node.block)
@@ -306,11 +320,12 @@ class WhileWidget(
 
         node.register(object : AstObserverAdapter() {
             override fun propertyChange(
-                observedNode: Node?,
-                property: ObservableProperty?,
+                observedNode: Node,
+                property: ObservableProperty,
                 oldValue: Any?,
                 newValue: Any?
             ) {
+                TODO()
                 println(property.toString() + " " + newValue)
             }
         })
@@ -412,7 +427,7 @@ class AssignWidget(
                     }
 
                     override fun undo() {
-                        assignment.value = old
+                        assignment.value = old.clone()
                     }
                 })
             }
@@ -439,7 +454,6 @@ class AssignWidget(
     }
 }
 
-// TODO empty return
 class ReturnWidget(parent: SequenceWidget, override val node: ReturnStmt, override val block: BlockStmt) :
     StatementWidget<ReturnStmt>(parent) {
     lateinit var keyword: TokenWidget
@@ -449,7 +463,7 @@ class ReturnWidget(parent: SequenceWidget, override val node: ReturnStmt, overri
     init {
         layout = FillLayout()
         row {
-            keyword = TokenWidget(this, "return")
+            keyword = Factory.newTokenWidget(this, "return")
             // BUG widget disposed
             keyword.addDelete(node, block)
 
@@ -526,7 +540,7 @@ fun createDeleteEvent(node: Statement, block: BlockStmt) = { keyEvent: KeyEvent 
 
 val NOPARSE = "\$NOPARSE"
 
-class ExpWidget(parent: Composite, var expression: Expression, editEvent: (Expression) -> Unit)
+class ExpWidget(val parent: Composite, var expression: Expression, editEvent: (Expression) -> Unit)
 //    : Composite(parent, SWT.NONE)
 {
 
@@ -560,7 +574,7 @@ class ExpWidget(parent: Composite, var expression: Expression, editEvent: (Expre
                         editEvent(expression!!)
                     } catch (_: ParseProblemException) {
                         textWidget.widget.background = Display.getDefault().getSystemColor(SWT.COLOR_RED)
-                        val noparse = NameExpr(NOPARSE).clone()
+                        val noparse = NameExpr(NOPARSE)
                         noparse.addOrphanComment(BlockComment(textWidget.text))
                         editEvent(noparse)
                     }
@@ -569,8 +583,8 @@ class ExpWidget(parent: Composite, var expression: Expression, editEvent: (Expre
         })
     }
 
-    fun update(e: Expression) {
-        expression = e
+    fun update(e: Expression?) {
+        expression = e ?: NameExpr("expression")
         textWidget.widget.text = expression.toString()
     }
 

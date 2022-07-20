@@ -133,22 +133,7 @@ interface TextWidget {
             }
             t.addFocusListener(FOCUS_SELECTALL)
 
-            t.addMouseTrackListener(object : MouseTrackAdapter() {
-                override fun mouseEnter(e: MouseEvent?) {
-                    if (Editor.focusFollowsMouse) {
-                        t.foreground = Display.getDefault().getSystemColor(SWT.COLOR_YELLOW)
-                        t.requestLayout()
-                        //t.setFocus()
-                    }
-                }
-
-                override fun mouseExit(e: MouseEvent?) {
-                    if (Editor.focusFollowsMouse) {
-                        t.foreground = Display.getDefault().getSystemColor(SWT.COLOR_WHITE)
-                        t.requestLayout()
-                    }
-                }
-            })
+            t.addMouseTrackListener(MOUSE_FOCUS)
             t.addModifyListener(MODIFY_PACK)
             t.addKeyListener(LISTENER_ARROW_KEYS)
             t.data = parent
@@ -230,6 +215,24 @@ interface TextWidget {
         private val FOCUS_SELECTALL: FocusListener = object : FocusAdapter() {
             override fun focusGained(e: FocusEvent) {
                 (e.widget as Text).selectAll()
+            }
+        }
+
+        private val MOUSE_FOCUS : MouseTrackListener = object : MouseTrackAdapter() {
+            override fun mouseEnter(e: MouseEvent) {
+                if (Editor.focusFollowsMouse) {
+                    val c =  e.widget as Control
+                    c.foreground = Display.getDefault().getSystemColor(SWT.COLOR_YELLOW)
+                    c.requestLayout()
+                }
+            }
+
+            override fun mouseExit(e: MouseEvent) {
+                val c =  e.widget as Control
+                if (Editor.focusFollowsMouse) {
+                    c.foreground = Display.getDefault().getSystemColor(SWT.COLOR_WHITE)
+                    c.requestLayout()
+                }
             }
         }
 

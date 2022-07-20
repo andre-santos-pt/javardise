@@ -1,10 +1,12 @@
 package javawidgets
 
+import basewidgets.TokenWidget
 import button
 import column
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration
 import org.eclipse.swt.SWT
 import org.eclipse.swt.custom.SashForm
+import org.eclipse.swt.graphics.Color
 import org.eclipse.swt.layout.FillLayout
 import org.eclipse.swt.widgets.*
 import row
@@ -133,4 +135,18 @@ interface Command {
     fun undo()
 }
 
+object Factory {
+    fun newTokenWidget(parent: Composite, keyword: String) : TokenWidget {
+        val w = TokenWidget(parent, keyword)
+        w.widget.foreground = Display.getDefault().getSystemColor(SWT.COLOR_MAGENTA)
+        return w
+    }
+}
 
+//object Colors {
+//    fun get(c: Control) : Color =
+//        when(c) {
+//            is TokenWidget -> Display.getDefault().getSystemColor(SWT.COLOR_MAGENTA)
+//            else -> Display.getDefault().getSystemColor(SWT.COLOR_WHITE)
+//        }
+//}

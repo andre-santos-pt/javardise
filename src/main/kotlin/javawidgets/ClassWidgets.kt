@@ -43,7 +43,7 @@ abstract class MemberWidget<T : NodeWithModifiers<*>>(
         column = column {
             firstRow = row {
                 node.modifiers.forEach {
-                    val mod = TokenWidget(this, it.keyword.asString())
+                    val mod = Factory.newTokenWidget(this, it.keyword.asString())
                     mod.addDeleteListener(node, it)
                     modifiers.add(mod)
                 }
@@ -57,11 +57,9 @@ abstract class MemberWidget<T : NodeWithModifiers<*>>(
                     ) {
                         val mod = nodeAddedOrRemoved as Modifier
                         if (type == AstObserver.ListChangeType.ADDITION) {
-                            val w = TokenWidget(firstRow, mod.keyword.asString())
-                            w.addDeleteListener(
-                                nodeAddedOrRemoved as NodeWithModifiers<*>,
-                                mod
-                            ) // BUG  class com.github.javaparser.ast.Modifier cannot be cast to class com.github.javaparser.ast.nodeTypes.NodeWithModifiers (com.github.javaparser.ast.Modifier and com.github.javaparser.ast.nodeTypes.NodeW
+                            val w = Factory.newTokenWidget(firstRow, mod.keyword.asString())
+                            w.addDeleteListener(node, mod)
+                            // BUG  should move to same place
                             w.moveAboveInternal(if (modifiers.isEmpty()) firstRow.children[0] else modifiers.last().widget)
                         } else {
                             val index = modifiers.indexOfFirst { it.text == mod.keyword.asString() }
@@ -105,7 +103,7 @@ class ClassWidget(parent: Composite, type: ClassOrInterfaceDeclaration) :
 
     init {
         layout = FillLayout()
-        keyword = TokenWidget(firstRow, "class")
+        keyword = Factory.newTokenWidget(firstRow, "class")
         id = Id(firstRow, type.name.id)
         id.addFocusListenerInternal(object : FocusAdapter() {
             override fun focusLost(e: FocusEvent?) {
