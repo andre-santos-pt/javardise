@@ -27,30 +27,30 @@ interface Constants {
     }
 
     companion object {
-        fun create(style: Int, spacing: Int): RowLayout {
+        fun create(style: Int, top: Int = 0, spacing: Int = 0): RowLayout {
             val layout = RowLayout(style)
             layout.marginLeft = 0
             layout.marginRight = 0
-            layout.marginTop = 0
+            layout.marginTop = top
             layout.marginBottom = 0
             layout.spacing = spacing
             return layout
         }
 
-        fun addInsertLine(widget: TextWidget) {
-            widget.widget.addKeyListener(INSERT_LINE)
+        fun addInsertLine(widget: TextWidget, after: Boolean = false) {
+            widget.widget.addKeyListener(INSERT_LINE(after))
             widget.widget.data = widget
         }
 
-        private val INSERT_LINE: KeyListener = object : KeyAdapter() {
+        class INSERT_LINE(val after: Boolean) : KeyAdapter() {
             override fun keyPressed(e: KeyEvent) {
                 if (e.character == SWT.CR) {
                     val w = e.widget.data as TextWidget
                     val statement = w.statement
                     val seq = statement.parent as SequenceWidget
-                    if (w is TokenWidget || w.isAtBeginning && !w.isAtEnd)
+                    if (w is TokenWidget && !after || w.isAtBeginning && !w.isAtEnd)
                         seq.insertLineAt(statement)
-                    else if(w.isAtEnd)
+                    else if(after || w.isAtEnd)
                         seq.insertLineAfter(statement)
                     e.doit = false
                 }
@@ -86,6 +86,8 @@ interface Constants {
 		val ROW_LAYOUT_H = create(SWT.HORIZONTAL, 3)
         val ROW_LAYOUT_H_DOT = create(SWT.HORIZONTAL, 0)
         val ROW_LAYOUT_V_ZERO = create(SWT.VERTICAL, 2)
+        val ROW_LAYOUT_V_SPACED = create(SWT.VERTICAL, 20)
+
         val ALIGN_TOP = GridData(SWT.LEFT, SWT.TOP, false, false)
         val data = GridData(SWT.LEFT, SWT.TOP, false, false)
     }

@@ -14,6 +14,7 @@ import com.github.javaparser.ast.expr.Expression
 import com.github.javaparser.ast.expr.FieldAccessExpr
 import com.github.javaparser.ast.expr.MethodCallExpr
 import com.github.javaparser.ast.expr.NameExpr
+import com.github.javaparser.ast.observer.AstObserver
 import com.github.javaparser.ast.observer.AstObserverAdapter
 import com.github.javaparser.ast.observer.ObservableProperty
 import com.github.javaparser.ast.stmt.*
@@ -24,10 +25,12 @@ import org.eclipse.swt.events.KeyEvent
 import org.eclipse.swt.layout.FillLayout
 import org.eclipse.swt.layout.RowLayout
 import org.eclipse.swt.widgets.Composite
+import org.eclipse.swt.widgets.Control
 import org.eclipse.swt.widgets.Display
 import org.eclipse.swt.widgets.Label
 import pt.iscte.javardise.api.column
 import pt.iscte.javardise.api.row
+import java.security.Key
 
 fun addWidget(
     stmt: Statement,
@@ -48,36 +51,52 @@ fun addWidget(
         else -> throw UnsupportedOperationException("NA $stmt ${stmt::class}")
     }
 
+fun SequenceWidget.findIndexByModel(control: Control): Int {
+    var i = 0
+    for (c in children) {
+        if (c === control)
+            return i
+
+        if (c is NodeWidget<*>)
+            i++
+    }
+    check(false)
+    return -1
+}
+
 fun createInsert(w: SequenceWidget, block: BlockStmt): TextWidget {
     val insert = TextWidget.create(w) { c, s ->
         c.toString().matches(Regex("[a-zA-Z0-9]|\\[|\\]|\\.")) || c == SWT.BS || c == SWT.SPACE
     }
 
     insert.addKeyEvent(SWT.SPACE, '(', precondition = { it.matches(Regex("if|while")) }) {
-        val insertIndex = w.findChildIndex(insert.widget)
+        val insertIndex = w.findIndexByModel(insert.widget)
+        //val insertIndex = w.findChildIndex(insert.widget)
         val stmt = if (insert.text == "if")
             IfStmt(BooleanLiteralExpr(true), BlockStmt(), null)
         else
             WhileStmt(BooleanLiteralExpr(true), BlockStmt())
-
+        insert.delete()
         Commands.execute(AddStatementCommand(stmt, block, insertIndex))
     }
 
     insert.addKeyEvent(SWT.SPACE, '{', precondition = { it == "else" }) {
-        val insertIndex = w.findChildIndex(insert.widget)
+        val insertIndex = w.findIndexByModel(insert.widget)
         if (insert.text == "else" && insertIndex > 0) {
             val prev = w.children[insertIndex - 1]
-            if (prev is IfWidget && !prev.node.hasElseBranch())
+            if (prev is IfWidget && !prev.node.hasElseBranch()) {
+                insert.delete()
                 Commands.execute(AddElseBlock((w.children[insertIndex - 1] as IfWidget).node))
+            }
         }
     }
     insert.addKeyEvent(SWT.SPACE, ';', precondition = { it == "return" }) {
-        val insertIndex = w.findChildIndex(insert.widget)
+        val insertIndex = w.findIndexByModel(insert.widget)
         val stmt = if (it.character == SWT.SPACE)
             ReturnStmt(NameExpr("expression"))
         else
             ReturnStmt()
-
+        insert.delete()
         Commands.execute(AddStatementCommand(stmt, block, insertIndex))
     }
 
@@ -87,7 +106,7 @@ fun createInsert(w: SequenceWidget, block: BlockStmt): TextWidget {
         precondition = {
             insert.isAtEnd && (tryParse<NameExpr>(it) || tryParse<ArrayAccessExpr>(it) || tryParse<FieldAccessExpr>(it))
         }) {
-        val insertIndex = w.findChildIndex(insert.widget)
+        val insertIndex = w.findIndexByModel(insert.widget)
         val stmt = ExpressionStmt(AssignExpr(NameExpr(insert.text), NameExpr("exp"), AssignExpr.Operator.ASSIGN))
         Commands.execute(AddStatementCommand(stmt, block, insertIndex))
     }
@@ -95,7 +114,7 @@ fun createInsert(w: SequenceWidget, block: BlockStmt): TextWidget {
     insert.addKeyEvent(
         '(',
         precondition = { insert.isAtEnd && (tryParse<NameExpr>(it) || tryParse<FieldAccessExpr>(it)) }) {
-        val insertIndex = w.findChildIndex(insert.widget)
+        val insertIndex = w.findIndexByModel(insert.widget)
         var e: Expression? = null
         try {
             e = StaticJavaParser.parseExpression(insert.text)
@@ -118,6 +137,12 @@ fun createInsert(w: SequenceWidget, block: BlockStmt): TextWidget {
             Commands.execute(AddStatementCommand(stmt, block, insertIndex))
         }
     }
+
+    insert.addFocusListenerInternal(object : FocusAdapter() {
+        override fun focusLost(e: FocusEvent) {
+            insert.clear()
+        }
+    })
     return insert
 }
 
@@ -163,6 +188,7 @@ fun SequenceWidget.findByModelIndex(index: Int): NodeWidget<*>? {
 }
 
 
+
 fun createSequence(parent: Composite, block: BlockStmt): SequenceWidget {
     val seq = SequenceWidget(parent, 1) { w, e ->
         createInsert(w, block)
@@ -186,7 +212,6 @@ abstract class StatementWidget<T : Statement>(parent: SequenceWidget) : NodeWidg
 
     init {
 
-
     }
 }
 
@@ -204,6 +229,9 @@ class IfWidget(
     var elseWidget: ElseWidget? = null
     var elseBody: SequenceWidget? = null
 
+    lateinit var openThenBracket : FixedToken
+    lateinit var closeThenBracket : FixedToken
+
     init {
         layout = RowLayout()
         column = column {
@@ -212,6 +240,7 @@ class IfWidget(
 
             row {
                 val keyword = Factory.newTokenWidget(this, "if")
+                Constants.addInsertLine(keyword)
                 keyword.addDelete(node, block)
                 FixedToken(this, "(")
                 exp = ExpWidget(this, node.condition) {
@@ -220,17 +249,32 @@ class IfWidget(
                         override fun run() {
                             node.condition = it
                         }
-
                         override fun undo() {
                             node.condition = old.clone()
                         }
                     })
                 }
-                FixedToken(this, ") {")
+                FixedToken(this, ")")
+                openThenBracket = FixedToken(this, "{")
             }
             thenBody = createSequence(this, node.thenBlock)
-            FixedToken(this, "}")
+            closeThenBracket = FixedToken(this, "}")
+
+            setThenBracketsVisibility(node.thenBlock.statements.size, openThenBracket, closeThenBracket)
         }
+
+        // TODO else brackets visibility
+        node.thenBlock.statements.register(object: AstObserverAdapter() {
+            override fun listChange(
+                observedNode: NodeList<*>,
+                type: AstObserver.ListChangeType,
+                index: Int,
+                nodeAddedOrRemoved: Node?
+            ) {
+                val newSize = observedNode.size + if(type == AstObserver.ListChangeType.ADDITION) 1 else -1
+                setThenBracketsVisibility(newSize, openThenBracket, closeThenBracket)
+            }
+        })
 
         node.observeProperty<Expression>(ObservableProperty.EXPRESSION) {
            exp.update(it)
@@ -247,6 +291,12 @@ class IfWidget(
 
             requestLayout()
         }
+    }
+
+    private fun setThenBracketsVisibility(bodySize: Int, open: FixedToken, close: FixedToken) {
+        val visible = bodySize == 0 || bodySize > 1
+        open.label.visible = visible
+        close.label.visible = visible
     }
 
     inner class ElseWidget(parent: Composite, elseStatement: Statement) : Composite(parent, SWT.NONE){
@@ -313,7 +363,8 @@ class WhileWidget(
                 FixedToken(this, ") {")
             }
             body = createSequence(this, node.block)
-            FixedToken(this, "}")
+            val bodyClose = TokenWidget(this, "}")
+            Constants.addInsertLine(bodyClose, true)
         }
 
         keyword.addDelete(node, block)
@@ -464,8 +515,8 @@ class ReturnWidget(parent: SequenceWidget, override val node: ReturnStmt, overri
         layout = FillLayout()
         row {
             keyword = Factory.newTokenWidget(this, "return")
-            // BUG widget disposed
             keyword.addDelete(node, block)
+            Constants.addInsertLine(keyword)
 
             if (node.expression.isPresent)
                 exp = createExpWidget(node.expression.get())
@@ -540,6 +591,7 @@ fun createDeleteEvent(node: Statement, block: BlockStmt) = { keyEvent: KeyEvent 
 
 val NOPARSE = "\$NOPARSE"
 
+// TODO observe expression change
 class ExpWidget(val parent: Composite, var expression: Expression, editEvent: (Expression) -> Unit)
 //    : Composite(parent, SWT.NONE)
 {

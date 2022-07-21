@@ -6,8 +6,11 @@ import column
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration
 import org.eclipse.swt.SWT
 import org.eclipse.swt.custom.SashForm
+import org.eclipse.swt.custom.ScrolledComposite
 import org.eclipse.swt.graphics.Color
 import org.eclipse.swt.layout.FillLayout
+import org.eclipse.swt.layout.GridData
+import org.eclipse.swt.layout.GridLayout
 import org.eclipse.swt.widgets.*
 import row
 import java.io.File
@@ -35,7 +38,6 @@ class JavardiseWindow(file: File) {
     private val display = Display()
     private val shell = Shell(display)
 
-    private lateinit var table: Table
 
     lateinit var classWidget: ClassWidget
 
@@ -46,40 +48,16 @@ class JavardiseWindow(file: File) {
         shell.layout = FillLayout()
         val form = SashForm(shell, SWT.HORIZONTAL)
 
+
+
         form.column {
             row {
-                button("test") {
-                    model.types[0].methods[1].parameters.removeAt(2)
-                  //  model.types[0].methods[1].parameters.add(1, Parameter(PrimitiveType(PrimitiveType.Primitive.CHAR), SimpleName("character")))
-//                    model.types[0].addMethod("testM")
-//                    model.types[0].addField("int", "f", Modifier.Keyword.PRIVATE, Modifier.Keyword.FINAL)
-//                    model.types[0].members.add(
-//                        0, FieldDeclaration(
-//                            NodeList(Modifier.publicModifier(), Modifier.finalModifier()), NodeList(), NodeList(
-//                                VariableDeclarator(StaticJavaParser.parseType("String"), "s")
-//                            )
-//                        )
-//                    )
-                }
-                button("save") {
-                    val pw = PrintWriter(file)
-                    pw.print(model.toString())
-                   pw.close()
-                }
-
-                button("load") {
-                    classWidget.dispose()
-                    model = loadModel(file)
-                    // TODO several types
-                    classWidget = ClassWidget(this@column, model.types[0] as ClassOrInterfaceDeclaration)
-                    requestLayout()
-                }
-
-                button("undo") {
-                    Commands.undo()
-                }
+                addButtons(this, file, this@column)
             }
-            classWidget = ClassWidget(this, model.types[0] as ClassOrInterfaceDeclaration) // TODO cast!
+
+            scrollable {
+                ClassWidget(it, model.types[0] as ClassOrInterfaceDeclaration) // TODO cast!
+            }
         }
 
         val textArea = Composite(form, SWT.NONE)
@@ -97,6 +75,43 @@ class JavardiseWindow(file: File) {
 //        }
     }
 
+    private fun addButtons(
+        composite: Composite,
+        file: File,
+        composite0: Composite
+    ) {
+        composite.button("test") {
+            model.types[0].methods[1].parameters.removeAt(2)
+            //  model.types[0].methods[1].parameters.add(1, Parameter(PrimitiveType(PrimitiveType.Primitive.CHAR), SimpleName("character")))
+            //                    model.types[0].addMethod("testM")
+            //                    model.types[0].addField("int", "f", Modifier.Keyword.PRIVATE, Modifier.Keyword.FINAL)
+            //                    model.types[0].members.add(
+            //                        0, FieldDeclaration(
+            //                            NodeList(Modifier.publicModifier(), Modifier.finalModifier()), NodeList(), NodeList(
+            //                                VariableDeclarator(StaticJavaParser.parseType("String"), "s")
+            //                            )
+            //                        )
+            //                    )
+        }
+        composite.button("save") {
+            val pw = PrintWriter(file)
+            pw.print(model.toString())
+            pw.close()
+        }
+
+        composite.button("load") {
+            classWidget.dispose()
+            model = loadModel(file)
+            // TODO several types
+            classWidget = ClassWidget(composite0, model.types[0] as ClassOrInterfaceDeclaration)
+            requestLayout()
+        }
+
+        composite.button("undo") {
+            Commands.undo()
+        }
+    }
+
 
     fun open() {
         shell.pack()
@@ -105,6 +120,23 @@ class JavardiseWindow(file: File) {
             if (!display.readAndDispatch()) display.sleep()
         }
         display.dispose()
+    }
+}
+
+fun Composite.scrollable(create: (Composite) -> Composite) {
+    val scroll = ScrolledComposite(this, SWT.H_SCROLL or SWT.V_SCROLL)
+    scroll.layout = GridLayout()
+    scroll.layoutData = GridData(SWT.FILL, SWT.FILL, true, true)
+    scroll.setMinSize(100, 100)
+    scroll.expandHorizontal = true
+    scroll.expandVertical = true
+
+    scroll.content = create(scroll)
+
+    addPaintListener {
+        val size = computeSize(SWT.DEFAULT, SWT.DEFAULT)
+        scroll.setMinSize(size)
+        scroll.requestLayout()
     }
 }
 
@@ -136,7 +168,7 @@ interface Command {
 }
 
 object Factory {
-    fun newTokenWidget(parent: Composite, keyword: String) : TokenWidget {
+    fun newTokenWidget(parent: Composite, keyword: String): TokenWidget {
         val w = TokenWidget(parent, keyword)
         w.widget.foreground = Display.getDefault().getSystemColor(SWT.COLOR_MAGENTA)
         return w

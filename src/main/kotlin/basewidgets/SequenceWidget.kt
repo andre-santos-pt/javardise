@@ -52,19 +52,19 @@ open class SequenceWidget(
     }
 
     fun insertLineAt(location: Control) : TextWidget {
-        val insert = insertWidgetCreator(this, false)  as Control
-        insert.moveAbove(location)
+        val insert = insertWidgetCreator(this, false)
+        insert.widget.moveAbove(location)
         requestLayout()
         insert.setFocus()
-        return insert as TextWidget
+        return insert
     }
 
     fun insertLineAfter(location: Control) : TextWidget {
-        val insert = insertWidgetCreator(this, false) as Control
-        insert.moveBelow(location)
+        val insert = insertWidgetCreator(this, false)
+        insert.widget.moveBelow(location)
         requestLayout()
         insert.setFocus()
-        return insert as TextWidget;
+        return insert
     }
 
 

@@ -18,10 +18,17 @@ import org.eclipse.swt.events.FocusEvent
 import org.eclipse.swt.layout.FillLayout
 import org.eclipse.swt.layout.RowLayout
 import org.eclipse.swt.widgets.Composite
+import org.eclipse.swt.widgets.Display
 import pt.iscte.javardise.api.column
 import pt.iscte.javardise.api.row
 
-abstract class NodeWidget<T>(parent: Composite) : Composite(parent, SWT.NONE) {
+
+interface ModelWidget<T : Node> {
+     abstract val node: T
+}
+
+abstract class NodeWidget<T>(parent: Composite, style: Int = SWT.NONE)
+    : Composite(parent, style) {
     abstract val node: T
 
     abstract fun setFocusOnCreation()
@@ -31,8 +38,9 @@ abstract class NodeWidget<T>(parent: Composite) : Composite(parent, SWT.NONE) {
 
 abstract class MemberWidget<T : NodeWithModifiers<*>>(
     parent: Composite,
-    override val node: T
-) : NodeWidget<NodeWithModifiers<*>>(parent) {
+    override val node: T,
+    style: Int = SWT.NONE
+) : NodeWidget<NodeWithModifiers<*>>(parent, style) {
     val modifiers = mutableListOf<TokenWidget>()
 
     lateinit var column: Composite
@@ -40,7 +48,7 @@ abstract class MemberWidget<T : NodeWithModifiers<*>>(
 
     init {
         layout = FillLayout()
-        column = column {
+        column = column(true) {
             firstRow = row {
                 node.modifiers.forEach {
                     val mod = Factory.newTokenWidget(this, it.keyword.asString())
@@ -88,7 +96,7 @@ abstract class MemberWidget<T : NodeWithModifiers<*>>(
                 }
 
                 override fun undo() {
-                    node.modifiers.add(modifier)
+                    node.modifiers.add(modifier.clone())
                 }
             })
         }
@@ -180,6 +188,8 @@ class FieldWidget(parent: Composite, val dec: FieldDeclaration) :
         typeId = Id(firstRow, dec.elementType.toString())
         Id(firstRow, dec.variables[0].name.asString()) // TODO multi var
         FixedToken(firstRow, ";")
+
+        // TODO listener
     }
 
     override fun setFocusOnCreation() {
@@ -189,8 +199,8 @@ class FieldWidget(parent: Composite, val dec: FieldDeclaration) :
 }
 
 
-class MethodWidget(parent: Composite, dec: CallableDeclaration<*>) :
-    MemberWidget<CallableDeclaration<*>>(parent, dec) {
+class MethodWidget(parent: Composite, dec: CallableDeclaration<*>, style: Int = SWT.NONE) :
+    MemberWidget<CallableDeclaration<*>>(parent, dec, style) {
 
     var typeId: Id? = null
     val name: Id
@@ -340,5 +350,21 @@ class MethodWidget(parent: Composite, dec: CallableDeclaration<*>) :
         name.setFocus()
     }
 
+
+    fun addSelectionListener(event: (Node) -> Unit) {
+        //TODO("Not yet implemented")
+    }
+
+    fun getNodeOnFocus() : Node? {
+        val control = Display.getDefault().focusControl
+        var parent = control.parent
+        while(parent != null && parent !is NodeWidget<*>)
+            parent = parent.parent
+
+        if(parent is NodeWidget<*>)
+            return parent.node as Node
+        else
+            return null
+    }
 }
 

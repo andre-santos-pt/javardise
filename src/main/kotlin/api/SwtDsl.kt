@@ -1,5 +1,6 @@
 package pt.iscte.javardise.api
 
+import basewidgets.Constants
 import org.eclipse.swt.SWT
 import org.eclipse.swt.custom.StackLayout
 import org.eclipse.swt.events.*
@@ -107,14 +108,14 @@ fun Composite.separator() : Label {
 
 fun Composite.row(content: Composite.() -> Unit) : Composite {
     val c = Composite(this, SWT.NONE)
-    c.layout = RowLayout()
+    c.layout = Constants.ROW_LAYOUT_H_ZERO
     content(c)
     return c
 }
 
-fun Composite.column(content: Composite.() -> Unit) : Composite {
+fun Composite.column(margin: Boolean = false, content: Composite.() -> Unit) : Composite {
     val c = Composite(this, SWT.NONE)
-    c.layout = RowLayout(SWT.VERTICAL)
+    c.layout = if(margin) Constants.ROW_LAYOUT_V_SPACED else Constants.ROW_LAYOUT_V_ZERO
     content(c)
     return c
 }

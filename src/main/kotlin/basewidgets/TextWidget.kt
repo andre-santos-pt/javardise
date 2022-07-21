@@ -71,7 +71,7 @@ interface TextWidget {
         widget.toolTipText = text
     }
 
-    fun clean() {
+    fun clear() {
         widget.text = ""
     }
 
@@ -147,10 +147,22 @@ interface TextWidget {
                    text: String = "",
                    accept: ((Char, String) -> Boolean) = { _: Char, _: String -> false }): TextWidget {
             return object : TextWidget {
-                val w: Text = createText(parent, text, accept)
+
+                var acceptFlag = false
+
+                val w: Text = createText(parent, text) {
+                    c, s -> acceptFlag || accept(c, s)
+                }
 
                 override val widget: Text
                     get() = w
+
+                override fun clear() {
+                    acceptFlag = true
+                    w.text = ""
+                    acceptFlag = false
+                }
+
 
                 override fun addKeyListenerInternal(listener: KeyListener) {
                     widget.addKeyListener(listener)
