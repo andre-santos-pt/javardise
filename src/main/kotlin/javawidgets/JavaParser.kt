@@ -92,6 +92,10 @@ fun <T> Observable.observeProperty(prop: ObservableProperty, event: (T?) -> Unit
 
 
 class AddStatementCommand(val stmt: Statement, val block: BlockStmt, val index: Int) : Command {
+    override val kind: CommandKind = CommandKind.ADD
+    override val target = block
+    override val element = stmt
+
     override fun run() {
         block.addStatement(index, stmt)
     }
@@ -101,13 +105,32 @@ class AddStatementCommand(val stmt: Statement, val block: BlockStmt, val index: 
     }
 }
 
-class AddElseBlock(val ifStmt: IfStmt) : Command {
+class RemoveStatementCommand(val stmt: Statement, val block: BlockStmt) : Command {
+    override val kind: CommandKind = CommandKind.REMOVE
+    override val target = block
+    override val element = stmt
+
+    val index = block.statements.indexOf(stmt)
+
     override fun run() {
-        ifStmt.setElseStmt(BlockStmt())
+        block.statements.remove(stmt)
     }
 
     override fun undo() {
-        ifStmt.setElseStmt(null)
+        block.statements.add(index, element.clone())
+    }
+}
+
+class AddElseBlock(override val target: IfStmt) : Command {
+    override val kind = CommandKind.ADD
+    override val element: Statement = BlockStmt()
+
+    override fun run() {
+        target.setElseStmt(element)
+    }
+
+    override fun undo() {
+        target.setElseStmt(null)
     }
 }
 

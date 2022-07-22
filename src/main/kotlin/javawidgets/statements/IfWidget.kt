@@ -1,4 +1,4 @@
-package javawidgets
+package javawidgets.statements
 
 import basewidgets.Constants
 import basewidgets.FixedToken
@@ -12,6 +12,7 @@ import com.github.javaparser.ast.observer.ObservableProperty
 import com.github.javaparser.ast.stmt.BlockStmt
 import com.github.javaparser.ast.stmt.IfStmt
 import com.github.javaparser.ast.stmt.Statement
+import javawidgets.*
 import org.eclipse.swt.SWT
 import org.eclipse.swt.layout.FillLayout
 import org.eclipse.swt.layout.RowLayout
@@ -44,18 +45,18 @@ class IfWidget(
 
             row {
                 val keyword = Factory.newTokenWidget(this, "if")
+                keyword.setCopySource()
                 Constants.addInsertLine(keyword)
                 keyword.addDelete(node, block)
                 FixedToken(this, "(")
                 exp = ExpWidget(this, node.condition) {
-                    Commands.execute(object : Command {
-                        val old = node.condition
+                    Commands.execute(object : AbstractCommand<Expression>(node, CommandKind.MODIFY, node.condition) {
                         override fun run() {
                             node.condition = it
                         }
 
                         override fun undo() {
-                            node.condition = old.clone()
+                            node.condition = element.clone()
                         }
                     })
                 }
@@ -111,7 +112,7 @@ class IfWidget(
                 row {
                     val keyword = Factory.newTokenWidget(this, "else")
                     keyword.addKeyEvent(SWT.BS) {
-                        Commands.execute(object : Command {
+                        Commands.execute(object : AbstractCommand<Statement>(node, CommandKind.REMOVE, elseStatement) {
                             override fun run() {
                                 node.removeElseStmt()
                             }

@@ -1,14 +1,14 @@
-package javawidgets
+package javawidgets.statements
 
 import basewidgets.Constants
 import basewidgets.FixedToken
 import basewidgets.SequenceWidget
 import basewidgets.TokenWidget
-import com.github.javaparser.ast.Node
-import com.github.javaparser.ast.observer.AstObserverAdapter
-import com.github.javaparser.ast.observer.ObservableProperty
+import com.github.javaparser.ast.expr.Expression
 import com.github.javaparser.ast.stmt.BlockStmt
+import com.github.javaparser.ast.stmt.ExpressionStmt
 import com.github.javaparser.ast.stmt.WhileStmt
+import javawidgets.*
 import org.eclipse.swt.layout.RowLayout
 import pt.iscte.javardise.api.column
 import pt.iscte.javardise.api.row
@@ -29,16 +29,16 @@ class WhileWidget(
         column {
             row {
                 keyword = Factory.newTokenWidget(this, "while")
+                keyword.setCopySource()
                 FixedToken(this, "(")
                 exp = ExpWidget(this, node.condition) {
-                    Commands.execute(object : Command {
-                        val old = node.condition
+                    Commands.execute(object : ModifyCommand<Expression>(node, node.condition) {
                         override fun run() {
                             node.condition = it
                         }
 
                         override fun undo() {
-                            node.condition = old.clone()
+                            node.condition = element
                         }
                     })
                 }
@@ -50,18 +50,6 @@ class WhileWidget(
         }
 
         keyword.addDelete(node, block)
-
-        node.register(object : AstObserverAdapter() {
-            override fun propertyChange(
-                observedNode: Node,
-                property: ObservableProperty,
-                oldValue: Any?,
-                newValue: Any?
-            ) {
-                TODO()
-                println(property.toString() + " " + newValue)
-            }
-        })
     }
 
     override fun setFocus(): Boolean = keyword.setFocus()

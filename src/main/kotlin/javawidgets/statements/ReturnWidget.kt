@@ -1,14 +1,13 @@
-package javawidgets
+package javawidgets.statements
 
-import basewidgets.Constants
-import basewidgets.FixedToken
-import basewidgets.SequenceWidget
-import basewidgets.TokenWidget
+import basewidgets.*
+import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.expr.Expression
 import com.github.javaparser.ast.expr.NameExpr
 import com.github.javaparser.ast.observer.ObservableProperty
 import com.github.javaparser.ast.stmt.BlockStmt
 import com.github.javaparser.ast.stmt.ReturnStmt
+import javawidgets.*
 import org.eclipse.swt.layout.FillLayout
 import org.eclipse.swt.widgets.Composite
 import pt.iscte.javardise.api.row
@@ -25,17 +24,20 @@ class ReturnWidget(parent: SequenceWidget, override val node: ReturnStmt, overri
             keyword = Factory.newTokenWidget(this, "return")
             keyword.addDelete(node, block)
             Constants.addInsertLine(keyword)
+            keyword.setCopySource()
+            keyword.setMoveSource()
 
-            if (node.expression.isPresent)
+            if (node.expression.isPresent) {
                 exp = createExpWidget(node.expression.get())
+                exp!!.setMoveSource()
+            }
             semiColon = FixedToken(this, ";")
         }
         keyword.addKeyEvent(' ') {
-            Commands.execute(object : Command {
+            Commands.execute(object : AbstractCommand<Expression>(node, CommandKind.ADD, NameExpr("expression")) {
                 override fun run() {
-                    node.setExpression(NameExpr("expression"))
+                    node.setExpression(element)
                 }
-
                 override fun undo() {
                     node.removeExpression()
                 }
@@ -57,7 +59,7 @@ class ReturnWidget(parent: SequenceWidget, override val node: ReturnStmt, overri
 
     private fun Composite.createExpWidget(exp: Expression): ExpWidget {
         val w = ExpWidget(this, exp) {
-            Commands.execute(object : Command {
+            Commands.execute(object : ModifyCommand<Expression>(node, if (node.expression.isPresent) node.expression.get() else null) {
                 val old = if (node.expression.isPresent) node.expression.get() else null
                 override fun run() {
                     node.setExpression(it)
@@ -74,6 +76,8 @@ class ReturnWidget(parent: SequenceWidget, override val node: ReturnStmt, overri
     override fun setFocus(): Boolean {
         return keyword.setFocus()
     }
+
+
 
     override fun setFocusOnCreation() {
         exp?.setFocus()

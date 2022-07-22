@@ -3,14 +3,18 @@ package javawidgets
 import basewidgets.TokenWidget
 import button
 import column
+import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration
+import com.github.javaparser.ast.expr.Expression
+import com.github.javaparser.ast.stmt.BlockStmt
+import com.github.javaparser.ast.stmt.Statement
 import org.eclipse.swt.SWT
 import org.eclipse.swt.custom.SashForm
 import org.eclipse.swt.custom.ScrolledComposite
-import org.eclipse.swt.graphics.Color
 import org.eclipse.swt.layout.FillLayout
 import org.eclipse.swt.layout.GridData
 import org.eclipse.swt.layout.GridLayout
+import org.eclipse.swt.layout.RowLayout
 import org.eclipse.swt.widgets.*
 import row
 import java.io.File
@@ -48,31 +52,42 @@ class JavardiseWindow(file: File) {
         shell.layout = FillLayout()
         val form = SashForm(shell, SWT.HORIZONTAL)
 
-
-
         form.column {
             row {
                 addButtons(this, file, this@column)
             }
 
-            scrollable {
-                ClassWidget(it, model.types[0] as ClassOrInterfaceDeclaration) // TODO cast!
+            classWidget = scrollable {
+                ClassWidget(it, model.types[0] as ClassOrInterfaceDeclaration)
             }
         }
 
-        val textArea = Composite(form, SWT.NONE)
+        val sash = SashForm(form, SWT.NONE)
+
+        val textArea = Composite(sash, SWT.NONE)
         textArea.layout = FillLayout()
         srcText = Text(textArea, SWT.MULTI)
         srcText.text = model.toString()
 
-        Commands.observers.add { srcText.text = model.toString() }
 
-//        display.addFilter(SWT.KeyDown) {
-//            println(it)
-//            if(it.stateMask and SWT.CTRL != 0 && it.character == 'z') {
-//                executor.undo()
-//            }
-//        }
+        val stackComp = Composite(sash, SWT.NONE)
+        stackComp.layout = RowLayout(SWT.VERTICAL)
+
+        Commands.observers.add {
+            srcText.text = model.toString()
+            stackComp.children.forEach { it.dispose() }
+            Commands.stack.forEach {
+                Label(stackComp, SWT.BORDER).text = it.asString()
+            }
+            stackComp.requestLayout()
+        }
+        // BUG lost focus
+        display.addFilter(SWT.KeyDown) {
+            if(it.stateMask ==  SWT.MOD1 && it.keyCode == 'z'.code) {
+                println("undo")
+                Commands.undo()
+            }
+        }
     }
 
     private fun addButtons(
@@ -102,6 +117,7 @@ class JavardiseWindow(file: File) {
         composite.button("load") {
             classWidget.dispose()
             model = loadModel(file)
+
             // TODO several types
             classWidget = ClassWidget(composite0, model.types[0] as ClassOrInterfaceDeclaration)
             requestLayout()
@@ -123,7 +139,7 @@ class JavardiseWindow(file: File) {
     }
 }
 
-fun Composite.scrollable(create: (Composite) -> Composite) {
+fun <T:Composite> Composite.scrollable(create: (Composite) -> T) : T {
     val scroll = ScrolledComposite(this, SWT.H_SCROLL or SWT.V_SCROLL)
     scroll.layout = GridLayout()
     scroll.layoutData = GridData(SWT.FILL, SWT.FILL, true, true)
@@ -131,18 +147,21 @@ fun Composite.scrollable(create: (Composite) -> Composite) {
     scroll.expandHorizontal = true
     scroll.expandVertical = true
 
-    scroll.content = create(scroll)
+    val content = create(scroll)
+    scroll.content = content
 
     addPaintListener {
         val size = computeSize(SWT.DEFAULT, SWT.DEFAULT)
         scroll.setMinSize(size)
         scroll.requestLayout()
     }
+    return content
 }
 
 object Commands {
     val stack = ArrayDeque<Command>()
     val observers = mutableListOf<(Command) -> Unit>()
+
     fun execute(c: Command) {
         c.run()
         stack.addLast(c)
@@ -162,10 +181,47 @@ object Commands {
     }
 }
 
+//fun <N:Node> Node.runCommand(kind: CommandKind, action: () -> Unit): (N, () -> Unit) -> Unit =
+//    { element: N, undoAction: () -> Unit ->
+//        Commands.execute(object : AbstractCommand<N>(this, kind, element) {
+//            override fun run() {
+//                action()
+//            }
+//
+//            override fun undo() {
+//                undoAction()
+//            }
+//        })
+//    }
+
+
+
+enum class CommandKind {
+    ADD, REMOVE, MODIFY
+}
+
 interface Command {
+    val target: Node
+    val kind: CommandKind
+    val element: Node
     fun run()
     fun undo()
+
+    fun asString(): String = "$kind - ${target::class.simpleName}"
+
 }
+
+abstract class AbstractCommand<E : Node>(
+    override val target: Node,
+    override val kind: CommandKind,
+    override val element: E)
+    : Command
+
+
+
+abstract class ModifyCommand<E:Node>(target: Node, previous: E?)
+    : AbstractCommand<E>(target, CommandKind.MODIFY, previous?.clone() as E)
+
 
 object Factory {
     fun newTokenWidget(parent: Composite, keyword: String): TokenWidget {
@@ -175,6 +231,23 @@ object Factory {
     }
 }
 
+object Clipboard {
+    var onCopy: Pair<Node,(Node, Node, Int?) -> Unit>? = null
+   // var cut: Boolean = false
+
+    fun copy(node: Node, copy: (Node,Node, Int?) -> Unit) {
+        onCopy = Pair(node,copy)
+    }
+
+//    fun cut(node: Node, copy: (Node,Node, Int?) -> Unit) {
+//        copy(node, copy)
+//        cut = true
+//    }
+
+    fun paste(block: BlockStmt, index: Int) {
+        Commands.execute(AddStatementCommand(onCopy!!.first.clone() as Statement, block, index))
+    }
+}
 //object Colors {
 //    fun get(c: Control) : Color =
 //        when(c) {
@@ -182,3 +255,9 @@ object Factory {
 //            else -> Display.getDefault().getSystemColor(SWT.COLOR_WHITE)
 //        }
 //}
+abstract class NodeWidget<T>(parent: Composite, style: Int = SWT.NONE)
+    : Composite(parent, style) {
+    abstract val node: T
+
+    abstract fun setFocusOnCreation()
+}

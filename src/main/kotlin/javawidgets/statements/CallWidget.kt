@@ -1,4 +1,4 @@
-package javawidgets
+package javawidgets.statements
 
 import basewidgets.FixedToken
 import basewidgets.Id
@@ -6,6 +6,8 @@ import basewidgets.SequenceWidget
 import com.github.javaparser.ast.expr.MethodCallExpr
 import com.github.javaparser.ast.stmt.BlockStmt
 import com.github.javaparser.ast.stmt.ExpressionStmt
+import javawidgets.StatementWidget
+import javawidgets.createDeleteEvent
 import org.eclipse.swt.SWT
 import org.eclipse.swt.layout.FillLayout
 import pt.iscte.javardise.api.row

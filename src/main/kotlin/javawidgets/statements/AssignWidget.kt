@@ -1,4 +1,4 @@
-package javawidgets
+package javawidgets.statements
 
 import basewidgets.FixedToken
 import basewidgets.Id
@@ -8,6 +8,7 @@ import com.github.javaparser.ast.expr.Expression
 import com.github.javaparser.ast.observer.ObservableProperty
 import com.github.javaparser.ast.stmt.BlockStmt
 import com.github.javaparser.ast.stmt.ExpressionStmt
+import javawidgets.*
 import org.eclipse.swt.SWT
 import org.eclipse.swt.layout.FillLayout
 import pt.iscte.javardise.api.row
@@ -22,22 +23,23 @@ class AssignWidget(
 
     init {
         require(node.expression is AssignExpr)
+
         val assignment = node.expression as AssignExpr
 
         layout = FillLayout()
         row {
             target = Id(this, assignment.target.toString())
+            target.setCopySource()
             target.addKeyEvent(SWT.BS, precondition = { it.isEmpty() }, action = createDeleteEvent(node, block))
             FixedToken(this, "=")
             expression = ExpWidget(this, assignment.value) {
-                Commands.execute(object : Command {
-                    val old = assignment.value
+                Commands.execute(object : ModifyCommand<Expression>(assignment, assignment.value) {
                     override fun run() {
                         assignment.value = it
                     }
 
                     override fun undo() {
-                        assignment.value = old.clone()
+                        assignment.value = element
                     }
                 })
             }
