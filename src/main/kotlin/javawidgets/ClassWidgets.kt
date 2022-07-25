@@ -8,6 +8,7 @@ import com.github.javaparser.ast.expr.SimpleName
 import com.github.javaparser.ast.observer.AstObserver
 import com.github.javaparser.ast.observer.AstObserverAdapter
 import com.github.javaparser.ast.observer.ObservableProperty
+import org.eclipse.swt.SWT
 import org.eclipse.swt.events.FocusAdapter
 import org.eclipse.swt.events.FocusEvent
 import org.eclipse.swt.layout.FillLayout
@@ -65,9 +66,9 @@ class ClassWidget(parent: Composite, type: ClassOrInterfaceDeclaration) :
                     val tail = index == body.children.size
                     val w = createMember(nodeAddedOrRemoved as BodyDeclaration<*>)
                     if (!tail)
-                        w.moveAbove(body.children[index])
+                        w.moveAbove(body.findByModelIndex(index))
                 } else {
-                    TODO("removal")
+                    body.find(nodeAddedOrRemoved)?.dispose()
                 }
                 body.requestLayout()
             }
@@ -95,8 +96,26 @@ class ClassWidget(parent: Composite, type: ClassOrInterfaceDeclaration) :
 
         init {
             typeId = Id(firstRow, dec.elementType.toString())
-            Id(firstRow, dec.variables[0].name.asString()) // TODO multi var
+            val name = Id(firstRow, dec.variables[0].name.asString()) // TODO multi var
             FixedToken(firstRow, ";")
+
+            name.addKeyEvent(SWT.BS, precondition = {it.isEmpty()}) {
+                Commands.execute(object : Command {
+                    override val target: ClassOrInterfaceDeclaration = dec.parentNode.get() as ClassOrInterfaceDeclaration
+                    override val kind: CommandKind = CommandKind.REMOVE
+                    override val element: Node = dec
+                    val index: Int =  target.members.indexOf(dec)
+                    override fun run() {
+                        dec.remove()
+                    }
+
+                    override fun undo() {
+                        target.members.add(index, dec.clone())
+                    }
+
+                })
+                dec.remove()
+            }
 
             // TODO listener
         }

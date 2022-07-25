@@ -5,12 +5,13 @@ import button
 import column
 import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration
-import com.github.javaparser.ast.expr.Expression
 import com.github.javaparser.ast.stmt.BlockStmt
 import com.github.javaparser.ast.stmt.Statement
 import org.eclipse.swt.SWT
 import org.eclipse.swt.custom.SashForm
 import org.eclipse.swt.custom.ScrolledComposite
+import org.eclipse.swt.events.PaintEvent
+import org.eclipse.swt.events.PaintListener
 import org.eclipse.swt.layout.FillLayout
 import org.eclipse.swt.layout.GridData
 import org.eclipse.swt.layout.GridLayout
@@ -43,18 +44,19 @@ class JavardiseWindow(file: File) {
     private val shell = Shell(display)
 
 
-    lateinit var classWidget: ClassWidget
+    lateinit var classWidget: Composite
 
     lateinit var srcText: Text
-
+    lateinit var col: Composite
+    lateinit var stackComp: Composite
     init {
         shell.text = model.types[0].name.id
         shell.layout = FillLayout()
         val form = SashForm(shell, SWT.HORIZONTAL)
 
-        form.column {
+        col = form.column {
             row {
-                addButtons(this, file, this@column)
+                addButtons(this, file)
             }
 
             classWidget = scrollable {
@@ -70,7 +72,17 @@ class JavardiseWindow(file: File) {
         srcText.text = model.toString()
 
 
-        val stackComp = Composite(sash, SWT.NONE)
+        createStackView(sash)
+        // BUG lost focus
+        display.addFilter(SWT.KeyDown) {
+            if(it.stateMask ==  SWT.MOD1 && it.keyCode == 'z'.code) {
+                Commands.undo()
+            }
+        }
+    }
+
+    private fun createStackView(parent: Composite) {
+        stackComp = Composite(parent, SWT.NONE)
         stackComp.layout = RowLayout(SWT.VERTICAL)
 
         Commands.observers.add {
@@ -81,19 +93,11 @@ class JavardiseWindow(file: File) {
             }
             stackComp.requestLayout()
         }
-        // BUG lost focus
-        display.addFilter(SWT.KeyDown) {
-            if(it.stateMask ==  SWT.MOD1 && it.keyCode == 'z'.code) {
-                println("undo")
-                Commands.undo()
-            }
-        }
     }
 
     private fun addButtons(
         composite: Composite,
-        file: File,
-        composite0: Composite
+        file: File
     ) {
         composite.button("test") {
             model.types[0].methods[1].parameters.removeAt(2)
@@ -119,7 +123,14 @@ class JavardiseWindow(file: File) {
             model = loadModel(file)
 
             // TODO several types
-            classWidget = ClassWidget(composite0, model.types[0] as ClassOrInterfaceDeclaration)
+
+            classWidget = col.scrollable {
+                ClassWidget(it, model.types[0] as ClassOrInterfaceDeclaration)
+            }
+            Commands.reset()
+            val parent = stackComp.parent
+            stackComp.dispose()
+            createStackView(parent)
             requestLayout()
         }
 
@@ -139,7 +150,7 @@ class JavardiseWindow(file: File) {
     }
 }
 
-fun <T:Composite> Composite.scrollable(create: (Composite) -> T) : T {
+fun <T:Composite> Composite.scrollable(create: (Composite) -> T) : Composite {
     val scroll = ScrolledComposite(this, SWT.H_SCROLL or SWT.V_SCROLL)
     scroll.layout = GridLayout()
     scroll.layoutData = GridData(SWT.FILL, SWT.FILL, true, true)
@@ -150,12 +161,21 @@ fun <T:Composite> Composite.scrollable(create: (Composite) -> T) : T {
     val content = create(scroll)
     scroll.content = content
 
-    addPaintListener {
-        val size = computeSize(SWT.DEFAULT, SWT.DEFAULT)
-        scroll.setMinSize(size)
-        scroll.requestLayout()
+    val list: PaintListener = object  : PaintListener {
+        override fun paintControl(e: PaintEvent?) {
+            if(!scroll.isDisposed) {
+                val size = computeSize(SWT.DEFAULT, SWT.DEFAULT)
+                scroll.setMinSize(size)
+                scroll.requestLayout()
+            }
+        }
+
     }
-    return content
+    addPaintListener(list)
+    addDisposeListener {
+        removePaintListener(list)
+    }
+    return scroll
 }
 
 object Commands {
@@ -178,6 +198,11 @@ object Commands {
                 it(cmd)
             }
         }
+    }
+
+    fun reset() {
+        stack.clear()
+        observers.clear()
     }
 }
 

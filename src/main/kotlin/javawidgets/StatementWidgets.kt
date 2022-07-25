@@ -202,6 +202,14 @@ fun createInsert(seq: SequenceWidget, block: BlockStmt): TextWidget {
 }
 
 
+fun createSequence(parent: Composite, block: BlockStmt): SequenceWidget {
+    val seq = SequenceWidget(parent, 1) { w, e ->
+        createInsert(w, block)
+    }
+    populateSequence(seq, block)
+    return seq
+}
+
 fun populateSequence(seq: SequenceWidget, block: BlockStmt) {
     block.statements.forEach {
         addWidget(it, block, seq)
@@ -243,13 +251,7 @@ fun SequenceWidget.findByModelIndex(index: Int): NodeWidget<*>? {
 }
 
 
-fun createSequence(parent: Composite, block: BlockStmt): SequenceWidget {
-    val seq = SequenceWidget(parent, 1) { w, e ->
-        createInsert(w, block)
-    }
-    populateSequence(seq, block)
-    return seq
-}
+
 
 
 class CommentWidget(parent: Composite, comment: Comment) {
@@ -276,6 +278,8 @@ fun createDeleteEvent(node: Statement, block: BlockStmt) = { keyEvent: KeyEvent 
         }
 
         override fun undo() {
+            // BUG statements list, after parent removal, is not the same (EXC: Widget is disposed)
+            // possible solution: locate by indexing
             block.statements.add(index, node.clone())
         }
     })

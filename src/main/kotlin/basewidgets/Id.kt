@@ -9,7 +9,7 @@ import org.eclipse.swt.widgets.Text
 import java.util.function.Supplier
 
 class Id(parent: Composite, id: String) :
-    EditorWidget(parent), TextWidget {
+    Composite(parent, SWT.NONE), TextWidget {
     private var read_only: Boolean
     private var skipVerify = false
     private val textWidget: Text

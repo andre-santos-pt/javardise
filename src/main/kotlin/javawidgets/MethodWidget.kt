@@ -29,14 +29,32 @@ class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: In
             typeId = Id(firstRow, (node as MethodDeclaration).type.toString())
 
         name = Id(firstRow, node.name.asString())
+        name.addKeyEvent(SWT.BS, precondition = {it.isEmpty()}) {
+            Commands.execute(object : Command {
+                override val target: ClassOrInterfaceDeclaration = dec.parentNode.get() as ClassOrInterfaceDeclaration
+                override val kind: CommandKind = CommandKind.REMOVE
+                override val element: Node = dec
+                val index: Int =  target.members.indexOf(dec)
+                override fun run() {
+                    dec.remove()
+                }
+
+                override fun undo() {
+                    target.members.add(index, dec.clone())
+                }
+
+            })
+            dec.remove()
+        }
 
         if (node.isConstructorDeclaration) {
             name.setReadOnly()
-            (node.parentNode.get() as TypeDeclaration<*>)
-                .observeProperty<SimpleName>(ObservableProperty.NAME) {
-                    name.set((it as SimpleName).asString())
-                    (node as ConstructorDeclaration).name = it
-                }
+            // problem with MVC
+//            (node.parentNode.get() as TypeDeclaration<*>)
+//                .observeProperty<SimpleName>(ObservableProperty.NAME) {
+//                    name.set((it as SimpleName).asString())
+//                    (node as ConstructorDeclaration).name = it
+//                }
         }
         FixedToken(firstRow, "(")
         ParamListWidget(firstRow, node.parameters)

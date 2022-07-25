@@ -27,7 +27,8 @@ fun main() {
 
     val src = StaticJavaParser.parse(File("src/main/kotlin/TestExample.java"))
     val dec : ClassOrInterfaceDeclaration = src.getClassByName(src.primaryTypeName.get()).get()
-
+    val me = dec.methods[0].body.get().statements[1]
+    val clone = dec.methods[0].body.get().statements[1].clone()
     dec.members.register(object : AstObserverAdapter() {
         override fun listChange(
             observedNode: NodeList<*>?,
