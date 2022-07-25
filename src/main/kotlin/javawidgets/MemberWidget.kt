@@ -45,8 +45,13 @@ abstract class MemberWidget<T : NodeWithModifiers<*>>(
                         if (type == AstObserver.ListChangeType.ADDITION) {
                             val w = Factory.newTokenWidget(firstRow, mod.keyword.asString())
                             w.addDeleteListener(node, mod)
-                            // BUG  should move to same place
-                            w.moveAboveInternal(if (modifiers.isEmpty()) firstRow.children[0] else modifiers.last().widget)
+                            if (modifiers.isEmpty())
+                                w.moveAboveInternal(firstRow.children[0])
+                            else if(index == modifiers.size)
+                                w.moveBelowInternal(modifiers.last().widget)
+                            else
+                                w.moveAboveInternal(modifiers[index].widget)
+                            modifiers.add(w)
                         } else {
                             val index = modifiers.indexOfFirst { it.text == mod.keyword.asString() }
                             if (index != -1) {
@@ -55,7 +60,7 @@ abstract class MemberWidget<T : NodeWithModifiers<*>>(
                                 if (index < modifiers.size)
                                     modifiers[index].setFocus()
                                 else
-                                    firstRow.children[index]
+                                    firstRow.children[index].setFocus()
                             }
                         }
                         requestLayout()
@@ -73,12 +78,14 @@ abstract class MemberWidget<T : NodeWithModifiers<*>>(
                 override val kind = CommandKind.REMOVE
                 override val element = modifier
 
+                val index = node.modifiers.indexOf(modifier)
+
                 override fun run() {
                     node.modifiers.remove(modifier)
                 }
 
                 override fun undo() {
-                    node.modifiers.add(modifier.clone())
+                    node.modifiers.add(index, modifier.clone())
                 }
             })
         }
