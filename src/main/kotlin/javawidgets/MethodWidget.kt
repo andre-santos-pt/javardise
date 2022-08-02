@@ -15,7 +15,7 @@ import org.eclipse.swt.widgets.Composite
 import org.eclipse.swt.widgets.Display
 
 class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: Int = SWT.NONE) :
-    MemberWidget<CallableDeclaration<*>>(parent, dec, style) {
+    MemberWidget<CallableDeclaration<*>>(parent, dec, style = style) {
 
     var typeId: Id? = null
     val name: Id
@@ -47,6 +47,7 @@ class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: In
             dec.remove()
         }
 
+
         if (node.isConstructorDeclaration) {
             name.setReadOnly()
             // problem with MVC
@@ -61,6 +62,9 @@ class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: In
         FixedToken(firstRow, ")")
         FixedToken(firstRow, "{")
         body = createSequence(column, bodyModel)
+        name.addKeyEvent(SWT.CR) {
+            body.insertLine()
+        }
         FixedToken(column, "}")
     }
 

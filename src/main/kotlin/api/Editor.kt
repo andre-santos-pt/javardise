@@ -12,7 +12,7 @@ object Editor {
         set(value) {
             font = Font(Display.getDefault(), if(System.getProperty("os.name").startsWith("Mac")) "Menlo" else "Consolas", value, SWT.NONE)
         }
-    var readOnly = false
+    var readOnly = true
 
     var font = Font(Display.getDefault(), FontData(if(System.getProperty("os.name").startsWith("Mac")) "Menlo"
     else "Consolas", 32, SWT.NORMAL))

@@ -8,6 +8,7 @@ import com.github.javaparser.ast.observer.ObservableProperty
 import com.github.javaparser.ast.stmt.BlockStmt
 import com.github.javaparser.ast.stmt.ReturnStmt
 import javawidgets.*
+import org.eclipse.swt.SWT
 import org.eclipse.swt.layout.FillLayout
 import org.eclipse.swt.widgets.Composite
 import pt.iscte.javardise.api.row
@@ -23,13 +24,15 @@ class ReturnWidget(parent: SequenceWidget, override val node: ReturnStmt, overri
         row {
             keyword = Factory.newTokenWidget(this, "return")
             keyword.addDelete(node, block)
-            Constants.addInsertLine(keyword)
+            Constants.addInsertLine(keyword, false)
             keyword.setCopySource()
             keyword.setMoveSource()
 
             if (node.expression.isPresent) {
                 exp = createExpWidget(node.expression.get())
                 exp!!.setMoveSource()
+                exp!!.addKeyEvent(SWT.BS, precondition = { exp!!.isEmpty }, action = createDeleteEvent(node, block))
+                Constants.addInsertLine(exp!!, true)
             }
             semiColon = FixedToken(this, ";")
         }

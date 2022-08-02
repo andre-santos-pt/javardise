@@ -249,8 +249,8 @@ abstract class ModifyCommand<E:Node>(target: Node, previous: E?)
 
 
 object Factory {
-    fun newTokenWidget(parent: Composite, keyword: String): TokenWidget {
-        val w = TokenWidget(parent, keyword)
+    fun newTokenWidget(parent: Composite, keyword: String, alternatives: List<String> = emptyList()): TokenWidget {
+        val w = TokenWidget(parent, keyword, alternatives)
         w.widget.foreground = Display.getDefault().getSystemColor(SWT.COLOR_MAGENTA)
         return w
     }

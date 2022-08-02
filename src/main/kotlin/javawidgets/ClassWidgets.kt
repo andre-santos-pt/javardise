@@ -16,7 +16,7 @@ import org.eclipse.swt.widgets.Composite
 
 
 class ClassWidget(parent: Composite, type: ClassOrInterfaceDeclaration) :
-    MemberWidget<ClassOrInterfaceDeclaration>(parent, type) {
+    MemberWidget<ClassOrInterfaceDeclaration>(parent, type, listOf("public", "final", "abstract")) {
     private val keyword: TokenWidget
     private val id: Id
     private var body: SequenceWidget

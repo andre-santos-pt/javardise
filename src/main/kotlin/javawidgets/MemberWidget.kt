@@ -17,6 +17,7 @@ import pt.iscte.javardise.api.row
 abstract class MemberWidget<T : NodeWithModifiers<*>>(
     parent: Composite,
     override val node: T,
+    validModifiers: List<String> = emptyList(),
     style: Int = SWT.NONE
 ) : NodeWidget<NodeWithModifiers<*>>(parent, style) {
     val modifiers = mutableListOf<TokenWidget>()
@@ -29,7 +30,7 @@ abstract class MemberWidget<T : NodeWithModifiers<*>>(
         column = column(true) {
             firstRow = row {
                 node.modifiers.forEach {
-                    val mod = Factory.newTokenWidget(this, it.keyword.asString())
+                    val mod = Factory.newTokenWidget(this, it.keyword.asString(), validModifiers)
                     mod.addDeleteListener(node, it)
                     modifiers.add(mod)
                 }
@@ -43,7 +44,7 @@ abstract class MemberWidget<T : NodeWithModifiers<*>>(
                     ) {
                         val mod = nodeAddedOrRemoved as Modifier
                         if (type == AstObserver.ListChangeType.ADDITION) {
-                            val w = Factory.newTokenWidget(firstRow, mod.keyword.asString())
+                            val w = Factory.newTokenWidget(firstRow, mod.keyword.asString(), validModifiers)
                             w.addDeleteListener(node, mod)
                             if (modifiers.isEmpty())
                                 w.moveAboveInternal(firstRow.children[0])
@@ -52,6 +53,7 @@ abstract class MemberWidget<T : NodeWithModifiers<*>>(
                             else
                                 w.moveAboveInternal(modifiers[index].widget)
                             modifiers.add(w)
+                            w.setFocus()
                         } else {
                             val index = modifiers.indexOfFirst { it.text == mod.keyword.asString() }
                             if (index != -1) {
@@ -86,6 +88,24 @@ abstract class MemberWidget<T : NodeWithModifiers<*>>(
 
                 override fun undo() {
                     node.modifiers.add(index, modifier.clone())
+                }
+            })
+        }
+
+        addKeyEvent(SWT.SPACE) {
+            Commands.execute(object : Command {
+                override val target = node as BodyDeclaration<*>
+                override val kind = CommandKind.ADD
+                override val element = Modifier(Modifier.Keyword.PUBLIC)
+
+                val index = node.modifiers.indexOf(modifier)
+
+                override fun run() {
+                    node.modifiers.add(index, element)
+                }
+
+                override fun undo() {
+                    node.modifiers.remove(element)
                 }
             })
         }

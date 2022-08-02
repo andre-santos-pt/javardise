@@ -40,9 +40,22 @@ open class SequenceWidget(
         }
     }
 
+    fun insertBeginning() : TextWidget {
+        return if(children.isEmpty()) {
+            val insert = insertWidgetCreator(this, false)
+            addDeleteBehavior(insert)
+            requestLayout()
+            insert.setFocus()
+            insert
+        }
+        else
+            insertLineAfter(children.last())
+    }
+
     fun insertLine() : TextWidget {
         return if(children.isEmpty()) {
             val insert = insertWidgetCreator(this, false)
+            addDeleteBehavior(insert)
             requestLayout()
             insert.setFocus()
             insert
@@ -53,14 +66,28 @@ open class SequenceWidget(
 
     fun insertLineAt(location: Control) : TextWidget {
         val insert = insertWidgetCreator(this, false)
+        addDeleteBehavior(insert)
+        Constants.addInsertLine(insert, true)
         insert.widget.moveAbove(location)
         requestLayout()
         insert.setFocus()
         return insert
     }
 
+    private fun addDeleteBehavior(insert: TextWidget) {
+        insert.addDeleteListener {
+            val index = children.indexOf(insert.widget) - 1
+            insert.delete()
+            if (children.isNotEmpty() && index != -1)
+                children[index].setFocus()
+            parent.requestLayout()
+        }
+    }
+
     fun insertLineAfter(location: Control) : TextWidget {
         val insert = insertWidgetCreator(this, false)
+        addDeleteBehavior(insert)
+        Constants.addInsertLine(insert, true)
         insert.widget.moveBelow(location)
         requestLayout()
         insert.setFocus()

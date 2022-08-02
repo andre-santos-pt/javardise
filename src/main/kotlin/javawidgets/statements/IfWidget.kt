@@ -60,6 +60,10 @@ class IfWidget(
                         }
                     })
                 }
+                exp.addKeyEvent(SWT.CR) {
+                    thenBody.insertLine()
+                }
+                Constants.addInsertLine(exp,)
                 FixedToken(this, ")")
                 openThenBracket = FixedToken(this, "{")
             }
