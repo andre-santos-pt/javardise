@@ -36,7 +36,7 @@ abstract class ModiferWidget<T>(parent: Composite, e: Any) :
     }
 
     fun addModifier(mod: String) {
-        val modifier = TokenWidget(header, mod, modifierProvider(getModifiers()))
+        val modifier = TokenWidget(header, mod) { modifierProvider(getModifiers()) }
         modifier.widget.data = "MODIFIER"
         modifier.addKeyListenerInternal(object : KeyAdapter() {
             override fun keyPressed(e: KeyEvent) {

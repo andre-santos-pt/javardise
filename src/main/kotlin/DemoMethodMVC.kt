@@ -12,7 +12,7 @@ import org.eclipse.swt.widgets.Shell
 import java.io.File
 
 fun main() {
-    var model = loadModel(File("src/main/kotlin/TestExample.java"))
+    var model = loadModel(File("src/test/kotlin/TestExample.java"))
 
     val display = Display()
     val shell1 = openShell(display, model.types[0].methods[0])

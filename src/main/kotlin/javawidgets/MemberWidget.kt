@@ -25,17 +25,29 @@ abstract class MemberWidget<T : NodeWithModifiers<*>>(
     lateinit var column: Composite
     lateinit var firstRow: Composite
 
+    val filterModifiers = {
+        validModifiers.filter { !node.modifiers.map { it.keyword.asString() }.contains(it) }
+    }
+
     init {
         layout = FillLayout()
         column = column(true) {
             firstRow = row {
                 node.modifiers.forEach {
-                    val mod = Factory.newTokenWidget(this, it.keyword.asString(), validModifiers)
-                    mod.addDeleteListener(node, it)
-                    modifiers.add(mod)
+                    val token = createModifierToken(it)
+                    modifiers.add(token)
                 }
 
                 node.modifiers.register(object : AstObserverAdapter() {
+                    override fun listReplacement(
+                        observedNode: NodeList<*>?,
+                        index: Int,
+                        oldNode: Node?,
+                        newNode: Node?
+                    ) {
+                        println("rp $newNode" )
+                        modifiers.find { it.text == (oldNode as Modifier).keyword.asString() }?.text = (newNode as Modifier).keyword.asString()
+                    }
                     override fun listChange(
                         observedNode: NodeList<*>,
                         type: AstObserver.ListChangeType,
@@ -44,16 +56,16 @@ abstract class MemberWidget<T : NodeWithModifiers<*>>(
                     ) {
                         val mod = nodeAddedOrRemoved as Modifier
                         if (type == AstObserver.ListChangeType.ADDITION) {
-                            val w = Factory.newTokenWidget(firstRow, mod.keyword.asString(), validModifiers)
-                            w.addDeleteListener(node, mod)
+                            val token = createModifierToken(mod)
+
                             if (modifiers.isEmpty())
-                                w.moveAboveInternal(firstRow.children[0])
+                                token.moveAboveInternal(firstRow.children[0])
                             else if(index == modifiers.size)
-                                w.moveBelowInternal(modifiers.last().widget)
+                                token.moveBelowInternal(modifiers.last().widget)
                             else
-                                w.moveAboveInternal(modifiers[index].widget)
-                            modifiers.add(w)
-                            w.setFocus()
+                                token.moveAboveInternal(modifiers[index].widget)
+                            modifiers.add(token)
+                            token.setFocus()
                         } else {
                             val index = modifiers.indexOfFirst { it.text == mod.keyword.asString() }
                             if (index != -1) {
@@ -72,8 +84,29 @@ abstract class MemberWidget<T : NodeWithModifiers<*>>(
         }
     }
 
+    private fun Composite.createModifierToken(it: Modifier): TokenWidget {
+        val mod = Factory.newTokenWidget(this, it.keyword.asString(), filterModifiers) { token ->
+            Commands.execute(object : Command {
+                override val target: Node = node as Node
+                override val kind: CommandKind = CommandKind.MODIFY
+                override val element = Modifier(Modifier.Keyword.valueOf(token.uppercase()))
+                val index = node.modifiers.indexOf(it)
+                override fun run() {
+                    node.modifiers[index] = element
+                }
 
-    private fun TokenWidget.addDeleteListener(node: NodeWithModifiers<*>, modifier: Modifier) {
+                override fun undo() {
+                    node.modifiers[index] = it
+                }
+
+            })
+        }
+        mod.addDeleteListener(it)
+        return mod
+    }
+
+
+    private fun TokenWidget.addDeleteListener(modifier: Modifier) {
         addDeleteListener {
             Commands.execute(object : Command {
                 override val target = node as BodyDeclaration<*>
@@ -92,6 +125,10 @@ abstract class MemberWidget<T : NodeWithModifiers<*>>(
             })
         }
 
+
+    }
+
+    private fun TokenWidget.addSpaceInsert(modifier: Modifier) {
         addKeyEvent(SWT.SPACE) {
             Commands.execute(object : Command {
                 override val target = node as BodyDeclaration<*>

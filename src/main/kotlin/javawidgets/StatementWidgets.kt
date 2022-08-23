@@ -301,7 +301,7 @@ class ExpWidget(val parent: Composite, var expression: Expression, editEvent: (E
 
         this.textWidget = TextWidget.create(parent, text) { c, s ->
             c.toString()
-                .matches(Regex("[a-zA-Z\\d\\[\\]\\.\"'\\+\\-\\*\\\\=!\\(\\)]")) || c == SWT.BS || c == SWT.SPACE
+                .matches(Regex("[a-zA-Z\\d\\[\\]\\.\"'\\+\\-\\*\\\\%=!\\(\\)<>]")) || c == SWT.BS || c == SWT.SPACE
         }
         if (noparse)
             this.textWidget.widget.background = Display.getDefault().getSystemColor(SWT.COLOR_RED)
@@ -332,8 +332,7 @@ class ExpWidget(val parent: Composite, var expression: Expression, editEvent: (E
 
     fun update(e: Expression?) {
         expression = e ?: NameExpr("expression")
-        // BUG: widget is disposed
-        textWidget.widget.text = expression.toString()
+        textWidget.text = expression.toString()
     }
 
     override val widget: Text

@@ -132,7 +132,6 @@ interface TextWidget {
                     e.doit = true
             }
             t.addFocusListener(FOCUS_SELECTALL)
-
             t.addMouseTrackListener(MOUSE_FOCUS)
             t.addModifyListener(MODIFY_PACK)
             t.addKeyListener(LISTENER_ARROW_KEYS)
@@ -163,6 +162,13 @@ interface TextWidget {
                     acceptFlag = false
                 }
 
+                override var text: String
+                    get() = super.text
+                    set(value) {
+                        acceptFlag = true
+                        w.text = value
+                        acceptFlag = false
+                    }
 
                 override fun addKeyListenerInternal(listener: KeyListener) {
                     widget.addKeyListener(listener)

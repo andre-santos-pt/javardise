@@ -3,6 +3,7 @@ package javawidgets.statements
 import basewidgets.FixedToken
 import basewidgets.Id
 import basewidgets.SequenceWidget
+import basewidgets.TokenWidget
 import com.github.javaparser.ast.expr.AssignExpr
 import com.github.javaparser.ast.expr.Expression
 import com.github.javaparser.ast.observer.ObservableProperty
@@ -18,7 +19,8 @@ class AssignWidget(
     override val node: ExpressionStmt,
     override val block: BlockStmt
 ) : StatementWidget<ExpressionStmt>(parent) {
-    lateinit var target: Id
+    lateinit var target: ExpWidget
+    lateinit var operator: TokenWidget
     lateinit var expression: ExpWidget
 
     init {
@@ -28,10 +30,26 @@ class AssignWidget(
 
         layout = FillLayout()
         row {
-            target = Id(this, assignment.target.toString())
+
+            // TODO check valid target
+            target = ExpWidget(this, assignment.target) {
+                Commands.execute(object : ModifyCommand<Expression>(assignment, assignment.target) {
+                    override fun run() {
+                        assignment.target = it
+                    }
+
+                    override fun undo() {
+                        assignment.target = element
+                    }
+                })
+            }
             target.setCopySource()
             target.addKeyEvent(SWT.BS, precondition = { it.isEmpty() }, action = createDeleteEvent(node, block))
-            FixedToken(this, "=")
+
+            operator = TokenWidget(this, "=") {
+                listOf("+=", "-=", "*=")
+            }
+
             expression = ExpWidget(this, assignment.value) {
                 Commands.execute(object : ModifyCommand<Expression>(assignment, assignment.value) {
                     override fun run() {
@@ -46,14 +64,14 @@ class AssignWidget(
             FixedToken(this, ";")
         }
 
-        node.observeProperty<Expression>(ObservableProperty.TARGET) {
+        assignment.observeProperty<Expression>(ObservableProperty.TARGET) {
+            target.update(it)
+        }
+        assignment.observeProperty<AssignExpr.Operator>(ObservableProperty.OPERATOR) {
             TODO()
         }
-        node.observeProperty<AssignExpr.Operator>(ObservableProperty.OPERATOR) {
-            TODO()
-        }
-        node.observeProperty<Expression>(ObservableProperty.VALUE) {
-            expression.update(it!!)
+        assignment.observeProperty<Expression>(ObservableProperty.VALUE) {
+            expression.update(it)
         }
     }
 

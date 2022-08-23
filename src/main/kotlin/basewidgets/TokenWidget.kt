@@ -6,18 +6,35 @@ import org.eclipse.swt.layout.RowData
 import org.eclipse.swt.widgets.*
 import java.util.*
 
+// TODO Observable menu
 class TokenWidget(
     parent: Composite,
     token: String,
-    alternatives: List<String> = emptyList()
+    val alternatives: () -> List<String> = {emptyList()},
+    val editAction: (String) -> Unit = {}
 ) : TextWidget {
 
-    override val widget: Text = TextWidget.createText(parent, token) { _, _ -> false }
+    override val widget: Text = TextWidget.createText(parent, token)
     private val map: MultiMapList<Char, String> = MultiMapList()
-
     init {
         widget.editable = false
-        addMenu(alternatives)
+        widget.addKeyListener(object : KeyAdapter() {
+            override fun keyPressed(e: KeyEvent) {
+                if (e.character == Constants.MENU_KEY) {
+                    addMenu(alternatives())
+                    menu.setLocation(widget.toDisplay(0, 20))
+                    menu.isVisible = true
+                } else if (map.containsKey(e.character)) {
+                    val list = ArrayList(map[e.character])
+                    val i = list.indexOf(widget.text)
+                    val item = list[(i + 1) % list.size]
+                    editAction(item)
+                    //widget.text = item
+                    //widget.requestLayout()
+                    //widget.selectAll()
+                }
+            }
+        })
     }
 
     private fun addMenu(alternatives: List<String>) {
@@ -28,31 +45,17 @@ class TokenWidget(
             map.put(t[0], t)
             item.addSelectionListener(object : SelectionAdapter() {
                 override fun widgetSelected(e: SelectionEvent) {
-                    widget.text = item.text
-                    widget.requestLayout()
-                    widget.selectAll()
-                    widget.setFocus()
+                    editAction(item.text)
+                    //widget.text = item.text
+                    //widget.requestLayout()
+                    //widget.selectAll()
+                    //widget.setFocus()
                 }
             })
         }
-        MenuItem(menu, SWT.SEPARATOR)
-        widget.addKeyListener(object : KeyAdapter() {
-            override fun keyPressed(e: KeyEvent) {
-                if (e.character == Constants.MENU_KEY) {
-                    menu.setLocation(widget.toDisplay(0, 20))
-                    menu.isVisible = true
-                } else if (map.containsKey(e.character)) {
-                    val list = ArrayList(map[e.character])
-                    val i = list.indexOf(widget.text)
-                    val item = list[(i + 1) % list.size]
-                    widget.text = item
-                    widget.requestLayout()
-                    widget.selectAll()
-                }
-            }
-        })
         widget.menu = menu
     }
+
 
     var menu: Menu
         get() = widget.menu
@@ -60,6 +63,13 @@ class TokenWidget(
             widget.menu = menu
         }
 
+    override var text: String
+        get() = super.text
+        set(value) {
+            widget.text = value
+            widget.requestLayout()
+
+        }
     fun setVisible(visible: Boolean) {
         widget.isVisible = visible
     }
