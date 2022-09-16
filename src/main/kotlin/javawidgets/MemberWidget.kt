@@ -1,16 +1,20 @@
 package javawidgets
 
+import basewidgets.SequenceWidget
+import basewidgets.TextWidget
 import basewidgets.TokenWidget
 import com.github.javaparser.ast.Modifier
 import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.NodeList
 import com.github.javaparser.ast.body.BodyDeclaration
+import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration
 import com.github.javaparser.ast.nodeTypes.NodeWithModifiers
 import com.github.javaparser.ast.observer.AstObserver
 import com.github.javaparser.ast.observer.AstObserverAdapter
 import org.eclipse.swt.SWT
 import org.eclipse.swt.layout.FillLayout
 import org.eclipse.swt.widgets.Composite
+import org.eclipse.swt.widgets.Display
 import pt.iscte.javardise.api.column
 import pt.iscte.javardise.api.row
 
@@ -34,7 +38,7 @@ abstract class MemberWidget<T : NodeWithModifiers<*>>(
         column = column(true) {
             firstRow = row {
                 node.modifiers.forEach {
-                    val token = createModifierToken(it)
+                    val token = createModifierToken(this, it)
                     modifiers.add(token)
                 }
 
@@ -45,9 +49,11 @@ abstract class MemberWidget<T : NodeWithModifiers<*>>(
                         oldNode: Node?,
                         newNode: Node?
                     ) {
-                        println("rp $newNode" )
-                        modifiers.find { it.text == (oldNode as Modifier).keyword.asString() }?.text = (newNode as Modifier).keyword.asString()
+                        println("rp $newNode")
+                        modifiers.find { it.text == (oldNode as Modifier).keyword.asString() }?.text =
+                            (newNode as Modifier).keyword.asString()
                     }
+
                     override fun listChange(
                         observedNode: NodeList<*>,
                         type: AstObserver.ListChangeType,
@@ -56,11 +62,11 @@ abstract class MemberWidget<T : NodeWithModifiers<*>>(
                     ) {
                         val mod = nodeAddedOrRemoved as Modifier
                         if (type == AstObserver.ListChangeType.ADDITION) {
-                            val token = createModifierToken(mod)
+                            val token = createModifierToken(this@row, mod)
 
                             if (modifiers.isEmpty())
                                 token.moveAboveInternal(firstRow.children[0])
-                            else if(index == modifiers.size)
+                            else if (index == modifiers.size)
                                 token.moveBelowInternal(modifiers.last().widget)
                             else
                                 token.moveAboveInternal(modifiers[index].widget)
@@ -84,8 +90,8 @@ abstract class MemberWidget<T : NodeWithModifiers<*>>(
         }
     }
 
-    private fun Composite.createModifierToken(it: Modifier): TokenWidget {
-        val mod = Factory.newTokenWidget(this, it.keyword.asString(), filterModifiers) { token ->
+    private fun createModifierToken(parent: Composite, it: Modifier): TokenWidget {
+        val mod = Factory.newTokenWidget(parent, it.keyword.asString(), filterModifiers) { token ->
             Commands.execute(object : Command {
                 override val target: Node = node as Node
                 override val kind: CommandKind = CommandKind.MODIFY
@@ -102,6 +108,7 @@ abstract class MemberWidget<T : NodeWithModifiers<*>>(
             })
         }
         mod.addDeleteListener(it)
+        mod.addSpaceInsert(it)
         return mod
     }
 
@@ -147,4 +154,27 @@ abstract class MemberWidget<T : NodeWithModifiers<*>>(
             })
         }
     }
+
+
 }
+
+
+internal fun Composite.addInsert(
+    member: MemberWidget<*>?,
+    body: SequenceWidget,
+    node: ClassOrInterfaceDeclaration,
+    after: Boolean
+): TextWidget {
+    val w = TextWidget.create(this)
+    w.addKeyEvent(SWT.CR) {
+        val insert = if (member == null)
+            body.insertBeginning()
+        else if (after)
+            body.insertLineAfter(member)
+        else
+            body.insertLineAt(member)
+    }
+    w.widget.background = Display.getDefault().getSystemColor(SWT.COLOR_MAGENTA)
+    return w
+}
+

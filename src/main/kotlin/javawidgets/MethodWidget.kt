@@ -1,8 +1,7 @@
 package javawidgets
 
-import basewidgets.FixedToken
-import basewidgets.Id
-import basewidgets.SequenceWidget
+import basewidgets.*
+import com.github.javaparser.ast.Modifier
 import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.NodeList
 import com.github.javaparser.ast.body.*
@@ -10,6 +9,9 @@ import com.github.javaparser.ast.expr.SimpleName
 import com.github.javaparser.ast.observer.ObservableProperty
 import com.github.javaparser.ast.type.PrimitiveType
 import org.eclipse.swt.SWT
+import org.eclipse.swt.events.FocusAdapter
+import org.eclipse.swt.events.FocusEvent
+import org.eclipse.swt.layout.GridLayout
 import org.eclipse.swt.layout.RowLayout
 import org.eclipse.swt.widgets.Composite
 import org.eclipse.swt.widgets.Display
@@ -24,17 +26,19 @@ class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: In
         if (dec is MethodDeclaration) dec.body.get()  // TODO watch out for signature only
         else (dec as ConstructorDeclaration).body
 
+    val paramsWidget: ParamListWidget
+
     init {
         if (node.isMethodDeclaration)
             typeId = Id(firstRow, (node as MethodDeclaration).type.toString())
 
         name = Id(firstRow, node.name.asString())
-        name.addKeyEvent(SWT.BS, precondition = {it.isEmpty()}) {
+        name.addKeyEvent(SWT.BS, precondition = { it.isEmpty() }) {
             Commands.execute(object : Command {
-                override val target: ClassOrInterfaceDeclaration = dec.parentNode.get() as ClassOrInterfaceDeclaration
+                override val target = node.parentNode as ClassOrInterfaceDeclaration
                 override val kind: CommandKind = CommandKind.REMOVE
                 override val element: Node = dec
-                val index: Int =  target.members.indexOf(dec)
+                val index: Int = target.members.indexOf(dec)
                 override fun run() {
                     dec.remove()
                 }
@@ -58,40 +62,41 @@ class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: In
 //                }
         }
         FixedToken(firstRow, "(")
-        ParamListWidget(firstRow, node.parameters)
+        paramsWidget = ParamListWidget(firstRow, node.parameters)
         FixedToken(firstRow, ")")
-        FixedToken(firstRow, "{")
+
+
+
         body = createSequence(column, bodyModel)
-        name.addKeyEvent(SWT.CR) {
-            body.insertLine()
+        TokenWidget(firstRow, "{").addInsert(null, body, true)
+        //val insert = TextWidget.create(firstRow)
+
+//        insert.addKeyEvent(SWT.CR) {
+//            body.insertBeginning()
+//        }
+
+        TokenWidget(column, "}").addInsert(this, findClassWidget()!!.body,true) // TODO !! remove
+    }
+
+    fun Composite.findClassWidget(): ClassWidget? {
+        if (this is ClassWidget)
+            return this
+        else {
+            val parent = this.parent
+            if (parent == null)
+                return null
+            else
+                return parent.findClassWidget()
         }
-        FixedToken(column, "}")
     }
 
     inner class ParamListWidget(parent: Composite, val parameters: NodeList<Parameter>) : Composite(parent, SWT.NONE) {
+        lateinit var insert : Id
         init {
             layout = RowLayout()
             (layout as RowLayout).marginTop = 0
 
-            val insert = Id(this, " ")
-            insert.addKeyEvent(SWT.SPACE, precondition = { it.isNotBlank() }) {
-                Commands.execute(object : Command {
-                    override val target = dec
-                    override val kind = CommandKind.ADD
-                    override val element: Parameter
-                        get() = Parameter(PrimitiveType(PrimitiveType.Primitive.INT), SimpleName("parameter"))
-
-                    override fun run() {
-                        // TODO type in ID
-                        parameters.add(0, element)
-                    }
-
-                    override fun undo() {
-                        parameters.remove(element)
-                    }
-                })
-                insert.set(" ")
-            }
+            createInsert()
             addParams()
 
             parameters.register(object : ListAddRemoveObserver<Parameter>() {
@@ -99,8 +104,7 @@ class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: In
                     val p = ParamWidget(this@ParamListWidget, index, node)
                     if (index == 0 && list.isEmpty()) {
                         //ParamWidget(this@ParamListWidget, index, node)
-                    }
-                    else if (index == list.size) {
+                    } else if (index == list.size) {
                         val c = FixedToken(this@ParamListWidget, ",")
                         c.moveAbove(p)
                     } else {
@@ -123,10 +127,40 @@ class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: In
                         // comma
                         if (index == 0 && list.size > 1)
                             children[index].dispose()
-                        else if(index != 0)
+                        else if (index != 0)
                             children[index - 1].dispose()
                     }
+                    if(parameters.size == 1)
+                        createInsert()
+
                     requestLayout()
+                }
+            })
+        }
+
+        private fun createInsert() {
+            insert = Id(this, " ")
+            insert.addKeyEvent(SWT.SPACE, precondition = { it.isNotBlank() }) {
+                Commands.execute(object : Command {
+                    override val target = dec
+                    override val kind = CommandKind.ADD
+                    override val element: Parameter
+                        get() = Parameter(PrimitiveType(PrimitiveType.Primitive.INT), SimpleName("parameter"))
+
+                    override fun run() {
+                        // TODO type in ID
+                        parameters.add(0, element)
+                    }
+
+                    override fun undo() {
+                        parameters.remove(element)
+                    }
+                })
+                insert.delete()
+            }
+            insert.addFocusListenerInternal(object : FocusAdapter() {
+                override fun focusLost(e: FocusEvent?) {
+                    insert.set(" ")
                 }
             })
         }
@@ -142,7 +176,8 @@ class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: In
         }
 
         // TODO name listeners
-        inner class ParamWidget(parent: Composite, val index: Int, override val node: Parameter) : NodeWidget<Parameter>(parent) {
+        inner class ParamWidget(parent: Composite, val index: Int, override val node: Parameter) :
+            NodeWidget<Parameter>(parent) {
             val type: Id
             val name: Id
 
@@ -188,29 +223,29 @@ class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: In
             }
 
             override fun setFocusOnCreation() {
-                type.setFocus()
+                name.setFocus()
             }
         }
     }
-
 
 
     override fun setFocusOnCreation() {
         name.setFocus()
     }
 
+    fun focusParameters() = paramsWidget.setFocus()
 
     fun addSelectionListener(event: (Node) -> Unit) {
         //TODO("Not yet implemented")
     }
 
-    fun getNodeOnFocus() : Node? {
+    fun getNodeOnFocus(): Node? {
         val control = Display.getDefault().focusControl
         var parent = control.parent
-        while(parent != null && parent !is NodeWidget<*>)
+        while (parent != null && parent !is NodeWidget<*>)
             parent = parent.parent
 
-        if(parent is NodeWidget<*>)
+        if (parent is NodeWidget<*>)
             return parent.node as Node
         else
             return null

@@ -61,7 +61,8 @@ class AssignWidget(
                     }
                 })
             }
-            FixedToken(this, ";")
+            if(this@AssignWidget.parent is SequenceWidget)
+                TokenWidget(this, ";").addInsert(this@AssignWidget, this@AssignWidget.parent as SequenceWidget, true)
         }
 
         assignment.observeProperty<Expression>(ObservableProperty.TARGET) {

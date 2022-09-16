@@ -134,7 +134,7 @@ interface TextWidget {
             t.addFocusListener(FOCUS_SELECTALL)
             t.addMouseTrackListener(MOUSE_FOCUS)
             t.addModifyListener(MODIFY_PACK)
-            t.addKeyListener(LISTENER_ARROW_KEYS)
+            t.addKeyListener(LISTENER_ARROW_KEYS)  // BUGS
             t.data = parent
 
             return t

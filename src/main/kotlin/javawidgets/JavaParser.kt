@@ -5,6 +5,8 @@ import com.github.javaparser.StaticJavaParser
 import com.github.javaparser.ast.CompilationUnit
 import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.NodeList
+import com.github.javaparser.ast.body.BodyDeclaration
+import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration
 import com.github.javaparser.ast.expr.Expression
 import com.github.javaparser.ast.expr.NameExpr
 import com.github.javaparser.ast.observer.AstObserver
@@ -52,6 +54,12 @@ fun substituteControlBlocks(model: CompilationUnit) {
     }
 }
 
+fun CompilationUnit.findPublicClass(): ClassOrInterfaceDeclaration? =
+    if(types.isEmpty()) null
+    else types
+        .filterIsInstance<ClassOrInterfaceDeclaration>()
+        .find { it.isPublic } ?:
+        if(types[0] is ClassOrInterfaceDeclaration) types[0] as ClassOrInterfaceDeclaration else null
 
 abstract class ListAddRemoveObserver<T : Node> : AstObserverAdapter() {
     override fun listChange(
@@ -90,6 +98,20 @@ fun <T> Observable.observeProperty(prop: ObservableProperty, event: (T?) -> Unit
     return obs
 }
 
+
+class AddMemberCommand(val member: BodyDeclaration<*>, val type: ClassOrInterfaceDeclaration, val index: Int) : Command {
+    override val kind: CommandKind = CommandKind.ADD
+    override val target = type
+    override val element = member
+
+    override fun run() {
+        type.members.add(index, member)
+    }
+
+    override fun undo() {
+        type.members.remove(member)
+    }
+}
 
 class AddStatementCommand(val stmt: Statement, val block: BlockStmt, val index: Int) : Command {
     override val kind: CommandKind = CommandKind.ADD

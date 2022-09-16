@@ -3,6 +3,7 @@ package javawidgets.statements
 import basewidgets.Constants
 import basewidgets.FixedToken
 import basewidgets.SequenceWidget
+import basewidgets.TokenWidget
 import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.NodeList
 import com.github.javaparser.ast.expr.Expression
@@ -34,8 +35,8 @@ class IfWidget(
     var elseWidget: ElseWidget? = null
     var elseBody: SequenceWidget? = null
 
-    lateinit var openThenBracket : FixedToken
-    lateinit var closeThenBracket : FixedToken
+    lateinit var openThenBracket : TokenWidget
+    lateinit var closeThenBracket : TokenWidget
 
     init {
         layout = RowLayout()
@@ -43,7 +44,7 @@ class IfWidget(
             if (node.comment.isPresent)
                 CommentWidget(this, node.comment.get())
 
-            row {
+            val firstRow = row {
                 val keyword = Factory.newTokenWidget(this, "if")
                 keyword.setCopySource()
                 Constants.addInsertLine(keyword)
@@ -65,12 +66,17 @@ class IfWidget(
                 }
                 Constants.addInsertLine(exp,)
                 FixedToken(this, ")")
-                openThenBracket = FixedToken(this, "{")
-            }
-            thenBody = createSequence(this, node.thenBlock)
-            closeThenBracket = FixedToken(this, "}")
 
-            setThenBracketsVisibility(node.thenBlock.statements.size, openThenBracket, closeThenBracket)
+            }
+
+            thenBody = createSequence(this, node.thenBlock)
+
+            openThenBracket = TokenWidget(firstRow, "{")
+            openThenBracket.addInsert(null, thenBody, false)
+            closeThenBracket = TokenWidget(this, "}")
+            closeThenBracket.addInsert(this@IfWidget, this@IfWidget.parent as SequenceWidget, true)
+
+            //setThenBracketsVisibility(node.thenBlock.statements.size, openThenBracket, closeThenBracket)
         }
 
         // TODO else brackets visibility
@@ -82,7 +88,7 @@ class IfWidget(
                 nodeAddedOrRemoved: Node?
             ) {
                 val newSize = observedNode.size + if(type == AstObserver.ListChangeType.ADDITION) 1 else -1
-                setThenBracketsVisibility(newSize, openThenBracket, closeThenBracket)
+                //setThenBracketsVisibility(newSize, openThenBracket, closeThenBracket)
             }
         })
 
@@ -103,10 +109,10 @@ class IfWidget(
         }
     }
 
-    private fun setThenBracketsVisibility(bodySize: Int, open: FixedToken, close: FixedToken) {
+    private fun setThenBracketsVisibility(bodySize: Int, open: TokenWidget, close: TokenWidget) {
         val visible = bodySize == 0 || bodySize > 1
-        open.label.visible = visible
-        close.label.visible = visible
+        open.widget.visible = visible
+        close.widget.visible = visible
     }
 
     inner class ElseWidget(parent: Composite, elseStatement: Statement) : Composite(parent, SWT.NONE){

@@ -9,17 +9,16 @@ import org.eclipse.swt.widgets.Text
 import java.util.function.Supplier
 
 class Id(parent: Composite, id: String) :
-    Composite(parent, SWT.NONE), TextWidget {
+  TextWidget {
     private var read_only: Boolean
     private var skipVerify = false
     private val textWidget: Text
     private var editAction = {  -> Unit}
-    private var allowEmpty = Supplier { false }
 
     init {
-        layout = Constants.ROW_LAYOUT_H_ZERO
+        //layout = Constants.ROW_LAYOUT_H_ZERO
         read_only = false
-        textWidget = TextWidget.createText(this, id)
+        textWidget = TextWidget.createText(parent, id)
         textWidget.addVerifyListener { e: VerifyEvent ->
             e.doit = skipVerify
                     || !read_only
@@ -45,10 +44,6 @@ class Id(parent: Composite, id: String) :
         textWidget.addFocusListener(listener)
     }
 
-    fun setAllowEmpty(allowEmpty: Supplier<Boolean>) {
-        this.allowEmpty = allowEmpty
-    }
-
     fun setReadOnly() {
         read_only = true
     }
@@ -58,9 +53,9 @@ class Id(parent: Composite, id: String) :
     }
 
 
-    override fun setMenu(menu: Menu) {
-        textWidget.menu = menu
-    }
+//    override fun setMenu(menu: Menu) {
+//        textWidget.menu = menu
+//    }
 
     fun set(id: String?) {
         skipVerify = true

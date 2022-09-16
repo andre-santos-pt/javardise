@@ -49,7 +49,7 @@ open class SequenceWidget(
             insert
         }
         else
-            insertLineAfter(children.last())
+            insertLineAt(children.first())
     }
 
     fun insertLine() : TextWidget {

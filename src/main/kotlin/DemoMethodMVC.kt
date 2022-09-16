@@ -19,7 +19,6 @@ fun main() {
 
     openShell(display, model.types[0].methods[0])
 
-
     while (!shell1.isDisposed) {
         if (!display.readAndDispatch()) display.sleep()
     }

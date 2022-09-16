@@ -110,7 +110,7 @@ fun SequenceWidget.findIndexByModel(control: Control): Int {
 
 fun createInsert(seq: SequenceWidget, block: BlockStmt): TextWidget {
     val insert = TextWidget.create(seq) { c, s ->
-        c.toString().matches(Regex("[a-zA-Z0-9]|\\[|\\]|\\.")) || c == SWT.BS || c == SWT.SPACE
+        c.toString().matches(Regex("[a-zA-Z0-9]|\\[|\\]|\\.")) || c == SWT.BS
     }
 
     insert.addKeyEvent(SWT.SPACE, '(', precondition = { it.matches(Regex("if|while")) }) {
