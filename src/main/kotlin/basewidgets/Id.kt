@@ -1,32 +1,47 @@
 package basewidgets
 
+import javawidgets.BACKGROUND_COLOR
+import javawidgets.ERROR_COLOR
 import org.eclipse.swt.SWT
 import org.eclipse.swt.events.*
-import org.eclipse.swt.widgets.Composite
-import org.eclipse.swt.widgets.Menu
-import org.eclipse.swt.widgets.Text
+import org.eclipse.swt.widgets.*
+import javax.lang.model.SourceVersion
 
-import java.util.function.Supplier
+val ID = Regex("[a-zA-Z][a-zA-Z0-9_]*")
+val ID_CHARS = Regex("[a-zA-Z0-9_]")
 
-class Id(parent: Composite, id: String) :
-  TextWidget {
-    private var read_only: Boolean
-    private var skipVerify = false
-    private val textWidget: Text
-    private var editAction = {  -> Unit}
+open class Id(parent: Composite, id: String) :
+    TextWidget {
+    private var readOnly: Boolean
+    internal val textWidget: Text
+    private var skip = false
 
     init {
-        //layout = Constants.ROW_LAYOUT_H_ZERO
-        read_only = false
-        textWidget = TextWidget.createText(parent, id)
-        textWidget.addVerifyListener { e: VerifyEvent ->
-            e.doit = skipVerify
-                    || !read_only
-                    || e.character == Constants.DEL_KEY
-                    || e.character == SWT.CR
+        readOnly = false
+        textWidget = TextWidget.createText(parent, id) { c, s ->
+            skip ||
+                    !readOnly && (
+                    c.toString().matches(ID_CHARS)
+                            || c == Constants.DEL_KEY
+                            || c == SWT.CR)
         }
         textWidget.menu = Menu(textWidget) // prevent system menu
+
+        textWidget.addModifyListener {
+            if (!textWidget.text.matches(ID)) {
+                textWidget.background = ERROR_COLOR()
+                textWidget.toolTipText = "Valid identifiers cannot start with a number."
+            } else if (SourceVersion.isKeyword(textWidget.text)) {
+                textWidget.background = ERROR_COLOR()
+                textWidget.toolTipText = "'${textWidget.text}' is a reserved keyword in Java."
+            } else {
+                textWidget.background = BACKGROUND_COLOR()
+                textWidget.toolTipText = ""
+            }
+        }
     }
+
+    fun isValid() = textWidget.text.matches(ID) && !SourceVersion.isKeyword(textWidget.text)
 
     override val widget: Text get() = textWidget
 
@@ -45,27 +60,12 @@ class Id(parent: Composite, id: String) :
     }
 
     fun setReadOnly() {
-        read_only = true
+        readOnly = true
     }
-
-    fun setEditAction(editAction: () -> Unit) {
-        this.editAction = editAction
-    }
-
-
-//    override fun setMenu(menu: Menu) {
-//        textWidget.menu = menu
-//    }
 
     fun set(id: String?) {
-        skipVerify = true
+        skip = true
         textWidget.text = id
-        skipVerify = false
-        //textWidget.requestLayout()
+        skip = false
     }
-
-
-
-    override val textToSerialize: String =
-        if (textWidget.text.isBlank()) "ID" else textWidget.text
 }

@@ -1,30 +1,44 @@
 package javawidgets
 
-import basewidgets.TokenWidget
+import basewidgets.*
 import button
 import column
-import com.github.javaparser.StaticJavaParser
 import com.github.javaparser.ast.CompilationUnit
 import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration
+import com.github.javaparser.ast.body.FieldDeclaration
+import com.github.javaparser.ast.expr.SimpleName
+import com.github.javaparser.ast.observer.AstObserver
+import com.github.javaparser.ast.observer.AstObserverAdapter
+import com.github.javaparser.ast.observer.ObservableProperty
 import com.github.javaparser.ast.stmt.BlockStmt
 import com.github.javaparser.ast.stmt.Statement
 import com.github.javaparser.ast.visitor.TreeVisitor
 import com.github.javaparser.ast.visitor.VoidVisitor
+import com.github.javaparser.ast.visitor.VoidVisitorWithDefaults
+import com.github.javaparser.printer.DefaultPrettyPrinter
+import com.github.javaparser.printer.DefaultPrettyPrinterVisitor
+import com.github.javaparser.printer.configuration.DefaultPrinterConfiguration
+import com.github.javaparser.printer.configuration.PrinterConfiguration
+import com.github.javaparser.printer.lexicalpreservation.LexicalPreservingPrinter
 import compile
 import org.eclipse.swt.SWT
 import org.eclipse.swt.custom.SashForm
 import org.eclipse.swt.custom.ScrolledComposite
 import org.eclipse.swt.events.PaintListener
+import org.eclipse.swt.graphics.Color
 import org.eclipse.swt.graphics.Point
 import org.eclipse.swt.layout.FillLayout
 import org.eclipse.swt.layout.GridData
 import org.eclipse.swt.layout.GridLayout
 import org.eclipse.swt.layout.RowLayout
 import org.eclipse.swt.widgets.*
+import pt.iscte.javardise.api.ICodeDecoration
+import pt.iscte.javardise.api.scrollable
 import row
 import java.io.File
 import java.io.PrintWriter
+import java.util.function.BiFunction
 
 
 fun main(args: Array<String>) {
@@ -40,6 +54,10 @@ fun main(args: Array<String>) {
     window.open()
 }
 
+
+val ERROR_COLOR = { Display.getDefault().getSystemColor(SWT.COLOR_RED) }
+
+val BACKGROUND_COLOR = { Display.getDefault().getSystemColor(SWT.COLOR_WIDGET_BACKGROUND) }
 
 class JavardiseWindow(var file: File?) {
 
@@ -145,35 +163,51 @@ class JavardiseWindow(var file: File?) {
             Commands.undo()
         }
 
+
+        data class Token(val line: Long, val col: Long, val offset: Int, val node: Node)
+
+
+        class TestVis2(val list: MutableList<Token>, conf: PrinterConfiguration) : DefaultPrettyPrinterVisitor(conf) {
+            override fun visit(n: FieldDeclaration?, arg: Void?) {
+                //println("F " + n)
+                super.visit(n, arg)
+            }
+
+            override fun visit(n: SimpleName, arg: Void?) {
+                super.visit(n, arg)
+                val offset = n.asString().length
+                val init = printer.cursor.column - offset + 1 // because cursor.column is zero-based
+                val pos = Token(printer.cursor.line.toLong(), init.toLong(), offset, n)
+                list.add(pos)
+            }
+        }
+
+
         composite.button("compile") {
-            save()
-            load(file)
-            val errors = compile(file!!)
-            val newParse = StaticJavaParser.parse(file!!)
+            classWidget!!.backgroundDefault()
+            val nodeMap = mutableListOf<Token>()
+            val printer = DefaultPrettyPrinter({ TestVis2(nodeMap, it) }, DefaultPrinterConfiguration())
+            val src = printer.print(model)
+            val errors = compile(model!!.nameAsString, src)
 
             for (e in errors) {
-                println("line ${e.lineNumber} ${e.columnNumber}")
-                val len = e.endPosition - e.startPosition
-                println("len $len")
+                println("ERROR line ${e.lineNumber} ${e.columnNumber} ${e.getMessage(null)}")
                 object : TreeVisitor() {
                     override fun process(node: Node) {
-                        val line = node.begin.get().line.toLong()
-                        val col = node.begin.get().column.toLong()
-                        if(line == e.lineNumber && col == e.columnNumber && node.toString().length.toLong() == len) {
-                            println("ERROR " + node.toString() + "  " + node.begin.get().toString() + " " + node::class)
-                            val child = classWidget!!.findChild(node)
+                        // zero-based in java compiler
+                        val t = nodeMap.find { it.line == e.lineNumber && it.col == e.columnNumber + 1 }
+                        t?.let {
+                            val child = classWidget!!.findChild(t.node)
                             child?.let {
-                                child.background = Display.getDefault().getSystemColor(SWT.COLOR_RED)
+                               child.background = Display.getDefault().getSystemColor(SWT.COLOR_RED)
                             }
                         }
                     }
-                }.visitBreadthFirst(newParse)
+                }.visitBreadthFirst(model)
             }
-
-
         }
-
     }
+
 
     private fun save() {
         if (file == null)
@@ -199,6 +233,10 @@ class JavardiseWindow(var file: File?) {
                 ClassWidget(it, c)
             } ?: notFoundLabel(it)
         }
+
+        model!!.observeProperty<SimpleName>(ObservableProperty.NAME) {
+            println("TYPE!! $it")
+        }
         Commands.reset()
         val parent = stackComp.parent
         stackComp.dispose()
@@ -219,97 +257,7 @@ class JavardiseWindow(var file: File?) {
     }
 }
 
-fun <T : Composite> Composite.scrollable(create: (Composite) -> T): Composite {
-    val scroll = ScrolledComposite(this, SWT.H_SCROLL or SWT.V_SCROLL)
-    scroll.layout = GridLayout()
-    scroll.layoutData = GridData(SWT.FILL, SWT.FILL, true, true)
-    scroll.setMinSize(100, 100)
-    scroll.expandHorizontal = true
-    scroll.expandVertical = true
 
-    val content = create(scroll)
-    scroll.content = content
-
-    val list = PaintListener {
-        if (!scroll.isDisposed) {
-            val size = computeSize(SWT.DEFAULT, SWT.DEFAULT)
-            scroll.setMinSize(size)
-            scroll.requestLayout()
-        }
-    }
-    addPaintListener(list)
-    addDisposeListener {
-        removePaintListener(list)
-    }
-    return scroll
-}
-
-object Commands {
-    val stack = ArrayDeque<Command>()
-    val observers = mutableListOf<(Command) -> Unit>()
-
-    fun execute(c: Command) {
-        c.run()
-        stack.addLast(c)
-        observers.forEach {
-            it(c)
-        }
-    }
-
-    fun undo() {
-        if (stack.isNotEmpty()) {
-            val cmd = stack.removeLast()
-            cmd.undo()
-            observers.forEach {
-                it(cmd)
-            }
-        }
-    }
-
-    fun reset() {
-        stack.clear()
-        observers.clear()
-    }
-}
-
-//fun <N:Node> Node.runCommand(kind: CommandKind, action: () -> Unit): (N, () -> Unit) -> Unit =
-//    { element: N, undoAction: () -> Unit ->
-//        Commands.execute(object : AbstractCommand<N>(this, kind, element) {
-//            override fun run() {
-//                action()
-//            }
-//
-//            override fun undo() {
-//                undoAction()
-//            }
-//        })
-//    }
-
-
-enum class CommandKind {
-    ADD, REMOVE, MODIFY
-}
-
-interface Command {
-    val target: Node
-    val kind: CommandKind
-    val element: Node
-    fun run()
-    fun undo()
-
-    fun asString(): String = "$kind - ${target::class.simpleName}"
-
-}
-
-abstract class AbstractCommand<E : Node>(
-    override val target: Node,
-    override val kind: CommandKind,
-    override val element: E
-) : Command
-
-
-abstract class ModifyCommand<E : Node>(target: Node, previous: E?) :
-    AbstractCommand<E>(target, CommandKind.MODIFY, previous?.clone() as E)
 
 
 object Factory {
@@ -324,31 +272,7 @@ object Factory {
     }
 }
 
-object Clipboard {
-    var onCopy: Pair<Node, (Node, Node, Int?) -> Unit>? = null
-    // var cut: Boolean = false
 
-    fun copy(node: Node, copy: (Node, Node, Int?) -> Unit) {
-        onCopy = Pair(node, copy)
-    }
-
-//    fun cut(node: Node, copy: (Node,Node, Int?) -> Unit) {
-//        copy(node, copy)
-//        cut = true
-//    }
-
-    fun paste(block: BlockStmt, index: Int) {
-        Commands.execute(AddStatementCommand(onCopy!!.first.clone() as Statement, block, index))
-    }
-}
-
-//object Colors {
-//    fun get(c: Control) : Color =
-//        when(c) {
-//            is TokenWidget -> Display.getDefault().getSystemColor(SWT.COLOR_MAGENTA)
-//            else -> Display.getDefault().getSystemColor(SWT.COLOR_WHITE)
-//        }
-//}
 abstract class NodeWidget<T>(parent: Composite, style: Int = SWT.NONE) : Composite(parent, style) {
     abstract val node: T
 
@@ -359,19 +283,27 @@ abstract class NodeWidget<T>(parent: Composite, style: Int = SWT.NONE) : Composi
 
 fun Control.traverse(visit: (Control) -> Boolean) {
     val enter = visit(this)
-    if(this is Composite && enter)
+    if (this is Composite && enter)
         this.children.forEach { it.traverse(visit) }
 }
 
-fun Composite.findChild(model: Node): NodeWidget<*>? {
-    var n : NodeWidget<*>? = null
+fun Composite.findChild(model: Node): Control? {
+    var n: Control? = null
     traverse {
-        if(it is NodeWidget<*> && it.node === model) {
+        if (it is NodeWidget<*> && it.node === model) {
             n = it
             return@traverse false
-        }
-        else
+        } else if (it is Text && it.data === model) {
+            n = it
+            return@traverse false
+        } else
             return@traverse true
     }
     return n
+}
+
+fun Control.backgroundDefault() = this.traverse {
+    background = Display.getDefault().getSystemColor(SWT.COLOR_WHITE)
+    foreground = Display.getDefault().getSystemColor(SWT.COLOR_BLUE)
+    true
 }

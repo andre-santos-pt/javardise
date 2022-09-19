@@ -1,20 +1,16 @@
 package javawidgets
 
-import basewidgets.SequenceWidget
-import basewidgets.TextWidget
 import basewidgets.TokenWidget
 import com.github.javaparser.ast.Modifier
 import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.NodeList
 import com.github.javaparser.ast.body.BodyDeclaration
-import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration
 import com.github.javaparser.ast.nodeTypes.NodeWithModifiers
 import com.github.javaparser.ast.observer.AstObserver
 import com.github.javaparser.ast.observer.AstObserverAdapter
 import org.eclipse.swt.SWT
 import org.eclipse.swt.layout.FillLayout
 import org.eclipse.swt.widgets.Composite
-import org.eclipse.swt.widgets.Display
 import pt.iscte.javardise.api.column
 import pt.iscte.javardise.api.row
 
@@ -49,7 +45,6 @@ abstract class MemberWidget<T : NodeWithModifiers<*>>(
                         oldNode: Node?,
                         newNode: Node?
                     ) {
-                        println("rp $newNode")
                         modifiers.find { it.text == (oldNode as Modifier).keyword.asString() }?.text =
                             (newNode as Modifier).keyword.asString()
                     }
@@ -90,40 +85,34 @@ abstract class MemberWidget<T : NodeWithModifiers<*>>(
         }
     }
 
-    private fun createModifierToken(parent: Composite, it: Modifier): TokenWidget {
-        val mod = Factory.newTokenWidget(parent, it.keyword.asString(), filterModifiers) { token ->
+    private fun createModifierToken(parent: Composite, modifier: Modifier): TokenWidget {
+        val mod = Factory.newTokenWidget(parent, modifier.keyword.asString(), filterModifiers) { token ->
             Commands.execute(object : Command {
                 override val target: Node = node as Node
                 override val kind: CommandKind = CommandKind.MODIFY
                 override val element = Modifier(Modifier.Keyword.valueOf(token.uppercase()))
-                val index = node.modifiers.indexOf(it)
+                val index = node.modifiers.indexOf(modifier)
                 override fun run() {
                     node.modifiers[index] = element
                 }
 
                 override fun undo() {
-                    node.modifiers[index] = it
+                    node.modifiers[index] = modifier
                 }
 
             })
         }
-        mod.addDeleteListener(it)
-        mod.addSpaceInsert(it)
-        return mod
-    }
-
-
-    private fun TokenWidget.addDeleteListener(modifier: Modifier) {
-        addDeleteListener {
+        mod.addKeyEvent(SWT.BS) {
             Commands.execute(object : Command {
+                val index = parent.children.indexOf(mod.widget)
+
                 override val target = node as BodyDeclaration<*>
                 override val kind = CommandKind.REMOVE
-                override val element = modifier
+                override val element = node.modifiers[index]
 
-                val index = node.modifiers.indexOf(modifier)
 
                 override fun run() {
-                    node.modifiers.remove(modifier)
+                    node.modifiers.removeAt(index)
                 }
 
                 override fun undo() {
@@ -131,8 +120,31 @@ abstract class MemberWidget<T : NodeWithModifiers<*>>(
                 }
             })
         }
+        //mod.addDeleteListener(it)
+        mod.addSpaceInsert(modifier)
+        return mod
+    }
 
 
+    private fun TokenWidget.addDeleteListener(modifier: Modifier) {
+        val modifierString = modifier.keyword.asString()
+        addDeleteListener {
+            Commands.execute(object : Command {
+                override val target = node as BodyDeclaration<*>
+                override val kind = CommandKind.REMOVE
+                override val element = modifier
+
+                val index = node.modifiers.indexOfFirst { it.keyword.asString() == modifierString }
+
+                override fun run() {
+                    node.modifiers.removeAt(index)
+                }
+
+                override fun undo() {
+                    node.modifiers.add(index, modifier.clone())
+                }
+            })
+        }
     }
 
     private fun TokenWidget.addSpaceInsert(modifier: Modifier) {
@@ -154,27 +166,6 @@ abstract class MemberWidget<T : NodeWithModifiers<*>>(
             })
         }
     }
-
-
 }
 
-
-internal fun Composite.addInsert(
-    member: MemberWidget<*>?,
-    body: SequenceWidget,
-    node: ClassOrInterfaceDeclaration,
-    after: Boolean
-): TextWidget {
-    val w = TextWidget.create(this)
-    w.addKeyEvent(SWT.CR) {
-        val insert = if (member == null)
-            body.insertBeginning()
-        else if (after)
-            body.insertLineAfter(member)
-        else
-            body.insertLineAt(member)
-    }
-    w.widget.background = Display.getDefault().getSystemColor(SWT.COLOR_MAGENTA)
-    return w
-}
 

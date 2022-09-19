@@ -23,7 +23,7 @@ import org.eclipse.swt.widgets.Composite
 import org.eclipse.swt.widgets.Control
 import org.eclipse.swt.widgets.Display
 
-val ID = "[a-zA-Z_][a-zA-Z_0-9]*"
+
 val MODIFIERS = "(${Modifier.Keyword.values().joinToString(separator = "|") { it.asString() }})"
 val MEMBER_REGEX = Regex(
     "($MODIFIERS\\s+)*$ID\\s+$ID"
@@ -33,41 +33,53 @@ val MEMBER_REGEX = Regex(
 fun matchModifier(keyword: String) =
     Modifier(Modifier.Keyword.valueOf(keyword.uppercase()))
 
-//fun matchType(name: String) =
-//    if(PrimitiveType.Primitive.values().map { it.name.lowercase() }.contains(name))
-//        ;
-//    else
-//        StaticJavaParser.par
 class ClassWidget(parent: Composite, type: ClassOrInterfaceDeclaration) :
     MemberWidget<ClassOrInterfaceDeclaration>(parent, type, listOf("public", "final", "abstract")) {
     private val keyword: TokenWidget
     private val id: Id
     internal var body: SequenceWidget
 
-    val CONSTRUCTOR_REGEX = Regex(
-        "($MODIFIERS\\s+)*${type.nameAsString}"
-    )
-
+    val CONSTRUCTOR_REGEX = { Regex("($MODIFIERS\\s+)*${type.nameAsString}") }
     init {
-        println(type.name.begin.get().toString() + " " + type.name.end)
         data = "ROOTAREA"
         layout = FillLayout()
         keyword = Factory.newTokenWidget(firstRow, "class")
-        id = Id(firstRow, type.name.id)
+        keyword.addKeyEvent(SWT.SPACE) {
+            Commands.execute(object : Command {
+                override val target = node
+                override val kind = CommandKind.ADD
+                override val element = Modifier(Modifier.Keyword.PUBLIC)
+
+                val index = node.modifiers.size
+
+                override fun run() {
+                    node.modifiers.add(index, element)
+                }
+
+                override fun undo() {
+                    node.modifiers.remove(element)
+                }
+            })
+        }
+
+        id = SimpleNameWidget(firstRow, type.name)
         id.addFocusListenerInternal(object : FocusAdapter() {
             override fun focusLost(e: FocusEvent?) {
-                if (id.text.isNotEmpty())
-                    Commands.execute(object : ModifyCommand<SimpleName>(type, type.name) {
+                if (id.isValid() && id.text != node.nameAsString)
+                    Commands.execute(object : ModifyCommand<SimpleName>(node, node.name) {
                         override fun run() {
-                            type.name = SimpleName(id.text)
+                            node.name = SimpleName(id.text)
+                            node.constructors.forEach { it.name = node.name.clone() }
                         }
 
                         override fun undo() {
-                            type.name = element
+                            node.name = element
                         }
                     })
-                else
-                    id.text = type.name.id
+                else {
+                    id.set(node.name.id)
+
+                }
             }
         })
 
@@ -87,7 +99,7 @@ class ClassWidget(parent: Composite, type: ClassOrInterfaceDeclaration) :
                 return modifiers
             }
 
-            insert.addKeyEvent(';', precondition = { it.matches(MEMBER_REGEX) }) {
+            insert.addKeyEvent(';', SWT.CR, precondition = { it.matches(MEMBER_REGEX) }) {
                 val split = insert.text.split(Regex("\\s+"))
                 val newField = FieldDeclaration(
                     modifiers(2),
@@ -98,12 +110,14 @@ class ClassWidget(parent: Composite, type: ClassOrInterfaceDeclaration) :
                 Commands.execute(AddMemberCommand(newField, node, insertIndex))
                 insert.delete()
             }
-            insert.addKeyEvent('(', precondition = { it.matches(CONSTRUCTOR_REGEX) }) {
+
+            insert.addKeyEvent('(', precondition = { it.matches(CONSTRUCTOR_REGEX()) }) {
                 val newConst = ConstructorDeclaration(modifiers(1), type.nameAsString)
                 val insertIndex = seq.findIndexByModel(insert.widget)
                 Commands.execute(AddMemberCommand(newConst, node, insertIndex))
                 insert.delete()
             }
+
             insert.addKeyEvent('(', precondition = { it.matches(MEMBER_REGEX) }) {
                 val split = insert.text.split(Regex("\\s+"))
                 val newMethod = MethodDeclaration(
@@ -125,15 +139,15 @@ class ClassWidget(parent: Composite, type: ClassOrInterfaceDeclaration) :
         }
         TokenWidget(firstRow, "{").addInsert(null, body, false)
 
-        // firstRow.addInsert(null, body, node, false)
-
         type.members.forEach {
             createMember(type, it)
         }
+
         FixedToken(column, "}")
 
         type.observeProperty<SimpleName>(ObservableProperty.NAME) {
-            id.text = it?.id ?: ""
+            id.set(it?.id ?: "")
+            id.textWidget.data = it
         }
 
         type.members.register(object : AstObserverAdapter() {
@@ -184,12 +198,12 @@ class ClassWidget(parent: Composite, type: ClassOrInterfaceDeclaration) :
         MemberWidget<FieldDeclaration>(parent, dec) {
 
         val typeId: Id
-
+        val name: Id
         val semiColon: TokenWidget
 
         init {
-            typeId = Id(firstRow, dec.elementType.toString())
-            val name = Id(firstRow, dec.variables[0].name.asString()) // TODO multi var
+            typeId = Id(firstRow, dec.elementType.asString())
+            name = SimpleNameWidget(firstRow, dec.variables[0].name) // TODO multi var
             semiColon = TokenWidget(firstRow, ";")
             semiColon.addInsert(this, body, true)
 
@@ -212,7 +226,27 @@ class ClassWidget(parent: Composite, type: ClassOrInterfaceDeclaration) :
                 dec.remove()
             }
 
+            name.addFocusListenerInternal(object: FocusAdapter() {
+                override fun focusLost(e: FocusEvent?) {
+                    if (name.text.isNotEmpty())
+                        Commands.execute(object : ModifyCommand<SimpleName>(dec, dec.variables[0].name) {
+                            override fun run() {
+                                dec.variables[0].name = SimpleName(name.text)
+                            }
 
+                            override fun undo() {
+                                dec.variables[0].name = element
+                            }
+                        })
+                    else
+                        name.text = dec.variables[0].name.asString()
+                }
+            })
+
+            dec.variables[0].observeProperty<SimpleName>(ObservableProperty.NAME) { n->
+                name.text = n?.id ?: ""
+                name.textWidget.data = n
+            }
             // TODO listener
         }
 
@@ -244,6 +278,11 @@ internal fun TokenWidget.addInsert(
     }
 }
 
+class SimpleNameWidget(parent: Composite, name: SimpleName) : Id(parent, name.asString()) {
 
+    init {
+        textWidget.data = name
+    }
+}
 
 

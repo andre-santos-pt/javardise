@@ -304,7 +304,7 @@ class ExpWidget(val parent: Composite, var expression: Expression, editEvent: (E
                 .matches(Regex("[a-zA-Z\\d\\[\\]\\.\"'\\+\\-\\*\\\\%=!\\(\\)<>]")) || c == SWT.BS || c == SWT.SPACE
         }
         if (noparse)
-            this.textWidget.widget.background = Display.getDefault().getSystemColor(SWT.COLOR_RED)
+            this.textWidget.widget.background = ERROR_COLOR()
 
         this.textWidget.addFocusListenerInternal(object : FocusAdapter() {
             var existingText: String? = null
@@ -317,10 +317,10 @@ class ExpWidget(val parent: Composite, var expression: Expression, editEvent: (E
                 if (this@ExpWidget.textWidget.text != existingText) {
                     try {
                         expression = StaticJavaParser.parseExpression(this@ExpWidget.textWidget.text)
-                        this@ExpWidget.textWidget.widget.background = null
+                        this@ExpWidget.textWidget.widget.background = BACKGROUND_COLOR()
                         editEvent(expression!!)
                     } catch (_: ParseProblemException) {
-                        this@ExpWidget.textWidget.widget.background = Display.getDefault().getSystemColor(SWT.COLOR_RED)
+                        this@ExpWidget.textWidget.widget.background = ERROR_COLOR()
                         val noparse = NameExpr(NOPARSE)
                         noparse.addOrphanComment(BlockComment(this@ExpWidget.textWidget.text))
                         editEvent(noparse)

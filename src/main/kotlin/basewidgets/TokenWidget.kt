@@ -10,17 +10,18 @@ import java.util.*
 class TokenWidget(
     parent: Composite,
     token: String,
-    val alternatives: () -> List<String> = {emptyList()},
+    val alternatives: () -> List<String> = { emptyList() },
     val editAction: (String) -> Unit = {}
 ) : TextWidget {
 
     override val widget: Text = TextWidget.createText(parent, token)
     private val map: MultiMapList<Char, String> = MultiMapList()
+
     init {
         widget.editable = false
         widget.addKeyListener(object : KeyAdapter() {
             override fun keyPressed(e: KeyEvent) {
-                if (e.character == Constants.MENU_KEY) {
+                if (e.character == SWT.CR) {
                     addMenu(alternatives())
                     menu.setLocation(widget.toDisplay(0, 20))
                     menu.isVisible = true
@@ -29,9 +30,6 @@ class TokenWidget(
                     val i = list.indexOf(widget.text)
                     val item = list[(i + 1) % list.size]
                     editAction(item)
-                    //widget.text = item
-                    //widget.requestLayout()
-                    //widget.selectAll()
                 }
             }
         })
@@ -46,10 +44,6 @@ class TokenWidget(
             item.addSelectionListener(object : SelectionAdapter() {
                 override fun widgetSelected(e: SelectionEvent) {
                     editAction(item.text)
-                    //widget.text = item.text
-                    //widget.requestLayout()
-                    //widget.selectAll()
-                    //widget.setFocus()
                 }
             })
         }
@@ -70,17 +64,8 @@ class TokenWidget(
             widget.requestLayout()
 
         }
-    fun setVisible(visible: Boolean) {
-        widget.isVisible = visible
-    }
 
     override fun toString(): String = text
-
-    fun isKeyword(keyword: String) = text == keyword
-
-    fun setLayoutData(data: RowData) {
-        widget.layoutData = data
-    }
 
     fun dispose() = widget.dispose()
 
@@ -93,5 +78,4 @@ class TokenWidget(
     override fun addFocusListenerInternal(listener: FocusListener) {
         widget.addFocusListener(listener)
     }
-
 }

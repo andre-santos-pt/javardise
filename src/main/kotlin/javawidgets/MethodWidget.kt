@@ -35,7 +35,7 @@ class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: In
         name = Id(firstRow, node.name.asString())
         name.addKeyEvent(SWT.BS, precondition = { it.isEmpty() }) {
             Commands.execute(object : Command {
-                override val target = node.parentNode as ClassOrInterfaceDeclaration
+                override val target = node.parentNode as ClassOrInterfaceDeclaration // BUG
                 override val kind: CommandKind = CommandKind.REMOVE
                 override val element: Node = dec
                 val index: Int = target.members.indexOf(dec)
@@ -51,9 +51,32 @@ class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: In
             dec.remove()
         }
 
+        name.addFocusListenerInternal(object : FocusAdapter() {
+            override fun focusLost(e: FocusEvent?) {
+                if (name.isValid() && name.text != node.nameAsString)
+                    Commands.execute(object : ModifyCommand<SimpleName>(node, node.name) {
+                        override fun run() {
+                            node.name = SimpleName(name.text)
+                        }
+
+                        override fun undo() {
+                            node.name = element
+                        }
+                    })
+                else {
+                    name.set(node.name.id)
+                }
+            }
+        })
+
+        node.observeProperty<SimpleName>(ObservableProperty.NAME) {
+            name.set(it?.asString())
+            //(node.parentNode.get() as ClassOrInterfaceDeclaration).name = it?.clone()
+        }
 
         if (node.isConstructorDeclaration) {
             name.setReadOnly()
+            name.setToolTip("Constructor name is not editable. Renaming the class modifies constructors accordingly.")
             // problem with MVC
 //            (node.parentNode.get() as TypeDeclaration<*>)
 //                .observeProperty<SimpleName>(ObservableProperty.NAME) {
@@ -69,12 +92,6 @@ class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: In
 
         body = createSequence(column, bodyModel)
         TokenWidget(firstRow, "{").addInsert(null, body, true)
-        //val insert = TextWidget.create(firstRow)
-
-//        insert.addKeyEvent(SWT.CR) {
-//            body.insertBeginning()
-//        }
-
         TokenWidget(column, "}").addInsert(this, findClassWidget()!!.body,true) // TODO !! remove
     }
 

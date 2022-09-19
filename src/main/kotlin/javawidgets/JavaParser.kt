@@ -54,6 +54,7 @@ fun substituteControlBlocks(model: CompilationUnit) {
     }
 }
 
+
 fun CompilationUnit.findPublicClass(): ClassOrInterfaceDeclaration? =
     if(types.isEmpty()) null
     else types

@@ -1,3 +1,10 @@
+import com.github.javaparser.ast.CompilationUnit
+import com.github.javaparser.ast.Node
+import com.github.javaparser.ast.NodeList
+import com.github.javaparser.ast.observer.AstObserver
+import com.github.javaparser.ast.observer.AstObserverAdapter
+import com.github.javaparser.ast.observer.ObservableProperty
+import com.github.javaparser.printer.lexicalpreservation.LexicalPreservingPrinter
 import java.io.File
 import java.io.PrintWriter
 import java.io.StringWriter
@@ -35,20 +42,7 @@ fun compile(cuName: String, src: String) : List<Diagnostic<*>> {
 //        println(diagnostic.getMessage(null))
 //    }
     println("Success: $success")
-    if (success) {
-        try {
-            Class.forName("HelloWorld").getDeclaredMethod("main", *arrayOf<Class<*>>(Array<String>::class.java))
-                .invoke(null, *arrayOf(null))
-        } catch (e: ClassNotFoundException) {
-            System.err.println("Class not found: $e")
-        } catch (e: NoSuchMethodException) {
-            System.err.println("No such method: $e")
-        } catch (e: IllegalAccessException) {
-            System.err.println("Illegal access: $e")
-        } catch (e: InvocationTargetException) {
-            System.err.println("Invocation target: $e")
-        }
-    }
+
     return diagnostics.diagnostics
 }
 
@@ -77,3 +71,4 @@ fun compile(file: File) : List<Diagnostic<*>>{
     println("Success: $success")
     return diagnostics.diagnostics
 }
+
