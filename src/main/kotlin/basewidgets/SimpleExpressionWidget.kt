@@ -95,6 +95,14 @@ class SimpleExpressionWidget(parent: Composite, literal: String, e: Any?) :
         w.addFocusListener(listener)
     }
 
+    override fun addFocusLostAction(action: () -> Unit) {
+        w.addFocusListener(object : FocusAdapter() {
+            override fun focusLost(e: FocusEvent?) {
+                action()
+            }
+        })
+    }
+
     override fun requestLayoutInternal() {
         w.requestLayout()
     }

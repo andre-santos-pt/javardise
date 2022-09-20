@@ -3,6 +3,8 @@ package javawidgets
 import basewidgets.*
 import button
 import column
+import com.github.javaparser.ParseProblemException
+import com.github.javaparser.StaticJavaParser
 import com.github.javaparser.ast.CompilationUnit
 import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration
@@ -58,6 +60,8 @@ fun main(args: Array<String>) {
 val ERROR_COLOR = { Display.getDefault().getSystemColor(SWT.COLOR_RED) }
 
 val BACKGROUND_COLOR = { Display.getDefault().getSystemColor(SWT.COLOR_WIDGET_BACKGROUND) }
+
+val COMMENT_COLOR = { Display.getDefault().getSystemColor(SWT.COLOR_GREEN) }
 
 class JavardiseWindow(var file: File?) {
 
@@ -306,4 +310,26 @@ fun Control.backgroundDefault() = this.traverse {
     background = Display.getDefault().getSystemColor(SWT.COLOR_WHITE)
     foreground = Display.getDefault().getSystemColor(SWT.COLOR_BLUE)
     true
+}
+
+class SimpleNameWidget<N : Node>(parent: Composite, node: N, getName: (N) -> String)
+    : Id(parent, getName(node), ID_CHARS, {
+        s ->
+    try {
+        StaticJavaParser.parseSimpleName(s)
+        Validation(true, "")
+    } catch (e: ParseProblemException) {
+        Validation(false, e.message.toString())
+    }
+}) {
+    init {
+        textWidget.data = node
+    }
+}
+
+class SimpleTypeWidget<N : Node>(parent: Composite, node: N, getName: (N) -> String)
+    : TypeId(parent, getName(node)) {
+    init {
+        textWidget.data = node
+    }
 }

@@ -85,12 +85,15 @@ interface TextWidget {
             }
         }
         widget.addKeyListener(l)
+        widget.toolTipText += chars.joinToString() + " do something\n"
         return l
     }
 
     fun addKeyListenerInternal(listener: KeyListener)
 
     fun addFocusListenerInternal(listener: FocusListener)
+
+    fun addFocusLostAction(action: () -> Unit)
 
     fun addDeleteListener(action: () -> Unit) =
             addKeyEvent(Constants.DEL_KEY) {
@@ -176,6 +179,14 @@ interface TextWidget {
 
                 override fun addFocusListenerInternal(listener: FocusListener) {
                     widget.addFocusListener(listener)
+                }
+
+                override fun addFocusLostAction(action: () -> Unit) {
+                    widget.addFocusListener(object : FocusAdapter() {
+                        override fun focusLost(e: FocusEvent?) {
+                            action()
+                        }
+                    })
                 }
             }
         }

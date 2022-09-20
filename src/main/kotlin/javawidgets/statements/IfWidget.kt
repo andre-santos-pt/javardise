@@ -23,10 +23,10 @@ import pt.iscte.javardise.api.row
 
 class IfWidget(
     parent: SequenceWidget,
-    override val node: IfStmt,
+    node: IfStmt,
     override val block: BlockStmt
 ) :
-    StatementWidget<IfStmt>(parent) {
+    StatementWidget<IfStmt>(parent, node) {
 
     lateinit var column: Composite
     lateinit var exp: ExpWidget
@@ -41,8 +41,7 @@ class IfWidget(
     init {
         layout = RowLayout()
         column = column {
-            if (node.comment.isPresent)
-                CommentWidget(this, node.comment.get())
+
 
             val firstRow = row {
                 val keyword = Factory.newTokenWidget(this, "if")

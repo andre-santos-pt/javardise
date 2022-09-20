@@ -31,7 +31,7 @@ abstract class MemberWidget<T : NodeWithModifiers<*>>(
 
     init {
         layout = FillLayout()
-        column = column(true) {
+        column = column {
             firstRow = row {
                 node.modifiers.forEach {
                     val token = createModifierToken(this, it)

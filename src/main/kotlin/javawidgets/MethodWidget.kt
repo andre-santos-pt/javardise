@@ -28,11 +28,13 @@ class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: In
 
     val paramsWidget: ParamListWidget
 
+    val closingBracket: TokenWidget
+
     init {
         if (node.isMethodDeclaration)
-            typeId = Id(firstRow, (node as MethodDeclaration).type.toString())
+            typeId = SimpleTypeWidget(firstRow, (node as MethodDeclaration).type) {it.asString()}
 
-        name = Id(firstRow, node.name.asString())
+        name = SimpleNameWidget(firstRow, node.name) {it.asString()}
         name.addKeyEvent(SWT.BS, precondition = { it.isEmpty() }) {
             Commands.execute(object : Command {
                 override val target = node.parentNode as ClassOrInterfaceDeclaration // BUG
@@ -51,23 +53,21 @@ class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: In
             dec.remove()
         }
 
-        name.addFocusListenerInternal(object : FocusAdapter() {
-            override fun focusLost(e: FocusEvent?) {
-                if (name.isValid() && name.text != node.nameAsString)
-                    Commands.execute(object : ModifyCommand<SimpleName>(node, node.name) {
-                        override fun run() {
-                            node.name = SimpleName(name.text)
-                        }
+        name.addFocusLostAction {
+            if (name.isValid() && name.text != node.nameAsString)
+                Commands.execute(object : ModifyCommand<SimpleName>(node, node.name) {
+                    override fun run() {
+                        node.name = SimpleName(name.text)
+                    }
 
-                        override fun undo() {
-                            node.name = element
-                        }
-                    })
-                else {
-                    name.set(node.name.id)
-                }
+                    override fun undo() {
+                        node.name = element
+                    }
+                })
+            else {
+                name.set(node.name.id)
             }
-        })
+        }
 
         node.observeProperty<SimpleName>(ObservableProperty.NAME) {
             name.set(it?.asString())
@@ -92,7 +92,8 @@ class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: In
 
         body = createSequence(column, bodyModel)
         TokenWidget(firstRow, "{").addInsert(null, body, true)
-        TokenWidget(column, "}").addInsert(this, findClassWidget()!!.body,true) // TODO !! remove
+        closingBracket =
+            TokenWidget(column, "}") //.addInsert(this, findClassWidget()!!.body,true) // TODO !! remove
     }
 
     fun Composite.findClassWidget(): ClassWidget? {
@@ -107,8 +108,10 @@ class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: In
         }
     }
 
-    inner class ParamListWidget(parent: Composite, val parameters: NodeList<Parameter>) : Composite(parent, SWT.NONE) {
-        lateinit var insert : Id
+    inner class ParamListWidget(parent: Composite, val parameters: NodeList<Parameter>) :
+        Composite(parent, SWT.NONE) {
+        lateinit var insert: TextWidget
+
         init {
             layout = RowLayout()
             (layout as RowLayout).marginTop = 0
@@ -147,7 +150,7 @@ class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: In
                         else if (index != 0)
                             children[index - 1].dispose()
                     }
-                    if(parameters.size == 1)
+                    if (parameters.size == 1)
                         createInsert()
 
                     requestLayout()
@@ -156,7 +159,9 @@ class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: In
         }
 
         private fun createInsert() {
-            insert = Id(this, " ")
+            insert = TextWidget.create(this, " ") {
+                s,c -> c.toString().matches(TYPE_CHARS)  // TODO not allowing anything
+            }
             insert.addKeyEvent(SWT.SPACE, precondition = { it.isNotBlank() }) {
                 Commands.execute(object : Command {
                     override val target = dec
@@ -177,7 +182,7 @@ class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: In
             }
             insert.addFocusListenerInternal(object : FocusAdapter() {
                 override fun focusLost(e: FocusEvent?) {
-                    insert.set(" ")
+                    insert.widget.text = " "
                 }
             })
         }
@@ -201,7 +206,7 @@ class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: In
             init {
                 layout = RowLayout()
                 (layout as RowLayout).marginTop = 0
-                type = Id(this, node.type.asString())
+                type = SimpleTypeWidget(this, node.type) { it.asString() }
                 type.addKeyEvent(SWT.BS, precondition = { it.isEmpty() }) {
                     Commands.execute(object : Command {
                         override val target = dec
@@ -220,7 +225,7 @@ class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: In
                     })
                 }
 
-                name = Id(this, node.name.asString())
+                name = SimpleNameWidget(this, node.name) { it.asString()}
                 name.addKeyEvent(',') {
                     Commands.execute(object : Command {
                         override val target = dec

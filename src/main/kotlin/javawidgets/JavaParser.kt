@@ -7,6 +7,8 @@ import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.NodeList
 import com.github.javaparser.ast.body.BodyDeclaration
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration
+import com.github.javaparser.ast.body.FieldDeclaration
+import com.github.javaparser.ast.body.VariableDeclarator
 import com.github.javaparser.ast.expr.Expression
 import com.github.javaparser.ast.expr.NameExpr
 import com.github.javaparser.ast.observer.AstObserver
@@ -27,6 +29,7 @@ val WhileStmt.block: BlockStmt get() = body as BlockStmt
 fun loadModel(file: File): CompilationUnit {
     val model = StaticJavaParser.parse(file)
     substituteControlBlocks(model)
+    expandFieldDeclarations(model)
     return model
 }
 
@@ -54,13 +57,34 @@ fun substituteControlBlocks(model: CompilationUnit) {
     }
 }
 
+fun expandFieldDeclarations(model: CompilationUnit) {
+    model.types.forEach { type ->
+        val changes = mutableListOf<Runnable>()
+        type.accept(object : VoidVisitorAdapter<Any>() {
+            override fun visit(dec: FieldDeclaration, arg: Any?) {
+                dec.variables.drop(1).forEach { v ->
+                    changes.add {
+                        val varDec = VariableDeclarator(dec.elementType.clone(), v.name.clone())
+                        if(v.initializer.isPresent)
+                            varDec.setInitializer(v.initializer.get().clone())
+                        type.members.addAfter(FieldDeclaration(NodeList(dec.modifiers), varDec), dec)
+                        dec.variables.remove(v)
+                    }
+                }
+                super.visit(dec, arg)
+            }
+
+        }, null)
+        changes.forEach { it.run() }
+    }
+}
 
 fun CompilationUnit.findPublicClass(): ClassOrInterfaceDeclaration? =
-    if(types.isEmpty()) null
+    if (types.isEmpty()) null
     else types
         .filterIsInstance<ClassOrInterfaceDeclaration>()
-        .find { it.isPublic } ?:
-        if(types[0] is ClassOrInterfaceDeclaration) types[0] as ClassOrInterfaceDeclaration else null
+        .find { it.isPublic }
+        ?: if (types[0] is ClassOrInterfaceDeclaration) types[0] as ClassOrInterfaceDeclaration else null
 
 abstract class ListAddRemoveObserver<T : Node> : AstObserverAdapter() {
     override fun listChange(
@@ -100,7 +124,8 @@ fun <T> Observable.observeProperty(prop: ObservableProperty, event: (T?) -> Unit
 }
 
 
-class AddMemberCommand(val member: BodyDeclaration<*>, val type: ClassOrInterfaceDeclaration, val index: Int) : Command {
+class AddMemberCommand(val member: BodyDeclaration<*>, val type: ClassOrInterfaceDeclaration, val index: Int) :
+    Command {
     override val kind: CommandKind = CommandKind.ADD
     override val target = type
     override val element = member

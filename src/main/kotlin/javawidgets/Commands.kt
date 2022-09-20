@@ -54,9 +54,12 @@ abstract class AbstractCommand<E : Node>(
     override val element: E
 ) : Command
 
+abstract class AddCommand<E : Node>(target: Node, element: E) :
+    AbstractCommand<E>(target, CommandKind.ADD, element)
 
 abstract class ModifyCommand<E : Node>(target: Node, previous: E?) :
     AbstractCommand<E>(target, CommandKind.MODIFY, previous?.clone() as E)
+
 
 
 

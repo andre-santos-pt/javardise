@@ -16,9 +16,9 @@ import pt.iscte.javardise.api.row
 
 class VariableWidget(
     parent: SequenceWidget,
-    override val node: ExpressionStmt,
+    node: ExpressionStmt,
     override val block: BlockStmt
-) : StatementWidget<ExpressionStmt>(parent) {
+) : StatementWidget<ExpressionStmt>(parent, node) {
     lateinit var type: Id
     lateinit var target: Id
     lateinit var expression: ExpWidget
@@ -31,9 +31,8 @@ class VariableWidget(
 
         layout = FillLayout()
         row {
-            type = Id(this, decl.type.asString())
-            target = Id(this, decl.nameAsString)
-
+            type = SimpleTypeWidget(this, decl.type) { it.asString() }
+            target = SimpleNameWidget(this, decl.name) { it.asString() }
             target.addKeyEvent(SWT.BS, precondition = { it.isEmpty() }, action = createDeleteEvent(node, block))
 
             if (decl.initializer.isPresent) {

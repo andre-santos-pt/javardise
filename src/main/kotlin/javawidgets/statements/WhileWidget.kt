@@ -15,10 +15,10 @@ import pt.iscte.javardise.api.row
 
 class WhileWidget(
     parent: SequenceWidget,
-    override val node: WhileStmt,
+    node: WhileStmt,
     override val block: BlockStmt
 ) :
-    StatementWidget<WhileStmt>(parent) {
+    StatementWidget<WhileStmt>(parent, node) {
 
     lateinit var keyword: TokenWidget
     lateinit var exp: ExpWidget

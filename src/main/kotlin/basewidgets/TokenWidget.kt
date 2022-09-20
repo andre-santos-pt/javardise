@@ -78,4 +78,12 @@ class TokenWidget(
     override fun addFocusListenerInternal(listener: FocusListener) {
         widget.addFocusListener(listener)
     }
+
+    override fun addFocusLostAction(action: () -> Unit) {
+        widget.addFocusListener(object : FocusAdapter() {
+            override fun focusLost(e: FocusEvent?) {
+                action()
+            }
+        })
+    }
 }

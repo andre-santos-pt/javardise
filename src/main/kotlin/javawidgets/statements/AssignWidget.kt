@@ -16,9 +16,9 @@ import pt.iscte.javardise.api.row
 
 class AssignWidget(
     parent: SequenceWidget,
-    override val node: ExpressionStmt,
+    node: ExpressionStmt,
     override val block: BlockStmt
-) : StatementWidget<ExpressionStmt>(parent) {
+) : StatementWidget<ExpressionStmt>(parent, node) {
     lateinit var target: ExpWidget
     lateinit var operator: TokenWidget
     lateinit var expression: ExpWidget

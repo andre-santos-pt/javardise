@@ -13,8 +13,8 @@ import org.eclipse.swt.layout.FillLayout
 import org.eclipse.swt.widgets.Composite
 import pt.iscte.javardise.api.row
 
-class ReturnWidget(parent: SequenceWidget, override val node: ReturnStmt, override val block: BlockStmt) :
-    StatementWidget<ReturnStmt>(parent) {
+class ReturnWidget(parent: SequenceWidget, node: ReturnStmt, override val block: BlockStmt) :
+    StatementWidget<ReturnStmt>(parent, node) {
     lateinit var keyword: TokenWidget
     var exp: ExpWidget? = null
     lateinit var semiColon: FixedToken

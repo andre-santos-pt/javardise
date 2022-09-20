@@ -13,8 +13,8 @@ import pt.iscte.javardise.api.column
 import pt.iscte.javardise.api.row
 
 // TODO
-class ForEachWidget(parent: SequenceWidget, override val node: ForEachStmt, override val block: BlockStmt) :
-    StatementWidget<ForEachStmt>(parent) {
+class ForEachWidget(parent: SequenceWidget, node: ForEachStmt, override val block: BlockStmt) :
+    StatementWidget<ForEachStmt>(parent, node) {
 
     lateinit var keyword: TokenWidget
     lateinit var iterable: ExpWidget

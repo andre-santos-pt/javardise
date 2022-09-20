@@ -7,6 +7,7 @@ import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.NodeList
 import com.github.javaparser.ast.comments.BlockComment
 import com.github.javaparser.ast.comments.Comment
+import com.github.javaparser.ast.comments.LineComment
 import com.github.javaparser.ast.expr.ArrayAccessExpr
 import com.github.javaparser.ast.expr.AssignExpr
 import com.github.javaparser.ast.expr.BooleanLiteralExpr
@@ -19,11 +20,18 @@ import com.github.javaparser.ast.stmt.*
 import javawidgets.statements.*
 import org.eclipse.swt.SWT
 import org.eclipse.swt.events.*
+import org.eclipse.swt.layout.FillLayout
 import org.eclipse.swt.widgets.*
+import row
 
-abstract class StatementWidget<T : Statement>(parent: SequenceWidget) : NodeWidget<T>(parent) {
+abstract class StatementWidget<T : Statement>(parent: SequenceWidget, override val node: T) : NodeWidget<T>(parent) {
 
     abstract val block: BlockStmt
+
+    init {
+        if (node.comment.isPresent)
+            CommentWidget(parent, node)
+    }
 
     fun TextWidget.setCopySource() {
         addKeyListenerInternal(object : KeyAdapter() {
@@ -251,14 +259,26 @@ fun SequenceWidget.findByModelIndex(index: Int): NodeWidget<*>? {
 }
 
 
-
-
-
-class CommentWidget(parent: Composite, comment: Comment) {
+class CommentWidget(parent: Composite, node: Statement) : Composite(parent, SWT.NONE) {
     init {
-        val label = Label(parent, SWT.NONE)
-        label.text = "//" + comment.content
-        label.foreground = Display.getDefault().getSystemColor(SWT.COLOR_YELLOW)
+        layout = FillLayout()
+        row {
+            val slashes = TokenWidget(this, "//")
+            slashes.widget.foreground = COMMENT_COLOR()
+            val cmt = TextWidget.create(this, node.comment.get().content.trim()) { _, _ -> true }
+            cmt.addFocusLostAction {
+                Commands.execute(object : ModifyCommand<Comment>(node, node.comment.get()) {
+                    override fun run() {
+                        node.setComment(LineComment(cmt.text))
+                    }
+
+                    override fun undo() {
+                        node.setComment(element)
+                    }
+                })
+            }
+            cmt.widget.foreground = COMMENT_COLOR()
+        }
     }
 }
 
@@ -346,4 +366,11 @@ class ExpWidget(val parent: Composite, var expression: Expression, editEvent: (E
         textWidget.addFocusListenerInternal(listener)
     }
 
+    override fun addFocusLostAction(action: () -> Unit) {
+        textWidget.addFocusListenerInternal(object : FocusAdapter() {
+            override fun focusLost(e: FocusEvent?) {
+                action()
+            }
+        })
+    }
 }
