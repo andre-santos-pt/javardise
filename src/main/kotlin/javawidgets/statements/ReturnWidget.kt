@@ -82,7 +82,7 @@ class ReturnWidget(parent: SequenceWidget, node: ReturnStmt, override val block:
 
 
 
-    override fun setFocusOnCreation() {
+    override fun setFocusOnCreation(firstFlag: Boolean) {
         exp?.setFocus()
     }
 }

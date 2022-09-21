@@ -1,6 +1,7 @@
 package javawidgets
 
 import basewidgets.*
+import com.github.javaparser.StaticJavaParser
 import com.github.javaparser.ast.Modifier
 import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.NodeList
@@ -77,7 +78,7 @@ class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: In
         if (node.isConstructorDeclaration) {
             name.setReadOnly()
             name.setToolTip("Constructor name is not editable. Renaming the class modifies constructors accordingly.")
-            // problem with MVC
+            // BUG problem with MVC
 //            (node.parentNode.get() as TypeDeclaration<*>)
 //                .observeProperty<SimpleName>(ObservableProperty.NAME) {
 //                    name.set((it as SimpleName).asString())
@@ -88,12 +89,9 @@ class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: In
         paramsWidget = ParamListWidget(firstRow, node.parameters)
         FixedToken(firstRow, ")")
 
-
-
         body = createSequence(column, bodyModel)
         TokenWidget(firstRow, "{").addInsert(null, body, true)
-        closingBracket =
-            TokenWidget(column, "}") //.addInsert(this, findClassWidget()!!.body,true) // TODO !! remove
+        closingBracket = TokenWidget(column, "}")
     }
 
     fun Composite.findClassWidget(): ClassWidget? {
@@ -135,7 +133,7 @@ class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: In
                             c.moveAbove(n)
                         }
                     }
-                    p.setFocusOnCreation()
+                    p.setFocusOnCreation(list.isEmpty())
                     requestLayout()
                 }
 
@@ -160,17 +158,16 @@ class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: In
 
         private fun createInsert() {
             insert = TextWidget.create(this, " ") {
-                s,c -> c.toString().matches(TYPE_CHARS)  // TODO not allowing anything
+                c,s -> c.toString().matches(TYPE_CHARS)
             }
-            insert.addKeyEvent(SWT.SPACE, precondition = { it.isNotBlank() }) {
+            insert.addKeyEvent(SWT.SPACE, precondition = { tryParseType(it) }) {
                 Commands.execute(object : Command {
                     override val target = dec
                     override val kind = CommandKind.ADD
                     override val element: Parameter
-                        get() = Parameter(PrimitiveType(PrimitiveType.Primitive.INT), SimpleName("parameter"))
+                        get() = Parameter(StaticJavaParser.parseType(insert.text), SimpleName("parameter"))
 
                     override fun run() {
-                        // TODO type in ID
                         parameters.add(0, element)
                     }
 
@@ -231,7 +228,7 @@ class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: In
                         override val target = dec
                         override val kind = CommandKind.ADD
                         override val element: Parameter
-                            get() = Parameter(PrimitiveType(PrimitiveType.Primitive.INT), SimpleName("parameter"))
+                            get() = Parameter(StaticJavaParser.parseType("type"), SimpleName("parameter"))
 
                         override fun run() {
                             parameters.add(index + 1, element)
@@ -244,22 +241,21 @@ class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: In
                 }
             }
 
-            override fun setFocusOnCreation() {
-                name.setFocus()
+            override fun setFocusOnCreation(firstFlag: Boolean) {
+                if(firstFlag)
+                    name.setFocus()
+                else
+                    type.setFocus()
             }
         }
     }
 
 
-    override fun setFocusOnCreation() {
+    override fun setFocusOnCreation(firstFlag: Boolean) {
         name.setFocus()
     }
 
     fun focusParameters() = paramsWidget.setFocus()
-
-    fun addSelectionListener(event: (Node) -> Unit) {
-        //TODO("Not yet implemented")
-    }
 
     fun getNodeOnFocus(): Node? {
         val control = Display.getDefault().focusControl

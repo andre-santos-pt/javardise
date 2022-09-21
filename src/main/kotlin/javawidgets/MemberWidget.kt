@@ -1,5 +1,6 @@
 package javawidgets
 
+import basewidgets.TextWidget
 import basewidgets.TokenWidget
 import com.github.javaparser.ast.Modifier
 import com.github.javaparser.ast.Node
@@ -17,16 +18,16 @@ import pt.iscte.javardise.api.row
 abstract class MemberWidget<T : NodeWithModifiers<*>>(
     parent: Composite,
     override val node: T,
-    validModifiers: List<String> = emptyList(),
+    validModifiers: List<Modifier.Keyword> = emptyList(),
     style: Int = SWT.NONE
 ) : NodeWidget<NodeWithModifiers<*>>(parent, style) {
     val modifiers = mutableListOf<TokenWidget>()
 
-    lateinit var column: Composite
+    val column: Composite
     lateinit var firstRow: Composite
 
-    val filterModifiers = {
-        validModifiers.filter { !node.modifiers.map { it.keyword.asString() }.contains(it) }
+    private val filterModifiers = {
+        validModifiers.filter { !node.modifiers.map { it.keyword  }.contains(it) }.map { it.asString() }
     }
 
     init {
@@ -121,7 +122,7 @@ abstract class MemberWidget<T : NodeWithModifiers<*>>(
             })
         }
         //mod.addDeleteListener(it)
-        mod.addSpaceInsert(modifier)
+        mod.addInsertModifier(modifier)
         return mod
     }
 
@@ -147,14 +148,14 @@ abstract class MemberWidget<T : NodeWithModifiers<*>>(
         }
     }
 
-    private fun TokenWidget.addSpaceInsert(modifier: Modifier) {
-        addKeyEvent(SWT.SPACE) {
+    internal fun TextWidget.addInsertModifier(atModifier: Modifier? = null) {
+        addKeyEvent(SWT.SPACE, precondition = { this.isAtBeginning }) {
             Commands.execute(object : Command {
                 override val target = node as BodyDeclaration<*>
                 override val kind = CommandKind.ADD
                 override val element = Modifier(Modifier.Keyword.PUBLIC)
 
-                val index = node.modifiers.indexOf(modifier)
+                val index = if(atModifier == null) 0 else node.modifiers.indexOf(atModifier)
 
                 override fun run() {
                     node.modifiers.add(index, element)

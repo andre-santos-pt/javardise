@@ -190,3 +190,11 @@ fun <E : Expression> tryParse(exp: String): Boolean {
         return false
     }
 }
+
+fun tryParseType(type: String): Boolean =
+    try {
+        StaticJavaParser.parseType(type)
+        true
+    } catch (_: ParseProblemException) {
+        false
+    }

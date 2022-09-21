@@ -141,7 +141,7 @@ class IfWidget(
     }
 
     override fun setFocus(): Boolean = exp.setFocus()
-    override fun setFocusOnCreation() {
+    override fun setFocusOnCreation(firstFlag: Boolean) {
         setFocus()
     }
 }

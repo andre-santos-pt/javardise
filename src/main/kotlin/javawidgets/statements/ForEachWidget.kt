@@ -38,7 +38,7 @@ class ForEachWidget(parent: SequenceWidget, node: ForEachStmt, override val bloc
         }
     }
 
-    override fun setFocusOnCreation() {
+    override fun setFocusOnCreation(firstFlag: Boolean) {
         iterable.setFocus()
     }
 

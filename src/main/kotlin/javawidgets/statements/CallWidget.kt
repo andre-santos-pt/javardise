@@ -42,7 +42,7 @@ class CallWidget(parent: SequenceWidget,
         return value.setFocus()
     }
 
-    override fun setFocusOnCreation() {
+    override fun setFocusOnCreation(firstFlag: Boolean) {
         value.setFocus()
     }
 }

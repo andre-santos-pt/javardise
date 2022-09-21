@@ -50,7 +50,7 @@ open class Id(parent: Composite, id: String, allowedChars: Regex,
                 //textWidget.toolTipText = "Valid identifiers cannot start with a number."
             } else if (SourceVersion.isKeyword(textWidget.text)) {
                 textWidget.background = ERROR_COLOR()
-                textWidget.toolTipText = "'${textWidget.text}' is a reserved keyword in Java."
+                textWidget.toolTipText = "'${textWidget.text}' is a reserved keyword in Java." // BUG shown in types
             } else {
                 textWidget.background = BACKGROUND_COLOR()
                 textWidget.toolTipText = ""

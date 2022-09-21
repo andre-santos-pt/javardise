@@ -3,6 +3,7 @@ package javawidgets
 import basewidgets.*
 import com.github.javaparser.StaticJavaParser
 import com.github.javaparser.ast.Modifier
+import com.github.javaparser.ast.Modifier.Keyword.*
 import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.NodeList
 import com.github.javaparser.ast.body.*
@@ -28,7 +29,7 @@ fun matchModifier(keyword: String) =
     Modifier(Modifier.Keyword.valueOf(keyword.uppercase()))
 
 class ClassWidget(parent: Composite, type: ClassOrInterfaceDeclaration) :
-    MemberWidget<ClassOrInterfaceDeclaration>(parent, type, listOf("public", "final", "abstract")) {
+    MemberWidget<ClassOrInterfaceDeclaration>(parent, type, listOf(PUBLIC, FINAL, ABSTRACT)) {
     private val keyword: TokenWidget
     private val id: Id
     internal var body: SequenceWidget
@@ -43,7 +44,7 @@ class ClassWidget(parent: Composite, type: ClassOrInterfaceDeclaration) :
             Commands.execute(object : Command {
                 override val target = node
                 override val kind = CommandKind.ADD
-                override val element = Modifier(Modifier.Keyword.PUBLIC)
+                override val element = Modifier(PUBLIC)
 
                 val index = node.modifiers.size
 
@@ -185,13 +186,11 @@ class ClassWidget(parent: Composite, type: ClassOrInterfaceDeclaration) :
             }
 
             else -> {
-                val label = Label(body, SWT.NONE)
-                label.text = "Unsupported - $dec"
-                label
+                UnsupportedWidget(body, dec)
             }
         }
 
-    override fun setFocusOnCreation() {
+    override fun setFocusOnCreation(firstFlag: Boolean) {
         id.setFocus()
     }
 }
@@ -199,7 +198,6 @@ class ClassWidget(parent: Composite, type: ClassOrInterfaceDeclaration) :
 internal fun TokenWidget.addInsert(
     member: Control?,
     body: SequenceWidget,
-    //node: ClassOrInterfaceDeclaration,
     after: Boolean
 ) {
     addKeyEvent(SWT.CR) {

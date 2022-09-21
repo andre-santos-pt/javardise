@@ -67,7 +67,7 @@ class VariableWidget(
         return target.setFocus()
     }
 
-    override fun setFocusOnCreation() {
+    override fun setFocusOnCreation(firstFlag: Boolean) {
         expression.setFocus()
     }
 }

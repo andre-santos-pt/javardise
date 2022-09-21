@@ -54,7 +54,7 @@ class WhileWidget(
 
     override fun setFocus(): Boolean = keyword.setFocus()
 
-    override fun setFocusOnCreation() {
+    override fun setFocusOnCreation(firstFlag: Boolean) {
         exp.setFocus()
     }
 }

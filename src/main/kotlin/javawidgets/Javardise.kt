@@ -280,7 +280,7 @@ object Factory {
 abstract class NodeWidget<T>(parent: Composite, style: Int = SWT.NONE) : Composite(parent, style) {
     abstract val node: T
 
-    abstract fun setFocusOnCreation()
+    abstract fun setFocusOnCreation(firstFlag: Boolean = false)
 
 
 }
@@ -331,5 +331,15 @@ class SimpleTypeWidget<N : Node>(parent: Composite, node: N, getName: (N) -> Str
     : TypeId(parent, getName(node)) {
     init {
         textWidget.data = node
+    }
+}
+
+class UnsupportedWidget(parent: Composite, node: Node) : Composite(parent, SWT.NONE) {
+    init {
+        layout = FillLayout()
+        val label = Label(this, SWT.NONE)
+        label.text = node.toString()
+        label.foreground = ERROR_COLOR()
+        label
     }
 }
