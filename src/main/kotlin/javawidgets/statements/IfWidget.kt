@@ -29,7 +29,7 @@ class IfWidget(
     StatementWidget<IfStmt>(parent, node) {
 
     lateinit var column: Composite
-    lateinit var exp: ExpWidget
+    lateinit var exp: ExpressionFreeWidget
     lateinit var thenBody: SequenceWidget
 
     var elseWidget: ElseWidget? = null
@@ -41,15 +41,13 @@ class IfWidget(
     init {
         layout = RowLayout()
         column = column {
-
-
             val firstRow = row {
-                val keyword = Factory.newTokenWidget(this, "if")
+                val keyword = Factory.newKeywordWidget(this, "if")
                 keyword.setCopySource()
-                Constants.addInsertLine(keyword)
+                //Constants.addInsertLine(keyword)
                 keyword.addDelete(node, block)
                 FixedToken(this, "(")
-                exp = ExpWidget(this, node.condition) {
+                exp = ExpressionFreeWidget(this, node.condition) {
                     Commands.execute(object : AbstractCommand<Expression>(node, CommandKind.MODIFY, node.condition) {
                         override fun run() {
                             node.condition = it
@@ -119,7 +117,7 @@ class IfWidget(
             layout = FillLayout()
             column {
                 row {
-                    val keyword = Factory.newTokenWidget(this, "else")
+                    val keyword = Factory.newKeywordWidget(this, "else")
                     keyword.addKeyEvent(SWT.BS) {
                         Commands.execute(object : AbstractCommand<Statement>(node, CommandKind.REMOVE, elseStatement) {
                             override fun run() {

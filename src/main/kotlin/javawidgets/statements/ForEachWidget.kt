@@ -5,7 +5,7 @@ import basewidgets.SequenceWidget
 import basewidgets.TokenWidget
 import com.github.javaparser.ast.stmt.BlockStmt
 import com.github.javaparser.ast.stmt.ForEachStmt
-import javawidgets.ExpWidget
+import javawidgets.ExpressionFreeWidget
 import javawidgets.StatementWidget
 import javawidgets.createSequence
 import org.eclipse.swt.layout.RowLayout
@@ -17,7 +17,7 @@ class ForEachWidget(parent: SequenceWidget, node: ForEachStmt, override val bloc
     StatementWidget<ForEachStmt>(parent, node) {
 
     lateinit var keyword: TokenWidget
-    lateinit var iterable: ExpWidget
+    lateinit var iterable: ExpressionFreeWidget
     lateinit var body: SequenceWidget
 
     init {
@@ -28,7 +28,7 @@ class ForEachWidget(parent: SequenceWidget, node: ForEachStmt, override val bloc
                 FixedToken(this, "(")
 
                 FixedToken(this, ":")
-                iterable = ExpWidget(this, node.iterable) {
+                iterable = ExpressionFreeWidget(this, node.iterable) {
 
                 }
                 FixedToken(this, ") {")

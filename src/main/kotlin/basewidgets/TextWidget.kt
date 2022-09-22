@@ -1,5 +1,6 @@
 package basewidgets
 
+import javawidgets.CODE_FONT
 import org.eclipse.swt.SWT
 import org.eclipse.swt.events.*
 import org.eclipse.swt.graphics.Font
@@ -93,7 +94,7 @@ interface TextWidget {
 
     fun addFocusListenerInternal(listener: FocusListener)
 
-    fun addFocusLostAction(action: () -> Unit)
+    fun addFocusLostAction(action: () -> Unit) : FocusListener
 
     fun addDeleteListener(action: () -> Unit) =
             addKeyEvent(Constants.DEL_KEY) {
@@ -121,7 +122,7 @@ interface TextWidget {
             t.background = parent.background
             t.foreground = parent.foreground
             t.text = text
-            t.font = f
+            t.font = CODE_FONT()
             t.cursor = Display.getCurrent().getSystemCursor(SWT.CURSOR_HAND);
 
             accept?.let {
@@ -138,7 +139,7 @@ interface TextWidget {
             t.addMouseTrackListener(MOUSE_FOCUS)
             t.addModifyListener(MODIFY_PACK)
             t.addKeyListener(LISTENER_ARROW_KEYS)  // BUGS
-            t.data = parent
+            //t.data = parent
 
             return t
         }
@@ -181,12 +182,14 @@ interface TextWidget {
                     widget.addFocusListener(listener)
                 }
 
-                override fun addFocusLostAction(action: () -> Unit) {
-                    widget.addFocusListener(object : FocusAdapter() {
+                override fun addFocusLostAction(action: () -> Unit): FocusListener {
+                    val listener = object : FocusAdapter() {
                         override fun focusLost(e: FocusEvent?) {
                             action()
                         }
-                    })
+                    }
+                    widget.addFocusListener(listener)
+                    return listener
                 }
             }
         }

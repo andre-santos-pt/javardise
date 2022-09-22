@@ -193,11 +193,9 @@ fun createInsert(seq: SequenceWidget, block: BlockStmt): TextWidget {
         }
     }
 
-    insert.addFocusListenerInternal(object : FocusAdapter() {
-        override fun focusLost(e: FocusEvent) {
-            insert.clear()
-        }
-    })
+    insert.addFocusLostAction {
+        insert.clear()
+    }
 
     insert.addKeyListenerInternal(object : KeyAdapter() {
         override fun keyPressed(e: KeyEvent) {
@@ -305,10 +303,10 @@ fun createDeleteEvent(node: Statement, block: BlockStmt) = { keyEvent: KeyEvent 
     })
 }
 
-val NOPARSE = "\$NOPARSE"
 
 // TODO observe expression change
-class ExpWidget(val parent: Composite, var expression: Expression, editEvent: (Expression) -> Unit) : TextWidget {
+class ExpressionFreeWidget(val parent: Composite, var expression: Expression, editEvent: (Expression) -> Unit) :
+    TextWidget {
 
     val textWidget: TextWidget
 
@@ -330,19 +328,19 @@ class ExpWidget(val parent: Composite, var expression: Expression, editEvent: (E
             var existingText: String? = null
 
             override fun focusGained(e: FocusEvent?) {
-                existingText = this@ExpWidget.textWidget.text
+                existingText = this@ExpressionFreeWidget.textWidget.text
             }
 
             override fun focusLost(e: FocusEvent?) {
-                if (this@ExpWidget.textWidget.text != existingText) {
+                if (this@ExpressionFreeWidget.textWidget.text != existingText) {
                     try {
-                        expression = StaticJavaParser.parseExpression(this@ExpWidget.textWidget.text)
-                        this@ExpWidget.textWidget.widget.background = BACKGROUND_COLOR()
+                        expression = StaticJavaParser.parseExpression(this@ExpressionFreeWidget.textWidget.text)
+                        this@ExpressionFreeWidget.textWidget.widget.background = BACKGROUND_COLOR()
                         editEvent(expression!!)
                     } catch (_: ParseProblemException) {
-                        this@ExpWidget.textWidget.widget.background = ERROR_COLOR()
+                        this@ExpressionFreeWidget.textWidget.widget.background = ERROR_COLOR()
                         val noparse = NameExpr(NOPARSE)
-                        noparse.addOrphanComment(BlockComment(this@ExpWidget.textWidget.text))
+                        noparse.addOrphanComment(BlockComment(this@ExpressionFreeWidget.textWidget.text))
                         editEvent(noparse)
                     }
                 }
@@ -366,11 +364,13 @@ class ExpWidget(val parent: Composite, var expression: Expression, editEvent: (E
         textWidget.addFocusListenerInternal(listener)
     }
 
-    override fun addFocusLostAction(action: () -> Unit) {
-        textWidget.addFocusListenerInternal(object : FocusAdapter() {
+    override fun addFocusLostAction(action: () -> Unit): FocusListener {
+        val listener = object : FocusAdapter() {
             override fun focusLost(e: FocusEvent?) {
                 action()
             }
-        })
+        }
+        textWidget.addFocusListenerInternal(listener)
+        return listener
     }
 }

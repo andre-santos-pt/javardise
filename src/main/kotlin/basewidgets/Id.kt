@@ -76,12 +76,14 @@ open class Id(parent: Composite, id: String, allowedChars: Regex,
         textWidget.addFocusListener(listener)
     }
 
-    override fun addFocusLostAction(action: () -> Unit) {
-        textWidget.addFocusListener(object : FocusAdapter() {
+    override fun addFocusLostAction(action: () -> Unit): FocusListener {
+        val listener = object : FocusAdapter() {
             override fun focusLost(e: FocusEvent?) {
                 action()
             }
-        })
+        }
+        textWidget.addFocusListener(listener)
+        return listener
     }
 
     fun setReadOnly() {

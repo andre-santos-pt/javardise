@@ -218,7 +218,7 @@ fun Shell.launch() {
 fun font(face: String, size: Int, style: Int = SWT.NONE) =
         Font(Display.getDefault(), FontData(face, size, style))
 
-fun <T : Composite> Composite.scrollable(create: (Composite) -> T): Composite {
+fun <T : Composite> Composite.scrollable(create: (Composite) -> T): T {
     val scroll = ScrolledComposite(this, SWT.H_SCROLL or SWT.V_SCROLL)
     scroll.layout = GridLayout()
     scroll.layoutData = GridData(SWT.FILL, SWT.FILL, true, true)
@@ -231,7 +231,7 @@ fun <T : Composite> Composite.scrollable(create: (Composite) -> T): Composite {
 
     val list = PaintListener {
         if (!scroll.isDisposed) {
-            val size = computeSize(SWT.DEFAULT, SWT.DEFAULT)
+            val size = content.computeSize(SWT.DEFAULT, SWT.DEFAULT)
             scroll.setMinSize(size)
             scroll.requestLayout()
         }
@@ -240,5 +240,5 @@ fun <T : Composite> Composite.scrollable(create: (Composite) -> T): Composite {
     addDisposeListener {
         removePaintListener(list)
     }
-    return scroll
+    return content
 }

@@ -6,7 +6,6 @@ import basewidgets.SequenceWidget
 import basewidgets.TokenWidget
 import com.github.javaparser.ast.expr.Expression
 import com.github.javaparser.ast.stmt.BlockStmt
-import com.github.javaparser.ast.stmt.ExpressionStmt
 import com.github.javaparser.ast.stmt.WhileStmt
 import javawidgets.*
 import org.eclipse.swt.layout.RowLayout
@@ -21,17 +20,17 @@ class WhileWidget(
     StatementWidget<WhileStmt>(parent, node) {
 
     lateinit var keyword: TokenWidget
-    lateinit var exp: ExpWidget
+    lateinit var exp: ExpressionFreeWidget
     lateinit var body: SequenceWidget
 
     init {
         layout = RowLayout()
         column {
             row {
-                keyword = Factory.newTokenWidget(this, "while")
+                keyword = Factory.newKeywordWidget(this, "while")
                 keyword.setCopySource()
                 FixedToken(this, "(")
-                exp = ExpWidget(this, node.condition) {
+                exp = ExpressionFreeWidget(this, node.condition) {
                     Commands.execute(object : ModifyCommand<Expression>(node, node.condition) {
                         override fun run() {
                             node.condition = it

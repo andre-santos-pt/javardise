@@ -87,7 +87,7 @@ abstract class MemberWidget<T : NodeWithModifiers<*>>(
     }
 
     private fun createModifierToken(parent: Composite, modifier: Modifier): TokenWidget {
-        val mod = Factory.newTokenWidget(parent, modifier.keyword.asString(), filterModifiers) { token ->
+        val mod = Factory.newKeywordWidget(parent, modifier.keyword.asString(), filterModifiers) { token ->
             Commands.execute(object : Command {
                 override val target: Node = node as Node
                 override val kind: CommandKind = CommandKind.MODIFY
@@ -121,6 +121,7 @@ abstract class MemberWidget<T : NodeWithModifiers<*>>(
                 }
             })
         }
+        mod.widget.data = modifier
         //mod.addDeleteListener(it)
         mod.addInsertModifier(modifier)
         return mod

@@ -10,37 +10,24 @@ import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration
 import com.github.javaparser.ast.body.FieldDeclaration
 import com.github.javaparser.ast.expr.SimpleName
-import com.github.javaparser.ast.observer.AstObserver
-import com.github.javaparser.ast.observer.AstObserverAdapter
 import com.github.javaparser.ast.observer.ObservableProperty
-import com.github.javaparser.ast.stmt.BlockStmt
-import com.github.javaparser.ast.stmt.Statement
 import com.github.javaparser.ast.visitor.TreeVisitor
-import com.github.javaparser.ast.visitor.VoidVisitor
-import com.github.javaparser.ast.visitor.VoidVisitorWithDefaults
 import com.github.javaparser.printer.DefaultPrettyPrinter
 import com.github.javaparser.printer.DefaultPrettyPrinterVisitor
 import com.github.javaparser.printer.configuration.DefaultPrinterConfiguration
 import com.github.javaparser.printer.configuration.PrinterConfiguration
-import com.github.javaparser.printer.lexicalpreservation.LexicalPreservingPrinter
 import compile
 import org.eclipse.swt.SWT
 import org.eclipse.swt.custom.SashForm
-import org.eclipse.swt.custom.ScrolledComposite
-import org.eclipse.swt.events.PaintListener
-import org.eclipse.swt.graphics.Color
+import org.eclipse.swt.graphics.Font
 import org.eclipse.swt.graphics.Point
 import org.eclipse.swt.layout.FillLayout
-import org.eclipse.swt.layout.GridData
-import org.eclipse.swt.layout.GridLayout
 import org.eclipse.swt.layout.RowLayout
 import org.eclipse.swt.widgets.*
-import pt.iscte.javardise.api.ICodeDecoration
 import pt.iscte.javardise.api.scrollable
 import row
 import java.io.File
 import java.io.PrintWriter
-import java.util.function.BiFunction
 
 
 fun main(args: Array<String>) {
@@ -57,15 +44,10 @@ fun main(args: Array<String>) {
 }
 
 
-val ERROR_COLOR = { Display.getDefault().getSystemColor(SWT.COLOR_RED) }
-
-val BACKGROUND_COLOR = { Display.getDefault().getSystemColor(SWT.COLOR_WIDGET_BACKGROUND) }
-
-val COMMENT_COLOR = { Display.getDefault().getSystemColor(SWT.COLOR_GREEN) }
 
 class JavardiseWindow(var file: File?) {
 
-    var model: ClassOrInterfaceDeclaration? = null //= loadModel(file)
+    var model: ClassOrInterfaceDeclaration? = null
 
     private val display = Display()
     private val shell = Shell(display)
@@ -79,7 +61,6 @@ class JavardiseWindow(var file: File?) {
 
 
     init {
-        //shell.text = model.types[0].name.id
         shell.layout = FillLayout()
         val form = SashForm(shell, SWT.HORIZONTAL)
 
@@ -89,15 +70,12 @@ class JavardiseWindow(var file: File?) {
             }
         }
 
-
         val sash = SashForm(form, SWT.NONE)
-
         val textArea = Composite(sash, SWT.NONE)
         textArea.layout = FillLayout()
         srcText = Text(textArea, SWT.MULTI)
         srcText.text = model.toString()
         srcText.editable = false
-
 
         createStackView(sash)
 
@@ -107,7 +85,6 @@ class JavardiseWindow(var file: File?) {
             val mirror = ClassWidget(form, it)
             mirror.enabled = false
         }
-
 
         // BUG lost focus
         display.addFilter(SWT.KeyDown) {
@@ -239,7 +216,7 @@ class JavardiseWindow(var file: File?) {
         }
 
         model!!.observeProperty<SimpleName>(ObservableProperty.NAME) {
-            println("TYPE!! $it")
+            shell.text = it?.toString() ?: "No public class found"
         }
         Commands.reset()
         val parent = stackComp.parent
@@ -265,13 +242,13 @@ class JavardiseWindow(var file: File?) {
 
 
 object Factory {
-    fun newTokenWidget(
+    fun newKeywordWidget(
         parent: Composite, keyword: String,
         alternatives: () -> List<String> = { emptyList() },
         editAtion: (String) -> Unit = {}
     ): TokenWidget {
         val w = TokenWidget(parent, keyword, alternatives, editAtion)
-        w.widget.foreground = Display.getDefault().getSystemColor(SWT.COLOR_MAGENTA)
+        w.widget.foreground = KEYWORD_COLOR()
         return w
     }
 }
@@ -282,7 +259,10 @@ abstract class NodeWidget<T>(parent: Composite, style: Int = SWT.NONE) : Composi
 
     abstract fun setFocusOnCreation(firstFlag: Boolean = false)
 
+    override fun setFocus(): Boolean {
 
+        return super.setFocus()
+    }
 }
 
 fun Control.traverse(visit: (Control) -> Boolean) {

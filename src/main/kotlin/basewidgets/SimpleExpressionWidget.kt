@@ -95,12 +95,14 @@ class SimpleExpressionWidget(parent: Composite, literal: String, e: Any?) :
         w.addFocusListener(listener)
     }
 
-    override fun addFocusLostAction(action: () -> Unit) {
-        w.addFocusListener(object : FocusAdapter() {
+    override fun addFocusLostAction(action: () -> Unit): FocusListener {
+        val lis = object : FocusAdapter() {
             override fun focusLost(e: FocusEvent?) {
                 action()
             }
-        })
+        }
+        w.addFocusListener(lis)
+        return lis
     }
 
     override fun requestLayoutInternal() {

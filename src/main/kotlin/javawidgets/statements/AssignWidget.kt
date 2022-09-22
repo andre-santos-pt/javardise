@@ -1,7 +1,5 @@
 package javawidgets.statements
 
-import basewidgets.FixedToken
-import basewidgets.Id
 import basewidgets.SequenceWidget
 import basewidgets.TokenWidget
 import com.github.javaparser.ast.expr.AssignExpr
@@ -19,9 +17,9 @@ class AssignWidget(
     node: ExpressionStmt,
     override val block: BlockStmt
 ) : StatementWidget<ExpressionStmt>(parent, node) {
-    lateinit var target: ExpWidget
+    lateinit var target: ExpressionFreeWidget
     lateinit var operator: TokenWidget
-    lateinit var expression: ExpWidget
+    lateinit var expression: ExpressionFreeWidget
 
     init {
         require(node.expression is AssignExpr)
@@ -32,7 +30,7 @@ class AssignWidget(
         row {
 
             // TODO check valid target
-            target = ExpWidget(this, assignment.target) {
+            target = ExpressionFreeWidget(this, assignment.target) {
                 Commands.execute(object : ModifyCommand<Expression>(assignment, assignment.target) {
                     override fun run() {
                         assignment.target = it
@@ -50,7 +48,7 @@ class AssignWidget(
                 listOf("+=", "-=", "*=")
             }
 
-            expression = ExpWidget(this, assignment.value) {
+            expression = ExpressionFreeWidget(this, assignment.value) {
                 Commands.execute(object : ModifyCommand<Expression>(assignment, assignment.value) {
                     override fun run() {
                         assignment.value = it

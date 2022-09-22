@@ -21,7 +21,7 @@ class VariableWidget(
 ) : StatementWidget<ExpressionStmt>(parent, node) {
     lateinit var type: Id
     lateinit var target: Id
-    lateinit var expression: ExpWidget
+    lateinit var expression: ExpressionFreeWidget
 
     init {
         require(node.expression is VariableDeclarationExpr)
@@ -37,7 +37,7 @@ class VariableWidget(
 
             if (decl.initializer.isPresent) {
                 FixedToken(this, "=")
-                expression = ExpWidget(this, decl.initializer.get()) {
+                expression = ExpressionFreeWidget(this, decl.initializer.get()) {
                     Commands.execute(object : ModifyCommand<Expression>(decl, decl.initializer.get()) {
                         override fun run() {
                             decl.setInitializer(it)

@@ -86,6 +86,23 @@ fun CompilationUnit.findPublicClass(): ClassOrInterfaceDeclaration? =
         .find { it.isPublic }
         ?: if (types[0] is ClassOrInterfaceDeclaration) types[0] as ClassOrInterfaceDeclaration else null
 
+interface ListObserver<T : Node> {
+    fun elementAdd(list: NodeList<T>, index: Int, node: T)
+    fun elementRemove(list: NodeList<T>, index: Int, node: T)
+}
+
+fun <T : Node> NodeList<T>.observeList(observer: ListObserver<T>) {
+    register(object : ListAddRemoveObserver<T>() {
+        override fun elementAdd(list: NodeList<T>, index: Int, node: T) {
+            observer.elementAdd(list, index, node)
+        }
+
+        override fun elementRemove(list: NodeList<T>, index: Int, node: T) {
+           observer.elementRemove(list, index, node)
+        }
+    })
+}
+
 abstract class ListAddRemoveObserver<T : Node> : AstObserverAdapter() {
     override fun listChange(
         observedNode: NodeList<*>,
@@ -194,6 +211,14 @@ fun <E : Expression> tryParse(exp: String): Boolean {
 fun tryParseType(type: String): Boolean =
     try {
         StaticJavaParser.parseType(type)
+        true
+    } catch (_: ParseProblemException) {
+        false
+    }
+
+fun tryParseExpression(exp: String): Boolean =
+    try {
+        StaticJavaParser.parseExpression<Expression>(exp)
         true
     } catch (_: ParseProblemException) {
         false

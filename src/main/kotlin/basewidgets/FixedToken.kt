@@ -1,5 +1,6 @@
 package basewidgets
 
+import javawidgets.CODE_FONT
 import org.eclipse.swt.SWT
 import org.eclipse.swt.events.KeyListener
 import org.eclipse.swt.widgets.Composite
@@ -11,7 +12,7 @@ class FixedToken(parent: Composite, token: String) {
     val label = Label(parent, SWT.NONE)
 
     init {
-        label.font = TextWidget.f
+        label.font = CODE_FONT()
         label.text = token
         label.background = parent.background
         label.foreground = parent.foreground

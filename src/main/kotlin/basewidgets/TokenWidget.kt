@@ -2,7 +2,6 @@ package basewidgets
 
 import org.eclipse.swt.SWT
 import org.eclipse.swt.events.*
-import org.eclipse.swt.layout.RowData
 import org.eclipse.swt.widgets.*
 import java.util.*
 
@@ -33,6 +32,7 @@ class TokenWidget(
                 }
             }
         })
+        widget.data = this
     }
 
     private fun addMenu(alternatives: List<String>) {
@@ -79,11 +79,13 @@ class TokenWidget(
         widget.addFocusListener(listener)
     }
 
-    override fun addFocusLostAction(action: () -> Unit) {
-        widget.addFocusListener(object : FocusAdapter() {
+    override fun addFocusLostAction(action: () -> Unit): FocusListener {
+        val listener = object : FocusAdapter() {
             override fun focusLost(e: FocusEvent?) {
                 action()
             }
-        })
+        }
+        widget.addFocusListener(listener)
+        return listener
     }
 }

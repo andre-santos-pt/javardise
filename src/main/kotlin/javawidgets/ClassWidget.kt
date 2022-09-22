@@ -16,7 +16,6 @@ import org.eclipse.swt.SWT
 import org.eclipse.swt.layout.FillLayout
 import org.eclipse.swt.widgets.Composite
 import org.eclipse.swt.widgets.Control
-import org.eclipse.swt.widgets.Label
 
 
 val MODIFIERS = "(${Modifier.Keyword.values().joinToString(separator = "|") { it.asString() }})"
@@ -39,7 +38,7 @@ class ClassWidget(parent: Composite, type: ClassOrInterfaceDeclaration) :
     init {
         data = "ROOTAREA"
         layout = FillLayout()
-        keyword = Factory.newTokenWidget(firstRow, "class")
+        keyword = Factory.newKeywordWidget(firstRow, "class")
         keyword.addKeyEvent(SWT.SPACE) {
             Commands.execute(object : Command {
                 override val target = node

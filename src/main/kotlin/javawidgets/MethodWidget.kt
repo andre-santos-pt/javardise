@@ -2,20 +2,15 @@ package javawidgets
 
 import basewidgets.*
 import com.github.javaparser.StaticJavaParser
-import com.github.javaparser.ast.Modifier
 import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.NodeList
 import com.github.javaparser.ast.body.*
 import com.github.javaparser.ast.expr.SimpleName
 import com.github.javaparser.ast.observer.ObservableProperty
-import com.github.javaparser.ast.type.PrimitiveType
+import com.github.javaparser.ast.stmt.ExpressionStmt
 import org.eclipse.swt.SWT
-import org.eclipse.swt.events.FocusAdapter
-import org.eclipse.swt.events.FocusEvent
-import org.eclipse.swt.layout.GridLayout
 import org.eclipse.swt.layout.RowLayout
-import org.eclipse.swt.widgets.Composite
-import org.eclipse.swt.widgets.Display
+import org.eclipse.swt.widgets.*
 
 class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: Int = SWT.NONE) :
     MemberWidget<CallableDeclaration<*>>(parent, dec, style = style) {
@@ -31,11 +26,40 @@ class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: In
 
     val closingBracket: TokenWidget
 
+
+    val focusListener = { event: Event ->
+        if ((event.widget as Control).isChild(this@MethodWidget)) {
+            val w = (event.widget as Control).findNodeWidget()
+            observers.forEach {
+                var n = w?.node as? Node
+                if (n is ExpressionStmt)
+                    n = n.expression
+                it(n, event.widget.data)
+            }
+        }
+    }
+
+    private fun Control.isChild(methodParent: MethodWidget): Boolean =
+        if (this == methodParent)
+            true
+        else if (parent == null)
+            false
+        else if (parent is MethodWidget)
+            parent == methodParent
+        else
+            parent.isChild(methodParent)
+
+    val observers = mutableListOf<(Node?, Any?) -> Unit>()
+
+    fun addObserver(action: (Node?, Any?) -> Unit) {
+        observers.add(action)
+    }
+
     init {
         if (node.isMethodDeclaration)
-            typeId = SimpleTypeWidget(firstRow, (node as MethodDeclaration).type) {it.asString()}
+            typeId = SimpleTypeWidget(firstRow, (node as MethodDeclaration).type) { it.asString() }
 
-        name = SimpleNameWidget(firstRow, node.name) {it.asString()}
+        name = SimpleNameWidget(firstRow, node.name) { it.asString() }
         name.addKeyEvent(SWT.BS, precondition = { it.isEmpty() }) {
             Commands.execute(object : Command {
                 override val target = node.parentNode as ClassOrInterfaceDeclaration // BUG
@@ -92,17 +116,19 @@ class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: In
         body = createSequence(column, bodyModel)
         TokenWidget(firstRow, "{").addInsert(null, body, true)
         closingBracket = TokenWidget(column, "}")
+
+        Display.getDefault().addFilter(SWT.FocusIn, focusListener)
     }
 
-    fun Composite.findClassWidget(): ClassWidget? {
-        if (this is ClassWidget)
+    fun Control.findNodeWidget(): NodeWidget<*>? {
+        if (this is NodeWidget<*>)
             return this
         else {
             val parent = this.parent
             if (parent == null)
                 return null
             else
-                return parent.findClassWidget()
+                return parent.findNodeWidget()
         }
     }
 
@@ -156,9 +182,15 @@ class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: In
             })
         }
 
+
+        override fun dispose() {
+            Display.getDefault().removeFilter(SWT.FocusIn, focusListener)
+            super.dispose()
+        }
+
         private fun createInsert() {
-            insert = TextWidget.create(this, " ") {
-                c,s -> c.toString().matches(TYPE_CHARS)
+            insert = TextWidget.create(this, " ") { c, s ->
+                c.toString().matches(TYPE_CHARS)
             }
             insert.addKeyEvent(SWT.SPACE, precondition = { tryParseType(it) }) {
                 Commands.execute(object : Command {
@@ -177,11 +209,9 @@ class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: In
                 })
                 insert.delete()
             }
-            insert.addFocusListenerInternal(object : FocusAdapter() {
-                override fun focusLost(e: FocusEvent?) {
-                    insert.widget.text = " "
-                }
-            })
+            insert.addFocusLostAction {
+                insert.widget.text = " "
+            }
         }
 
 
@@ -222,7 +252,7 @@ class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: In
                     })
                 }
 
-                name = SimpleNameWidget(this, node.name) { it.asString()}
+                name = SimpleNameWidget(this, node.name) { it.asString() }
                 name.addKeyEvent(',') {
                     Commands.execute(object : Command {
                         override val target = dec
@@ -242,7 +272,7 @@ class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: In
             }
 
             override fun setFocusOnCreation(firstFlag: Boolean) {
-                if(firstFlag)
+                if (firstFlag)
                     name.setFocus()
                 else
                     type.setFocus()
@@ -268,4 +298,7 @@ class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: In
         else
             return null
     }
+
+
 }
+

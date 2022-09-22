@@ -1,7 +1,6 @@
 package javawidgets.statements
 
 import basewidgets.*
-import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.expr.Expression
 import com.github.javaparser.ast.expr.NameExpr
 import com.github.javaparser.ast.observer.ObservableProperty
@@ -16,15 +15,15 @@ import pt.iscte.javardise.api.row
 class ReturnWidget(parent: SequenceWidget, node: ReturnStmt, override val block: BlockStmt) :
     StatementWidget<ReturnStmt>(parent, node) {
     lateinit var keyword: TokenWidget
-    var exp: ExpWidget? = null
+    var exp: ExpressionFreeWidget? = null
     lateinit var semiColon: FixedToken
 
     init {
         layout = FillLayout()
         row {
-            keyword = Factory.newTokenWidget(this, "return")
+            keyword = Factory.newKeywordWidget(this, "return")
             keyword.addDelete(node, block)
-            Constants.addInsertLine(keyword, false)
+            //Constants.addInsertLine(keyword, false)
             keyword.setCopySource()
             keyword.setMoveSource()
 
@@ -60,8 +59,8 @@ class ReturnWidget(parent: SequenceWidget, node: ReturnStmt, override val block:
         }
     }
 
-    private fun Composite.createExpWidget(exp: Expression): ExpWidget {
-        val w = ExpWidget(this, exp) {
+    private fun Composite.createExpWidget(exp: Expression): ExpressionFreeWidget {
+        val w = ExpressionFreeWidget(this, exp) {
             Commands.execute(object : ModifyCommand<Expression>(node, if (node.expression.isPresent) node.expression.get() else null) {
                 val old = if (node.expression.isPresent) node.expression.get() else null
                 override fun run() {
