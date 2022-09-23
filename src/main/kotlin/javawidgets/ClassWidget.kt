@@ -14,6 +14,7 @@ import com.github.javaparser.ast.observer.AstObserverAdapter
 import com.github.javaparser.ast.observer.ObservableProperty
 import org.eclipse.swt.SWT
 import org.eclipse.swt.layout.FillLayout
+import org.eclipse.swt.layout.RowLayout
 import org.eclipse.swt.widgets.Composite
 import org.eclipse.swt.widgets.Control
 
@@ -37,7 +38,7 @@ class ClassWidget(parent: Composite, type: ClassOrInterfaceDeclaration) :
 
     init {
         data = "ROOTAREA"
-        layout = FillLayout()
+        layout = RowLayout()
         keyword = Factory.newKeywordWidget(firstRow, "class")
         keyword.addKeyEvent(SWT.SPACE) {
             Commands.execute(object : Command {

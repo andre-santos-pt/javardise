@@ -3,10 +3,13 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 plugins {
     kotlin("jvm") version "1.6.21"
     id("project-report")
+    application
 }
 
 group = "org.example"
-version = "1.0-SNAPSHOT"
+version = "0.1"
+
+
 
 repositories {
     mavenCentral()
@@ -14,9 +17,10 @@ repositories {
 
 dependencies {
     testImplementation(kotlin("test"))
-    implementation("com.github.javaparser:javaparser-symbol-solver-core:3.24.2")
+    implementation("com.github.javaparser:javaparser-symbol-solver-core:3.24.4")
     //implementation("org.eclipse.platform:org.eclipse.swt:3.116.0")
 
+    //implementation("org.eclipse.swt:org.eclipse.swt.cocoa.macosx.x86_64:4.3")
     implementation("org.eclipse.platform:org.eclipse.swt.cocoa.macosx.x86_64:3.120.0")
 }
 
@@ -39,6 +43,10 @@ configurations.all {
             }
         }
     }
+}
+
+application {
+    mainClass.set("TestKt")
 }
 
 tasks.test {

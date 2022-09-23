@@ -2,6 +2,7 @@ package javawidgets
 
 import basewidgets.TextWidget
 import basewidgets.TokenWidget
+import column
 import com.github.javaparser.ast.Modifier
 import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.NodeList
@@ -11,9 +12,9 @@ import com.github.javaparser.ast.observer.AstObserver
 import com.github.javaparser.ast.observer.AstObserverAdapter
 import org.eclipse.swt.SWT
 import org.eclipse.swt.layout.FillLayout
+import org.eclipse.swt.layout.RowLayout
 import org.eclipse.swt.widgets.Composite
-import pt.iscte.javardise.api.column
-import pt.iscte.javardise.api.row
+import row
 
 abstract class MemberWidget<T : NodeWithModifiers<*>>(
     parent: Composite,
@@ -31,7 +32,7 @@ abstract class MemberWidget<T : NodeWithModifiers<*>>(
     }
 
     init {
-        layout = FillLayout()
+        layout = RowLayout()
         column = column {
             firstRow = row {
                 node.modifiers.forEach {

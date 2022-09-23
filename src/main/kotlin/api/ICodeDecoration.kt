@@ -1,4 +1,4 @@
-package pt.iscte.javardise.api
+package api
 
 import org.eclipse.swt.graphics.Point
 import org.eclipse.swt.widgets.Control

@@ -14,7 +14,7 @@ import javawidgets.*
 import org.eclipse.swt.SWT
 import org.eclipse.swt.layout.FillLayout
 import org.eclipse.swt.widgets.Composite
-import pt.iscte.javardise.api.row
+import row
 
 class CallWidget(
     parent: SequenceWidget,

@@ -1,11 +1,11 @@
 package basewidgets
 
 import javawidgets.CODE_FONT
+import javawidgets.Configuration
 import org.eclipse.swt.SWT
 import org.eclipse.swt.events.*
 import org.eclipse.swt.graphics.Font
 import org.eclipse.swt.widgets.*
-import pt.iscte.javardise.api.Editor
 
 interface TextWidget {
     val widget: Text
@@ -252,7 +252,7 @@ interface TextWidget {
 
         private val MOUSE_FOCUS : MouseTrackListener = object : MouseTrackAdapter() {
             override fun mouseEnter(e: MouseEvent) {
-                if (Editor.focusFollowsMouse) {
+                if (Configuration.focusFollowsMouse) {
                     val c =  e.widget as Control
                     c.foreground = Display.getDefault().getSystemColor(SWT.COLOR_YELLOW)
                     c.requestLayout()
@@ -261,7 +261,7 @@ interface TextWidget {
 
             override fun mouseExit(e: MouseEvent) {
                 val c =  e.widget as Control
-                if (Editor.focusFollowsMouse) {
+                if (Configuration.focusFollowsMouse) {
                     c.foreground = Display.getDefault().getSystemColor(SWT.COLOR_WHITE)
                     c.requestLayout()
                 }

@@ -4,8 +4,8 @@ import org.eclipse.swt.SWT
 import org.eclipse.swt.graphics.*
 import org.eclipse.swt.layout.GridLayout
 import org.eclipse.swt.widgets.*
-import pt.iscte.javardise.api.ICodeDecoration
-import pt.iscte.javardise.api.IWidget
+import api.ICodeDecoration
+import api.IWidget
 import java.util.*
 import java.util.function.BiFunction
 import kotlin.math.*

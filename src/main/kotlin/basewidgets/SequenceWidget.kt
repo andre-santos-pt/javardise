@@ -1,5 +1,6 @@
 package basewidgets
 
+import javawidgets.Configuration
 import org.eclipse.swt.SWT
 import org.eclipse.swt.events.MouseAdapter
 import org.eclipse.swt.events.MouseEvent
@@ -7,7 +8,6 @@ import org.eclipse.swt.layout.GridLayout
 import org.eclipse.swt.widgets.Composite
 import org.eclipse.swt.widgets.Control
 import org.eclipse.swt.widgets.Display
-import pt.iscte.javardise.api.Editor
 import java.lang.IllegalStateException
 import kotlin.reflect.KClass
 
@@ -15,7 +15,7 @@ open class SequenceWidget(
         parent: Composite,
         tabs: Int,
         val insertWidgetCreator: (SequenceWidget, Boolean) -> TextWidget
-) : EditorWidget(parent) {
+) : Composite(parent, SWT.NONE) {
 
     var insertWidget: Control? = null
 
@@ -23,21 +23,12 @@ open class SequenceWidget(
         background = parent.background
         foreground = parent.foreground
         val layout = GridLayout(1, true)
-        layout.marginLeft = tabs * Editor.tabLength * 5
+        layout.marginLeft = tabs * Configuration.tabLength * 5
         layout.marginTop = 0
         layout.marginBottom = 0
         layout.verticalSpacing = 0
         layout.horizontalSpacing = 0
         setLayout(layout)
-        if(!Editor.readOnly) {
-            val w = insertWidgetCreator(this, true) //configuration.language.createInsertWidget(this, true)
-            insertWidget = if (w is Control) w else w.widget
-            insertWidget!!.addMouseListener(object : MouseAdapter() {
-                override fun mouseDown(e: MouseEvent) {
-                    insertWidget!!.setFocus()
-                }
-            })
-        }
     }
 
     fun insertBeginning() : TextWidget {

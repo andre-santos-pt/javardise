@@ -311,7 +311,7 @@ class ExpressionFreeWidget(val parent: Composite, var expression: Expression, ed
     val textWidget: TextWidget
 
     init {
-        val noparse = expression is NameExpr && (expression as NameExpr).name.asString() == NOPARSE
+        val noparse = expression is NameExpr && (expression as NameExpr).name.asString() == Configuration.NOPARSE
         val text = if (noparse)
             if (expression.orphanComments.isNotEmpty()) expression.orphanComments[0].content else ""
         else
@@ -339,7 +339,7 @@ class ExpressionFreeWidget(val parent: Composite, var expression: Expression, ed
                         editEvent(expression!!)
                     } catch (_: ParseProblemException) {
                         this@ExpressionFreeWidget.textWidget.widget.background = ERROR_COLOR()
-                        val noparse = NameExpr(NOPARSE)
+                        val noparse = NameExpr(Configuration.NOPARSE)
                         noparse.addOrphanComment(BlockComment(this@ExpressionFreeWidget.textWidget.text))
                         editEvent(noparse)
                     }

@@ -4,13 +4,13 @@ import basewidgets.Constants
 import basewidgets.FixedToken
 import basewidgets.SequenceWidget
 import basewidgets.TokenWidget
+import column
 import com.github.javaparser.ast.expr.Expression
 import com.github.javaparser.ast.stmt.BlockStmt
 import com.github.javaparser.ast.stmt.WhileStmt
 import javawidgets.*
 import org.eclipse.swt.layout.RowLayout
-import pt.iscte.javardise.api.column
-import pt.iscte.javardise.api.row
+import row
 
 class WhileWidget(
     parent: SequenceWidget,

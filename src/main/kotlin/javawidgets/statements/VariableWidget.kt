@@ -12,7 +12,7 @@ import com.github.javaparser.ast.stmt.ExpressionStmt
 import javawidgets.*
 import org.eclipse.swt.SWT
 import org.eclipse.swt.layout.FillLayout
-import pt.iscte.javardise.api.row
+import row
 
 class VariableWidget(
     parent: SequenceWidget,

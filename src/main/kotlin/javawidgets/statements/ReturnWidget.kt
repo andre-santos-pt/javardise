@@ -10,7 +10,7 @@ import javawidgets.*
 import org.eclipse.swt.SWT
 import org.eclipse.swt.layout.FillLayout
 import org.eclipse.swt.widgets.Composite
-import pt.iscte.javardise.api.row
+import row
 
 class ReturnWidget(parent: SequenceWidget, node: ReturnStmt, override val block: BlockStmt) :
     StatementWidget<ReturnStmt>(parent, node) {
@@ -23,7 +23,6 @@ class ReturnWidget(parent: SequenceWidget, node: ReturnStmt, override val block:
         row {
             keyword = Factory.newKeywordWidget(this, "return")
             keyword.addDelete(node, block)
-            //Constants.addInsertLine(keyword, false)
             keyword.setCopySource()
             keyword.setMoveSource()
 

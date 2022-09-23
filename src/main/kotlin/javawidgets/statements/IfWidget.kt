@@ -4,6 +4,7 @@ import basewidgets.Constants
 import basewidgets.FixedToken
 import basewidgets.SequenceWidget
 import basewidgets.TokenWidget
+import column
 import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.NodeList
 import com.github.javaparser.ast.expr.Expression
@@ -18,8 +19,7 @@ import org.eclipse.swt.SWT
 import org.eclipse.swt.layout.FillLayout
 import org.eclipse.swt.layout.RowLayout
 import org.eclipse.swt.widgets.Composite
-import pt.iscte.javardise.api.column
-import pt.iscte.javardise.api.row
+import row
 
 class IfWidget(
     parent: SequenceWidget,

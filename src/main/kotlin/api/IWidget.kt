@@ -1,4 +1,4 @@
-package pt.iscte.javardise.api
+package api
 
 import org.eclipse.swt.graphics.Color
 import org.eclipse.swt.graphics.Image

@@ -1,4 +1,6 @@
+import basewidgets.Constants
 import org.eclipse.swt.SWT
+import org.eclipse.swt.custom.ScrolledComposite
 import org.eclipse.swt.custom.StackLayout
 import org.eclipse.swt.events.*
 import org.eclipse.swt.graphics.Font
@@ -105,14 +107,14 @@ fun Composite.separator() : Label {
 
 fun Composite.row(content: Composite.() -> Unit) : Composite {
     val c = Composite(this, SWT.NONE)
-    c.layout = RowLayout()
+    c.layout = Constants.ROW_LAYOUT_H_ZERO
     content(c)
     return c
 }
 
-fun Composite.column(content: Composite.() -> Unit) : Composite {
+fun Composite.column(margin: Boolean = false, content: Composite.() -> Unit) : Composite {
     val c = Composite(this, SWT.NONE)
-    c.layout = GridLayout()
+    c.layout = if(margin) Constants.ROW_LAYOUT_V_SPACED else Constants.ROW_LAYOUT_V_ZERO
     content(c)
     return c
 }
@@ -214,3 +216,28 @@ fun Shell.launch() {
 fun font(face: String, size: Int, style: Int = SWT.NONE) =
         Font(Display.getDefault(), FontData(face, size, style))
 
+fun <T : Composite> Composite.scrollable(create: (Composite) -> T): T {
+    val scroll = ScrolledComposite(this, SWT.H_SCROLL or SWT.V_SCROLL)
+    scroll.layout = GridLayout()
+    scroll.layoutData = GridData(SWT.FILL, SWT.FILL, true, true)
+    scroll.setMinSize(100, 100)
+    scroll.expandHorizontal = true
+    scroll.expandVertical = true
+
+    val content = create(scroll)
+    scroll.content = content
+
+    val list = PaintListener {
+        if (!scroll.isDisposed) {
+            val size = content.computeSize(SWT.DEFAULT, SWT.DEFAULT)
+            scroll.setMinSize(size)
+            scroll.requestLayout()
+        }
+    }
+
+    content.addPaintListener(list)
+    addDisposeListener {
+        removePaintListener(list)
+    }
+    return content
+}

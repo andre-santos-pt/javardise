@@ -1,25 +1,39 @@
-import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration
+import com.github.javaparser.StaticJavaParser
 import com.github.javaparser.ast.body.MethodDeclaration
-import com.github.javaparser.ast.stmt.ExpressionStmt
 import javawidgets.MethodWidget
-import javawidgets.loadModel
+import javawidgets.loadCompilationUnit
+import javawidgets.loadMethod
 import org.eclipse.swt.SWT
 import org.eclipse.swt.layout.FillLayout
-import org.eclipse.swt.layout.GridLayout
 import org.eclipse.swt.widgets.Display
 import org.eclipse.swt.widgets.Shell
-import pt.iscte.javardise.api.fillGridHorizontal
-import pt.iscte.javardise.api.scrollable
 import java.io.File
 
 /*
 Opens two views for the editing same method of the model.
 Any edits on either window will be reflected on the other.
  */
-fun main() {
-    val model = loadModel(File("src/test/kotlin/TestExample.java"))
-    val method = model.types[0].methods[0]
 
+
+fun main() {
+    val src = """
+    public static int fact(int n) {
+        int x = 7;
+        while(x == 0) {
+            fact(0);
+        }
+        if(n == 1) {
+            if (n == 7)
+                return 0;
+            return 1;
+        }
+        else
+            return n * fact(n-1);
+
+    }
+""".trimIndent()
+
+    val method = loadMethod(src)
     val display = Display()
 
     val shell1 = createShell(display, method, false)
@@ -37,7 +51,6 @@ fun main() {
 private fun createShell(display: Display, model: MethodDeclaration, readonly: Boolean): Shell {
     val shell = Shell(display)
     shell.layout = FillLayout()
-    shell.text = (model.parentNode.get() as ClassOrInterfaceDeclaration).nameAsString
     val methodWidget = shell.column {
        layout = FillLayout()
         val w = scrollable {

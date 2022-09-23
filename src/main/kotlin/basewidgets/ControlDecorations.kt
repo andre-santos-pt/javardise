@@ -1,14 +1,10 @@
 package basewidgets
 
 import org.eclipse.swt.SWT
-import org.eclipse.swt.custom.ScrolledComposite
-import org.eclipse.swt.events.PaintListener
 import org.eclipse.swt.graphics.Color
 import org.eclipse.swt.graphics.Point
-import org.eclipse.swt.layout.GridData
-import org.eclipse.swt.layout.GridLayout
 import org.eclipse.swt.widgets.*
-import pt.iscte.javardise.api.ICodeDecoration
+import api.ICodeDecoration
 import java.util.function.BiFunction
 
 fun <T : Control> Control.addDecoration(

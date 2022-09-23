@@ -3,14 +3,14 @@ package javawidgets.statements
 import basewidgets.FixedToken
 import basewidgets.SequenceWidget
 import basewidgets.TokenWidget
+import column
 import com.github.javaparser.ast.stmt.BlockStmt
 import com.github.javaparser.ast.stmt.ForEachStmt
 import javawidgets.ExpressionFreeWidget
 import javawidgets.StatementWidget
 import javawidgets.createSequence
 import org.eclipse.swt.layout.RowLayout
-import pt.iscte.javardise.api.column
-import pt.iscte.javardise.api.row
+import row
 
 // TODO
 class ForEachWidget(parent: SequenceWidget, node: ForEachStmt, override val block: BlockStmt) :

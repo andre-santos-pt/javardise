@@ -19,15 +19,15 @@ import com.github.javaparser.printer.configuration.PrinterConfiguration
 import compile
 import org.eclipse.swt.SWT
 import org.eclipse.swt.custom.SashForm
-import org.eclipse.swt.graphics.Font
 import org.eclipse.swt.graphics.Point
 import org.eclipse.swt.layout.FillLayout
 import org.eclipse.swt.layout.RowLayout
 import org.eclipse.swt.widgets.*
-import pt.iscte.javardise.api.scrollable
 import row
+import scrollable
 import java.io.File
 import java.io.PrintWriter
+
 
 
 fun main(args: Array<String>) {
@@ -202,8 +202,8 @@ class JavardiseWindow(var file: File?) {
         classWidget?.dispose()
 
         model = if (file?.exists() == true) {
-            val cu = loadModel(file)
-            cu.findPublicClass()
+            val cu = loadCompilationUnit(file)
+            cu.findMainClass()
         } else {
             val cu = CompilationUnit()
             cu.addClass("Test")
@@ -237,7 +237,6 @@ class JavardiseWindow(var file: File?) {
         display.dispose()
     }
 }
-
 
 
 

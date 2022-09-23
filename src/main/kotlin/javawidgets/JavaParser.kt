@@ -8,9 +8,10 @@ import com.github.javaparser.ast.NodeList
 import com.github.javaparser.ast.body.BodyDeclaration
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration
 import com.github.javaparser.ast.body.FieldDeclaration
+import com.github.javaparser.ast.body.MethodDeclaration
+import com.github.javaparser.ast.body.TypeDeclaration
 import com.github.javaparser.ast.body.VariableDeclarator
 import com.github.javaparser.ast.expr.Expression
-import com.github.javaparser.ast.expr.NameExpr
 import com.github.javaparser.ast.observer.AstObserver
 import com.github.javaparser.ast.observer.AstObserverAdapter
 import com.github.javaparser.ast.observer.Observable
@@ -26,60 +27,78 @@ val IfStmt.thenBlock: BlockStmt get() = thenStmt as BlockStmt
 val IfStmt.elseBlock: BlockStmt get() = elseStmt.get() as BlockStmt
 val WhileStmt.block: BlockStmt get() = body as BlockStmt
 
-fun loadModel(file: File): CompilationUnit {
-    val model = StaticJavaParser.parse(file)
-    substituteControlBlocks(model)
-    expandFieldDeclarations(model)
-    return model
-}
+fun loadCompilationUnit(file: File): CompilationUnit =
+    StaticJavaParser.parse(file).apply {
+        performTransformations(this)
+    }
 
-fun substituteControlBlocks(model: CompilationUnit) {
+fun loadCompilationUnit(src: String): CompilationUnit =
+    StaticJavaParser.parse(src).apply {
+        performTransformations(this)
+    }
+
+fun loadMethod(src: String): MethodDeclaration =
+    StaticJavaParser.parseMethodDeclaration(src).apply {
+       substituteControlBlocks(this)
+    }
+
+private fun performTransformations(model: CompilationUnit) {
     model.types.forEach {
-        it.accept(object : VoidVisitorAdapter<Any>() {
-            override fun visit(n: WhileStmt, arg: Any?) {
-                if (n.body !is BlockStmt)
-                    n.body = if (n.body == null) BlockStmt() else BlockStmt(NodeList(n.body))
-                super.visit(n, arg)
-            }
-
-            override fun visit(n: IfStmt, arg: Any?) {
-                if (n.thenStmt !is BlockStmt)
-                    n.thenStmt = if (n.thenStmt == null) BlockStmt() else BlockStmt(NodeList(n.thenStmt))
-
-                if (n.hasElseBranch())
-                    if (n.elseStmt.get() !is BlockStmt)
-                        n.setElseStmt(BlockStmt(NodeList(n.elseStmt.get())))
-                super.visit(n, arg)
-            }
-
-            // TODO DO, FOR, FOR EACH
-        }, null)
+        substituteControlBlocks(it)
+        expandFieldDeclarations(it)
     }
 }
 
-fun expandFieldDeclarations(model: CompilationUnit) {
-    model.types.forEach { type ->
-        val changes = mutableListOf<Runnable>()
-        type.accept(object : VoidVisitorAdapter<Any>() {
-            override fun visit(dec: FieldDeclaration, arg: Any?) {
-                dec.variables.drop(1).forEach { v ->
-                    changes.add {
-                        val varDec = VariableDeclarator(dec.elementType.clone(), v.name.clone())
-                        if(v.initializer.isPresent)
-                            varDec.setInitializer(v.initializer.get().clone())
-                        type.members.addAfter(FieldDeclaration(NodeList(dec.modifiers), varDec), dec)
-                        dec.variables.remove(v)
-                    }
+fun substituteControlBlocks(node: Node) {
+    //model.types.forEach {
+    node.accept(object : VoidVisitorAdapter<Any>() {
+        override fun visit(n: WhileStmt, arg: Any?) {
+            if (n.body !is BlockStmt)
+                n.body = if (n.body == null) BlockStmt() else BlockStmt(NodeList(n.body))
+            super.visit(n, arg)
+        }
+
+        override fun visit(n: IfStmt, arg: Any?) {
+            if (n.thenStmt !is BlockStmt)
+                n.thenStmt = if (n.thenStmt == null) BlockStmt() else BlockStmt(NodeList(n.thenStmt))
+
+            if (n.hasElseBranch())
+                if (n.elseStmt.get() !is BlockStmt)
+                    n.setElseStmt(BlockStmt(NodeList(n.elseStmt.get())))
+            super.visit(n, arg)
+        }
+
+        // TODO DO, FOR, FOR EACH
+    }, null)
+    //}
+}
+
+fun expandFieldDeclarations(type: TypeDeclaration<*>) {
+
+    val changes = mutableListOf<Runnable>()
+    type.accept(object : VoidVisitorAdapter<Any>() {
+        override fun visit(dec: FieldDeclaration, arg: Any?) {
+            dec.variables.drop(1).forEach { v ->
+                changes.add {
+                    val varDec = VariableDeclarator(dec.elementType.clone(), v.name.clone())
+                    if (v.initializer.isPresent)
+                        varDec.setInitializer(v.initializer.get().clone())
+                    type.members.addAfter(FieldDeclaration(NodeList(dec.modifiers), varDec), dec)
+                    dec.variables.remove(v)
                 }
-                super.visit(dec, arg)
             }
+            super.visit(dec, arg)
+        }
 
-        }, null)
-        changes.forEach { it.run() }
-    }
+    }, null)
+    changes.forEach { it.run() }
+
 }
 
-fun CompilationUnit.findPublicClass(): ClassOrInterfaceDeclaration? =
+/*
+    Returs the single public class, or otherwise the first declared class (if exists)
+ */
+fun CompilationUnit.findMainClass(): ClassOrInterfaceDeclaration? =
     if (types.isEmpty()) null
     else types
         .filterIsInstance<ClassOrInterfaceDeclaration>()
@@ -98,7 +117,7 @@ fun <T : Node> NodeList<T>.observeList(observer: ListObserver<T>) {
         }
 
         override fun elementRemove(list: NodeList<T>, index: Int, node: T) {
-           observer.elementRemove(list, index, node)
+            observer.elementRemove(list, index, node)
         }
     })
 }
