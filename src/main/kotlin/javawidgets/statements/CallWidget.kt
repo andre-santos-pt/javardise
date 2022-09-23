@@ -138,7 +138,7 @@ class CallWidget(
             arg.moveBelowInternal(comma.label)
         }
         argumentWidgets.add(arg)
-        row.requestLayout()
+        requestLayout()
         return arg
     }
 

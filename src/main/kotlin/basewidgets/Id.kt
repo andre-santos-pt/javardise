@@ -4,6 +4,7 @@ import com.github.javaparser.ParseProblemException
 import com.github.javaparser.StaticJavaParser
 import javawidgets.BACKGROUND_COLOR
 import javawidgets.ERROR_COLOR
+import javawidgets.FOREGROUND_COLOR
 import org.eclipse.swt.SWT
 import org.eclipse.swt.events.FocusAdapter
 import org.eclipse.swt.events.FocusEvent
@@ -42,20 +43,24 @@ open class Id(parent: Composite, id: String, allowedChars: Regex,
         }
         textWidget.menu = Menu(textWidget) // prevent system menu
 
-        textWidget.addModifyListener {
-            val validate = validate(textWidget.text)
-            if (validate.fail) {
-                textWidget.background = ERROR_COLOR()
-                textWidget.toolTipText = validate.msg
-                //textWidget.toolTipText = "Valid identifiers cannot start with a number."
-            } else if (SourceVersion.isKeyword(textWidget.text)) {
-                textWidget.background = ERROR_COLOR()
-                textWidget.toolTipText = "'${textWidget.text}' is a reserved keyword in Java." // BUG shown in types
-            } else {
-                textWidget.background = BACKGROUND_COLOR()
-                textWidget.toolTipText = ""
-            }
-        }
+        textWidget.foreground = parent.foreground
+        textWidget.background = parent.background
+
+
+//        textWidget.addModifyListener {
+//            val validate = validate(textWidget.text)
+//            if (validate.fail) {
+//                textWidget.background = ERROR_COLOR()
+//                textWidget.toolTipText = validate.msg
+//                //textWidget.toolTipText = "Valid identifiers cannot start with a number."
+//            } else if (SourceVersion.isKeyword(textWidget.text)) {
+//                textWidget.background = ERROR_COLOR()
+//                textWidget.toolTipText = "'${textWidget.text}' is a reserved keyword in Java." // BUG shown in types
+//            } else {
+//                textWidget.background = BACKGROUND_COLOR()
+//                textWidget.toolTipText = ""
+//            }
+//        }
     }
 
     fun isValid() = textWidget.text.matches(ID) && !SourceVersion.isKeyword(textWidget.text)
@@ -64,6 +69,7 @@ open class Id(parent: Composite, id: String, allowedChars: Regex,
 
     override fun setFocus(): Boolean {
         textWidget.setFocus()
+        textWidget.requestLayout()
         return true
     }
 

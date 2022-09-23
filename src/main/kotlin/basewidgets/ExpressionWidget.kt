@@ -19,16 +19,16 @@ class ExpressionWidget(
     override fun substitute(current: Expression, newExpression: Expression) {
         current.dispose()
         expression = newExpression
-        expression.requestLayoutInternal()
-        requestLayout()
+        expression.layoutInternal()
+        layout()
     }
 
     override fun setFocus(): Boolean {
         return expression.setFocus()
     }
 
-    override fun requestLayoutInternal() {
-        expression.requestLayoutInternal()
+    override fun layoutInternal() {
+        expression.layoutInternal()
     }
 
     override fun addKeyListenerInternal(listener: KeyListener) {

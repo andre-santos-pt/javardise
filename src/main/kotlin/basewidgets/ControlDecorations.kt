@@ -46,7 +46,7 @@ fun Control.addMark(color: Color): ICodeDecoration<Canvas> {
 
         init {
             val dim = control.computeSize(SWT.DEFAULT, SWT.DEFAULT)
-            background = Display.getDefault().getSystemColor(SWT.COLOR_TRANSPARENT)
+            background = Display.getDefault().getSystemColor(SWT.TRANSPARENT)
             addPaintListener { e ->
                 e.gc.foreground = color
                 e.gc.lineWidth = 3
@@ -69,7 +69,7 @@ fun Control.addMark(color: Color): ICodeDecoration<Canvas> {
         val d =
             dec as Decoration<Canvas>
         d.setAlpha(128)
-        d.setBackground(Display.getDefault().getSystemColor(SWT.COLOR_TRANSPARENT))
+        d.setBackground(Display.getDefault().getSystemColor(SWT.TRANSPARENT))
     }
     return dec
 }

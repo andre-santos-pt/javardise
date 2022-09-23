@@ -85,7 +85,7 @@ open class EditorWidget : Composite, IWidget {
 
             init {
                 val dim = control.computeSize(SWT.DEFAULT, SWT.DEFAULT)
-                background = Display.getDefault().getSystemColor(SWT.COLOR_TRANSPARENT)
+                background = Display.getDefault().getSystemColor(SWT.TRANSPARENT)
                 addPaintListener { e ->
                     e.gc.foreground = color
                     e.gc.lineWidth = 3
@@ -108,7 +108,7 @@ open class EditorWidget : Composite, IWidget {
             val d =
                 dec as Decoration<Canvas>
             d.setAlpha(128)
-            d.setBackground(Display.getDefault().getSystemColor(SWT.COLOR_TRANSPARENT))
+            d.setBackground(Display.getDefault().getSystemColor(SWT.TRANSPARENT))
         }
         return dec
     }
@@ -150,7 +150,7 @@ open class EditorWidget : Composite, IWidget {
             }
 
             init {
-                background = Display.getDefault().getSystemColor(SWT.COLOR_TRANSPARENT)
+                background = Display.getDefault().getSystemColor(SWT.TRANSPARENT)
                 addPaintListener { e ->
                     e.gc.foreground = color
                     e.gc.lineWidth = 3
@@ -175,7 +175,7 @@ open class EditorWidget : Composite, IWidget {
             val d =
                 dec as Decoration<Canvas>
             d.setAlpha(128)
-            d.setBackground(Display.getDefault().getSystemColor(SWT.COLOR_TRANSPARENT))
+            d.setBackground(Display.getDefault().getSystemColor(SWT.TRANSPARENT))
         }
         return dec
     }
@@ -268,7 +268,7 @@ open class EditorWidget : Composite, IWidget {
                     dim = from.computeSize(SWT.DEFAULT, SWT.DEFAULT)
                     arrowY = target!!.location.y
                 }
-                background = Display.getDefault().getSystemColor(SWT.COLOR_TRANSPARENT)
+                background = Display.getDefault().getSystemColor(SWT.TRANSPARENT)
                 addPaintListener { e ->
                     e.gc.drawArc(0, dim.y / 2, (W * 1.5).toInt(), y(), 90, 180)
                     e.gc.background = Display.getDefault().getSystemColor(SWT.COLOR_BLACK)

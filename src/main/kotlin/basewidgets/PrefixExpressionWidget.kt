@@ -51,8 +51,8 @@ class PrefixExpressionWidget(
         operator.addKeyListenerInternal(listener)
     }
 
-    override fun requestLayoutInternal() {
-        operator.widget.requestLayout()
+    override fun layoutInternal() {
+        layout()
     }
 
     override fun substitute(
@@ -61,7 +61,7 @@ class PrefixExpressionWidget(
     ) {
         current.dispose()
         expression = newExpression
-        expression.requestLayoutInternal()
+        expression.layoutInternal()
     }
 
 

@@ -25,7 +25,7 @@ class InfixExpressionWidget(
             val p = this.parent as Expression
             val e = this.left.copyTo(this.parent as EditorWidget)
             if (p.isSubstitutable) (p as Expression.SubstitutableExpression).substitute(this, e)
-            p.requestLayoutInternal()
+            p.layoutInternal()
             e.setFocus()
         }
         //this.right.addKeyListenerInternal(delListener)
@@ -43,8 +43,8 @@ class InfixExpressionWidget(
         operator.addKeyListenerInternal(listener)
     }
 
-    override fun requestLayoutInternal() {
-        operator.widget.requestLayout()
+    override fun layoutInternal() {
+        layout()
     }
 
     override fun substitute(current: Expression, newExpression: Expression) {

@@ -21,7 +21,7 @@ class BracketExpressionWidget(
             val e = expression.copyTo(parent as EditorWidget)
             val p = getParent() as Expression
             if (p.isSubstitutable) (p as Expression.SubstitutableExpression).substitute(this, e)
-            p.requestLayoutInternal()
+            p.layoutInternal()
             e.setFocus()
         }
         right.addDeleteListener(delAction)
@@ -38,7 +38,7 @@ class BracketExpressionWidget(
        expression.addKeyListenerInternal(listener)
     }
 
-    override fun requestLayoutInternal() {
+    override fun layoutInternal() {
         requestLayout()
     }
 

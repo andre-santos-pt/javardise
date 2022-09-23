@@ -108,6 +108,8 @@ fun Composite.separator() : Label {
 fun Composite.row(content: Composite.() -> Unit) : Composite {
     val c = Composite(this, SWT.NONE)
     c.layout = Constants.ROW_LAYOUT_H_ZERO
+    c.background = this.background
+    c.foreground = this.foreground
     content(c)
     return c
 }
@@ -115,6 +117,8 @@ fun Composite.row(content: Composite.() -> Unit) : Composite {
 fun Composite.column(margin: Boolean = false, content: Composite.() -> Unit) : Composite {
     val c = Composite(this, SWT.NONE)
     c.layout = if(margin) Constants.ROW_LAYOUT_V_SPACED else Constants.ROW_LAYOUT_V_ZERO
+    c.background = this.background
+    c.foreground = this.foreground
     content(c)
     return c
 }
@@ -219,10 +223,12 @@ fun font(face: String, size: Int, style: Int = SWT.NONE) =
 fun <T : Composite> Composite.scrollable(create: (Composite) -> T): T {
     val scroll = ScrolledComposite(this, SWT.H_SCROLL or SWT.V_SCROLL)
     scroll.layout = GridLayout()
-    scroll.layoutData = GridData(SWT.FILL, SWT.FILL, true, true)
     scroll.setMinSize(100, 100)
     scroll.expandHorizontal = true
     scroll.expandVertical = true
+
+    scroll.background = this.background
+    scroll.foreground = this.foreground
 
     val content = create(scroll)
     scroll.content = content

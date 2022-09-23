@@ -256,6 +256,10 @@ object Factory {
 abstract class NodeWidget<T>(parent: Composite, style: Int = SWT.NONE) : Composite(parent, style) {
     abstract val node: T
 
+    init {
+        background = parent.background
+        foreground = parent.foreground
+    }
     abstract fun setFocusOnCreation(firstFlag: Boolean = false)
 
     override fun setFocus(): Boolean {

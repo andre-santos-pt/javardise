@@ -160,7 +160,7 @@ class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: In
                         }
                     }
                     p.setFocusOnCreation(list.isEmpty())
-                    requestLayout()
+                    p.requestLayout()
                 }
 
                 override fun elementRemove(list: NodeList<Parameter>, index: Int, node: Parameter) {

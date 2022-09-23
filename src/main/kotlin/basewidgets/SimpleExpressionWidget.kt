@@ -71,7 +71,7 @@ class SimpleExpressionWidget(parent: Composite, literal: String, e: Any?) :
         val p = parent as Expression
         if (p.isSubstitutable) {
             (p as Expression.SubstitutableExpression).substitute(this@SimpleExpressionWidget, w)
-            p.requestLayoutInternal()
+            p.layoutInternal()
         }
         rule.afterAction(w)
     }
@@ -105,8 +105,8 @@ class SimpleExpressionWidget(parent: Composite, literal: String, e: Any?) :
         return lis
     }
 
-    override fun requestLayoutInternal() {
-        w.requestLayout()
+    override fun layoutInternal() {
+       layout()
     }
 
     private fun validCharacter(c: Char): Boolean {

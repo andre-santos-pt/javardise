@@ -102,7 +102,7 @@ class IfWidget(
             else
                 elseWidget = ElseWidget(column, it)
 
-            requestLayout()
+            elseWidget?.requestLayout()
         }
     }
 

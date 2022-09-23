@@ -66,7 +66,7 @@ interface TextWidget {
 
     fun moveBelowInternal(control: Control) = widget.moveBelow(control)
     fun moveAboveInternal(control: Control) = widget.moveAbove(control)
-    fun requestLayoutInternal() = widget.requestLayout()
+    fun layoutInternal() = widget.requestLayout()
 
     fun setToolTip(text: String) {
         widget.toolTipText = text
@@ -110,7 +110,6 @@ interface TextWidget {
     }
 
     companion object {
-        val f = Font(Display.getDefault(), "Menlo", 16, SWT.NORMAL)
 
         @JvmStatic
         fun createText(
@@ -155,6 +154,9 @@ interface TextWidget {
 
                 val w: Text = createText(parent, text) {
                     c, s -> acceptFlag || accept(c, s)
+                }.apply {
+                    background = parent.background
+                    foreground = parent.foreground
                 }
 
                 override val widget: Text

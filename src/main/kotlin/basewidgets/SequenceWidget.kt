@@ -71,7 +71,7 @@ open class SequenceWidget(
             insert.delete()
             if (children.isNotEmpty() && index != -1)
                 children[index].setFocus()
-            parent.requestLayout()
+            requestLayout()
         }
     }
 
@@ -129,10 +129,6 @@ open class SequenceWidget(
                 return children[i-1]
         throw IllegalStateException()
     }
-
-    fun <T : Control> addElement(f: (SequenceWidget) -> T): T = addElement(totalElements(), f)
-
-    fun <T : Control> addElementAfter(c: Control, f: (SequenceWidget) -> T): T = addElement(findChildIndex(c)+1, f)
 
     fun<T : Control> addElement(index: Int, f: (SequenceWidget) -> T): T {
         val el = if(index < children.size) children[index] else null

@@ -33,6 +33,7 @@ abstract class MemberWidget<T : NodeWithModifiers<*>>(
 
     init {
         layout = RowLayout()
+
         column = column {
             firstRow = row {
                 node.modifiers.forEach {

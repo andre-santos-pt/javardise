@@ -6,7 +6,7 @@ interface Expression {
     fun copyTo(parent: EditorWidget): Expression
     fun dispose()
     fun setFocus(): Boolean
-    fun requestLayoutInternal()
+    fun layoutInternal()
     fun addKeyListenerInternal(listener: KeyListener)
     val isSubstitutable: Boolean
         get() = this is SubstitutableExpression
