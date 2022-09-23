@@ -25,9 +25,13 @@ for your Operating System. Place the **swt.jar** file in the directory **/libs**
 2. Run Gradle task **build jar**, which will output the **javardiseJP-VERSION.jar** to the directory **/build/libs**.
 
 
-## Your project build  (Gradle)
+## Integration in other projects
+The Javardise base editor may run standalone.  However, this project has also the following goals:
+- Provide reusable widgets to manipulate the code elements that may be used by other applications as a library
+- Enable the integration of extensions to the base editor.
 
-1. Include the following dependencies in the **build.gradle.kts**, replacing *%PATH* and *%VERSION* with appropriate values.
+### Dependencies (Gradle)
+Include the following dependencies in the **build.gradle.kts**, replacing *%PATH* and *%VERSION* with appropriate values.
 
 ```kotlin
 dependencies {
@@ -39,6 +43,7 @@ dependencies {
 
 
 ## Examples
+In this repo there are few examples of using Javardise components.
 
 ### ClassWidget
 
