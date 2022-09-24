@@ -46,8 +46,13 @@ dependencies {
 In this repo there are few examples of using Javardise components.
 
 ### ClassWidget
+An example of using an widget to edit a whole class.
+
+[pt.iscte.javardise.examples.DemoClassEditor](https://github.com/andre-santos-pt/JavardiseJP/blob/master/src/main/kotlin/pt/iscte/javardise/examples/DemoClassEditor.kt)
 
 ### MethodWidget (multiple views)
+An example of using a widget to edit a method in isolation. This example also ilustrates the possibility of multiple views of a same element of the model (method in this case).
 
+[pt.iscte.javardise.examples.DemoMethodMVC](https://github.com/andre-santos-pt/JavardiseJP/blob/master/src/main/kotlin/pt/iscte/javardise/examples/DemoMethodMVC.kt)
 
 
