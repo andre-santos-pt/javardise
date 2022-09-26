@@ -1,3 +1,5 @@
+package pt.iscte.javardise.examples
+
 import com.github.javaparser.ast.body.MethodDeclaration
 import org.eclipse.swt.SWT
 import org.eclipse.swt.layout.FillLayout
@@ -16,15 +18,8 @@ Any edits on either window will be reflected on the other.
 fun main() {
     val src = """
     public static int fact(int n) {
-        int x = 7;
-        while(x == 0) {
-            fact(0);
-        }
-        if(n == 1) {
-            if (n == 7)
-                return 0;
+        if(n == 1)
             return 1;
-        }
         else
             return n * fact(n-1);
 

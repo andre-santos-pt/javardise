@@ -15,7 +15,12 @@ import org.eclipse.swt.SWT
 import org.eclipse.swt.layout.RowLayout
 import org.eclipse.swt.widgets.Composite
 import org.eclipse.swt.widgets.Control
+import org.eclipse.swt.widgets.Display
+import org.eclipse.swt.widgets.Event
+import org.eclipse.swt.widgets.Listener
+import pt.iscte.javardise.*
 import pt.iscte.javardise.basewidgets.*
+import pt.iscte.javardise.external.isChild
 import pt.iscte.javardise.widgets.statements.find
 import pt.iscte.javardise.widgets.statements.findByModelIndex
 import pt.iscte.javardise.widgets.statements.findIndexByModel
@@ -30,13 +35,55 @@ val MEMBER_REGEX = Regex(
 fun matchModifier(keyword: String) =
     Modifier(Modifier.Keyword.valueOf(keyword.uppercase()))
 
+
+
 class ClassWidget(parent: Composite, type: ClassOrInterfaceDeclaration) :
     MemberWidget<ClassOrInterfaceDeclaration>(parent, type, listOf(PUBLIC, FINAL, ABSTRACT)) {
     private val keyword: TokenWidget
     private val id: Id
     internal var body: SequenceWidget
 
-    val CONSTRUCTOR_REGEX = { Regex("($MODIFIERS\\s+)*${type.nameAsString}") }
+    private val observers = mutableListOf<(BodyDeclaration<*>?, Node?) -> Unit>()
+
+
+//    val focusMemberTracker = object : Listener {
+//        var current: MemberWidget<*>? = null
+//        override fun handleEvent(e: Event) {
+//            if ((e.widget as Control).isChild(this@ClassWidget)) {
+//                val w = (e.widget as Control).findAncestor<MemberWidget<*>>()
+//                if(w != current) {
+//                    observers.forEach {
+//                        var n = w?.node as? BodyDeclaration<*>
+//                        it(n, w)
+//                    }
+//                    current = w
+//                }
+//            }
+//        }
+//    }
+
+//    private val focusListener = { event: Event ->
+//        if ((event.widget as Control).isChild(this@ClassWidget)) {
+//            val w = (event.widget as Control).findAncestor<MemberWidget<*>>()
+//            observers.forEach {
+//                var n = w?.node as? BodyDeclaration<*>
+//                it(n, w)
+//            }
+//        }
+//    }
+
+    private val focusListenerGlobal = { event: Event ->
+        val control = event.widget as Control
+        if (control.isChild(this@ClassWidget)) {
+            val memberWidget = control.findNode<BodyDeclaration<*>>()
+            val nodeWidget = control.findNode<Node>()
+            observers.forEach {
+                //val member = memberWidget?.node as? BodyDeclaration<*>
+                //  val node = nodeWidget?.node as? Node
+                it(memberWidget, nodeWidget)
+            }
+        }
+    }
 
     init {
         data = "ROOTAREA"
@@ -60,8 +107,8 @@ class ClassWidget(parent: Composite, type: ClassOrInterfaceDeclaration) :
             })
         }
 
-        id = SimpleNameWidget(firstRow, type.name) {
-            it.asString()
+        id = SimpleNameWidget(firstRow, type) {
+            it.name.asString()
         }
 
         id.addFocusLostAction {
@@ -81,102 +128,133 @@ class ClassWidget(parent: Composite, type: ClassOrInterfaceDeclaration) :
             }
         }
 
-        body = SequenceWidget(column, 1) { seq, e ->
-            val insert = TextWidget.create(seq) { c, s ->
-                Character.isLetter(c) || c == SWT.SPACE && s.isNotEmpty() || c == SWT.BS
-            }
-
-            fun modifiers(tail: Int): NodeList<Modifier> {
-                val split = insert.text.split(Regex("\\s+"))
-                val modifiers = NodeList<Modifier>()
-                split.subList(0, split.size - tail).forEach {
-                    val m = matchModifier(it)
-                    modifiers.add(m)
-                }
-                return modifiers
-            }
-
-            insert.addKeyEvent(';','=', SWT.CR, precondition = { it.matches(MEMBER_REGEX) }) {
-                val split = insert.text.split(Regex("\\s+"))
-                val newField = FieldDeclaration(
-                    modifiers(2),
-                    StaticJavaParser.parseType(split[split.lastIndex - 1]),
-                    split.last()
-                )
-                if(it.character == '=')
-                    newField.variables[0].setInitializer(NameExpr("expression"))
-
-                val insertIndex = seq.findIndexByModel(insert.widget)
-                Commands.execute(AddMemberCommand(newField, node, insertIndex))
-                insert.delete()
-            }
-
-            insert.addKeyEvent('(', precondition = { it.matches(CONSTRUCTOR_REGEX()) }) {
-                val newConst = ConstructorDeclaration(modifiers(1), type.nameAsString)
-                val insertIndex = seq.findIndexByModel(insert.widget)
-                Commands.execute(AddMemberCommand(newConst, node, insertIndex))
-                insert.delete()
-            }
-
-            insert.addKeyEvent('(', precondition = { it.matches(MEMBER_REGEX) }) {
-                val split = insert.text.split(Regex("\\s+"))
-                val newMethod = MethodDeclaration(
-                    modifiers(2),
-                    split.last(),
-                    StaticJavaParser.parseType(split[split.lastIndex - 1]),
-                    NodeList()
-                )
-                val insertIndex = seq.findIndexByModel(insert.widget)
-                Commands.execute(AddMemberCommand(newMethod, node, insertIndex))
-                insert.delete()
-            }
-            insert.addFocusLostAction {
-                insert.clear()
-            }
-            insert
+        body = SequenceWidget(column, 1) { seq, _ ->
+            createInsert(seq)
         }
+
         TokenWidget(firstRow, "{").addInsert(null, body, false)
 
-        type.members.forEach {
+        node.members.forEach {
             createMember(it)
         }
 
         FixedToken(column, "}")
 
-        type.observeProperty<SimpleName>(ObservableProperty.NAME) {
+        registerObservers()
+        Display.getDefault().addFilter(SWT.FocusIn, focusListenerGlobal)
+    }
+
+    /**
+     * Adds an observer wheneven a class member (field, constructor, method) gains focus.
+     * Changes of focus within a member do not trigger an event.
+     */
+    fun addMemberFocusObserver(action: (BodyDeclaration<*>?, Node?) -> Unit) {
+        observers.add(action)
+    }
+
+ //   fun removeMemberFocusObserver(action: (BodyDeclaration<*>?, MemberWidget<*>?) -> Unit) {
+   //     observers.remove(action)
+    //}
+
+    private fun registerObservers() {
+        node.observeProperty<SimpleName>(ObservableProperty.NAME) {
             id.set(it?.id ?: "")
             id.textWidget.data = it
         }
 
-        type.members.register(object : AstObserverAdapter() {
-            override fun listChange(
-                observedNode: NodeList<*>,
-                change: AstObserver.ListChangeType,
-                index: Int,
-                nodeAddedOrRemoved: Node
-            ) {
-                if (change == AstObserver.ListChangeType.ADDITION) {
-                    val tail = index == type.members.size
-                    val w = createMember(nodeAddedOrRemoved as BodyDeclaration<*>)
-                    if (!tail)
-                        w.moveAbove(body.findByModelIndex(index))
+        node.members.register(
+            object : AstObserverAdapter() {
+                override fun listChange(
+                    observedNode: NodeList<*>,
+                    change: AstObserver.ListChangeType,
+                    index: Int,
+                    nodeAddedOrRemoved: Node
+                ) {
+                    if (change == AstObserver.ListChangeType.ADDITION) {
+                        val tail = index == node.members.size
+                        val w = createMember(nodeAddedOrRemoved as BodyDeclaration<*>)
+                        if (!tail)
+                            w.moveAbove(body.findByModelIndex(index) as Control)
 
-                    if (w is MethodWidget)
-                        w.focusParameters()
-                    else
-                        (w as FieldWidget).focusExpressionOrSemiColon()
+                        if (w is MethodWidget)
+                            w.focusParameters()
+                        else
+                            (w as FieldWidget).focusExpressionOrSemiColon()
 
-                } else {
-                    body.find(nodeAddedOrRemoved)?.dispose()
+                    } else {
+                        (body.find(nodeAddedOrRemoved) as? Control)?.dispose()
+                    }
+                    body.requestLayout()
                 }
-                body.requestLayout()
+            })
+    }
+
+    override fun dispose() {
+        Display.getDefault().removeFilter(SWT.FocusIn, focusListenerGlobal)
+        super.dispose()
+    }
+
+
+    private fun createInsert(seq: SequenceWidget): TextWidget {
+        val CONSTRUCTOR_REGEX = { Regex("($MODIFIERS\\s+)*${node.nameAsString}") }
+
+        val insert = TextWidget.create(seq) { c, s ->
+            Character.isLetter(c) || c == SWT.SPACE && s.isNotEmpty() || c == SWT.BS
+        }
+
+        fun modifiers(tail: Int): NodeList<Modifier> {
+            val split = insert.text.split(Regex("\\s+"))
+            val modifiers = NodeList<Modifier>()
+            split.subList(0, split.size - tail).forEach {
+                val m = matchModifier(it)
+                modifiers.add(m)
             }
-        })
+            return modifiers
+        }
+
+        insert.addKeyEvent(';', '=', SWT.CR, precondition = { it.matches(MEMBER_REGEX) }) {
+            val split = insert.text.split(Regex("\\s+"))
+            val newField = FieldDeclaration(
+                modifiers(2),
+                StaticJavaParser.parseType(split[split.lastIndex - 1]),
+                split.last()
+            )
+            if (it.character == '=')
+                newField.variables[0].setInitializer(NameExpr("expression"))
+
+            val insertIndex = seq.findIndexByModel(insert.widget)
+            Commands.execute(AddMemberCommand(newField, node, insertIndex))
+            insert.delete()
+        }
+
+        insert.addKeyEvent('(', precondition = { it.matches(CONSTRUCTOR_REGEX()) }) {
+            val newConst = ConstructorDeclaration(modifiers(1), node.nameAsString)
+            val insertIndex = seq.findIndexByModel(insert.widget)
+            Commands.execute(AddMemberCommand(newConst, node, insertIndex))
+            insert.delete()
+        }
+
+        insert.addKeyEvent('(', precondition = { it.matches(MEMBER_REGEX) }) {
+            val split = insert.text.split(Regex("\\s+"))
+            val newMethod = MethodDeclaration(
+                modifiers(2),
+                split.last(),
+                StaticJavaParser.parseType(split[split.lastIndex - 1]),
+                NodeList()
+            )
+            val insertIndex = seq.findIndexByModel(insert.widget)
+            Commands.execute(AddMemberCommand(newMethod, node, insertIndex))
+            insert.delete()
+        }
+        insert.addFocusLostAction {
+            insert.clear()
+        }
+        return insert
     }
 
     fun createMember(dec: BodyDeclaration<*>) =
         when (dec) {
-            is FieldDeclaration ->  {
+            is FieldDeclaration -> {
                 val w = FieldWidget(body, dec)
                 w.semiColon.addInsert(w, body, true)
                 w
@@ -186,7 +264,6 @@ class ClassWidget(parent: Composite, type: ClassOrInterfaceDeclaration) :
                 w.closingBracket.addInsert(w, body, true)
                 w
             }
-
             else -> {
                 UnsupportedWidget(body, dec)
             }
@@ -211,6 +288,3 @@ internal fun TokenWidget.addInsert(
             body.insertLineAt(member)
     }
 }
-
-
-

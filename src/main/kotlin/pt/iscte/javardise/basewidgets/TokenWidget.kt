@@ -31,6 +31,7 @@ class TokenWidget(
                     val i = list.indexOf(widget.text)
                     val item = list[(i + 1) % list.size]
                     editAction(item)
+                    e.doit = false
                 }
             }
         })
@@ -89,5 +90,9 @@ class TokenWidget(
         }
         widget.addFocusListener(listener)
         return listener
+    }
+
+    fun set(value: String) {
+        widget.text = value
     }
 }

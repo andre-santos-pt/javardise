@@ -8,6 +8,7 @@ import com.github.javaparser.ast.stmt.ReturnStmt
 import org.eclipse.swt.SWT
 import org.eclipse.swt.layout.FillLayout
 import org.eclipse.swt.widgets.Composite
+import pt.iscte.javardise.*
 import pt.iscte.javardise.basewidgets.Constants
 import pt.iscte.javardise.basewidgets.FixedToken
 import pt.iscte.javardise.basewidgets.SequenceWidget
@@ -19,7 +20,7 @@ class ReturnWidget(parent: SequenceWidget, node: ReturnStmt, override val block:
     StatementWidget<ReturnStmt>(parent, node) {
     lateinit var keyword: TokenWidget
     var exp: ExpressionFreeWidget? = null
-    lateinit var semiColon: FixedToken
+    lateinit var semiColon: TokenWidget
 
     init {
         layout = FillLayout()
@@ -35,13 +36,15 @@ class ReturnWidget(parent: SequenceWidget, node: ReturnStmt, override val block:
                 exp!!.addKeyEvent(SWT.BS, precondition = { exp!!.isEmpty }, action = createDeleteEvent(node, block))
                 Constants.addInsertLine(exp!!, true)
             }
-            semiColon = FixedToken(this, ";")
+            semiColon = TokenWidget(this, ";")
+            semiColon.addInsert(this@ReturnWidget, this@ReturnWidget.parent as SequenceWidget, true)
         }
         keyword.addKeyEvent(' ') {
             Commands.execute(object : AbstractCommand<Expression>(node, CommandKind.ADD, NameExpr("expression")) {
                 override fun run() {
                     node.setExpression(element)
                 }
+
                 override fun undo() {
                     node.removeExpression()
                 }
@@ -53,7 +56,7 @@ class ReturnWidget(parent: SequenceWidget, node: ReturnStmt, override val block:
         node.observeProperty<Expression>(ObservableProperty.EXPRESSION) {
             if (it != null && exp == null) {
                 exp = createExpWidget(it)
-                exp!!.textWidget.moveAboveInternal(semiColon.label)
+                exp!!.textWidget.moveAboveInternal(semiColon.widget)
                 requestLayout()
                 exp!!.setFocus()
             }
@@ -63,7 +66,8 @@ class ReturnWidget(parent: SequenceWidget, node: ReturnStmt, override val block:
 
     private fun Composite.createExpWidget(exp: Expression): ExpressionFreeWidget {
         val w = ExpressionFreeWidget(this, exp) {
-            Commands.execute(object : ModifyCommand<Expression>(node, if (node.expression.isPresent) node.expression.get() else null) {
+            Commands.execute(object :
+                ModifyCommand<Expression>(node, if (node.expression.isPresent) node.expression.get() else null) {
                 val old = if (node.expression.isPresent) node.expression.get() else null
                 override fun run() {
                     node.setExpression(it)
@@ -80,7 +84,6 @@ class ReturnWidget(parent: SequenceWidget, node: ReturnStmt, override val block:
     override fun setFocus(): Boolean {
         return keyword.setFocus()
     }
-
 
 
     override fun setFocusOnCreation(firstFlag: Boolean) {

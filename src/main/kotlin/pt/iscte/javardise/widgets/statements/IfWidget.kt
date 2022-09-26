@@ -13,10 +13,11 @@ import org.eclipse.swt.SWT
 import org.eclipse.swt.layout.FillLayout
 import org.eclipse.swt.layout.RowLayout
 import org.eclipse.swt.widgets.Composite
-import pt.iscte.javardise.basewidgets.Constants
-import pt.iscte.javardise.basewidgets.FixedToken
-import pt.iscte.javardise.basewidgets.SequenceWidget
-import pt.iscte.javardise.basewidgets.TokenWidget
+import pt.iscte.javardise.AbstractCommand
+import pt.iscte.javardise.CommandKind
+import pt.iscte.javardise.Commands
+import pt.iscte.javardise.Factory
+import pt.iscte.javardise.basewidgets.*
 import pt.iscte.javardise.widgets.*
 import pt.iscte.javardise.external.*
 
@@ -25,11 +26,12 @@ class IfWidget(
     node: IfStmt,
     override val block: BlockStmt
 ) :
-    StatementWidget<IfStmt>(parent, node) {
+    StatementWidget<IfStmt>(parent, node), SequenceContainer {
 
     lateinit var column: Composite
+    lateinit var keyword: TokenWidget
     lateinit var exp: ExpressionFreeWidget
-    lateinit var thenBody: SequenceWidget
+    override lateinit var body: SequenceWidget
 
     var elseWidget: ElseWidget? = null
     var elseBody: SequenceWidget? = null
@@ -41,7 +43,7 @@ class IfWidget(
         layout = RowLayout()
         column = column {
             val firstRow = row {
-                val keyword = Factory.newKeywordWidget(this, "if")
+                keyword = Factory.newKeywordWidget(this, "if")
                 keyword.setCopySource()
                 //Constants.addInsertLine(keyword)
                 keyword.addDelete(node, block)
@@ -58,17 +60,17 @@ class IfWidget(
                     })
                 }
                 exp.addKeyEvent(SWT.CR) {
-                    thenBody.insertLine()
+                    body.insertLine()
                 }
                 Constants.addInsertLine(exp,)
                 FixedToken(this, ")")
 
             }
 
-            thenBody = createSequence(this, node.thenBlock)
+            body = createSequence(this, node.thenBlock)
 
             openThenBracket = TokenWidget(firstRow, "{")
-            openThenBracket.addInsert(null, thenBody, false)
+            openThenBracket.addInsert(null, body, false)
             closeThenBracket = TokenWidget(this, "}")
             closeThenBracket.addInsert(this@IfWidget, this@IfWidget.parent as SequenceWidget, true)
 
@@ -96,12 +98,15 @@ class IfWidget(
             elseWidget = ElseWidget(column, node.elseBlock)
 
         node.observeProperty<Statement>(ObservableProperty.ELSE_STMT) {
-            if (it == null)
+            if (it == null) {
                 elseWidget?.dispose()
-            else
+                keyword.setFocus()
+            }
+            else {
                 elseWidget = ElseWidget(column, it)
-
-            elseWidget?.requestLayout()
+                elseWidget?.focusOpenBracket()
+                elseWidget?.requestLayout()
+            }
         }
     }
 
@@ -112,6 +117,8 @@ class IfWidget(
     }
 
     inner class ElseWidget(parent: Composite, elseStatement: Statement) : Composite(parent, SWT.NONE){
+        var openBracketElse: TokenWidget? = null
+        var closeBracketElse: TokenWidget? = null
         init {
             layout = FillLayout()
             column {
@@ -129,11 +136,17 @@ class IfWidget(
                         })
                     }
 
-                    FixedToken(this, "{")
+                    openBracketElse = TokenWidget(this, "{")
                 }
                 elseBody = createSequence(this, elseStatement as BlockStmt)
-                FixedToken(this, "}")
+                closeBracketElse = TokenWidget(this, "}")
+                closeBracketElse?.addInsert(this@IfWidget, this@IfWidget.parent as SequenceWidget, true)
             }
+            openBracketElse?.addInsert(null, elseBody!!, false)
+        }
+
+        fun focusOpenBracket() {
+            openBracketElse?.setFocus()
         }
     }
 

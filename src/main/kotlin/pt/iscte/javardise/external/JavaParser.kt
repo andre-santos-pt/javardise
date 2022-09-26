@@ -16,6 +16,8 @@ import com.github.javaparser.ast.stmt.IfStmt
 import com.github.javaparser.ast.stmt.Statement
 import com.github.javaparser.ast.stmt.WhileStmt
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter
+import pt.iscte.javardise.Command
+import pt.iscte.javardise.CommandKind
 import java.io.File
 
 val IfStmt.thenBlock: BlockStmt get() = thenStmt as BlockStmt

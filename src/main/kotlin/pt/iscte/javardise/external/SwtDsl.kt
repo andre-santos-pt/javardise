@@ -249,3 +249,14 @@ fun <T : Composite> Composite.scrollable(create: (Composite) -> T): T {
     }
     return content
 }
+
+
+fun Control.isChild(comp: Composite): Boolean =
+    if (this == comp)
+        true
+    else if (parent == null)
+        false
+    else if (parent == comp)
+        true
+    else
+        parent.isChild(comp)

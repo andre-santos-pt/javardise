@@ -1,8 +1,9 @@
-package pt.iscte.javardise.widgets
+package pt.iscte.javardise
 
 import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.stmt.BlockStmt
 import com.github.javaparser.ast.stmt.Statement
+import pt.iscte.javardise.widgets.AddStatementCommand
 
 object Commands {
     val stack = ArrayDeque<Command>()

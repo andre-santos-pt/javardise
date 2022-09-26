@@ -7,6 +7,8 @@ import org.eclipse.swt.SWT
 import org.eclipse.swt.layout.FillLayout
 import org.eclipse.swt.widgets.Composite
 import pt.iscte.javardise.COMMENT_COLOR
+import pt.iscte.javardise.Commands
+import pt.iscte.javardise.ModifyCommand
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
 import pt.iscte.javardise.external.row

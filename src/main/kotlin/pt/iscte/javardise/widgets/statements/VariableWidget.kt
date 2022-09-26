@@ -8,6 +8,10 @@ import com.github.javaparser.ast.stmt.BlockStmt
 import com.github.javaparser.ast.stmt.ExpressionStmt
 import org.eclipse.swt.SWT
 import org.eclipse.swt.layout.FillLayout
+import pt.iscte.javardise.Commands
+import pt.iscte.javardise.ModifyCommand
+import pt.iscte.javardise.SimpleNameWidget
+import pt.iscte.javardise.SimpleTypeWidget
 import pt.iscte.javardise.basewidgets.FixedToken
 import pt.iscte.javardise.basewidgets.Id
 import pt.iscte.javardise.basewidgets.SequenceWidget
@@ -27,12 +31,12 @@ class VariableWidget(
         require(node.expression is VariableDeclarationExpr)
 
         val assignment = node.expression as VariableDeclarationExpr
-        val decl = assignment.variables[0] // TODO multi
+        val decl = assignment.variables[0] // multi variable not supported
 
         layout = FillLayout()
         row {
             type = SimpleTypeWidget(this, decl.type) { it.asString() }
-            target = SimpleNameWidget(this, decl.name) { it.asString() }
+            target = SimpleNameWidget(this, decl) { it.name.asString() }
             target.addKeyEvent(SWT.BS, precondition = { it.isEmpty() }, action = createDeleteEvent(node, block))
 
             if (decl.initializer.isPresent) {

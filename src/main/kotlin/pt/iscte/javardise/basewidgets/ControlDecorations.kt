@@ -31,7 +31,7 @@ fun Control.addMark(color: Color): ICodeDecoration<Canvas> {
     class Rec(
         parent: Composite?,
         var control: Control
-    ) : Canvas(parent, SWT.NONE) {
+    ) : Canvas(parent, SWT.NO_BACKGROUND) {
         override fun computeSize(wHint: Int, hHint: Int, changed: Boolean): Point {
             val size = control.computeSize(wHint, hHint, changed)
             size.x += 4
@@ -44,9 +44,9 @@ fun Control.addMark(color: Color): ICodeDecoration<Canvas> {
         }
 
         init {
-            val dim = control.computeSize(SWT.DEFAULT, SWT.DEFAULT)
             background = Display.getDefault().getSystemColor(SWT.TRANSPARENT)
             addPaintListener { e ->
+                val dim = control.computeSize(SWT.DEFAULT, SWT.DEFAULT)
                 e.gc.foreground = color
                 e.gc.lineWidth = 3
                 e.gc.drawRectangle(0, 0, dim.x + 2, dim.y + 2)

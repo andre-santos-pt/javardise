@@ -1,4 +1,4 @@
-package pt.iscte.javardise.widgets
+package pt.iscte.javardise
 
 import pt.iscte.javardise.external.*
 import com.github.javaparser.ParseProblemException
@@ -20,9 +20,8 @@ import org.eclipse.swt.graphics.Point
 import org.eclipse.swt.layout.FillLayout
 import org.eclipse.swt.layout.RowLayout
 import org.eclipse.swt.widgets.*
-import pt.iscte.javardise.ERROR_COLOR
-import pt.iscte.javardise.KEYWORD_COLOR
 import pt.iscte.javardise.basewidgets.*
+import pt.iscte.javardise.widgets.*
 import java.io.File
 import java.io.PrintWriter
 
@@ -63,9 +62,7 @@ class JavardiseWindow(var file: File?) {
         val form = SashForm(shell, SWT.HORIZONTAL)
 
         col = form.column {
-            row {
-                addButtons(this)
-            }
+
         }
 
         val sash = SashForm(form, SWT.NONE)
@@ -84,6 +81,9 @@ class JavardiseWindow(var file: File?) {
             mirror.enabled = false
         }
 
+        col.row {
+            addButtons(this)
+        }
         // BUG lost focus
         display.addFilter(SWT.KeyDown) {
             if (it.stateMask == SWT.MOD1 && it.keyCode == 'z'.code) {
@@ -251,19 +251,28 @@ object Factory {
 }
 
 
-abstract class NodeWidget<T>(parent: Composite, style: Int = SWT.NONE) : Composite(parent, style) {
-    abstract val node: T
+interface NodeWidget<T> {
+    val node: T
 
-    init {
-        background = parent.background
-        foreground = parent.foreground
-    }
     abstract fun setFocusOnCreation(firstFlag: Boolean = false)
 
-    override fun setFocus(): Boolean {
+}
 
-        return super.setFocus()
-    }
+
+inline fun <reified T : NodeWidget<*>> Control.findAncestor(): T? {
+    var w : Control? = this
+    while(w !is T && w != null && w.data !is T)
+        w = w.parent
+
+    return w as? T
+}
+
+inline fun <reified T : Node> Control.findNode(): T? {
+    var w : Control? = this
+    while(!(w is NodeWidget<*> && w.node is T) && w != null && w.data !is T)
+        w = w.parent
+
+    return if(w is NodeWidget<*>) w.node as T else w?.data as? T
 }
 
 fun Control.traverse(visit: (Control) -> Boolean) {
@@ -293,8 +302,8 @@ fun Control.backgroundDefault() = this.traverse {
     true
 }
 
-class SimpleNameWidget<N : Node>(parent: Composite, node: N, getName: (N) -> String)
-    : Id(parent, getName(node), ID_CHARS, {
+class SimpleNameWidget<N : Node>(parent: Composite, override val node: N, getName: (N) -> String)
+    : NodeWidget<N>, Id(parent, getName(node), ID_CHARS, {
         s ->
     try {
         StaticJavaParser.parseSimpleName(s)
@@ -305,6 +314,10 @@ class SimpleNameWidget<N : Node>(parent: Composite, node: N, getName: (N) -> Str
 }) {
     init {
         textWidget.data = node
+    }
+
+    override fun setFocusOnCreation(firstFlag: Boolean) {
+        textWidget.setFocus()
     }
 }
 

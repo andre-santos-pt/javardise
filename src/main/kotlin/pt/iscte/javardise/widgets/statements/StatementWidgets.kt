@@ -9,12 +9,13 @@ import com.github.javaparser.ast.stmt.*
 import org.eclipse.swt.SWT
 import org.eclipse.swt.events.*
 import org.eclipse.swt.widgets.*
+import pt.iscte.javardise.*
 import pt.iscte.javardise.basewidgets.SequenceWidget
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
 import pt.iscte.javardise.widgets.*
-import pt.iscte.javardise.widgets.statements.*
-abstract class StatementWidget<T : Statement>(parent: SequenceWidget, override val node: T) : NodeWidget<T>(parent) {
+
+abstract class StatementWidget<T : Statement>(parent: SequenceWidget, override val node: T) : Composite(parent, SWT.NONE),  NodeWidget<T> {
 
     abstract val block: BlockStmt
 
@@ -123,12 +124,13 @@ fun createInsert(seq: SequenceWidget, block: BlockStmt): TextWidget {
     }
 
     insert.addKeyEvent(SWT.SPACE, '{', precondition = { it == "else" }) {
-        val insertIndex = seq.findIndexByModel(insert.widget)
-        if (insert.text == "else" && insertIndex > 0) {
-            val prev = seq.children[insertIndex - 1]
+        //val insertIndex = seq.findIndexByModel(insert.widget) // TODO BUG sometimes inserts at wrong
+        val seqIndex = seq.children.indexOf(insert.widget)
+        if (insert.text == "else" && seqIndex > 0) {
+            val prev = seq.children[seqIndex - 1]
             if (prev is IfWidget && !prev.node.hasElseBranch()) {
                 insert.delete()
-                Commands.execute(AddElseBlock((seq.children[insertIndex - 1] as IfWidget).node))
+                Commands.execute(AddElseBlock(prev.node))
             }
         }
     }
@@ -179,6 +181,7 @@ fun createInsert(seq: SequenceWidget, block: BlockStmt): TextWidget {
                         NodeList()
                     )
                 )
+            insert.delete()
             Commands.execute(AddStatementCommand(stmt, block, insertIndex))
         }
     }
@@ -212,7 +215,7 @@ fun populateSequence(seq: SequenceWidget, block: BlockStmt) {
     }
     block.statements.register(object : ListAddRemoveObserver<Statement>() {
         override fun elementAdd(list: NodeList<Statement>, index: Int, node: Statement) {
-            val prev = seq.findByModelIndex(index)
+            val prev = seq.findByModelIndex(index) as? Control
             val w = addWidget(node, block, seq)
             if (prev != null)
                 (w as Composite).moveAbove(prev)
@@ -221,10 +224,19 @@ fun populateSequence(seq: SequenceWidget, block: BlockStmt) {
         }
 
         override fun elementRemove(list: NodeList<Statement>, index: Int, node: Statement) {
-            val next = seq.findByModelIndex(index + 1)
-            seq.find(node)?.dispose()
+            val control = seq.find(node) as? Control
+            val index = seq.children.indexOf(control)
+
+            control?.dispose()
             seq.requestLayout()
-            next?.setFocus()
+
+            val childrenLen = seq.children.size
+            if(index < childrenLen)
+                seq.children[index].setFocus()
+            else if(index - 1 in 0 until childrenLen)
+                seq.children[index-1].setFocus()
+            else
+                seq.parent.setFocus()
         }
     })
 }

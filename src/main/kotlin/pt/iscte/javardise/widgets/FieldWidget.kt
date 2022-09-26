@@ -14,6 +14,7 @@ import com.github.javaparser.ast.observer.ObservableProperty
 import com.github.javaparser.ast.type.Type
 import org.eclipse.swt.SWT
 import org.eclipse.swt.widgets.Composite
+import pt.iscte.javardise.*
 import pt.iscte.javardise.basewidgets.Id
 import pt.iscte.javardise.basewidgets.TokenWidget
 

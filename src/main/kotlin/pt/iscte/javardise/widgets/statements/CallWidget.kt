@@ -12,6 +12,10 @@ import com.github.javaparser.ast.stmt.ExpressionStmt
 import org.eclipse.swt.SWT
 import org.eclipse.swt.layout.FillLayout
 import org.eclipse.swt.widgets.Composite
+import pt.iscte.javardise.Command
+import pt.iscte.javardise.CommandKind
+import pt.iscte.javardise.Commands
+import pt.iscte.javardise.SimpleNameWidget
 import pt.iscte.javardise.basewidgets.*
 import pt.iscte.javardise.external.row
 import pt.iscte.javardise.widgets.*
@@ -53,7 +57,7 @@ class CallWidget(
             createInsert(row)
 
         FixedToken(row, ")")
-        FixedToken(row, ";")
+        TokenWidget(row, ";").addInsert(this, this.parent as SequenceWidget, true)
 
         methodName.addFocusLostAction {
             if (methodName.text.isEmpty())

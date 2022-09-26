@@ -13,15 +13,17 @@ import org.eclipse.swt.widgets.Composite
 import org.eclipse.swt.widgets.Control
 import org.eclipse.swt.widgets.Display
 import org.eclipse.swt.widgets.Event
+import pt.iscte.javardise.*
 import pt.iscte.javardise.basewidgets.*
+import pt.iscte.javardise.external.isChild
 import pt.iscte.javardise.widgets.statements.createSequence
 
 class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: Int = SWT.NONE) :
-    MemberWidget<CallableDeclaration<*>>(parent, dec, style = style) {
+    MemberWidget<CallableDeclaration<*>>(parent, dec, style = style), SequenceContainer {
 
     var typeId: Id? = null
     val name: Id
-    var body: SequenceWidget
+    override lateinit var body: SequenceWidget
     val bodyModel =
         if (dec is MethodDeclaration) dec.body.get()  // TODO watch out for signature only
         else (dec as ConstructorDeclaration).body
@@ -33,7 +35,7 @@ class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: In
 
     val focusListener = { event: Event ->
         if ((event.widget as Control).isChild(this@MethodWidget)) {
-            val w = (event.widget as Control).findNodeWidget()
+            val w = (event.widget as Control).findAncestor<NodeWidget<*>>()
             observers.forEach {
                 var n = w?.node as? Node
                 if (n is ExpressionStmt)
@@ -43,17 +45,8 @@ class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: In
         }
     }
 
-    private fun Control.isChild(methodParent: MethodWidget): Boolean =
-        if (this == methodParent)
-            true
-        else if (parent == null)
-            false
-        else if (parent is MethodWidget)
-            parent == methodParent
-        else
-            parent.isChild(methodParent)
 
-    val observers = mutableListOf<(Node?, Any?) -> Unit>()
+    private val observers = mutableListOf<(Node?, Any?) -> Unit>()
 
     fun addObserver(action: (Node?, Any?) -> Unit) {
         observers.add(action)
@@ -124,16 +117,9 @@ class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: In
         Display.getDefault().addFilter(SWT.FocusIn, focusListener)
     }
 
-    fun Control.findNodeWidget(): NodeWidget<*>? {
-        if (this is NodeWidget<*>)
-            return this
-        else {
-            val parent = this.parent
-            if (parent == null)
-                return null
-            else
-                return parent.findNodeWidget()
-        }
+    override fun dispose() {
+        Display.getDefault().removeFilter(SWT.FocusIn, focusListener)
+        super.dispose()
     }
 
     inner class ParamListWidget(parent: Composite, val parameters: NodeList<Parameter>) :
@@ -230,7 +216,7 @@ class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: In
 
         // TODO name listeners
         inner class ParamWidget(parent: Composite, val index: Int, override val node: Parameter) :
-            NodeWidget<Parameter>(parent) {
+        Composite(parent, SWT.NONE), NodeWidget<Parameter> {
             val type: Id
             val name: Id
 
@@ -290,19 +276,5 @@ class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: In
     }
 
     fun focusParameters() = paramsWidget.setFocus()
-
-    fun getNodeOnFocus(): Node? {
-        val control = Display.getDefault().focusControl
-        var parent = control.parent
-        while (parent != null && parent !is NodeWidget<*>)
-            parent = parent.parent
-
-        if (parent is NodeWidget<*>)
-            return parent.node as Node
-        else
-            return null
-    }
-
-
 }
 

@@ -6,9 +6,9 @@ import org.eclipse.swt.widgets.Display
 
 val ERROR_COLOR = { Display.getDefault().getSystemColor(SWT.COLOR_RED) }
 
-val FOREGROUND_COLOR = { Display.getDefault().getSystemColor(SWT.COLOR_BLACK) }
+val FOREGROUND_COLOR = { Display.getDefault().getSystemColor(SWT.COLOR_WIDGET_FOREGROUND) }
 
-val BACKGROUND_COLOR = { Display.getDefault().getSystemColor(SWT.COLOR_WHITE) }
+val BACKGROUND_COLOR = { Display.getDefault().getSystemColor(SWT.COLOR_WIDGET_BACKGROUND) }
 
 val COMMENT_COLOR = { Display.getDefault().getSystemColor(SWT.COLOR_GREEN) }
 

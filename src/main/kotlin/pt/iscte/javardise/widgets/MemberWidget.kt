@@ -10,6 +10,8 @@ import com.github.javaparser.ast.observer.AstObserverAdapter
 import org.eclipse.swt.SWT
 import org.eclipse.swt.layout.RowLayout
 import org.eclipse.swt.widgets.Composite
+import org.eclipse.swt.widgets.Display
+import pt.iscte.javardise.*
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
 import pt.iscte.javardise.external.*
@@ -18,7 +20,7 @@ abstract class MemberWidget<T : NodeWithModifiers<*>>(
     override val node: T,
     validModifiers: List<Modifier.Keyword> = emptyList(),
     style: Int = SWT.NONE
-) : NodeWidget<NodeWithModifiers<*>>(parent, style) {
+) : Composite(parent, style), NodeWidget<NodeWithModifiers<*>> {
     val modifiers = mutableListOf<TokenWidget>()
 
     val column: Composite
@@ -166,6 +168,18 @@ abstract class MemberWidget<T : NodeWithModifiers<*>>(
                 }
             })
         }
+    }
+
+    fun getNodeOnFocus(): Node? {
+        val control = Display.getDefault().focusControl
+        var w = control.parent
+        while (w != null && w !is NodeWidget<*>)
+            w = w.parent
+
+        if (w is NodeWidget<*>)
+            return w.node as Node
+        else
+            return null
     }
 }
 

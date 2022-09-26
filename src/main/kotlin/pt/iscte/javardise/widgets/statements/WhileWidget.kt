@@ -4,6 +4,9 @@ import com.github.javaparser.ast.expr.Expression
 import com.github.javaparser.ast.stmt.BlockStmt
 import com.github.javaparser.ast.stmt.WhileStmt
 import org.eclipse.swt.layout.RowLayout
+import pt.iscte.javardise.Commands
+import pt.iscte.javardise.Factory
+import pt.iscte.javardise.ModifyCommand
 import pt.iscte.javardise.basewidgets.Constants
 import pt.iscte.javardise.basewidgets.FixedToken
 import pt.iscte.javardise.basewidgets.SequenceWidget
@@ -21,7 +24,7 @@ class WhileWidget(
     lateinit var keyword: TokenWidget
     lateinit var exp: ExpressionFreeWidget
     lateinit var body: SequenceWidget
-
+    lateinit var openBracket: TokenWidget
     init {
         layout = RowLayout()
         column {
@@ -40,9 +43,11 @@ class WhileWidget(
                         }
                     })
                 }
-                FixedToken(this, ") {")
+                FixedToken(this, ")")
+                openBracket = TokenWidget(this, "{")
             }
             body = createSequence(this, node.block)
+            openBracket.addInsert(null, body, false)
             val bodyClose = TokenWidget(this, "}")
             Constants.addInsertLine(bodyClose, true)
         }

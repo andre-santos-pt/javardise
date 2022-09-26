@@ -68,6 +68,8 @@ open class SequenceWidget(
             insert.delete()
             if (children.isNotEmpty() && index != -1)
                 children[index].setFocus()
+            else
+                parent.setFocus()
             requestLayout()
         }
     }

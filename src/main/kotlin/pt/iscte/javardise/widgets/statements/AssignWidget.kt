@@ -8,6 +8,8 @@ import com.github.javaparser.ast.stmt.ExpressionStmt
 import pt.iscte.javardise.external.*
 import org.eclipse.swt.SWT
 import org.eclipse.swt.layout.FillLayout
+import pt.iscte.javardise.Commands
+import pt.iscte.javardise.ModifyCommand
 import pt.iscte.javardise.basewidgets.SequenceWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
 import pt.iscte.javardise.widgets.*
@@ -44,8 +46,10 @@ class AssignWidget(
             target.setCopySource()
             target.addKeyEvent(SWT.BS, precondition = { it.isEmpty() }, action = createDeleteEvent(node, block))
 
-            operator = TokenWidget(this, "=") {
-                listOf("+=", "-=", "*=")
+            operator = TokenWidget(this, assignment.operator.asString(), {
+                AssignExpr.Operator.values().map { it.asString() }
+            }) {
+                assignment.operator = AssignExpr.Operator.values().find { op -> op.asString() == it }
             }
 
             expression = ExpressionFreeWidget(this, assignment.value) {
@@ -67,7 +71,8 @@ class AssignWidget(
             target.update(it)
         }
         assignment.observeProperty<AssignExpr.Operator>(ObservableProperty.OPERATOR) {
-            TODO()
+            operator.set(it?.asString() ?: "NaO")
+            expression.setFocus()
         }
         assignment.observeProperty<Expression>(ObservableProperty.VALUE) {
             expression.update(it)
