@@ -37,7 +37,7 @@ class IfWidget(
     var elseBody: SequenceWidget? = null
 
     lateinit var openThenBracket : TokenWidget
-    lateinit var closeThenBracket : TokenWidget
+    override val closingBracket : TokenWidget
 
     init {
         layout = RowLayout()
@@ -71,11 +71,12 @@ class IfWidget(
 
             openThenBracket = TokenWidget(firstRow, "{")
             openThenBracket.addInsert(null, body, false)
-            closeThenBracket = TokenWidget(this, "}")
-            closeThenBracket.addInsert(this@IfWidget, this@IfWidget.parent as SequenceWidget, true)
+
 
             //setThenBracketsVisibility(node.thenBlock.statements.size, openThenBracket, closeThenBracket)
         }
+        closingBracket = TokenWidget(column, "}")
+        closingBracket.addInsert(this@IfWidget, this@IfWidget.parent as SequenceWidget, true)
 
         // TODO else brackets visibility
         node.thenBlock.statements.register(object: AstObserverAdapter() {
@@ -150,8 +151,9 @@ class IfWidget(
         }
     }
 
-    override fun setFocus(): Boolean = exp.setFocus()
+    override fun setFocus(): Boolean = keyword.setFocus()
+
     override fun setFocusOnCreation(firstFlag: Boolean) {
-        setFocus()
+        exp.setFocus()
     }
 }

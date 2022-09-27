@@ -24,13 +24,14 @@ class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: In
     var typeId: Id? = null
     val name: Id
     override lateinit var body: SequenceWidget
+
     val bodyModel =
         if (dec is MethodDeclaration) dec.body.get()  // TODO watch out for signature only
         else (dec as ConstructorDeclaration).body
 
     val paramsWidget: ParamListWidget
 
-    val closingBracket: TokenWidget
+    override val closingBracket: TokenWidget
 
 
     val focusListener = { event: Event ->
@@ -59,7 +60,7 @@ class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: In
         name = SimpleNameWidget(firstRow, node.name) { it.asString() }
         name.addKeyEvent(SWT.BS, precondition = { it.isEmpty() }) {
             Commands.execute(object : Command {
-                override val target = node.parentNode as ClassOrInterfaceDeclaration // BUG
+                override val target = node.parentNode.get() as ClassOrInterfaceDeclaration // BUG
                 override val kind: CommandKind = CommandKind.REMOVE
                 override val element: Node = dec
                 val index: Int = target.members.indexOf(dec)

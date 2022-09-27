@@ -223,6 +223,8 @@ open class SequenceWidget(
         children.forEach { if(it != insertWidget) it.dispose() }
     }
 
+    fun isEmpty(): Boolean = children.isEmpty()
+
     //override fun setReadOnly(readonly: Boolean) {
         //super.setReadOnly(readonly)
         //insertWidget.visible = false

@@ -38,10 +38,11 @@ fun matchModifier(keyword: String) =
 
 
 class ClassWidget(parent: Composite, type: ClassOrInterfaceDeclaration) :
-    MemberWidget<ClassOrInterfaceDeclaration>(parent, type, listOf(PUBLIC, FINAL, ABSTRACT)) {
+    MemberWidget<ClassOrInterfaceDeclaration>(parent, type, listOf(PUBLIC, FINAL, ABSTRACT)), SequenceContainer {
     private val keyword: TokenWidget
     private val id: Id
-    internal var body: SequenceWidget
+    override lateinit var body: SequenceWidget
+    override val closingBracket: TokenWidget
 
     private val observers = mutableListOf<(BodyDeclaration<*>?, Node?) -> Unit>()
 
@@ -138,7 +139,7 @@ class ClassWidget(parent: Composite, type: ClassOrInterfaceDeclaration) :
             createMember(it)
         }
 
-        FixedToken(column, "}")
+        closingBracket = TokenWidget(column, "}")
 
         registerObservers()
         Display.getDefault().addFilter(SWT.FocusIn, focusListenerGlobal)

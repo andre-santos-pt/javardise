@@ -5,6 +5,8 @@ import org.eclipse.swt.events.*
 import org.eclipse.swt.widgets.*
 import pt.iscte.javardise.CODE_FONT
 import pt.iscte.javardise.Configuration
+import pt.iscte.javardise.widgets.MemberWidget
+import pt.iscte.javardise.widgets.statements.StatementWidget
 
 interface TextWidget {
     val widget: Text
@@ -75,7 +77,11 @@ interface TextWidget {
         widget.text = ""
     }
 
-    fun addKeyEvent(vararg chars: Char, precondition: (String) -> Boolean = {true}, action: (KeyEvent) -> Unit): KeyListener {
+    fun addKeyEvent(
+        vararg chars: Char,
+        precondition: (String) -> Boolean = { true },
+        action: (KeyEvent) -> Unit
+    ): KeyListener {
         val l = object : KeyAdapter() {
             override fun keyPressed(e: KeyEvent) {
                 if (!widget.isDisposed && precondition(widget.text) && chars.contains(e.character)) {
@@ -93,23 +99,15 @@ interface TextWidget {
 
     fun addFocusListenerInternal(listener: FocusListener)
 
-    fun addFocusLostAction(action: () -> Unit) : FocusListener
+    fun addFocusLostAction(action: () -> Unit): FocusListener
 
     fun addDeleteListener(action: () -> Unit) =
-            addKeyEvent(Constants.DEL_KEY) {
-                if (it.widget is Label) action()
-                else if (it.widget is Text) {
-                    val t = it.widget as Text
-                        if (t.text.isEmpty() && t.caretPosition == 0 || !t.editable) action()
-                }
-            }
+        addKeyEvent(Constants.DEL_KEY, precondition = { widget.text.isEmpty() && widget.caretPosition == 0 }) {
+            action()
+        }
 
-    fun setInsertLineMode() {
-        Constants.addInsertLine(this)
-    }
 
     companion object {
-
         @JvmStatic
         fun createText(
             parent: Composite,
@@ -144,15 +142,17 @@ interface TextWidget {
 
 
         @JvmStatic
-        fun create(parent: Composite,
-                   text: String = "",
-                   accept: ((Char, String) -> Boolean) = { _: Char, _: String -> false }): TextWidget {
+        fun create(
+            parent: Composite,
+            text: String = "",
+            accept: ((Char, String) -> Boolean) = { _: Char, _: String -> false }
+        ): TextWidget {
             return object : TextWidget {
 
                 var acceptFlag = false
 
-                val w: Text = createText(parent, text) {
-                    c, s -> acceptFlag || accept(c, s)
+                val w: Text = createText(parent, text) { c, s ->
+                    acceptFlag || accept(c, s)
                 }.apply {
                     background = parent.background
                     foreground = parent.foreground
@@ -203,43 +203,71 @@ interface TextWidget {
         }
 
         private val MODIFY_PACK =
-                ModifyListener { e -> //			((Control) e.widget).setLayoutData(new RowData(SWT.DEFAULT, SWT.DEFAULT));
-                    (e.widget as Control).pack()
-                    (e.widget as Control).requestLayout()
-                }
+            ModifyListener { e -> //			((Control) e.widget).setLayoutData(new RowData(SWT.DEFAULT, SWT.DEFAULT));
+                (e.widget as Control).pack()
+                (e.widget as Control).requestLayout()
+            }
+
+        inline fun <reified T> Control.findAncestorOfType(): T? {
+            var w: Control? = this.parent
+            while (w !is T && w != null && w.data !is T)
+                w = w.parent
+
+            return w as? T
+        }
+
+        val Text.isAtBeginning: Boolean
+            get() = caretPosition == 0 && selectionCount == 0
+
+        val Text.isAtEnd: Boolean
+            get() = caretPosition == text.length
 
         private val LISTENER_ARROW_KEYS: KeyListener = object : KeyAdapter() {
             override fun keyPressed(e: KeyEvent) {
-                val focusControl = Display.getDefault().focusControl
-                if (focusControl != null && focusControl.parent is TextWidget) {
-                    val w = focusControl.parent as TextWidget
-                    val text = w.widget
-                    if (e.keyCode == SWT.ARROW_RIGHT && (!text.editable || w.isAtEnd)) {
+                val text = Display.getDefault().focusControl
+                if (text is Text) {
+                    if (e.keyCode == SWT.ARROW_RIGHT && (!text.editable || text.isAtEnd)) {
                         text.traverse(SWT.TRAVERSE_TAB_NEXT)
                         e.doit = false
-                    } else if (e.keyCode == SWT.ARROW_LEFT && (!text.editable || w.isAtBeginning)) {
+                    } else if (e.keyCode == SWT.ARROW_LEFT && (!text.editable || text.isAtBeginning)) {
                         text.traverse(SWT.TRAVERSE_TAB_PREVIOUS)
                         e.doit = false
-                    } else if (e.keyCode == SWT.ARROW_UP) {
-                        moveCursorUp(w)
-                        e.doit = false
-                    } else if (e.keyCode == SWT.ARROW_DOWN) {
-                        moveCursorDown(w)
-                        e.doit = false
-                    }
-                } else if (focusControl is Text && !focusControl.editable) {
-                    if (e.keyCode == SWT.ARROW_RIGHT) {
-                        focusControl.traverse(SWT.TRAVERSE_TAB_NEXT)
-                        e.doit = false
-                    } else if (e.keyCode == SWT.ARROW_LEFT) {
-                        focusControl.traverse(SWT.TRAVERSE_TAB_PREVIOUS)
-                        e.doit = false
-                    } else if (e.keyCode == SWT.ARROW_UP) {
-                        moveCursorUp(focusControl)
-                        e.doit = false
-                    } else if (e.keyCode == SWT.ARROW_DOWN) {
-                        moveCursorDown(focusControl)
-                        e.doit = false
+                    } else if (e.keyCode == SWT.ARROW_UP || e.keyCode == SWT.ARROW_DOWN) {
+                        val sw = text.findAncestorOfType<StatementWidget<*>>() ?: text.findAncestorOfType<MemberWidget<*>>()
+
+                        if (sw != null) {
+                            val index = sw.parent.children.indexOf(sw)
+                            if (e.keyCode == SWT.ARROW_UP) {
+                                if (sw is SequenceContainer && text == sw.closingBracket.widget)
+                                    sw.focusLast()
+                                else if (index > 0) {
+                                    val prev = sw.parent.children[index - 1]
+                                    if(prev is SequenceContainer)
+                                        prev.focusLast()
+                                    else
+                                        prev.setFocus()
+                                }
+                                else {
+                                    val levelUp = sw.findAncestorOfType<SequenceContainer>()
+                                    levelUp?.setFocus()
+                                }
+
+                            } else {
+                                if (sw is SequenceContainer && text != sw.closingBracket.widget) {
+                                    if(sw.body.isEmpty())
+                                        sw.closingBracket.setFocus()
+                                    else
+                                        sw.body.setFocus()
+                                }
+                                else if (index + 1 < sw.parent.children.size)
+                                    sw.parent.children[index + 1].setFocus()
+                                else {
+                                    val levelUp = sw.findAncestorOfType<SequenceContainer>()
+                                    levelUp?.closingBracket?.setFocus()
+                                }
+                            }
+                        }
+
                     }
                 }
             }
@@ -251,17 +279,17 @@ interface TextWidget {
             }
         }
 
-        private val MOUSE_FOCUS : MouseTrackListener = object : MouseTrackAdapter() {
+        private val MOUSE_FOCUS: MouseTrackListener = object : MouseTrackAdapter() {
             override fun mouseEnter(e: MouseEvent) {
                 if (Configuration.focusFollowsMouse) {
-                    val c =  e.widget as Control
+                    val c = e.widget as Control
                     c.foreground = Display.getDefault().getSystemColor(SWT.COLOR_YELLOW)
                     c.requestLayout()
                 }
             }
 
             override fun mouseExit(e: MouseEvent) {
-                val c =  e.widget as Control
+                val c = e.widget as Control
                 if (Configuration.focusFollowsMouse) {
                     c.foreground = Display.getDefault().getSystemColor(SWT.COLOR_WHITE)
                     c.requestLayout()

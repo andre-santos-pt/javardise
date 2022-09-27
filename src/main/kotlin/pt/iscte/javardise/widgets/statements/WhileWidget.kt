@@ -7,10 +7,7 @@ import org.eclipse.swt.layout.RowLayout
 import pt.iscte.javardise.Commands
 import pt.iscte.javardise.Factory
 import pt.iscte.javardise.ModifyCommand
-import pt.iscte.javardise.basewidgets.Constants
-import pt.iscte.javardise.basewidgets.FixedToken
-import pt.iscte.javardise.basewidgets.SequenceWidget
-import pt.iscte.javardise.basewidgets.TokenWidget
+import pt.iscte.javardise.basewidgets.*
 import pt.iscte.javardise.widgets.*
 import pt.iscte.javardise.external.*
 
@@ -19,15 +16,16 @@ class WhileWidget(
     node: WhileStmt,
     override val block: BlockStmt
 ) :
-    StatementWidget<WhileStmt>(parent, node) {
+    StatementWidget<WhileStmt>(parent, node), SequenceContainer {
 
     lateinit var keyword: TokenWidget
     lateinit var exp: ExpressionFreeWidget
-    lateinit var body: SequenceWidget
+    override lateinit var body: SequenceWidget
     lateinit var openBracket: TokenWidget
+    override lateinit var closingBracket: TokenWidget
     init {
         layout = RowLayout()
-        column {
+        val col = column {
             row {
                 keyword = Factory.newKeywordWidget(this, "while")
                 keyword.setCopySource()
@@ -48,9 +46,10 @@ class WhileWidget(
             }
             body = createSequence(this, node.block)
             openBracket.addInsert(null, body, false)
-            val bodyClose = TokenWidget(this, "}")
-            Constants.addInsertLine(bodyClose, true)
+
         }
+        closingBracket = TokenWidget(col, "}")
+        Constants.addInsertLine(closingBracket, true)
 
         keyword.addDelete(node, block)
     }
