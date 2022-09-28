@@ -109,7 +109,7 @@ fun Composite.separator() : Label {
 
 fun Composite.row(content: Composite.() -> Unit) : Composite {
     val c = Composite(this, SWT.NONE)
-    c.layout = Constants.ROW_LAYOUT_H_ZERO
+    c.layout = ROW_LAYOUT_H_ZERO
     c.background = this.background
     c.foreground = this.foreground
     content(c)
@@ -118,7 +118,7 @@ fun Composite.row(content: Composite.() -> Unit) : Composite {
 
 fun Composite.column(margin: Boolean = false, content: Composite.() -> Unit) : Composite {
     val c = Composite(this, SWT.NONE)
-    c.layout = if(margin) Constants.ROW_LAYOUT_V_SPACED else Constants.ROW_LAYOUT_V_ZERO
+    c.layout = if(margin) ROW_LAYOUT_V_SPACED else ROW_LAYOUT_V_ZERO
     c.background = this.background
     c.foreground = this.foreground
     content(c)
@@ -260,3 +260,21 @@ fun Control.isChild(comp: Composite): Boolean =
         true
     else
         parent.isChild(comp)
+
+
+fun create(style: Int, top: Int = 0, spacing: Int = 0): RowLayout {
+    val layout = RowLayout(style)
+    layout.marginLeft = 0
+    layout.marginRight = 0
+    layout.marginTop = top
+    layout.marginBottom = 0
+    layout.spacing = spacing
+    return layout
+}
+
+val ROW_LAYOUT_H_SHRINK = create(SWT.HORIZONTAL, 0)
+val ROW_LAYOUT_H_ZERO = create(SWT.HORIZONTAL, 2)
+val ROW_LAYOUT_H = create(SWT.HORIZONTAL, 3)
+val ROW_LAYOUT_H_DOT = create(SWT.HORIZONTAL, 0)
+val ROW_LAYOUT_V_ZERO = create(SWT.VERTICAL, 2)
+val ROW_LAYOUT_V_SPACED = create(SWT.VERTICAL, 20)

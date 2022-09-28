@@ -34,7 +34,7 @@ class ReturnWidget(parent: SequenceWidget, node: ReturnStmt, override val block:
                 exp = createExpWidget(node.expression.get())
                 exp!!.setMoveSource()
                 exp!!.addKeyEvent(SWT.BS, precondition = { exp!!.isEmpty }, action = createDeleteEvent(node, block))
-                Constants.addInsertLine(exp!!, true)
+                //Constants.addInsertLine(exp!!, true)
             }
             semiColon = TokenWidget(this, ";")
             semiColon.addInsert(this@ReturnWidget, this@ReturnWidget.parent as SequenceWidget, true)

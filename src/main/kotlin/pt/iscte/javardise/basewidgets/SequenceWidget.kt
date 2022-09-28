@@ -55,7 +55,7 @@ open class SequenceWidget(
     fun insertLineAt(location: Control) : TextWidget {
         val insert = insertWidgetCreator(this, false)
         addDeleteBehavior(insert)
-        Constants.addInsertLine(insert, true)
+       // Constants.addInsertLine(insert, true)
         insert.widget.moveAbove(location)
         requestLayout()
         insert.setFocus()
@@ -77,7 +77,7 @@ open class SequenceWidget(
     fun insertLineAfter(location: Control) : TextWidget {
         val insert = insertWidgetCreator(this, false)
         addDeleteBehavior(insert)
-        Constants.addInsertLine(insert, true)
+        //Constants.addInsertLine(insert, true)
         insert.widget.moveBelow(location)
         requestLayout()
         insert.setFocus()

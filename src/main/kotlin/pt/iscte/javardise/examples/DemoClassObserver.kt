@@ -23,6 +23,12 @@ public class Student {
 	public Student(int number, String name) {
 		this.number = number;
 		this.name = name;
+        if(true) {
+            i = 1;
+            while(true) {
+                j= 0;
+                }
+        }
 	}
 
 	public int getNumber() {

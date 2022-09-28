@@ -7,8 +7,10 @@ import com.github.javaparser.ast.NodeList
 import com.github.javaparser.ast.expr.*
 import com.github.javaparser.ast.stmt.*
 import org.eclipse.swt.SWT
-import org.eclipse.swt.events.*
-import org.eclipse.swt.widgets.*
+import org.eclipse.swt.events.KeyAdapter
+import org.eclipse.swt.events.KeyEvent
+import org.eclipse.swt.widgets.Composite
+import org.eclipse.swt.widgets.Control
 import pt.iscte.javardise.*
 import pt.iscte.javardise.basewidgets.SequenceWidget
 import pt.iscte.javardise.basewidgets.TextWidget

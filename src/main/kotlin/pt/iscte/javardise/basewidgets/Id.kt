@@ -36,7 +36,7 @@ open class Id(parent: Composite, id: String, allowedChars: Regex,
             skip ||
                     !readOnly && (
                     c.toString().matches(allowedChars)
-                            || c == Constants.DEL_KEY
+                            || c == SWT.BS
                             || c == SWT.CR)
         }
         textWidget.menu = Menu(textWidget) // prevent system menu

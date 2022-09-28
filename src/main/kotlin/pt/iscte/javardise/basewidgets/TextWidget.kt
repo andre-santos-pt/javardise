@@ -21,23 +21,6 @@ interface TextWidget {
             widget.text = value
         }
 
-
-    val statement: Control
-        get() {
-            var c: Control = widget
-            while (!(c.data == "ROOTAREA" || c.parent is SequenceWidget)) c = c.parent
-            return c
-        }
-
-    val sequenceContainer: SequenceContainer
-        get() {
-            var c: Control = widget.parent
-            while (c !is SequenceContainer) {
-                c = c.parent
-            }
-            return c
-        }
-
     val isEmpty: Boolean
         get() = widget.text.isBlank()
 
@@ -195,13 +178,6 @@ interface TextWidget {
             }
         }
 
-        @JvmStatic
-        fun findStatement(widget: Control): Control {
-            var c: Control = widget
-            while (!(c.data == "ROOTAREA" || c.parent is SequenceWidget)) c = c.parent
-            return c
-        }
-
         private val MODIFY_PACK =
             ModifyListener { e -> //			((Control) e.widget).setLayoutData(new RowData(SWT.DEFAULT, SWT.DEFAULT));
                 (e.widget as Control).pack()
@@ -222,6 +198,8 @@ interface TextWidget {
         val Text.isAtEnd: Boolean
             get() = caretPosition == text.length
 
+        // TODO handle insert cursor
+        // TODO handle else special case
         private val LISTENER_ARROW_KEYS: KeyListener = object : KeyAdapter() {
             override fun keyPressed(e: KeyEvent) {
                 val text = Display.getDefault().focusControl
@@ -296,38 +274,5 @@ interface TextWidget {
                 }
             }
         }
-
-        fun moveCursorUp(widget: TextWidget) {
-            val statement = widget.statement
-            if (statement.data != "ROOTAREA") {
-                val seq = statement.parent as SequenceWidget
-                seq.focusPreviousStatement(statement)
-            }
-        }
-
-        fun moveCursorUp(widget: Control) {
-            val statement = findStatement(widget)
-            if (statement.data != "ROOTAREA") {
-                val seq = statement.parent as SequenceWidget
-                seq.focusPreviousStatement(statement)
-            }
-        }
-
-        fun moveCursorDown(widget: TextWidget) {
-            val statement = widget.statement
-            if (statement.data != "ROOTAREA") {
-                val seq = statement.parent as SequenceWidget
-                seq.focusNextStatement(widget.statement)
-            }
-        }
-
-        fun moveCursorDown(widget: Control) {
-            val statement = findStatement(widget)
-            if (statement.data != "ROOTAREA") {
-                val seq = statement.parent as SequenceWidget
-                seq.focusNextStatement(statement)
-            }
-        }
-
     }
 }

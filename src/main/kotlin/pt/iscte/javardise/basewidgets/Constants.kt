@@ -38,25 +38,25 @@ interface Constants {
             return layout
         }
 
-        fun addInsertLine(widget: TextWidget, after: Boolean = false) {
-            widget.widget.addKeyListener(INSERT_LINE(after))
-            widget.widget.data = widget
-        }
+//        fun addInsertLine(widget: TextWidget, after: Boolean = false) {
+//            widget.widget.addKeyListener(INSERT_LINE(after))
+//            widget.widget.data = widget
+//        }
 
-        class INSERT_LINE(val after: Boolean) : KeyAdapter() {
-            override fun keyPressed(e: KeyEvent) {
-                if (e.character == SWT.CR) {
-                    val w = e.widget.data as TextWidget
-                    val statement = w.statement
-                    val seq = statement.parent as SequenceWidget
-                    if (w is TokenWidget && !after || w.isAtBeginning && !w.isAtEnd)
-                        seq.insertLineAt(statement)
-                    else if(after || w.isAtEnd)
-                        seq.insertLineAfter(statement)
-                    e.doit = false
-                }
-            }
-        }
+//        class INSERT_LINE(val after: Boolean) : KeyAdapter() {
+//            override fun keyPressed(e: KeyEvent) {
+//                if (e.character == SWT.CR) {
+//                    val w = e.widget.data as TextWidget
+//                    val statement = w.statement
+//                    val seq = statement.parent as SequenceWidget
+//                    if (w is TokenWidget && !after || w.isAtBeginning && !w.isAtEnd)
+//                        seq.insertLineAt(statement)
+//                    else if(after || w.isAtEnd)
+//                        seq.insertLineAfter(statement)
+//                    e.doit = false
+//                }
+//            }
+//        }
 
         fun createHeader(parent: EditorWidget): EditorWidget {
             val c = EditorWidget(parent)

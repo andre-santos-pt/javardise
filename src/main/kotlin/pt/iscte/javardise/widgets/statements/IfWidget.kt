@@ -62,7 +62,7 @@ class IfWidget(
                 exp.addKeyEvent(SWT.CR) {
                     body.insertLine()
                 }
-                Constants.addInsertLine(exp,)
+                //Constants.addInsertLine(exp,)
                 FixedToken(this, ")")
 
             }

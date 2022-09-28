@@ -16,7 +16,14 @@ class TokenWidget(
 ) : TextWidget {
 
     override val widget: Text = TextWidget.createText(parent, token)
-    private val map: MultiMapList<Char, String> = MultiMapList()
+    private val map: MutableMap<Char, MutableList<String>> = mutableMapOf()
+
+    fun MutableMap<Char, MutableList<String>>.putPair(c: Char, s: String) {
+        if(containsKey(c))
+            get(c)?.add(s)
+        else
+            put(c, mutableListOf(s))
+    }
 
     init {
         widget.editable = false
@@ -43,7 +50,7 @@ class TokenWidget(
         for (t in alternatives) {
             val item = MenuItem(menu, SWT.NONE)
             item.text = t
-            map.put(t[0], t)
+            map.putPair(t[0], t)
             item.addSelectionListener(object : SelectionAdapter() {
                 override fun widgetSelected(e: SelectionEvent) {
                     editAction(item.text)

@@ -49,7 +49,7 @@ class WhileWidget(
 
         }
         closingBracket = TokenWidget(col, "}")
-        Constants.addInsertLine(closingBracket, true)
+        //Constants.addInsertLine(closingBracket, true)
 
         keyword.addDelete(node, block)
     }
