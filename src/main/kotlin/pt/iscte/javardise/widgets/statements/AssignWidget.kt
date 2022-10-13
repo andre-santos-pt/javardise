@@ -63,7 +63,7 @@ class AssignWidget(
                     }
                 })
             }
-            if(this@AssignWidget.parent is SequenceWidget)
+            if (this@AssignWidget.parent is SequenceWidget)
                 TokenWidget(this, ";").addInsert(this@AssignWidget, this@AssignWidget.parent as SequenceWidget, true)
         }
 
@@ -71,7 +71,7 @@ class AssignWidget(
             target.update(it)
         }
         assignment.observeProperty<AssignExpr.Operator>(ObservableProperty.OPERATOR) {
-            operator.set(it?.asString() ?: "NaO")
+            operator.set(it?.asString() ?: "??")
             expression.setFocus()
         }
         assignment.observeProperty<Expression>(ObservableProperty.VALUE) {

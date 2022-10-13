@@ -35,7 +35,7 @@ class IfWidget(
     var column: Composite
     lateinit var firstRow: Composite
     lateinit var keyword: TokenWidget
-    var exp: ExpWidget<*>? = null
+    lateinit var exp: ExpWidget<*>
     override lateinit var body: SequenceWidget
 
     var elseWidget: ElseWidget? = null
@@ -80,9 +80,9 @@ class IfWidget(
         })
 
         node.observeProperty<Expression>(ObservableProperty.CONDITION) {
-            exp?.dispose()
+            exp.dispose()
             exp = firstRow.createExpWidget(it!!)
-            exp!!.moveBelow(openClause.label)
+            exp.moveBelow(openClause.label)
             firstRow.requestLayout()
         }
 
@@ -140,7 +140,6 @@ class IfWidget(
                             }
                         })
                     }
-
                     openBracketElse = TokenWidget(this, "{")
                 }
                 elseBody = createSequence(this, elseStatement as BlockStmt)

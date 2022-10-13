@@ -1,17 +1,17 @@
 package pt.iscte.javardise.widgets.statements
 
-import com.github.javaparser.ast.expr.AssignExpr
+import com.github.javaparser.StaticJavaParser
+import com.github.javaparser.ast.body.VariableDeclarator
 import com.github.javaparser.ast.expr.Expression
+import com.github.javaparser.ast.expr.SimpleName
 import com.github.javaparser.ast.expr.VariableDeclarationExpr
 import com.github.javaparser.ast.observer.ObservableProperty
 import com.github.javaparser.ast.stmt.BlockStmt
 import com.github.javaparser.ast.stmt.ExpressionStmt
+import com.github.javaparser.ast.type.Type
 import org.eclipse.swt.SWT
-import org.eclipse.swt.layout.FillLayout
-import pt.iscte.javardise.Commands
-import pt.iscte.javardise.ModifyCommand
-import pt.iscte.javardise.SimpleNameWidget
-import pt.iscte.javardise.SimpleTypeWidget
+import org.eclipse.swt.widgets.Composite
+import pt.iscte.javardise.*
 import pt.iscte.javardise.basewidgets.FixedToken
 import pt.iscte.javardise.basewidgets.Id
 import pt.iscte.javardise.basewidgets.SequenceWidget
@@ -24,9 +24,9 @@ class VariableWidget(
     node: ExpressionStmt,
     override val block: BlockStmt
 ) : StatementWidget<ExpressionStmt>(parent, node) {
-    lateinit var type: Id
-    lateinit var target: Id
-    var expression: ExpressionFreeWidget? = null
+    var type: Id
+    var name: Id
+    var expression: ExpWidget<*>? = null
 
     init {
         require(node.expression is VariableDeclarationExpr)
@@ -34,42 +34,77 @@ class VariableWidget(
         val assignment = node.expression as VariableDeclarationExpr
         val decl = assignment.variables[0] // multi variable not supported
 
-        layout = FillLayout()
-        row {
-            type = SimpleTypeWidget(this, decl.type) { it.asString() }
-            target = SimpleNameWidget(this, decl) { it.name.asString() }
-            target.addKeyEvent(SWT.BS, precondition = { it.isEmpty() }, action = createDeleteEvent(node, block))
+        layout = ROW_LAYOUT_H_SHRINK
 
-            if (decl.initializer.isPresent) {
-                FixedToken(this, "=")
-                expression = ExpressionFreeWidget(this, decl.initializer.get()) {
-                    Commands.execute(object : ModifyCommand<Expression>(decl, decl.initializer.get()) {
+        // TODO delete to assign
+        type = SimpleTypeWidget(this, decl.type) { it.asString() }
+        type.addFocusLostAction {
+            if (type.text != decl.typeAsString)
+                if (tryParseType(type.text))
+                    Commands.execute(object : ModifyCommand<Type>(assignment, assignment.commonType) {
                         override fun run() {
-                            decl.setInitializer(it)
+                            assignment.setAllTypes(StaticJavaParser.parseType(type.text))
                         }
 
                         override fun undo() {
-                            decl.setInitializer(element)
+                            assignment.setAllTypes(element)
                         }
                     })
-                }
-            }
-            TokenWidget(this, ";").addInsert(this@VariableWidget, this@VariableWidget.parent as SequenceWidget, true)
+                else
+                    type.set(decl.typeAsString)
         }
 
-        node.observeProperty<Expression>(ObservableProperty.TARGET) {
-            TODO()
+        name = SimpleNameWidget(this, decl) { it.name.asString() }
+        name.addKeyEvent(SWT.BS, precondition = { it.isEmpty() }, action = createDeleteEvent(node, block))
+        name.addFocusLostAction {
+            if (name.text != decl.nameAsString)
+                Commands.execute(object : ModifyCommand<SimpleName>(decl, decl.name) {
+                    override fun run() {
+                        decl.name = SimpleName(name.text)
+                    }
+
+                    override fun undo() {
+                        decl.name = element
+                    }
+                })
         }
-        node.observeProperty<AssignExpr.Operator>(ObservableProperty.OPERATOR) {
-            TODO()
+
+        if (decl.initializer.isPresent) {
+            FixedToken(this, "=")
+            expression = createExpWidget(decl, decl.initializer.get())
         }
-        node.observeProperty<Expression>(ObservableProperty.VALUE) {
-            expression?.update(it!!) // TODO expression
+        val semiColon = TokenWidget(this, ";")
+        semiColon.addInsert(this@VariableWidget, this@VariableWidget.parent as SequenceWidget, true)
+
+        assignment.observeProperty<Type>(ObservableProperty.TYPE) {
+            type.set(it?.asString())
+        }
+        decl.observeProperty<SimpleName>(ObservableProperty.NAME) {
+            name.set(it.toString())
+        }
+        decl.observeProperty<Expression>(ObservableProperty.INITIALIZER) {
+            expression?.dispose()
+            expression = this@VariableWidget.createExpWidget(decl, it!!)
+            expression!!.moveAbove(semiColon.widget)
+            expression!!.requestLayout()
         }
     }
 
+    private fun Composite.createExpWidget(variable: VariableDeclarator, expression: Expression) =
+        createExpressionWidget(this, expression) {
+            Commands.execute(object : ModifyCommand<Expression>(variable, variable.initializer.get()) {
+                override fun run() {
+                    variable.setInitializer(it)
+                }
+
+                override fun undo() {
+                    variable.setInitializer(element)
+                }
+            })
+        }
+
     override fun setFocus(): Boolean {
-        return target.setFocus()
+        return name.setFocus()
     }
 
     override fun setFocusOnCreation(firstFlag: Boolean) {

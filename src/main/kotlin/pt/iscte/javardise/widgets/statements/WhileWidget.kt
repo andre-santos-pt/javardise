@@ -1,12 +1,12 @@
 package pt.iscte.javardise.widgets.statements
 
 import com.github.javaparser.ast.expr.Expression
+import com.github.javaparser.ast.observer.ObservableProperty
 import com.github.javaparser.ast.stmt.BlockStmt
 import com.github.javaparser.ast.stmt.WhileStmt
 import org.eclipse.swt.layout.RowLayout
-import pt.iscte.javardise.Commands
-import pt.iscte.javardise.Factory
-import pt.iscte.javardise.ModifyCommand
+import org.eclipse.swt.widgets.Composite
+import pt.iscte.javardise.*
 import pt.iscte.javardise.basewidgets.*
 import pt.iscte.javardise.widgets.*
 import pt.iscte.javardise.external.*
@@ -19,28 +19,21 @@ class WhileWidget(
     StatementWidget<WhileStmt>(parent, node), SequenceContainer {
 
     lateinit var keyword: TokenWidget
-    lateinit var exp: ExpressionFreeWidget
+    lateinit var exp: ExpWidget<*>
+    lateinit var firstRow: Composite
     override lateinit var body: SequenceWidget
+    lateinit var openClause: FixedToken
+
     lateinit var openBracket: TokenWidget
     override lateinit var closingBracket: TokenWidget
     init {
         layout = RowLayout()
         val col = column {
-            row {
+            firstRow = row {
                 keyword = Factory.newKeywordWidget(this, "while")
                 keyword.setCopySource()
-                FixedToken(this, "(")
-                exp = ExpressionFreeWidget(this, node.condition) {
-                    Commands.execute(object : ModifyCommand<Expression>(node, node.condition) {
-                        override fun run() {
-                            node.condition = it
-                        }
-
-                        override fun undo() {
-                            node.condition = element
-                        }
-                    })
-                }
+                openClause = FixedToken(this, "(")
+                exp = createExpWidget(node.condition)
                 FixedToken(this, ")")
                 openBracket = TokenWidget(this, "{")
             }
@@ -52,7 +45,27 @@ class WhileWidget(
             closingBracket.addInsert(this, this.parent as SequenceWidget, true)
 
         keyword.addDelete(node, block)
+
+        node.observeProperty<Expression>(ObservableProperty.CONDITION) {
+            exp.dispose()
+            exp = firstRow.createExpWidget(it!!)
+            exp.moveBelow(openClause.label)
+            firstRow.requestLayout()
+        }
     }
+
+    private fun Composite.createExpWidget(condition: Expression) =
+        createExpressionWidget(this, condition) {
+            Commands.execute(object : AbstractCommand<Expression>(node, CommandKind.MODIFY, condition) {
+                override fun run() {
+                    node.condition = it
+                }
+
+                override fun undo() {
+                    node.condition = element
+                }
+            })
+        }
 
     override fun setFocus(): Boolean = keyword.setFocus()
 
