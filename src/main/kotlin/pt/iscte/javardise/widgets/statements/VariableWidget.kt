@@ -15,6 +15,7 @@ import pt.iscte.javardise.SimpleTypeWidget
 import pt.iscte.javardise.basewidgets.FixedToken
 import pt.iscte.javardise.basewidgets.Id
 import pt.iscte.javardise.basewidgets.SequenceWidget
+import pt.iscte.javardise.basewidgets.TokenWidget
 import pt.iscte.javardise.widgets.*
 import pt.iscte.javardise.external.*
 
@@ -25,7 +26,7 @@ class VariableWidget(
 ) : StatementWidget<ExpressionStmt>(parent, node) {
     lateinit var type: Id
     lateinit var target: Id
-    lateinit var expression: ExpressionFreeWidget
+    var expression: ExpressionFreeWidget? = null
 
     init {
         require(node.expression is VariableDeclarationExpr)
@@ -53,7 +54,7 @@ class VariableWidget(
                     })
                 }
             }
-            FixedToken(this, ";")
+            TokenWidget(this, ";").addInsert(this@VariableWidget, this@VariableWidget.parent as SequenceWidget, true)
         }
 
         node.observeProperty<Expression>(ObservableProperty.TARGET) {
@@ -63,7 +64,7 @@ class VariableWidget(
             TODO()
         }
         node.observeProperty<Expression>(ObservableProperty.VALUE) {
-            expression.update(it!!)
+            expression?.update(it!!) // TODO expression
         }
     }
 
@@ -72,6 +73,6 @@ class VariableWidget(
     }
 
     override fun setFocusOnCreation(firstFlag: Boolean) {
-        expression.setFocus()
+        expression?.setFocus()
     }
 }

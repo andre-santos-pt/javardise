@@ -24,7 +24,7 @@ import pt.iscte.javardise.basewidgets.*
 import pt.iscte.javardise.widgets.*
 import java.io.File
 import java.io.PrintWriter
-
+import javax.lang.model.SourceVersion
 
 
 fun main(args: Array<String>) {
@@ -84,6 +84,8 @@ class JavardiseWindow(var file: File?) {
         col.row {
             addButtons(this)
         }
+
+
         // BUG lost focus
         display.addFilter(SWT.KeyDown) {
             if (it.stateMask == SWT.MOD1 && it.keyCode == 'z'.code) {
@@ -117,19 +119,6 @@ class JavardiseWindow(var file: File?) {
     private fun addButtons(
         composite: Composite,
     ) {
-        composite.button("test") {
-            //model.types[0].methods[1].parameters.removeAt(2)
-            //  model.types[0].methods[1].parameters.add(1, Parameter(PrimitiveType(PrimitiveType.Primitive.CHAR), SimpleName("character")))
-            //                    model.types[0].addMethod("testM")
-            //                    model.types[0].addField("int", "f", Modifier.Keyword.PRIVATE, Modifier.Keyword.FINAL)
-            //                    model.types[0].members.add(
-            //                        0, FieldDeclaration(
-            //                            NodeList(Modifier.publicModifier(), Modifier.finalModifier()), NodeList(), NodeList(
-            //                                VariableDeclarator(StaticJavaParser.parseType("String"), "s")
-            //                            )
-            //                        )
-            //                    )
-        }
         composite.button("save") {
             save()
         }
@@ -254,9 +243,9 @@ object Factory {
 interface NodeWidget<T> {
     val node: T
 
-    abstract fun setFocusOnCreation(firstFlag: Boolean = false)
-
+    fun setFocusOnCreation(firstFlag: Boolean = false)
 }
+
 
 
 inline fun <reified T : NodeWidget<*>> Control.findAncestor(): T? {

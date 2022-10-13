@@ -131,7 +131,9 @@ class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: In
             layout = RowLayout()
             (layout as RowLayout).marginTop = 0
 
-            createInsert()
+            if(parameters.isEmpty())
+                createInsert()
+
             addParams()
 
             parameters.register(object : ListAddRemoveObserver<Parameter>() {
@@ -203,6 +205,7 @@ class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: In
             insert.addFocusLostAction {
                 insert.widget.text = " "
             }
+
         }
 
 

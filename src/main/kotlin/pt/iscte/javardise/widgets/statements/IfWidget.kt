@@ -17,9 +17,13 @@ import pt.iscte.javardise.AbstractCommand
 import pt.iscte.javardise.CommandKind
 import pt.iscte.javardise.Commands
 import pt.iscte.javardise.Factory
-import pt.iscte.javardise.basewidgets.*
+import pt.iscte.javardise.basewidgets.FixedToken
+import pt.iscte.javardise.basewidgets.SequenceContainer
+import pt.iscte.javardise.basewidgets.SequenceWidget
+import pt.iscte.javardise.basewidgets.TokenWidget
+import pt.iscte.javardise.external.column
+import pt.iscte.javardise.external.row
 import pt.iscte.javardise.widgets.*
-import pt.iscte.javardise.external.*
 
 class IfWidget(
     parent: SequenceWidget,
@@ -28,43 +32,28 @@ class IfWidget(
 ) :
     StatementWidget<IfStmt>(parent, node), SequenceContainer {
 
-    lateinit var column: Composite
+    var column: Composite
+    lateinit var firstRow: Composite
     lateinit var keyword: TokenWidget
-    lateinit var exp: ExpressionFreeWidget
+    var exp: ExpWidget<*>? = null
     override lateinit var body: SequenceWidget
 
     var elseWidget: ElseWidget? = null
     var elseBody: SequenceWidget? = null
-
-    lateinit var openThenBracket : TokenWidget
-    override val closingBracket : TokenWidget
+    lateinit var openClause: FixedToken
+    lateinit var openThenBracket: TokenWidget
+    override val closingBracket: TokenWidget
 
     init {
         layout = RowLayout()
         column = column {
-            val firstRow = row {
+            firstRow = row {
                 keyword = Factory.newKeywordWidget(this, "if")
                 keyword.setCopySource()
-                //Constants.addInsertLine(keyword)
                 keyword.addDelete(node, block)
-                FixedToken(this, "(")
-                exp = ExpressionFreeWidget(this, node.condition) {
-                    Commands.execute(object : AbstractCommand<Expression>(node, CommandKind.MODIFY, node.condition) {
-                        override fun run() {
-                            node.condition = it
-                        }
-
-                        override fun undo() {
-                            node.condition = element.clone()
-                        }
-                    })
-                }
-                exp.addKeyEvent(SWT.CR) {
-                    body.insertLine()
-                }
-                //Constants.addInsertLine(exp,)
+                openClause = FixedToken(this, "(")
+                exp = this.createExpWidget(node.condition)
                 FixedToken(this, ")")
-
             }
 
             body = createSequence(this, node.thenBlock)
@@ -72,27 +61,29 @@ class IfWidget(
             openThenBracket = TokenWidget(firstRow, "{")
             openThenBracket.addInsert(null, body, false)
 
-
             //setThenBracketsVisibility(node.thenBlock.statements.size, openThenBracket, closeThenBracket)
         }
         closingBracket = TokenWidget(column, "}")
         closingBracket.addInsert(this@IfWidget, this@IfWidget.parent as SequenceWidget, true)
 
         // TODO else brackets visibility
-        node.thenBlock.statements.register(object: AstObserverAdapter() {
+        node.thenBlock.statements.register(object : AstObserverAdapter() {
             override fun listChange(
                 observedNode: NodeList<*>,
                 type: AstObserver.ListChangeType,
                 index: Int,
                 nodeAddedOrRemoved: Node?
             ) {
-                val newSize = observedNode.size + if(type == AstObserver.ListChangeType.ADDITION) 1 else -1
+                val newSize = observedNode.size + if (type == AstObserver.ListChangeType.ADDITION) 1 else -1
                 //setThenBracketsVisibility(newSize, openThenBracket, closeThenBracket)
             }
         })
 
-        node.observeProperty<Expression>(ObservableProperty.EXPRESSION) {
-           exp.update(it)
+        node.observeProperty<Expression>(ObservableProperty.CONDITION) {
+            exp?.dispose()
+            exp = firstRow.createExpWidget(it!!)
+            exp!!.moveBelow(openClause.label)
+            firstRow.requestLayout()
         }
 
         if (node.hasElseBranch())
@@ -102,8 +93,7 @@ class IfWidget(
             if (it == null) {
                 elseWidget?.dispose()
                 keyword.setFocus()
-            }
-            else {
+            } else {
                 elseWidget = ElseWidget(column, it)
                 elseWidget?.focusOpenBracket()
                 elseWidget?.requestLayout()
@@ -111,15 +101,29 @@ class IfWidget(
         }
     }
 
+    private fun Composite.createExpWidget(condition: Expression) =
+        createExpressionWidget(this, condition) {
+            Commands.execute(object : AbstractCommand<Expression>(node, CommandKind.MODIFY, condition) {
+                override fun run() {
+                    node.condition = it
+                }
+
+                override fun undo() {
+                    node.condition = element
+                }
+            })
+        }
+
     private fun setThenBracketsVisibility(bodySize: Int, open: TokenWidget, close: TokenWidget) {
         val visible = bodySize == 0 || bodySize > 1
         open.widget.visible = visible
         close.widget.visible = visible
     }
 
-    inner class ElseWidget(parent: Composite, elseStatement: Statement) : Composite(parent, SWT.NONE){
+    inner class ElseWidget(parent: Composite, elseStatement: Statement) : Composite(parent, SWT.NONE) {
         var openBracketElse: TokenWidget? = null
         var closeBracketElse: TokenWidget? = null
+
         init {
             layout = FillLayout()
             column {
@@ -154,6 +158,6 @@ class IfWidget(
     override fun setFocus(): Boolean = keyword.setFocus()
 
     override fun setFocusOnCreation(firstFlag: Boolean) {
-        exp.setFocus()
+        exp?.setFocus()
     }
 }

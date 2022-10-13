@@ -10,6 +10,10 @@ import org.eclipse.swt.events.KeyListener
 import org.eclipse.swt.widgets.Composite
 import org.eclipse.swt.widgets.Menu
 import org.eclipse.swt.widgets.Text
+import pt.iscte.javardise.FOREGROUND_COLOR
+import pt.iscte.javardise.Factory
+import pt.iscte.javardise.KEYWORD_COLOR
+import pt.iscte.javardise.updateColor
 import javax.lang.model.SourceVersion
 
 val ID = Regex("[a-zA-Z][a-zA-Z0-9_]*")
@@ -41,10 +45,12 @@ open class Id(parent: Composite, id: String, allowedChars: Regex,
         }
         textWidget.menu = Menu(textWidget) // prevent system menu
 
-        textWidget.foreground = parent.foreground
         textWidget.background = parent.background
+        updateColor(this)
 
-
+        textWidget.addModifyListener {
+            updateColor(this)
+        }
 //        textWidget.addModifyListener {
 //            val validate = validate(textWidget.text)
 //            if (validate.fail) {
@@ -60,6 +66,7 @@ open class Id(parent: Composite, id: String, allowedChars: Regex,
 //            }
 //        }
     }
+
 
     fun isValid() = textWidget.text.matches(ID) && !SourceVersion.isKeyword(textWidget.text)
 

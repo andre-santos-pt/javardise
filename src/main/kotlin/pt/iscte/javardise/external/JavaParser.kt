@@ -6,6 +6,7 @@ import com.github.javaparser.ast.CompilationUnit
 import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.NodeList
 import com.github.javaparser.ast.body.*
+import com.github.javaparser.ast.expr.BinaryExpr
 import com.github.javaparser.ast.expr.Expression
 import com.github.javaparser.ast.observer.AstObserver
 import com.github.javaparser.ast.observer.AstObserverAdapter
@@ -19,6 +20,7 @@ import com.github.javaparser.ast.visitor.VoidVisitorAdapter
 import pt.iscte.javardise.Command
 import pt.iscte.javardise.CommandKind
 import java.io.File
+import java.util.function.BinaryOperator
 
 val IfStmt.thenBlock: BlockStmt get() = thenStmt as BlockStmt
 val IfStmt.elseBlock: BlockStmt get() = elseStmt.get() as BlockStmt
@@ -239,3 +241,13 @@ fun tryParseExpression(exp: String): Boolean =
     } catch (_: ParseProblemException) {
         false
     }
+
+fun tryParseSimpleName(name: String): Boolean =
+    try {
+        StaticJavaParser.parseSimpleName(name)
+        true
+    } catch (_: ParseProblemException) {
+        false
+    }
+
+val binaryOperators : List<BinaryExpr.Operator> = BinaryExpr.Operator.values().toList()

@@ -78,8 +78,10 @@ interface TextWidget {
         return l
     }
 
+    // TODO remove
     fun addKeyListenerInternal(listener: KeyListener)
 
+    // TODO remove
     fun addFocusListenerInternal(listener: FocusListener)
 
     fun addFocusLostAction(action: () -> Unit): FocusListener
@@ -89,6 +91,11 @@ interface TextWidget {
             action()
         }
 
+    fun removeFocusOutListeners() {
+        widget.getListeners(SWT.FocusOut).forEach {
+            widget.removeListener(SWT.FocusOut, it)
+        }
+    }
 
     companion object {
         @JvmStatic

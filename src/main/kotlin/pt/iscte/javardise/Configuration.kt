@@ -3,6 +3,8 @@ package pt.iscte.javardise
 import org.eclipse.swt.SWT
 import org.eclipse.swt.graphics.Font
 import org.eclipse.swt.widgets.Display
+import pt.iscte.javardise.basewidgets.TextWidget
+import javax.lang.model.SourceVersion
 
 val ERROR_COLOR = { Display.getDefault().getSystemColor(SWT.COLOR_RED) }
 
@@ -20,4 +22,11 @@ object Configuration {
     const val tabLength = 4
     const val focusFollowsMouse = false
     const val NOPARSE = "\$NOPARSE"
+}
+
+fun updateColor(textWidget: TextWidget) {
+    if (SourceVersion.isKeyword(textWidget.text))
+        textWidget.widget.foreground = KEYWORD_COLOR()
+    else
+        textWidget.widget.foreground = FOREGROUND_COLOR()
 }

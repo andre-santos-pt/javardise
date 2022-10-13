@@ -41,7 +41,7 @@ enum class CommandKind {
 interface Command {
     val target: Node
     val kind: CommandKind
-    val element: Node
+    val element: Any
     fun run()
     fun undo()
 

@@ -27,7 +27,7 @@ class FieldWidget(parent: Composite, val dec: FieldDeclaration) :
     val type: Id
     val name: Id
     var equals: TokenWidget? = null
-    var initializer: ExpressionFreeWidget? = null
+    var initializer: ExpWidget<*>? = null
     val semiColon: TokenWidget
 
     init {
@@ -123,22 +123,25 @@ class FieldWidget(parent: Composite, val dec: FieldDeclaration) :
                 addInitializer(it)
             }
 
-            if (initializer != null && it == null) {
-                equals?.dispose()
-                initializer?.delete()
+            else if (initializer != null && it == null) {
+                equals!!.dispose()
+                initializer!!.dispose()
                 initializer = null
                 firstRow.requestLayout()
             }
-
-            it?.let {
-                initializer?.update(it)
+            else {
+                it?.let {
+                    equals?.dispose()
+                    initializer?.dispose()
+                    addInitializer(it)
+                }
             }
         }
     }
 
     private fun addInitializer(expression: Expression) {
         equals = TokenWidget(firstRow, "=")
-        initializer = ExpressionFreeWidget(firstRow, expression) {
+        initializer = createExpressionWidget(firstRow, expression) {
             Commands.execute(object : ModifyCommand<Expression>(dec, dec.variable.initializer.get()) {
                 override fun run() {
                     dec.variable.setInitializer(it)
@@ -149,9 +152,10 @@ class FieldWidget(parent: Composite, val dec: FieldDeclaration) :
                 }
             })
         }
-        equals?.moveAboveInternal(semiColon.widget)
-        initializer?.moveBelowInternal(equals!!.widget)
-        initializer?.setFocus()
+        equals!!.moveAboveInternal(semiColon.widget)
+        initializer!!.moveBelow(equals!!.widget)
+        initializer!!.requestLayout()
+        initializer!!.setFocus()
     }
 
 

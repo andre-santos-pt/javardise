@@ -23,7 +23,7 @@ public class Student {
 	}
 
 	public int getNumber() {
-		return number;
+		return number + 1;
 	}
 
 	public String getName() {
