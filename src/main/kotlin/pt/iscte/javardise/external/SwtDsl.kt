@@ -84,7 +84,7 @@ fun Composite.label(file: File, style: Int = SWT.NONE, font: Font? = null, init:
     val s = Scanner(file)
     val buf = StringBuffer()
     while(s.hasNextLine())
-        buf.appendln(s.nextLine())
+        buf.appendLine(s.nextLine())
     s.close()
     return label(buf.toString(), style, font, init)
 }

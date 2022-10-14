@@ -13,8 +13,8 @@ import pt.iscte.javardise.Commands
 import pt.iscte.javardise.ModifyCommand
 import pt.iscte.javardise.basewidgets.TokenWidget
 import pt.iscte.javardise.external.ROW_LAYOUT_H_SHRINK
-import pt.iscte.javardise.widgets.observeProperty
-import pt.iscte.javardise.widgets.unaryOperators
+import pt.iscte.javardise.external.observeProperty
+import pt.iscte.javardise.external.unaryOperators
 
 class UnaryExpressionWidget(parent: Composite, override val node: UnaryExpr) : ExpWidget<UnaryExpr>(parent) {
     var operator: TokenWidget

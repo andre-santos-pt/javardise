@@ -1,4 +1,4 @@
-package pt.iscte.javardise.widgets
+package pt.iscte.javardise.widgets.members
 
 import com.github.javaparser.StaticJavaParser
 import com.github.javaparser.ast.Node
@@ -15,7 +15,7 @@ import org.eclipse.swt.widgets.Display
 import org.eclipse.swt.widgets.Event
 import pt.iscte.javardise.*
 import pt.iscte.javardise.basewidgets.*
-import pt.iscte.javardise.external.isChild
+import pt.iscte.javardise.external.*
 import pt.iscte.javardise.widgets.statements.createSequence
 
 class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: Int = SWT.NONE) :
@@ -128,8 +128,7 @@ class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: In
         lateinit var insert: TextWidget
 
         init {
-            layout = RowLayout()
-            (layout as RowLayout).marginTop = 0
+            layout = ROW_LAYOUT_H_SHRINK
 
             if(parameters.isEmpty())
                 createInsert()

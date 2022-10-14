@@ -1,4 +1,4 @@
-package pt.iscte.javardise.widgets
+package pt.iscte.javardise.widgets.members
 
 import com.github.javaparser.ast.Modifier
 import com.github.javaparser.ast.Node
@@ -14,7 +14,9 @@ import org.eclipse.swt.widgets.Display
 import pt.iscte.javardise.*
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
-import pt.iscte.javardise.external.*
+import pt.iscte.javardise.external.column
+import pt.iscte.javardise.external.row
+
 abstract class MemberWidget<T : NodeWithModifiers<*>>(
     parent: Composite,
     override val node: T,

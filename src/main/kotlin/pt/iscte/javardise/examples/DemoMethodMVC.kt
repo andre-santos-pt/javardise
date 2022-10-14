@@ -6,8 +6,8 @@ import org.eclipse.swt.layout.FillLayout
 import org.eclipse.swt.widgets.Display
 import org.eclipse.swt.widgets.Shell
 import pt.iscte.javardise.external.*
-import pt.iscte.javardise.widgets.MethodWidget
-import pt.iscte.javardise.widgets.loadMethod
+import pt.iscte.javardise.widgets.members.MethodWidget
+import pt.iscte.javardise.external.loadMethod
 
 /*
 Opens two views for the editing same method of the model.

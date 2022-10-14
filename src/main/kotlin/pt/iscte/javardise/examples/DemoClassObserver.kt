@@ -1,15 +1,13 @@
 package pt.iscte.javardise.examples
 
-import org.eclipse.swt.SWT
 import org.eclipse.swt.layout.FillLayout
 import org.eclipse.swt.widgets.Display
 import org.eclipse.swt.widgets.Shell
 import pt.iscte.javardise.basewidgets.ICodeDecoration
-import pt.iscte.javardise.basewidgets.addMark
 import pt.iscte.javardise.external.*
-import pt.iscte.javardise.widgets.ClassWidget
-import pt.iscte.javardise.widgets.findMainClass
-import pt.iscte.javardise.widgets.loadCompilationUnit
+import pt.iscte.javardise.external.findMainClass
+import pt.iscte.javardise.external.loadCompilationUnit
+import pt.iscte.javardise.widgets.members.ClassWidget
 
 /*
 Opens a shell with a class editor. An observer is plugged in to react when focus changes.

@@ -21,11 +21,11 @@ import pt.iscte.javardise.basewidgets.FixedToken
 import pt.iscte.javardise.basewidgets.SequenceContainer
 import pt.iscte.javardise.basewidgets.SequenceWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
-import pt.iscte.javardise.external.column
-import pt.iscte.javardise.external.row
+import pt.iscte.javardise.external.*
 import pt.iscte.javardise.widgets.*
 import pt.iscte.javardise.widgets.expressions.ExpWidget
 import pt.iscte.javardise.widgets.expressions.createExpressionWidget
+import pt.iscte.javardise.widgets.members.addInsert
 
 class IfWidget(
     parent: SequenceWidget,
@@ -159,6 +159,6 @@ class IfWidget(
     override fun setFocus(): Boolean = keyword.setFocus()
 
     override fun setFocusOnCreation(firstFlag: Boolean) {
-        exp?.setFocus()
+        exp.setFocus()
     }
 }

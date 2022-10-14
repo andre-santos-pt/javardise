@@ -1,4 +1,4 @@
-package pt.iscte.javardise.widgets
+package pt.iscte.javardise.widgets.members
 
 import com.github.javaparser.ParseProblemException
 import com.github.javaparser.StaticJavaParser
@@ -19,6 +19,7 @@ import pt.iscte.javardise.basewidgets.Id
 import pt.iscte.javardise.basewidgets.TokenWidget
 import pt.iscte.javardise.widgets.expressions.ExpWidget
 import pt.iscte.javardise.widgets.expressions.createExpressionWidget
+import pt.iscte.javardise.external.observeProperty
 
 class FieldWidget(parent: Composite, val dec: FieldDeclaration) :
     MemberWidget<FieldDeclaration>(parent, dec, listOf(PUBLIC, PRIVATE, PROTECTED, FINAL)) {

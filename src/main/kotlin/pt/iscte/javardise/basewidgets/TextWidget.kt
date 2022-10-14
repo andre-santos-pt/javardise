@@ -5,7 +5,7 @@ import org.eclipse.swt.events.*
 import org.eclipse.swt.widgets.*
 import pt.iscte.javardise.CODE_FONT
 import pt.iscte.javardise.Configuration
-import pt.iscte.javardise.widgets.MemberWidget
+import pt.iscte.javardise.widgets.members.MemberWidget
 import pt.iscte.javardise.widgets.statements.StatementWidget
 
 interface TextWidget {
@@ -109,7 +109,7 @@ interface TextWidget {
             t.foreground = parent.foreground
             t.text = text
             t.font = CODE_FONT()
-            t.cursor = Display.getCurrent().getSystemCursor(SWT.CURSOR_HAND);
+            t.cursor = Display.getCurrent().getSystemCursor(SWT.CURSOR_HAND)
 
             accept?.let {
                 t.addVerifyListener {

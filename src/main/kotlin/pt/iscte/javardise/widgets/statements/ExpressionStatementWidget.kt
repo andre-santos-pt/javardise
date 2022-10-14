@@ -5,9 +5,9 @@ import com.github.javaparser.ast.stmt.ExpressionStmt
 import pt.iscte.javardise.basewidgets.SequenceWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
 import pt.iscte.javardise.external.ROW_LAYOUT_H_SHRINK
-import pt.iscte.javardise.widgets.addInsert
 import pt.iscte.javardise.widgets.expressions.ExpWidget
 import pt.iscte.javardise.widgets.expressions.createExpressionWidget
+import pt.iscte.javardise.widgets.members.addInsert
 
 class ExpressionStatementWidget(
     parent: SequenceWidget,

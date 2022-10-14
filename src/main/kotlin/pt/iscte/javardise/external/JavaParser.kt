@@ -1,4 +1,4 @@
-package pt.iscte.javardise.widgets
+package pt.iscte.javardise.external
 
 import com.github.javaparser.ParseProblemException
 import com.github.javaparser.StaticJavaParser
@@ -21,7 +21,6 @@ import com.github.javaparser.ast.visitor.VoidVisitorAdapter
 import pt.iscte.javardise.Command
 import pt.iscte.javardise.CommandKind
 import java.io.File
-import java.util.function.BinaryOperator
 
 val IfStmt.thenBlock: BlockStmt get() = thenStmt as BlockStmt
 val IfStmt.elseBlock: BlockStmt get() = elseStmt.get() as BlockStmt

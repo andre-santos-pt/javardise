@@ -11,11 +11,11 @@ import org.eclipse.swt.widgets.Composite
 import pt.iscte.javardise.*
 import pt.iscte.javardise.basewidgets.SequenceWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
+import pt.iscte.javardise.external.observeProperty
 import pt.iscte.javardise.external.row
-import pt.iscte.javardise.widgets.*
-import pt.iscte.javardise.widgets.addInsert
 import pt.iscte.javardise.widgets.expressions.ExpWidget
 import pt.iscte.javardise.widgets.expressions.createExpressionWidget
+import pt.iscte.javardise.widgets.members.addInsert
 
 class ReturnWidget(parent: SequenceWidget, node: ReturnStmt, override val block: BlockStmt) :
     StatementWidget<ReturnStmt>(parent, node) {

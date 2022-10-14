@@ -12,8 +12,8 @@ import pt.iscte.javardise.Commands
 import pt.iscte.javardise.ModifyCommand
 import pt.iscte.javardise.basewidgets.TokenWidget
 import pt.iscte.javardise.external.ROW_LAYOUT_H_SHRINK
-import pt.iscte.javardise.widgets.binaryOperators
-import pt.iscte.javardise.widgets.observeProperty
+import pt.iscte.javardise.external.binaryOperators
+import pt.iscte.javardise.external.observeProperty
 
 class BinaryExpressionWidget(parent: Composite, override val node: BinaryExpr) : ExpWidget<BinaryExpr>(parent) {
 

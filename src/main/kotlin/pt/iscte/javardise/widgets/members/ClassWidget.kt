@@ -1,4 +1,4 @@
-package pt.iscte.javardise.widgets
+package pt.iscte.javardise.widgets.members
 
 import com.github.javaparser.StaticJavaParser
 import com.github.javaparser.ast.Modifier
@@ -17,10 +17,14 @@ import org.eclipse.swt.widgets.Composite
 import org.eclipse.swt.widgets.Control
 import org.eclipse.swt.widgets.Display
 import org.eclipse.swt.widgets.Event
-import org.eclipse.swt.widgets.Listener
 import pt.iscte.javardise.*
 import pt.iscte.javardise.basewidgets.*
+import pt.iscte.javardise.external.AddMemberCommand
 import pt.iscte.javardise.external.isChild
+import pt.iscte.javardise.external.observeProperty
+import pt.iscte.javardise.widgets.members.FieldWidget
+import pt.iscte.javardise.widgets.members.MemberWidget
+import pt.iscte.javardise.widgets.members.MethodWidget
 import pt.iscte.javardise.widgets.statements.find
 import pt.iscte.javardise.widgets.statements.findByModelIndex
 import pt.iscte.javardise.widgets.statements.findIndexByModel

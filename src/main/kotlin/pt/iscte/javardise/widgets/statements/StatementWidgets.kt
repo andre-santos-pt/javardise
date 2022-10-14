@@ -16,7 +16,8 @@ import pt.iscte.javardise.*
 import pt.iscte.javardise.basewidgets.SequenceWidget
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
-import pt.iscte.javardise.widgets.*
+import pt.iscte.javardise.external.*
+import pt.iscte.javardise.widgets.members.CommentWidget
 
 abstract class StatementWidget<T : Statement>(parent: SequenceWidget, override val node: T) :
     Composite(parent, SWT.NONE), NodeWidget<T> {

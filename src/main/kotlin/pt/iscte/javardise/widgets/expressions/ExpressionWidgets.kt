@@ -7,8 +7,8 @@ import org.eclipse.swt.events.KeyEvent
 import org.eclipse.swt.widgets.Composite
 import pt.iscte.javardise.NodeWidget
 import pt.iscte.javardise.basewidgets.TextWidget
-import pt.iscte.javardise.widgets.binaryOperators
-import pt.iscte.javardise.widgets.unaryOperators
+import pt.iscte.javardise.external.binaryOperators
+import pt.iscte.javardise.external.unaryOperators
 
 fun createExpressionWidget(parent: Composite, node: Expression, editEvent: (Expression) -> Unit): ExpWidget<*> =
     when (node) {

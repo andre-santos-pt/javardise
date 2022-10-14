@@ -17,6 +17,7 @@ import pt.iscte.javardise.basewidgets.TokenWidget
 import pt.iscte.javardise.widgets.*
 import pt.iscte.javardise.widgets.expressions.ExpWidget
 import pt.iscte.javardise.widgets.expressions.createExpressionWidget
+import pt.iscte.javardise.widgets.members.addInsert
 
 // to expression?
 class AssignWidget(

@@ -10,9 +10,8 @@ import org.eclipse.swt.widgets.Composite
 import pt.iscte.javardise.Configuration
 import pt.iscte.javardise.ERROR_COLOR
 import pt.iscte.javardise.basewidgets.TextWidget
-import pt.iscte.javardise.external.ROW_LAYOUT_H_SHRINK
+import pt.iscte.javardise.external.*
 import pt.iscte.javardise.updateColor
-import pt.iscte.javardise.widgets.*
 
 class SimpleExpressionWidget(parent: Composite, override var node: Expression, val editEvent: (Expression) -> Unit) :
     ExpWidget<Expression>(parent) {

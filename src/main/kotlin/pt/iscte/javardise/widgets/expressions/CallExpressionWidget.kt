@@ -14,8 +14,7 @@ import pt.iscte.javardise.CommandKind
 import pt.iscte.javardise.Commands
 import pt.iscte.javardise.SimpleNameWidget
 import pt.iscte.javardise.basewidgets.*
-import pt.iscte.javardise.external.ROW_LAYOUT_H_SHRINK
-import pt.iscte.javardise.widgets.*
+import pt.iscte.javardise.external.*
 
 class CallExpressionWidget(parent: Composite, override val node: MethodCallExpr) :
     ExpWidget<MethodCallExpr>(parent) {
@@ -125,11 +124,11 @@ class CallExpressionWidget(parent: Composite, override val node: MethodCallExpr)
             })
         }
         if (argumentWidgets.isEmpty()) {
-            (arg as SimpleExpressionWidget).expression.moveBelowInternal(openBracket.label)
+            arg.expression.moveBelowInternal(openBracket.label)
         } else {
             val comma = FixedToken(this, ",")
             comma.label.moveBelow(argumentWidgets.last())
-            (arg as SimpleExpressionWidget).expression.moveBelowInternal(comma.label)
+            arg.expression.moveBelowInternal(comma.label)
         }
         argumentWidgets.add(arg)
         requestLayout()

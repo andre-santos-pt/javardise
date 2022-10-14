@@ -22,9 +22,9 @@ import org.eclipse.swt.layout.RowLayout
 import org.eclipse.swt.widgets.*
 import pt.iscte.javardise.basewidgets.*
 import pt.iscte.javardise.widgets.*
+import pt.iscte.javardise.widgets.members.ClassWidget
 import java.io.File
 import java.io.PrintWriter
-import javax.lang.model.SourceVersion
 
 
 fun main(args: Array<String>) {
