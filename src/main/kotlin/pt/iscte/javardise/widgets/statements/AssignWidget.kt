@@ -1,89 +1,103 @@
 package pt.iscte.javardise.widgets.statements
 
+import com.github.javaparser.ast.expr.ArrayAccessExpr
 import com.github.javaparser.ast.expr.AssignExpr
 import com.github.javaparser.ast.expr.Expression
+import com.github.javaparser.ast.expr.FieldAccessExpr
+import com.github.javaparser.ast.expr.NameExpr
 import com.github.javaparser.ast.observer.ObservableProperty
 import com.github.javaparser.ast.stmt.BlockStmt
 import com.github.javaparser.ast.stmt.ExpressionStmt
 import pt.iscte.javardise.external.*
-import org.eclipse.swt.SWT
-import org.eclipse.swt.layout.FillLayout
+import org.eclipse.swt.widgets.Composite
 import pt.iscte.javardise.Commands
 import pt.iscte.javardise.ModifyCommand
 import pt.iscte.javardise.basewidgets.SequenceWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
 import pt.iscte.javardise.widgets.*
+import pt.iscte.javardise.widgets.expressions.ExpWidget
+import pt.iscte.javardise.widgets.expressions.createExpressionWidget
 
+// to expression?
 class AssignWidget(
     parent: SequenceWidget,
     node: ExpressionStmt,
     override val block: BlockStmt
 ) : StatementWidget<ExpressionStmt>(parent, node) {
-    lateinit var target: ExpressionFreeWidget
-    lateinit var operator: TokenWidget
-    lateinit var expression: ExpressionFreeWidget
+    var target: ExpWidget<*>
+    var operator: TokenWidget
+    var value: ExpWidget<*>
+    val assignment = node.expression as AssignExpr
 
     init {
         require(node.expression is AssignExpr)
+        require(assignment.target is NameExpr || assignment.target is FieldAccessExpr || assignment.target is ArrayAccessExpr)
 
-        val assignment = node.expression as AssignExpr
+        layout = ROW_LAYOUT_H_SHRINK
 
-        layout = FillLayout()
-        row {
+        target = createTargetWidget(assignment.target)
+        //target.widget.addKeyEvent(SWT.BS, precondition = { it.isEmpty() }, action = createDeleteEvent(node, block))
 
-            // TODO check valid target
-            target = ExpressionFreeWidget(this, assignment.target) {
-                Commands.execute(object : ModifyCommand<Expression>(assignment, assignment.target) {
-                    override fun run() {
-                        assignment.target = it
-                    }
-
-                    override fun undo() {
-                        assignment.target = element
-                    }
-                })
-            }
-            target.setCopySource()
-            target.addKeyEvent(SWT.BS, precondition = { it.isEmpty() }, action = createDeleteEvent(node, block))
-
-            operator = TokenWidget(this, assignment.operator.asString(), {
-                AssignExpr.Operator.values().map { it.asString() }
-            }) {
-                assignment.operator = AssignExpr.Operator.values().find { op -> op.asString() == it }
-            }
-
-            expression = ExpressionFreeWidget(this, assignment.value) {
-                Commands.execute(object : ModifyCommand<Expression>(assignment, assignment.value) {
-                    override fun run() {
-                        assignment.value = it
-                    }
-
-                    override fun undo() {
-                        assignment.value = element
-                    }
-                })
-            }
-            if (this@AssignWidget.parent is SequenceWidget)
-                TokenWidget(this, ";").addInsert(this@AssignWidget, this@AssignWidget.parent as SequenceWidget, true)
+        operator = TokenWidget(this, assignment.operator.asString(), {
+            AssignExpr.Operator.values().map { it.asString() }
+        }) {
+            assignment.operator = AssignExpr.Operator.values().find { op -> op.asString() == it }
         }
 
+        value = createValueWidget(assignment.value)
+
+        if (this@AssignWidget.parent is SequenceWidget)
+            TokenWidget(this, ";").addInsert(this@AssignWidget, this@AssignWidget.parent as SequenceWidget, true)
+
         assignment.observeProperty<Expression>(ObservableProperty.TARGET) {
-            target.update(it)
+            target.dispose()
+            target = createTargetWidget(it!!)
+            target.moveAbove(operator.widget)
+            target.requestLayout()
         }
         assignment.observeProperty<AssignExpr.Operator>(ObservableProperty.OPERATOR) {
             operator.set(it?.asString() ?: "??")
-            expression.setFocus()
+            value.setFocus()
         }
         assignment.observeProperty<Expression>(ObservableProperty.VALUE) {
-            expression.update(it)
+            value.dispose()
+            value = createValueWidget(it!!)
+            value.moveBelow(operator.widget)
+            value.requestLayout()
         }
     }
+
+    private fun Composite.createTargetWidget(target: Expression) =
+        createExpressionWidget(this, target) {
+            Commands.execute(object : ModifyCommand<Expression>(assignment, assignment.target) {
+                override fun run() {
+                    assignment.target = it
+                }
+
+                override fun undo() {
+                    assignment.target = element
+                }
+            })
+        }
+
+    private fun Composite.createValueWidget(expression: Expression) =
+        createExpressionWidget(this, expression) {
+            Commands.execute(object : ModifyCommand<Expression>(assignment, assignment.value) {
+                override fun run() {
+                    assignment.value = it
+                }
+
+                override fun undo() {
+                    assignment.value = element
+                }
+            })
+        }
 
     override fun setFocus(): Boolean {
         return target.setFocus()
     }
 
     override fun setFocusOnCreation(firstFlag: Boolean) {
-        expression.setFocus()
+        value.setFocus()
     }
 }

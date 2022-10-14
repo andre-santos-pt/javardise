@@ -24,8 +24,7 @@ abstract class StatementWidget<T : Statement>(parent: SequenceWidget, override v
     abstract val block: BlockStmt
 
     init {
-        if (node.comment.isPresent)
-            CommentWidget(parent, node)
+        if (node.comment.isPresent) CommentWidget(parent, node)
     }
 
     fun TextWidget.setCopySource() {
@@ -33,8 +32,7 @@ abstract class StatementWidget<T : Statement>(parent: SequenceWidget, override v
             override fun keyPressed(e: KeyEvent) {
                 if ((e.stateMask == SWT.MOD1) && (e.keyCode == 'c'.code)) {
                     Clipboard.copy(node) { node, dest, index ->
-                        if (index != null)
-                            (dest as BlockStmt).statements.add(index, node as Statement)
+                        if (index != null) (dest as BlockStmt).statements.add(index, node as Statement)
                     }
                 }
 //                else if ((e.stateMask == SWT.MOD1) && (e.keyCode == 'x'.code)) {
@@ -53,8 +51,7 @@ abstract class StatementWidget<T : Statement>(parent: SequenceWidget, override v
                 if ((e.stateMask == SWT.ALT) && (e.keyCode == SWT.ARROW_UP)) {
                     val index = block.statements.indexOf(node)
                     if (index == 0) {
-                        if (block.parentNode.isPresent)
-                            println(block.parentNode.get())
+                        if (block.parentNode.isPresent) println(block.parentNode.get())
                     } else {
                         block.statements.remove(node)
                         block.statements.add(index - 1, node)
@@ -78,33 +75,24 @@ abstract class StatementWidget<T : Statement>(parent: SequenceWidget, override v
 
 
 fun addWidget(
-    stmt: Statement,
-    block: BlockStmt,
-    parent: SequenceWidget
-): NodeWidget<*> =
-    when (stmt) {
-        is ReturnStmt -> ReturnWidget(parent, stmt, block)
-        is IfStmt -> IfWidget(parent, stmt, block)
-        is WhileStmt -> WhileWidget(parent, stmt, block)
-        is ExpressionStmt ->
-            if (stmt.expression is VariableDeclarationExpr)
-                VariableWidget(parent, stmt, block)
-            else if (stmt.expression is AssignExpr)
-                AssignWidget(parent, stmt, block)
-            else if (stmt.expression is MethodCallExpr)
-                CallWidget(parent, stmt, block)
-            else
-                throw UnsupportedOperationException("NA $stmt ${stmt::class}")
-        else -> throw UnsupportedOperationException("NA $stmt ${stmt::class}")
+    stmt: Statement, block: BlockStmt, parent: SequenceWidget
+): NodeWidget<*> = when (stmt) {
+    is ReturnStmt -> ReturnWidget(parent, stmt, block)
+    is IfStmt -> IfWidget(parent, stmt, block)
+    is WhileStmt -> WhileWidget(parent, stmt, block)
+    is ExpressionStmt -> when(stmt.expression) {
+        is VariableDeclarationExpr -> VariableWidget(parent, stmt, block)
+        is AssignExpr -> AssignWidget(parent, stmt, block)
+        else -> ExpressionStatementWidget(parent, stmt, block)
     }
+    else -> throw UnsupportedOperationException("NA $stmt ${stmt::class}")
+}
 
 fun SequenceWidget.findIndexByModel(control: Control): Int {
     var i = 0
     for (c in children) {
-        if (c === control)
-            return i
-        if (c is NodeWidget<*>)
-            i++
+        if (c === control) return i
+        if (c is NodeWidget<*>) i++
 
     }
     check(false)
@@ -113,17 +101,15 @@ fun SequenceWidget.findIndexByModel(control: Control): Int {
 
 fun createInsert(seq: SequenceWidget, block: BlockStmt): TextWidget {
     val insert = TextWidget.create(seq) { c, s ->
-        c.toString().matches(Regex("[a-zA-Z0-9]|\\[|\\]|\\.|\\s")) || c == SWT.BS
+        c.toString().matches(Regex("\\w|\\[|]|\\.|\\s|\\+|-")) || c == SWT.BS
     }
 
     insert.addKeyEvent(SWT.SPACE, '(', precondition = { it.matches(Regex("if|while")) }) {
         val keyword = insert.text
         val insertIndex = seq.findIndexByModel(insert.widget)
         insert.delete()
-        val stmt = if (keyword == "if")
-            IfStmt(BooleanLiteralExpr(true), BlockStmt(), null)
-        else
-            WhileStmt(BooleanLiteralExpr(true), BlockStmt())
+        val stmt = if (keyword == "if") IfStmt(BooleanLiteralExpr(true), BlockStmt(), null)
+        else WhileStmt(BooleanLiteralExpr(true), BlockStmt())
         Commands.execute(AddStatementCommand(stmt, block, insertIndex))
     }
 
@@ -139,34 +125,26 @@ fun createInsert(seq: SequenceWidget, block: BlockStmt): TextWidget {
     }
     insert.addKeyEvent(SWT.SPACE, ';', precondition = { it == "return" }) {
         val insertIndex = seq.findIndexByModel(insert.widget)
-        val stmt = if (it.character == SWT.SPACE)
-            ReturnStmt(NameExpr("expression"))
-        else
-            ReturnStmt()
+        val stmt = if (it.character == SWT.SPACE) ReturnStmt(NameExpr("expression"))
+        else ReturnStmt()
         insert.delete()
         Commands.execute(AddStatementCommand(stmt, block, insertIndex))
     }
 
-    insert.addKeyEvent(
-        '=',
-        precondition = {
-            insert.isAtEnd &&
-                    (tryParse<NameExpr>(it) || tryParse<ArrayAccessExpr>(it) || tryParse<FieldAccessExpr>(it))
-        }) {
+    insert.addKeyEvent('=', precondition = {
+        insert.isAtEnd && (tryParse<NameExpr>(it) || tryParse<ArrayAccessExpr>(it) || tryParse<FieldAccessExpr>(it))
+    }) {
         val insertIndex = seq.findIndexByModel(insert.widget)
         val stmt = ExpressionStmt(AssignExpr(NameExpr(insert.text), NameExpr("exp"), AssignExpr.Operator.ASSIGN))
         insert.delete()
         Commands.execute(AddStatementCommand(stmt, block, insertIndex))
     }
 
-    insert.addKeyEvent(
-        ';',
-        precondition = {
-            insert.isAtEnd &&
-                    it.split(Regex("\\s+")).size == 2 &&
-                    tryParseType(it.split(Regex("\\s+"))[0]) &&
-                    tryParse<NameExpr>(it.split(Regex("\\s+"))[1])
-        }) {
+    insert.addKeyEvent(';', precondition = {
+        insert.isAtEnd && it.split(Regex("\\s+")).size == 2 && tryParseType(it.split(Regex("\\s+"))[0]) && tryParse<NameExpr>(
+            it.split(Regex("\\s+"))[1]
+        )
+    }) {
         val insertIndex = seq.findIndexByModel(insert.widget)
         val split = insert.text.split(Regex("\\s+"))
         val stmt = ExpressionStmt(VariableDeclarationExpr(StaticJavaParser.parseType(split[0]), split[1]))
@@ -174,14 +152,11 @@ fun createInsert(seq: SequenceWidget, block: BlockStmt): TextWidget {
         Commands.execute(AddStatementCommand(stmt, block, insertIndex))
     }
 
-    insert.addKeyEvent(
-        '=',
-        precondition = {
-            insert.isAtEnd &&
-                    it.split(Regex("\\s+")).size == 2 &&
-                    tryParseType(it.split(Regex("\\s+"))[0]) &&
-                    tryParse<NameExpr>(it.split(Regex("\\s+"))[1])
-        }) {
+    insert.addKeyEvent('=', precondition = {
+        insert.isAtEnd && it.split(Regex("\\s+")).size == 2 && tryParseType(it.split(Regex("\\s+"))[0]) && tryParse<NameExpr>(
+            it.split(Regex("\\s+"))[1]
+        )
+    }) {
         val insertIndex = seq.findIndexByModel(insert.widget)
         val split = insert.text.split(Regex("\\s+"))
         val dec = VariableDeclarator(StaticJavaParser.parseType(split[0]), split[1], NameExpr("expression"))
@@ -190,9 +165,9 @@ fun createInsert(seq: SequenceWidget, block: BlockStmt): TextWidget {
         Commands.execute(AddStatementCommand(stmt, block, insertIndex))
     }
 
-    insert.addKeyEvent(
-        '(',
-        precondition = { insert.isAtEnd && (tryParse<NameExpr>(it) || tryParse<FieldAccessExpr>(it)) }) {
+    insert.addKeyEvent('(',
+        precondition = { insert.isAtEnd &&
+                (tryParse<NameExpr>(it) || tryParse<FieldAccessExpr>(it) || tryParse<ArrayAccessExpr>(it)) }) {
         val insertIndex = seq.findIndexByModel(insert.widget)
         var e: Expression? = null
         try {
@@ -201,21 +176,22 @@ fun createInsert(seq: SequenceWidget, block: BlockStmt): TextWidget {
         }
 
         if (e != null) {
-            val stmt = if (e is NameExpr)
-                ExpressionStmt(MethodCallExpr(null, e.name, NodeList()))
+            val stmt = if (e is NameExpr) ExpressionStmt(MethodCallExpr(null, e.name, NodeList()))
 //            else if(e is ArrayAccessExpr)
 //                ExpressionStmt(MethodCallExpr(e, e.name, NodeList()))
-            else
-                ExpressionStmt(
-                    MethodCallExpr(
-                        (e as FieldAccessExpr).scope,
-                        (e as FieldAccessExpr).nameAsString,
-                        NodeList()
-                    )
-                )
+            else ExpressionStmt(
+                MethodCallExpr((e as FieldAccessExpr).scope, e.nameAsString, NodeList())
+            )
             insert.delete()
             Commands.execute(AddStatementCommand(stmt, block, insertIndex))
         }
+    }
+
+    insert.addKeyEvent(';',precondition = {insert.isAtEnd && tryParseExpression(it) }) {
+        val insertIndex = seq.findIndexByModel(insert.widget)
+        val stmt = ExpressionStmt(StaticJavaParser.parseExpression(insert.text))
+        insert.delete()
+        Commands.execute(AddStatementCommand(stmt, block, insertIndex))
     }
 
     insert.addFocusLostAction {
@@ -249,8 +225,7 @@ fun populateSequence(seq: SequenceWidget, block: BlockStmt) {
         override fun elementAdd(list: NodeList<Statement>, index: Int, node: Statement) {
             val prev = seq.findByModelIndex(index) as? Control
             val w = addWidget(node, block, seq)
-            if (prev != null)
-                (w as Composite).moveAbove(prev)
+            if (prev != null) (w as Composite).moveAbove(prev) // bug with comments?
             seq.requestLayout()
             w.setFocusOnCreation()
         }
@@ -263,12 +238,9 @@ fun populateSequence(seq: SequenceWidget, block: BlockStmt) {
             seq.requestLayout()
 
             val childrenLen = seq.children.size
-            if (index < childrenLen)
-                seq.children[index].setFocus()
-            else if (index - 1 in 0 until childrenLen)
-                seq.children[index - 1].setFocus()
-            else
-                seq.parent.setFocus()
+            if (index < childrenLen) seq.children[index].setFocus()
+            else if (index - 1 in 0 until childrenLen) seq.children[index - 1].setFocus()
+            else seq.parent.setFocus()
         }
     })
 }
@@ -281,12 +253,8 @@ fun <T : Node> SequenceWidget.find(e: T): NodeWidget<T>? =
 
 fun SequenceWidget.findByModelIndex(index: Int): NodeWidget<*>? {
     var i = 0
-    for (c in children)
-        if (c is NodeWidget<*>)
-            if (i == index)
-                return c
-            else
-                i++
+    for (c in children) if (c is NodeWidget<*>) if (i == index) return c
+    else i++
     return null
 }
 

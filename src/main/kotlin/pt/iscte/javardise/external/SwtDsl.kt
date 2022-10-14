@@ -12,7 +12,6 @@ import org.eclipse.swt.layout.GridData
 import org.eclipse.swt.layout.GridLayout
 import org.eclipse.swt.layout.RowLayout
 import org.eclipse.swt.widgets.*
-import pt.iscte.javardise.basewidgets.Constants
 import java.io.File
 import java.util.*
 

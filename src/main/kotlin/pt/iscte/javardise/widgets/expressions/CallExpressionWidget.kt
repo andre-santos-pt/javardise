@@ -1,4 +1,4 @@
-package pt.iscte.javardise.widgets.statements
+package pt.iscte.javardise.widgets.expressions
 
 import com.github.javaparser.StaticJavaParser
 import com.github.javaparser.ast.NodeList
@@ -7,66 +7,53 @@ import com.github.javaparser.ast.expr.MethodCallExpr
 import com.github.javaparser.ast.expr.NameExpr
 import com.github.javaparser.ast.expr.SimpleName
 import com.github.javaparser.ast.observer.ObservableProperty
-import com.github.javaparser.ast.stmt.BlockStmt
-import com.github.javaparser.ast.stmt.ExpressionStmt
 import org.eclipse.swt.SWT
-import org.eclipse.swt.layout.FillLayout
 import org.eclipse.swt.widgets.Composite
 import pt.iscte.javardise.Command
 import pt.iscte.javardise.CommandKind
 import pt.iscte.javardise.Commands
 import pt.iscte.javardise.SimpleNameWidget
 import pt.iscte.javardise.basewidgets.*
-import pt.iscte.javardise.external.row
+import pt.iscte.javardise.external.ROW_LAYOUT_H_SHRINK
 import pt.iscte.javardise.widgets.*
 
-class CallWidget(
-    parent: SequenceWidget,
-    node: ExpressionStmt, override val block: BlockStmt
-) :
-    StatementWidget<ExpressionStmt>(parent, node) {
+class CallExpressionWidget(parent: Composite, override val node: MethodCallExpr) :
+    ExpWidget<MethodCallExpr>(parent) {
     lateinit var target: Id
-    lateinit var methodName: Id
-    val row: Composite
-    val call: MethodCallExpr
+    var methodName: Id
     lateinit var insert: TextWidget
-    lateinit var openBracket: FixedToken
-
-    val argumentWidgets = mutableListOf<ExpressionFreeWidget>()
+    val openBracket: FixedToken
+    val closeBracket: TokenWidget
+    val argumentWidgets = mutableListOf<ExpWidget<*>>()
 
     init {
-        require(node.expression is MethodCallExpr)
-        call = node.expression as MethodCallExpr
+        layout = ROW_LAYOUT_H_SHRINK
+        if (node.scope.isPresent) {
+            target = SimpleNameWidget(this, node.scope.get()) { it.toString() }
+            target.addKeyEvent(SWT.BS, precondition = { it.isEmpty() }) {
 
-        layout = FillLayout()
-        row = row {
-            if (call.scope.isPresent) {
-                target = SimpleNameWidget(this, call.scope.get()) { it.toString() }
-                target.addKeyEvent(SWT.BS, precondition = { it.isEmpty() }, action = createDeleteEvent(node, block))
-                FixedToken(this, ".")
-            }
-            methodName = SimpleNameWidget(this, call.name) { it.asString() }
-            openBracket = FixedToken(this, "(")
+            }  //action = createDeleteEvent(node, block))
+            FixedToken(this, ".")
         }
+        methodName = SimpleNameWidget(this, node.name) { it.asString() }
+        openBracket = FixedToken(this, "(")
 
-        call.arguments.forEach {
+        node.arguments.forEach {
             createArgument(it)
         }
+        if (node.arguments.isEmpty())
+            createInsert(this)
 
-        if (call.arguments.isEmpty())
-            createInsert(row)
-
-        FixedToken(row, ")")
-        TokenWidget(row, ";").addInsert(this, this.parent as SequenceWidget, true)
+        closeBracket = TokenWidget(this, ")")
 
         methodName.addFocusLostAction {
             if (methodName.text.isEmpty())
-                methodName.set(call.name.asString())
-            else if (methodName.text != call.name.asString()) {
+                methodName.set(node.name.asString())
+            else if (methodName.text != node.name.asString()) {
                 Commands.execute(object : Command {
-                    override val target = call
+                    override val target = node
                     override val kind = CommandKind.MODIFY
-                    override val element = call.name
+                    override val element = node.name
                     override fun run() {
                         target.name = SimpleName(methodName.text)
                     }
@@ -77,69 +64,72 @@ class CallWidget(
                 })
             }
         }
-
         registerObservers()
     }
 
+    override val tail: TextWidget
+        get() = closeBracket
+
     private fun registerObservers() {
-        call.observeProperty<SimpleName>(ObservableProperty.NAME) {
-            methodName.set(it?.asString() ?: call.name.asString())
+        node.observeProperty<SimpleName>(ObservableProperty.NAME) {
+            methodName.set(it?.asString() ?: node.name.asString())
         }
 
-        call.arguments.observeList(object : ListObserver<Expression> {
+        node.arguments.observeList(object : ListObserver<Expression> {
             override fun elementAdd(list: NodeList<Expression>, index: Int, node: Expression) {
                 createArgument(node).setFocus()
             }
 
             override fun elementRemove(list: NodeList<Expression>, index: Int, node: Expression) {
-                val a = argumentWidgets.find { it.expression === node }
+                val a = argumentWidgets.find { it.node === node }
                 a?.let {
-                    it.delete()
+                    it.dispose()
                     argumentWidgets.remove(it)
                 }
             }
         })
     }
 
-    private fun createArgument(node: Expression): ExpressionFreeWidget {
-        val arg = ExpressionFreeWidget(row, node) {
+    private fun createArgument(exp: Expression): ExpWidget<*> {
+        val arg = createExpressionWidget(this, exp) {
             Commands.execute(object : Command {
-                override val target = call
-                override val kind = CommandKind.MODIFY
-                override val element = node
+                override val target = node
+                override val kind = CommandKind.ADD
+                override val element = exp
 
                 override fun run() {
-                    val index = call.arguments.indexOf(node) // BUG
-                    call.arguments[index] = it
+                    val index = node.arguments.indexOf(exp) // BUG
+                    node.arguments[index] = it
                 }
 
                 override fun undo() {
-                    val index = call.arguments.indexOf(it)
-                    call.arguments[index] = element
+                    val index = node.arguments.indexOf(it)
+                    node.arguments[index] = element
                 }
             })
         }
-        arg.addKeyEvent(',') {
+        // TODO cast..
+        (arg as SimpleExpressionWidget).expression.addKeyEvent(',') {
             Commands.execute(object : Command {
-                override val target = call
+                override val target = node
                 override val kind = CommandKind.ADD
                 override val element get() = NameExpr("expression")
 
                 override fun run() {
-                    call.arguments.addAfter(element, arg.expression)
+                    node.arguments.addAfter(element, arg.node)
                 }
 
                 override fun undo() {
-                    call.arguments.remove(element)
+                    node.arguments.remove(element)
                 }
             })
         }
         if (argumentWidgets.isEmpty()) {
-            arg.moveBelowInternal(openBracket.label)
+            (arg as SimpleExpressionWidget).expression.moveBelowInternal(openBracket.label)
         } else {
-            val comma = FixedToken(row, ",")
-            comma.label.moveBelow(argumentWidgets.last().widget)
-            arg.moveBelowInternal(comma.label)
+            val comma = FixedToken(this, ",")
+            comma.label.moveBelow(argumentWidgets.last())
+            (arg as SimpleExpressionWidget).expression.moveBelowInternal(comma.label)
         }
         argumentWidgets.add(arg)
         requestLayout()
@@ -183,7 +173,7 @@ class CallWidget(
 
     private fun doAddArgummentCommand(expression: Expression, after: Expression? = null) {
         Commands.execute(object : Command {
-            override val target = node.expression as MethodCallExpr
+            override val target = node
             override val kind = CommandKind.ADD
             override val element = expression
 

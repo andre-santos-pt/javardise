@@ -17,6 +17,8 @@ import org.eclipse.swt.widgets.Composite
 import pt.iscte.javardise.*
 import pt.iscte.javardise.basewidgets.Id
 import pt.iscte.javardise.basewidgets.TokenWidget
+import pt.iscte.javardise.widgets.expressions.ExpWidget
+import pt.iscte.javardise.widgets.expressions.createExpressionWidget
 
 class FieldWidget(parent: Composite, val dec: FieldDeclaration) :
     MemberWidget<FieldDeclaration>(parent, dec, listOf(PUBLIC, PRIVATE, PROTECTED, FINAL)) {

@@ -87,7 +87,7 @@ interface TextWidget {
     fun addFocusLostAction(action: () -> Unit): FocusListener
 
     fun addDeleteListener(action: () -> Unit) =
-        addKeyEvent(Constants.DEL_KEY, precondition = { widget.text.isEmpty() && widget.caretPosition == 0 }) {
+        addKeyEvent(SWT.BS, precondition = { widget.text.isEmpty() && widget.caretPosition == 0 }) {
             action()
         }
 

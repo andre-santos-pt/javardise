@@ -9,6 +9,7 @@ import com.github.javaparser.ast.observer.ObservableProperty
 import com.github.javaparser.ast.stmt.BlockStmt
 import com.github.javaparser.ast.stmt.ExpressionStmt
 import com.github.javaparser.ast.type.Type
+import com.github.javaparser.symbolsolver.resolution.typesolvers.CombinedTypeSolver
 import org.eclipse.swt.SWT
 import org.eclipse.swt.widgets.Composite
 import pt.iscte.javardise.*
@@ -18,7 +19,10 @@ import pt.iscte.javardise.basewidgets.SequenceWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
 import pt.iscte.javardise.widgets.*
 import pt.iscte.javardise.external.*
+import pt.iscte.javardise.widgets.expressions.ExpWidget
+import pt.iscte.javardise.widgets.expressions.createExpressionWidget
 
+// TODO delete initializer
 class VariableWidget(
     parent: SequenceWidget,
     node: ExpressionStmt,

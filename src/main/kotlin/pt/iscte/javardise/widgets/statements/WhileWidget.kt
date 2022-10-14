@@ -10,6 +10,8 @@ import pt.iscte.javardise.*
 import pt.iscte.javardise.basewidgets.*
 import pt.iscte.javardise.widgets.*
 import pt.iscte.javardise.external.*
+import pt.iscte.javardise.widgets.expressions.ExpWidget
+import pt.iscte.javardise.widgets.expressions.createExpressionWidget
 
 class WhileWidget(
     parent: SequenceWidget,

@@ -8,6 +8,7 @@ import com.github.javaparser.ast.NodeList
 import com.github.javaparser.ast.body.*
 import com.github.javaparser.ast.expr.BinaryExpr
 import com.github.javaparser.ast.expr.Expression
+import com.github.javaparser.ast.expr.UnaryExpr
 import com.github.javaparser.ast.observer.AstObserver
 import com.github.javaparser.ast.observer.AstObserverAdapter
 import com.github.javaparser.ast.observer.Observable
@@ -251,3 +252,5 @@ fun tryParseSimpleName(name: String): Boolean =
     }
 
 val binaryOperators : List<BinaryExpr.Operator> = BinaryExpr.Operator.values().toList()
+
+val unaryOperators : List<UnaryExpr.Operator> = UnaryExpr.Operator.values().toList()
