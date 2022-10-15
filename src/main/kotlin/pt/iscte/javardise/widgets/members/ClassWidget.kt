@@ -20,6 +20,7 @@ import org.eclipse.swt.widgets.Event
 import pt.iscte.javardise.*
 import pt.iscte.javardise.basewidgets.*
 import pt.iscte.javardise.external.AddMemberCommand
+import pt.iscte.javardise.external.ROW_LAYOUT_H_SHRINK
 import pt.iscte.javardise.external.isChild
 import pt.iscte.javardise.external.observeProperty
 import pt.iscte.javardise.widgets.members.FieldWidget
@@ -91,8 +92,7 @@ class ClassWidget(parent: Composite, type: ClassOrInterfaceDeclaration) :
     }
 
     init {
-        data = "ROOTAREA"
-        layout = RowLayout()
+        layout = ROW_LAYOUT_H_SHRINK
         keyword = Factory.newKeywordWidget(firstRow, "class")
         keyword.addKeyEvent(SWT.SPACE) {
             Commands.execute(object : Command {

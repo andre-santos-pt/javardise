@@ -11,6 +11,7 @@ import pt.iscte.javardise.Command
 import pt.iscte.javardise.CommandKind
 import pt.iscte.javardise.Commands
 import pt.iscte.javardise.ModifyCommand
+import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
 import pt.iscte.javardise.external.ROW_LAYOUT_H_SHRINK
 import pt.iscte.javardise.external.observeProperty
@@ -83,4 +84,7 @@ class UnaryExpressionWidget(parent: Composite, override val node: UnaryExpr) : E
     override fun setFocusOnCreation(firstFlag: Boolean) {
         expressionWidget.setFocusOnCreation(firstFlag)
     }
+
+    override val tail: TextWidget
+        get() = expressionWidget.tail
 }

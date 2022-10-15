@@ -156,20 +156,29 @@ class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: In
                 }
 
                 override fun elementRemove(list: NodeList<Parameter>, index: Int, node: Parameter) {
-                    val index = children.indexOfFirst { it is ParamWidget && it.node == node }
-                    if (index != -1) {
-                        children[index].dispose()
+                    val i = children.indexOfFirst { it is ParamWidget && it.node == node }
+                    if (i != -1) {
+                        children[i].dispose()
 
                         // comma
-                        if (index == 0 && list.size > 1)
-                            children[index].dispose()
-                        else if (index != 0)
-                            children[index - 1].dispose()
+                        if (i == 0 && list.size > 1)
+                            children[i].dispose()
+                        else if (i != 0)
+                            children[i - 1].dispose()
                     }
                     if (parameters.size == 1)
                         createInsert()
 
                     requestLayout()
+                }
+
+                override fun elementReplace(
+                    list: NodeList<Parameter>,
+                    index: Int,
+                    old: Parameter,
+                    new: Parameter
+                ) {
+                    TODO("parameter replacement")
                 }
             })
         }

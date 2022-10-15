@@ -10,12 +10,14 @@ import pt.iscte.javardise.Command
 import pt.iscte.javardise.CommandKind
 import pt.iscte.javardise.Commands
 import pt.iscte.javardise.ModifyCommand
+import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
 import pt.iscte.javardise.external.ROW_LAYOUT_H_SHRINK
 import pt.iscte.javardise.external.binaryOperators
 import pt.iscte.javardise.external.observeProperty
 
-class BinaryExpressionWidget(parent: Composite, override val node: BinaryExpr) : ExpWidget<BinaryExpr>(parent) {
+class BinaryExpressionWidget(parent: Composite, override val node: BinaryExpr) :
+    ExpWidget<BinaryExpr>(parent) {
 
     var left: ExpWidget<*>
     var operator: TokenWidget
@@ -34,7 +36,8 @@ class BinaryExpressionWidget(parent: Composite, override val node: BinaryExpr) :
                 override val element = node.operator
 
                 override fun run() {
-                    node.operator = binaryOperators.find { op -> op.asString() == it }
+                    node.operator =
+                        binaryOperators.find { op -> op.asString() == it }
                 }
 
                 override fun undo() {
@@ -45,22 +48,25 @@ class BinaryExpressionWidget(parent: Composite, override val node: BinaryExpr) :
         }
         left = drawLeft(this, node.left)
         right = drawRight(this, node.right)
-        leftObserver = node.observeProperty<Expression>(ObservableProperty.LEFT) {
-            //if (!this.isDisposed) {
-            left.dispose()
-            drawLeft(this, it!!)
-            //}
-        }
-        rightObserver = node.observeProperty<Expression>(ObservableProperty.RIGHT) {
-            // if (!this.isDisposed) {
-            right.dispose()
-            drawRight(this, it!!)
-            //
-        }
-        operatorObserver = node.observeProperty<BinaryExpr.Operator>(ObservableProperty.OPERATOR) {
-            operator.set(it?.asString() ?: "??")
-            operator.setFocus()
-        }
+        leftObserver =
+            node.observeProperty<Expression>(ObservableProperty.LEFT) {
+                //if (!this.isDisposed) {
+                left.dispose()
+                drawLeft(this, it!!)
+                //}
+            }
+        rightObserver =
+            node.observeProperty<Expression>(ObservableProperty.RIGHT) {
+                // if (!this.isDisposed) {
+                right.dispose()
+                drawRight(this, it!!)
+                //
+            }
+        operatorObserver =
+            node.observeProperty<BinaryExpr.Operator>(ObservableProperty.OPERATOR) {
+                operator.set(it?.asString() ?: "??")
+                operator.setFocus()
+            }
     }
 
     override fun dispose() {
@@ -70,7 +76,10 @@ class BinaryExpressionWidget(parent: Composite, override val node: BinaryExpr) :
         node.unregister(operatorObserver)
     }
 
-    private fun drawLeft(parent: Composite, expression: Expression): ExpWidget<*> {
+    private fun drawLeft(
+        parent: Composite,
+        expression: Expression
+    ): ExpWidget<*> {
         left = createExpressionWidget(parent, expression) {
             Commands.execute(object :
                 ModifyCommand<Expression>(node, node.left) {
@@ -91,7 +100,10 @@ class BinaryExpressionWidget(parent: Composite, override val node: BinaryExpr) :
         return left
     }
 
-    private fun drawRight(parent: Composite, expression: Expression): ExpWidget<*> {
+    private fun drawRight(
+        parent: Composite,
+        expression: Expression
+    ): ExpWidget<*> {
         right = createExpressionWidget(parent, expression) {
             Commands.execute(object :
                 ModifyCommand<Expression>(node, node.right) {
@@ -120,4 +132,7 @@ class BinaryExpressionWidget(parent: Composite, override val node: BinaryExpr) :
     override fun toString(): String {
         return "BiExp $node"
     }
+
+    override val tail: TextWidget
+        get() = right.tail
 }

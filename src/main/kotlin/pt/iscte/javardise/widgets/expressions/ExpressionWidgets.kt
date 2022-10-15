@@ -10,7 +10,20 @@ import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.external.binaryOperators
 import pt.iscte.javardise.external.unaryOperators
 
-fun createExpressionWidget(parent: Composite, node: Expression, editEvent: (Expression) -> Unit): ExpWidget<*> =
+abstract class ExpWidget<T : Expression>(parent: Composite) : Composite(parent, SWT
+    .NONE),
+    NodeWidget<T> {
+    abstract val tail: TextWidget
+    override fun toString(): String {
+        return this::class.simpleName + ": $node"
+    }
+}
+
+fun createExpressionWidget(
+    parent: Composite,
+    node: Expression,
+    editEvent: (Expression) -> Unit
+): ExpWidget<*> =
     when (node) {
         is UnaryExpr -> UnaryExpressionWidget(parent, node)
         is BinaryExpr -> BinaryExpressionWidget(parent, node)
@@ -19,28 +32,35 @@ fun createExpressionWidget(parent: Composite, node: Expression, editEvent: (Expr
         is MethodCallExpr -> CallExpressionWidget(parent, node)
         else -> SimpleExpressionWidget(parent, node, editEvent)
     }.apply {
-        tail?.apply {
-            addKeyListenerInternal(object : KeyAdapter() {
-                override fun keyPressed(e: KeyEvent) {
-                    if(isAtBeginning) {
-                        val op = unaryOperators.filter { it.isPrefix }.find { it.asString().startsWith(e.character) }
-                        op?.let {
-                            editEvent(UnaryExpr(node.clone(), it))
+        if (this !is SimpleExpressionWidget)
+            tail.apply {
+                addKeyListenerInternal(object : KeyAdapter() {
+                    override fun keyPressed(e: KeyEvent) {
+                        if (isAtBeginning) {
+                            val op = unaryOperators.filter { it.isPrefix }
+                                .find { it.asString().startsWith(e.character) }
+                            op?.let {
+                                editEvent(UnaryExpr(node.clone(), it))
+                            }
+                        } else if (isAtEnd) {
+                            val op = binaryOperators.find {
+                                it.asString().startsWith(e.character)
+                            }
+                            op?.let {
+                                editEvent(
+                                    BinaryExpr(
+                                        node.clone(),
+                                        NameExpr("expression"),
+                                        it
+                                    )
+                                )
+                            }
                         }
                     }
-                    else if(isAtEnd) {
-                        val op = binaryOperators.find { it.asString().startsWith(e.character) }
-                        op?.let {
-                            editEvent(BinaryExpr(node.clone(), NameExpr("expression"), it))
-                        }
-                    }
-                }
-            })
-        }
+                })
+            }
     }
 
-abstract class ExpWidget<T>(parent: Composite) : Composite(parent, SWT.NONE), NodeWidget<T> {
-    open val tail: TextWidget? = null
-}
+
 
 

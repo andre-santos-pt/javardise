@@ -45,7 +45,7 @@ interface Command {
     fun run()
     fun undo()
 
-    fun asString(): String = "$kind - ${target::class.simpleName}"
+    fun asString(): String = "$kind - ${target::class.simpleName} - $element"
 
 }
 

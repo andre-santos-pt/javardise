@@ -243,6 +243,15 @@ fun populateSequence(seq: SequenceWidget, block: BlockStmt) {
             else if (index - 1 in 0 until childrenLen) seq.children[index - 1].setFocus()
             else seq.parent.setFocus()
         }
+
+        override fun elementReplace(
+            list: NodeList<Statement>,
+            index: Int,
+            old: Statement,
+            new: Statement
+        ) {
+            TODO("Not yet implemented")
+        }
     })
 }
 

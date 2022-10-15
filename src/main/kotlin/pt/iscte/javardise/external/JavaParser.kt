@@ -95,7 +95,8 @@ fun expandFieldDeclarations(type: TypeDeclaration<*>) {
 }
 
 /*
-    Returs the single public class, or otherwise the first declared class (if exists)
+    Returns the single public class, or otherwise the first declared class
+    (if exists)
  */
 fun CompilationUnit.findMainClass(): ClassOrInterfaceDeclaration? =
     if (types.isEmpty()) null
@@ -107,6 +108,7 @@ fun CompilationUnit.findMainClass(): ClassOrInterfaceDeclaration? =
 interface ListObserver<T : Node> {
     fun elementAdd(list: NodeList<T>, index: Int, node: T)
     fun elementRemove(list: NodeList<T>, index: Int, node: T)
+    fun elementReplace(list: NodeList<T>, index: Int, old: T, new: T)
 }
 
 fun <T : Node> NodeList<T>.observeList(observer: ListObserver<T>) {
@@ -117,6 +119,11 @@ fun <T : Node> NodeList<T>.observeList(observer: ListObserver<T>) {
 
         override fun elementRemove(list: NodeList<T>, index: Int, node: T) {
             observer.elementRemove(list, index, node)
+        }
+
+        override fun elementReplace(list: NodeList<T>, index: Int, old: T,
+                                    new: T) {
+            observer.elementReplace(list, index, old, new)
         }
     })
 }
@@ -134,9 +141,21 @@ abstract class ListAddRemoveObserver<T : Node> : AstObserverAdapter() {
             elementRemove(observedNode as NodeList<T>, index, nodeAddedOrRemoved as T)
     }
 
+    override fun listReplacement(
+        observedNode: NodeList<*>,
+        index: Int,
+        oldNode: Node?,
+        newNode: Node?
+    ) {
+        elementReplace(observedNode as NodeList<T>, index, oldNode as T,
+            newNode as T)
+    }
+
     abstract fun elementAdd(list: NodeList<T>, index: Int, node: T)
 
     abstract fun elementRemove(list: NodeList<T>, index: Int, node: T)
+
+    abstract fun elementReplace(list: NodeList<T>, index: Int, old: T, new: T)
 }
 
 abstract class PropertyObserver<T>(val prop: ObservableProperty) : AstObserverAdapter() {

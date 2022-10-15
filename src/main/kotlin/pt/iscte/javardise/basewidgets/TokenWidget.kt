@@ -7,7 +7,6 @@ import org.eclipse.swt.widgets.Menu
 import org.eclipse.swt.widgets.MenuItem
 import org.eclipse.swt.widgets.Text
 
-// TODO Observable menu
 class TokenWidget(
     parent: Composite,
     token: String,
@@ -83,10 +82,6 @@ class TokenWidget(
 
     override fun addKeyListenerInternal(listener: KeyListener) {
         widget.addKeyListener(listener)
-    }
-
-    override fun addFocusListenerInternal(listener: FocusListener) {
-        widget.addFocusListener(listener)
     }
 
     override fun addFocusLostAction(action: () -> Unit): FocusListener {

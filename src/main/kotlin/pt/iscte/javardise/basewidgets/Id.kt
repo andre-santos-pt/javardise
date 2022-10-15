@@ -10,9 +10,6 @@ import org.eclipse.swt.events.KeyListener
 import org.eclipse.swt.widgets.Composite
 import org.eclipse.swt.widgets.Menu
 import org.eclipse.swt.widgets.Text
-import pt.iscte.javardise.FOREGROUND_COLOR
-import pt.iscte.javardise.Factory
-import pt.iscte.javardise.KEYWORD_COLOR
 import pt.iscte.javardise.updateColor
 import javax.lang.model.SourceVersion
 
@@ -81,10 +78,6 @@ open class Id(parent: Composite, id: String, allowedChars: Regex,
 
     override fun addKeyListenerInternal(listener: KeyListener) {
         textWidget.addKeyListener(listener)
-    }
-
-    override fun addFocusListenerInternal(listener: FocusListener) {
-        textWidget.addFocusListener(listener)
     }
 
     override fun addFocusLostAction(action: () -> Unit): FocusListener {

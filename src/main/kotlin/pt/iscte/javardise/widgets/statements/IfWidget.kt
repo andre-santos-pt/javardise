@@ -68,7 +68,7 @@ class IfWidget(
         closingBracket = TokenWidget(column, "}")
         closingBracket.addInsert(this@IfWidget, this@IfWidget.parent as SequenceWidget, true)
 
-        // TODO else brackets visibility
+
         node.thenBlock.statements.register(object : AstObserverAdapter() {
             override fun listChange(
                 observedNode: NodeList<*>,

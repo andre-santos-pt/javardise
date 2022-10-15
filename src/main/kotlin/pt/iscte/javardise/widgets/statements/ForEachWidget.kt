@@ -10,7 +10,7 @@ import pt.iscte.javardise.basewidgets.TokenWidget
 import pt.iscte.javardise.widgets.expressions.ExpWidget
 import pt.iscte.javardise.widgets.expressions.createExpressionWidget
 
-// TODO
+// TODO for each
 class ForEachWidget(parent: SequenceWidget, node: ForEachStmt, override val block: BlockStmt) :
     StatementWidget<ForEachStmt>(parent, node) {
 

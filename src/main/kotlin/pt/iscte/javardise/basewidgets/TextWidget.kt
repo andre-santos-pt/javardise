@@ -78,11 +78,7 @@ interface TextWidget {
         return l
     }
 
-    // TODO remove
-    fun addKeyListenerInternal(listener: KeyListener)
-
-    // TODO remove
-    fun addFocusListenerInternal(listener: FocusListener)
+    fun addKeyListenerInternal(listener: KeyListener) 
 
     fun addFocusLostAction(action: () -> Unit): FocusListener
 
@@ -167,10 +163,6 @@ interface TextWidget {
 
                 override fun addKeyListenerInternal(listener: KeyListener) {
                     widget.addKeyListener(listener)
-                }
-
-                override fun addFocusListenerInternal(listener: FocusListener) {
-                    widget.addFocusListener(listener)
                 }
 
                 override fun addFocusLostAction(action: () -> Unit): FocusListener {
