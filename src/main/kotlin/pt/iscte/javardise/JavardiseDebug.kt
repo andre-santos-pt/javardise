@@ -4,7 +4,9 @@ import pt.iscte.javardise.external.*
 import com.github.javaparser.ParseProblemException
 import com.github.javaparser.StaticJavaParser
 import com.github.javaparser.ast.CompilationUnit
+import com.github.javaparser.ast.Modifier
 import com.github.javaparser.ast.Node
+import com.github.javaparser.ast.NodeList
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration
 import com.github.javaparser.ast.body.FieldDeclaration
 import com.github.javaparser.ast.expr.SimpleName
@@ -25,24 +27,18 @@ import pt.iscte.javardise.widgets.*
 import pt.iscte.javardise.widgets.members.ClassWidget
 import java.io.File
 import java.io.PrintWriter
+import javax.lang.model.SourceVersion
 
 
 fun main(args: Array<String>) {
-    //require(args.isNotEmpty()) {
-    //    "file argument  missing"
-    //}
-    val file = if (args.isEmpty()) null else File(args[0])
-    //require(file.exists()) {
-    //    "file $file does not exist"
-    //}
-
+    val file = if (args.isEmpty()) File("Unnamed.java") else File(args[0])
     val window = JavardiseWindow(file)
     window.open()
 }
 
 
 
-class JavardiseWindow(var file: File?) {
+class JavardiseWindow(var file: File) {
 
     var model: ClassOrInterfaceDeclaration? = null
 
@@ -185,15 +181,24 @@ class JavardiseWindow(var file: File?) {
         pw.close()
     }
 
-    private fun load(file: File?): ClassOrInterfaceDeclaration? {
+    private fun load(file: File): ClassOrInterfaceDeclaration? {
+        require(file.name.endsWith(".java")) {
+            "Java file must have '.java' extension"
+        }
+        val typeName = file.name.dropLast(".java".length)
+
+        require(SourceVersion.isIdentifier(typeName)) {
+            "'$typeName' is not a valid identifier for a Java type"
+        }
         classWidget?.dispose()
 
-        model = if (file?.exists() == true) {
+        model = if (file.exists()) {
             val cu = loadCompilationUnit(file)
-            cu.findMainClass()
+            cu.findMainClass() ?:
+                ClassOrInterfaceDeclaration(NodeList(), false, typeName)
         } else {
             val cu = CompilationUnit()
-            cu.addClass("Test")
+            cu.addClass(typeName)
         }
 
         classWidget = col.scrollable {
@@ -308,6 +313,9 @@ class SimpleNameWidget<N : Node>(parent: Composite, override val node: N, getNam
     override fun setFocusOnCreation(firstFlag: Boolean) {
         textWidget.setFocus()
     }
+
+    override fun isValid(): Boolean = textWidget.text.matches(ID) && !SourceVersion.isKeyword(textWidget.text)
+
 }
 
 class SimpleTypeWidget<N : Node>(parent: Composite, node: N, getName: (N) -> String)
@@ -315,6 +323,8 @@ class SimpleTypeWidget<N : Node>(parent: Composite, node: N, getName: (N) -> Str
     init {
         textWidget.data = node
     }
+
+    override fun isValid(): Boolean = tryParseType(textWidget.text)
 }
 
 class UnsupportedWidget(parent: Composite, node: Node) : Composite(parent, SWT.NONE) {

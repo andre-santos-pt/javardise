@@ -10,10 +10,6 @@ import pt.iscte.javardise.widgets.statements.StatementWidget
 
 interface TextWidget {
     val widget: Text
-    val textToSerialize: String
-        get() {
-            return widget.text
-        }
 
     var text: String
         get() = widget.text
@@ -43,7 +39,11 @@ interface TextWidget {
         get() = widget.editable
 
 
-    fun delete() = widget.dispose()
+    fun delete() {
+        //removeKeyListeners()
+        //removeFocusOutListeners()
+        widget.dispose()
+    }
     fun setAtLeft() = widget.setSelection(0, 0)
     fun setAtRight() = widget.setSelection(widget.text.length)
     fun setFocus() = widget.setFocus()
@@ -78,7 +78,7 @@ interface TextWidget {
         return l
     }
 
-    fun addKeyListenerInternal(listener: KeyListener) 
+    fun addKeyListenerInternal(listener: KeyListener)
 
     fun addFocusLostAction(action: () -> Unit): FocusListener
 
@@ -90,6 +90,12 @@ interface TextWidget {
     fun removeFocusOutListeners() {
         widget.getListeners(SWT.FocusOut).forEach {
             widget.removeListener(SWT.FocusOut, it)
+        }
+    }
+
+    fun removeKeyListeners() {
+        widget.getListeners(SWT.KeyDown).forEach {
+            widget.removeListener(SWT.KeyDown, it)
         }
     }
 
@@ -118,10 +124,9 @@ interface TextWidget {
                     e.doit = true
             }
             t.addFocusListener(FOCUS_SELECTALL)
-            t.addMouseTrackListener(MOUSE_FOCUS)
+            //t.addMouseTrackListener(MOUSE_FOCUS)
             t.addModifyListener(MODIFY_PACK)
-            t.addKeyListener(LISTENER_ARROW_KEYS)  // BUGS
-            //t.data = parent
+            t.addKeyListener(LISTENER_ARROW_KEYS)  // TODO BUGS
 
             return t
         }
@@ -231,10 +236,10 @@ interface TextWidget {
 
                             } else {
                                 if (sw is SequenceContainer && text != sw.closingBracket.widget) {
-                                    if(sw.body.isEmpty())
+                                    if(sw.body?.isEmpty() == true)
                                         sw.closingBracket.setFocus()
                                     else
-                                        sw.body.setFocus()
+                                        sw.body?.setFocus()
                                 }
                                 else if (index + 1 < sw.parent.children.size)
                                     sw.parent.children[index + 1].setFocus()

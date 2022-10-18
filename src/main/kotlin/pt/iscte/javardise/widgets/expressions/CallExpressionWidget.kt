@@ -20,22 +20,22 @@ import pt.iscte.javardise.external.*
 class CallExpressionWidget(
     parent: Composite,
     override val node: MethodCallExpr
-) :
-    ExpWidget<MethodCallExpr>(parent) {
-    var target: Id? = null
-    var methodName: Id
-    val openBracket: FixedToken
-    lateinit var insert: TextWidget
-    val closeBracket: TokenWidget
+) : ExpWidget<MethodCallExpr>(parent) {
 
-    data class ArgWidget(val comma: FixedToken?, var arg: ExpWidget<*>) {
+    private var target: Id? = null
+    private var methodName: Id
+    private val openBracket: FixedToken
+    private lateinit var insert: TextWidget
+    private val closeBracket: TokenWidget
+
+    private val argumentWidgets = mutableListOf<ArgWidget>()
+
+    private data class ArgWidget(val comma: FixedToken?, var arg: ExpWidget<*>) {
         fun dispose() {
             comma?.dispose()
             arg.dispose()
         }
     }
-
-    val argumentWidgets = mutableListOf<ArgWidget>()
 
     init {
         layout = ROW_LAYOUT_H_SHRINK
@@ -263,13 +263,11 @@ class CallExpressionWidget(
             doAddArgummentCommand(NameExpr("expression"), insertExp)
         }
         val listener = insert.addFocusLostAction {
-            insert.widget.text = " "
+            insert.text = " "
         }
 
         insert.widget.addDisposeListener {
             insert.widget.removeFocusListener(listener)
         }
     }
-
-
 }

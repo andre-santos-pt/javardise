@@ -91,9 +91,50 @@ class ClassWidget(parent: Composite, type: ClassOrInterfaceDeclaration) :
         }
     }
 
+    enum class TypeTypes {
+        CLASS, INTERFACE;
+        //, ENUM;
+
+        fun element(type: ClassOrInterfaceDeclaration) =
+            when(this) {
+                CLASS -> !type.isInterface
+                INTERFACE -> type.isInterface
+                //ENUM -> type.isEnumDeclaration
+            }
+
+        fun apply(type: ClassOrInterfaceDeclaration) =
+            when(this) {
+                CLASS -> type.isInterface = false
+                INTERFACE -> type.isInterface = true
+                //ENUM -> type.setE
+            }
+
+        fun applyReverse(type: ClassOrInterfaceDeclaration) =
+            when(this) {
+                CLASS -> type.isInterface = true
+                INTERFACE -> type.isInterface = false
+                //ENUM -> type.setE
+            }
+    }
+
     init {
         layout = ROW_LAYOUT_H_SHRINK
-        keyword = Factory.newKeywordWidget(firstRow, "class")
+        keyword = Factory.newKeywordWidget(firstRow, "class",
+            alternatives = {TypeTypes.values().map { it.name.lowercase() }}) {
+            Commands.execute(object : Command {
+                override val target = node
+                override val kind = CommandKind.MODIFY
+                override val element = TypeTypes.valueOf(it.uppercase()).element(node)
+
+                override fun run() {
+                    TypeTypes.valueOf(it.uppercase()).apply(node)
+                }
+
+                override fun undo() {
+                    TypeTypes.valueOf(it.uppercase()).applyReverse(node)
+                }
+            })
+        }
         keyword.addKeyEvent(SWT.SPACE) {
             Commands.execute(object : Command {
                 override val target = node
@@ -162,6 +203,10 @@ class ClassWidget(parent: Composite, type: ClassOrInterfaceDeclaration) :
     //}
 
     private fun registerObservers() {
+        node.observeProperty<Boolean>(ObservableProperty.INTERFACE) {
+            keyword.set(if(it!!) "interface" else "class")
+            id.setFocus()
+        }
         node.observeProperty<SimpleName>(ObservableProperty.NAME) {
             id.set(it?.id ?: "")
             id.textWidget.data = it
@@ -247,6 +292,9 @@ class ClassWidget(parent: Composite, type: ClassOrInterfaceDeclaration) :
                 StaticJavaParser.parseType(split[split.lastIndex - 1]),
                 NodeList()
             )
+            if(node.isInterface)
+                newMethod.setBody(null)
+
             val insertIndex = seq.findIndexByModel(insert.widget)
             Commands.execute(AddMemberCommand(newMethod, node, insertIndex))
             insert.delete()

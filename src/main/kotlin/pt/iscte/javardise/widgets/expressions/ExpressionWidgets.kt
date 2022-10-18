@@ -10,12 +10,17 @@ import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.external.binaryOperators
 import pt.iscte.javardise.external.unaryOperators
 
-abstract class ExpWidget<T : Expression>(parent: Composite) : Composite(parent, SWT
-    .NONE),
-    NodeWidget<T> {
+abstract class ExpWidget<T : Expression>(parent: Composite)
+    : Composite(parent, SWT.NONE), NodeWidget<T> {
+
     abstract val tail: TextWidget
     override fun toString(): String {
         return this::class.simpleName + ": $node"
+    }
+
+    override fun dispose() {
+        tail.removeKeyListeners()
+        super.dispose()
     }
 }
 

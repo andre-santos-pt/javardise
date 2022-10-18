@@ -52,7 +52,8 @@ class TokenWidget(
             map.putPair(t[0], t)
             item.addSelectionListener(object : SelectionAdapter() {
                 override fun widgetSelected(e: SelectionEvent) {
-                    editAction(item.text)
+                    if(item.text != widget.text)
+                        editAction(item.text)
                 }
             })
         }
