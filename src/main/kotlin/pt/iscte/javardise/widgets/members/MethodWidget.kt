@@ -73,6 +73,8 @@ class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: In
                             node.type = element
                         }
                     })
+                else
+                    typeId!!.set(node.typeAsString)
             }
         }
 
@@ -233,8 +235,12 @@ class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: In
                 })
                 insert.delete()
             }
+            if(bodyModel != null)
+                insert.addKeyEvent(SWT.CR) {
+                    this@MethodWidget.body!!.insertBeginning()
+                }
             insert.addFocusLostAction {
-                insert.widget.text = " "
+                insert.clear(" ")
             }
 
         }
@@ -290,6 +296,8 @@ class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: In
                                 node.type = element
                             }
                         })
+                    else
+                        type.set(node.typeAsString)
                 }
 
                 name = SimpleNameWidget(this, node.name) { it.asString() }
@@ -309,6 +317,10 @@ class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: In
                         }
                     })
                 }
+                if(bodyModel != null)
+                    name.addKeyEvent(SWT.CR, precondition= {this@ParamListWidget.children.last() === this}) {
+                        this@MethodWidget.body!!.insertBeginning()
+                    }
                 name.addFocusLostAction {
                     if (name.isValidAndDifferent(node.nameAsString))
                         Commands.execute(object : ModifyCommand<SimpleName>(node, node.name) {

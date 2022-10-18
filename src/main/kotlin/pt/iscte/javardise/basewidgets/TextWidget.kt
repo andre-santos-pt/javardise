@@ -56,8 +56,8 @@ interface TextWidget {
         widget.toolTipText = text
     }
 
-    fun clear() {
-        widget.text = ""
+    fun clear(text: String = "") {
+        widget.text = text
     }
 
     fun addKeyEvent(
@@ -113,6 +113,8 @@ interface TextWidget {
             t.font = CODE_FONT()
             t.cursor = Display.getCurrent().getSystemCursor(SWT.CURSOR_HAND)
 
+            t.menu = Menu(t)
+
             accept?.let {
                 t.addVerifyListener {
                     it.doit = accept(it.character, t.text)
@@ -152,9 +154,9 @@ interface TextWidget {
                 override val widget: Text
                     get() = w
 
-                override fun clear() {
+                override fun clear(text: String) {
                     acceptFlag = true
-                    w.text = ""
+                    w.text = text
                     acceptFlag = false
                 }
 
