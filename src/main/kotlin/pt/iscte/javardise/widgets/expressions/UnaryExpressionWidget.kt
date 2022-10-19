@@ -17,9 +17,9 @@ import pt.iscte.javardise.external.ROW_LAYOUT_H_SHRINK
 import pt.iscte.javardise.external.observeProperty
 import pt.iscte.javardise.external.unaryOperators
 
-class UnaryExpressionWidget(parent: Composite, override val node: UnaryExpr) : ExpWidget<UnaryExpr>(parent) {
+class UnaryExpressionWidget(parent: Composite, override val node: UnaryExpr) : ExpressionWidget<UnaryExpr>(parent) {
     var operator: TokenWidget
-    var expressionWidget: ExpWidget<*>
+    var expressionWidget: ExpressionWidget<*>
     val expressionObserver: AstObserver
     val operatorObserver: AstObserver
 
@@ -55,7 +55,7 @@ class UnaryExpressionWidget(parent: Composite, override val node: UnaryExpr) : E
         }
     }
 
-    private fun drawExpression(parent: Composite, expression: Expression): ExpWidget<*> {
+    private fun drawExpression(parent: Composite, expression: Expression): ExpressionWidget<*> {
         expressionWidget = createExpressionWidget(parent, expression) {
             Commands.execute(object :
                 ModifyCommand<Expression>(node, node.expression) {

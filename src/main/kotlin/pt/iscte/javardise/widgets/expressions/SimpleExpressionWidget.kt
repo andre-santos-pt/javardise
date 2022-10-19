@@ -1,6 +1,8 @@
 package pt.iscte.javardise.widgets.expressions
 
 import com.github.javaparser.StaticJavaParser
+import com.github.javaparser.ast.ArrayCreationLevel
+import com.github.javaparser.ast.NodeList
 import com.github.javaparser.ast.comments.BlockComment
 import com.github.javaparser.ast.expr.*
 import org.eclipse.swt.SWT
@@ -14,12 +16,14 @@ import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.external.*
 import pt.iscte.javardise.updateColor
 
+val ARRAYTYPE = Regex("[a-zA-Z][a-zA-Z0-9_]+")
+
 class SimpleExpressionWidget(
     parent: Composite,
     override var node: Expression,
     val editEvent: (Expression) -> Unit
 ) :
-    ExpWidget<Expression>(parent) {
+    ExpressionWidget<Expression>(parent) {
 
     // TODO flag to require target expression
 
@@ -37,7 +41,7 @@ class SimpleExpressionWidget(
 
         expression = TextWidget.create(this, text) { c, s ->
             c.toString()
-                .matches(Regex("[a-zA-Z\\d_\\[\\]()+]")) || c == SWT.BS || c == SWT.SPACE
+                .matches(Regex("[a-zA-Z\\d_\\[\\]()+\\.]")) || c == SWT.BS || c == SWT.SPACE
         }
         if (noparse)
             expression.widget.background = ERROR_COLOR()
@@ -87,6 +91,16 @@ class SimpleExpressionWidget(
         }
         expression.addKeyEvent('(', precondition = { tryParseSimpleName(it) }) {
             editEvent(MethodCallExpr(expression.text))
+        }
+
+        expression.addKeyEvent('[', precondition = {
+            it.matches(Regex("new\\s+${ARRAYTYPE.pattern}"))}) {
+            val arrayCreationExpr = ArrayCreationExpr(
+                StaticJavaParser.parseType(expression.text.split(Regex("\\s+"))[1]),
+                NodeList.nodeList(ArrayCreationLevel(NameExpr("expression"))),
+                null
+            )
+            editEvent(arrayCreationExpr)
         }
 
         expression.addKeyEvent(

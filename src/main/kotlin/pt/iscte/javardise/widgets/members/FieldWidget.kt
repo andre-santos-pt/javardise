@@ -17,7 +17,7 @@ import org.eclipse.swt.widgets.Composite
 import pt.iscte.javardise.*
 import pt.iscte.javardise.basewidgets.Id
 import pt.iscte.javardise.basewidgets.TokenWidget
-import pt.iscte.javardise.widgets.expressions.ExpWidget
+import pt.iscte.javardise.widgets.expressions.ExpressionWidget
 import pt.iscte.javardise.widgets.expressions.createExpressionWidget
 import pt.iscte.javardise.external.observeProperty
 
@@ -30,7 +30,7 @@ class FieldWidget(parent: Composite, val dec: FieldDeclaration) :
     val type: Id
     val name: Id
     var equals: TokenWidget? = null
-    var initializer: ExpWidget<*>? = null
+    var initializer: ExpressionWidget<*>? = null
     val semiColon: TokenWidget
 
     init {

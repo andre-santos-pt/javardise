@@ -3,8 +3,7 @@ package pt.iscte.javardise.basewidgets
 import org.eclipse.swt.SWT
 import org.eclipse.swt.events.*
 import org.eclipse.swt.widgets.*
-import pt.iscte.javardise.CODE_FONT
-import pt.iscte.javardise.Configuration
+import pt.iscte.javardise.*
 import pt.iscte.javardise.widgets.members.MemberWidget
 import pt.iscte.javardise.widgets.statements.StatementWidget
 
@@ -80,7 +79,30 @@ interface TextWidget {
 
     fun addKeyListenerInternal(listener: KeyListener)
 
-    fun addFocusLostAction(action: () -> Unit): FocusListener
+    fun addFocusLostAction(action: () -> Unit): FocusListener {
+        val listener = object : FocusAdapter() {
+            override fun focusLost(e: FocusEvent?) {
+                action()
+            }
+        }
+        widget.addFocusListener(listener)
+        return listener
+    }
+
+    fun addFocusLostAction(isValid: (String) -> Boolean, action: () -> Unit): FocusListener {
+        val listener = object : FocusAdapter() {
+            override fun focusLost(e: FocusEvent?) {
+                if(isValid(widget.text)) {
+                    action()
+                    widget.background = BACKGROUND_COLOR()
+                }
+                else
+                    widget.background = ERROR_COLOR()
+            }
+        }
+        widget.addFocusListener(listener)
+        return listener
+    }
 
     fun addDeleteListener(action: () -> Unit) =
         addKeyEvent(SWT.BS, precondition = { widget.text.isEmpty() && widget.caretPosition == 0 }) {

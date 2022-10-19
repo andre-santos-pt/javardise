@@ -272,7 +272,7 @@ fun create(style: Int, top: Int = 0, spacing: Int = 0): RowLayout {
 }
 
 val ROW_LAYOUT_H_STRING = create(SWT.HORIZONTAL, spacing = -3)
-val ROW_LAYOUT_H_SHRINK = create(SWT.HORIZONTAL, 0)
+val ROW_LAYOUT_H_SHRINK = create(SWT.HORIZONTAL, spacing = 1, top= 0)
 val ROW_LAYOUT_H_ZERO = create(SWT.HORIZONTAL, 2)
 val ROW_LAYOUT_H = create(SWT.HORIZONTAL, 3)
 val ROW_LAYOUT_H_DOT = create(SWT.HORIZONTAL, 0)

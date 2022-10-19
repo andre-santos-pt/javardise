@@ -4,14 +4,13 @@ import pt.iscte.javardise.external.*
 import com.github.javaparser.ParseProblemException
 import com.github.javaparser.StaticJavaParser
 import com.github.javaparser.ast.CompilationUnit
-import com.github.javaparser.ast.Modifier
 import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.NodeList
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration
 import com.github.javaparser.ast.body.FieldDeclaration
-import com.github.javaparser.ast.expr.SimpleName
+import com.github.javaparser.ast.body.MethodDeclaration
+import com.github.javaparser.ast.expr.*
 import com.github.javaparser.ast.observer.ObservableProperty
-import com.github.javaparser.ast.visitor.TreeVisitor
 import com.github.javaparser.printer.DefaultPrettyPrinter
 import com.github.javaparser.printer.DefaultPrettyPrinterVisitor
 import com.github.javaparser.printer.configuration.DefaultPrinterConfiguration
@@ -23,7 +22,6 @@ import org.eclipse.swt.layout.FillLayout
 import org.eclipse.swt.layout.RowLayout
 import org.eclipse.swt.widgets.*
 import pt.iscte.javardise.basewidgets.*
-import pt.iscte.javardise.widgets.*
 import pt.iscte.javardise.widgets.members.ClassWidget
 import java.io.File
 import java.io.PrintWriter
@@ -139,11 +137,41 @@ class JavardiseWindow(var file: File) {
 
             override fun visit(n: SimpleName, arg: Void?) {
                 super.visit(n, arg)
-                val offset = n.asString().length
-                val init = printer.cursor.column - offset + 1 // because cursor.column is zero-based
-                val pos = Token(printer.cursor.line.toLong(), init.toLong(), offset, n)
+                addToken(n)
+            }
+
+            override fun visit(n: NameExpr, arg: Void?) {
+                super.visit(n, arg)
+                addToken(n)
+            }
+
+            override fun visit(m: MethodDeclaration, arg: Void?) {
+                super.visit(m, arg)
+               // addToken(m.type)
+               // addToken(m.name)
+            }
+
+            override fun visit(n: DoubleLiteralExpr, arg: Void?) {
+                super.visit(n, arg)
+                addToken(n)
+                println("!! $n")
+            }
+
+            private fun addToken(n: Node) {
+                val offset = n.toString().length
+                val init =
+                    printer.cursor.column - offset + 1 // because cursor.column is zero-based
+                val pos = Token(
+                    printer.cursor.line.toLong(),
+                    init.toLong(),
+                    offset,
+                    n
+                )
                 list.add(pos)
             }
+
+
+
         }
 
 
@@ -156,26 +184,23 @@ class JavardiseWindow(var file: File) {
 
             for (e in errors) {
                 println("ERROR line ${e.lineNumber} ${e.columnNumber} ${e.getMessage(null)}")
-                object : TreeVisitor() {
-                    override fun process(node: Node) {
-                        // zero-based in java compiler
-                        val t = nodeMap.find { it.line == e.lineNumber && it.col == e.columnNumber + 1 }
-                        t?.let {
-                            val child = classWidget!!.findChild(t.node)
-                            child?.let {
-                               child.background = Display.getDefault().getSystemColor(SWT.COLOR_RED)
-                            }
-                        }
+                // zero-based in java compiler
+                val t = nodeMap.find { it.line == e.lineNumber && it.col == e.columnNumber }
+                t?.let {
+                    val child = classWidget!!.findChild(t.node)
+                    child?.let {
+                        child.background = ERROR_COLOR()
+                        child.toolTipText = e.getMessage(null)
+                        child.requestLayout()
                     }
-                }.visitBreadthFirst(model)
+                }
+                // TODO show not handled
             }
         }
     }
 
 
     private fun save() {
-        if (file == null)
-            file = File(model!!.nameAsString + ".java")
         val pw = PrintWriter(file)
         pw.print(model.toString())
         pw.close()
@@ -291,8 +316,8 @@ fun Composite.findChild(model: Node): Control? {
 }
 
 fun Control.backgroundDefault() = this.traverse {
-    background = Display.getDefault().getSystemColor(SWT.COLOR_WHITE)
-    foreground = Display.getDefault().getSystemColor(SWT.COLOR_BLUE)
+    background = BACKGROUND_COLOR()
+    foreground = FOREGROUND_COLOR()
     true
 }
 
@@ -314,17 +339,20 @@ class SimpleNameWidget<N : Node>(parent: Composite, override val node: N, getNam
         textWidget.setFocus()
     }
 
-    override fun isValid(): Boolean = textWidget.text.matches(ID) && !SourceVersion.isKeyword(textWidget.text)
+    override fun isValid(): Boolean = SourceVersion.isIdentifier(textWidget.text) && !SourceVersion.isKeyword(textWidget.text)
 
 }
 
-class SimpleTypeWidget<N : Node>(parent: Composite, node: N, getName: (N) -> String)
-    : TypeId(parent, getName(node)) {
+class SimpleTypeWidget<N : Node>(parent: Composite,  override val node: N, getName: (N) -> String)
+    : TypeId(parent, getName(node)), NodeWidget<N> {
     init {
         textWidget.data = node
     }
 
-    override fun isValid(): Boolean = tryParseType(textWidget.text)
+    override fun isValid(): Boolean = isValidType(textWidget.text)
+    override fun setFocusOnCreation(firstFlag: Boolean) {
+        setFocus()
+    }
 }
 
 class UnsupportedWidget(parent: Composite, node: Node) : Composite(parent, SWT.NONE) {

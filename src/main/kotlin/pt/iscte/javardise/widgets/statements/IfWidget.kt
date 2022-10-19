@@ -22,8 +22,7 @@ import pt.iscte.javardise.basewidgets.SequenceContainer
 import pt.iscte.javardise.basewidgets.SequenceWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
 import pt.iscte.javardise.external.*
-import pt.iscte.javardise.widgets.*
-import pt.iscte.javardise.widgets.expressions.ExpWidget
+import pt.iscte.javardise.widgets.expressions.ExpressionWidget
 import pt.iscte.javardise.widgets.expressions.createExpressionWidget
 import pt.iscte.javardise.widgets.members.addInsert
 
@@ -37,7 +36,7 @@ class IfWidget(
     var column: Composite
     lateinit var firstRow: Composite
     lateinit var keyword: TokenWidget
-    lateinit var exp: ExpWidget<*>
+    lateinit var exp: ExpressionWidget<*>
     override lateinit var body: SequenceWidget
 
     var elseWidget: ElseWidget? = null

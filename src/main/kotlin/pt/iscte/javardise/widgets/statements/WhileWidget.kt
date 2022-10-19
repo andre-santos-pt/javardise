@@ -8,9 +8,8 @@ import org.eclipse.swt.layout.RowLayout
 import org.eclipse.swt.widgets.Composite
 import pt.iscte.javardise.*
 import pt.iscte.javardise.basewidgets.*
-import pt.iscte.javardise.widgets.*
 import pt.iscte.javardise.external.*
-import pt.iscte.javardise.widgets.expressions.ExpWidget
+import pt.iscte.javardise.widgets.expressions.ExpressionWidget
 import pt.iscte.javardise.widgets.expressions.createExpressionWidget
 import pt.iscte.javardise.widgets.members.addInsert
 
@@ -22,7 +21,7 @@ class WhileWidget(
     StatementWidget<WhileStmt>(parent, node), SequenceContainer {
 
     lateinit var keyword: TokenWidget
-    lateinit var exp: ExpWidget<*>
+    lateinit var exp: ExpressionWidget<*>
     lateinit var firstRow: Composite
     override lateinit var body: SequenceWidget
     lateinit var openClause: FixedToken

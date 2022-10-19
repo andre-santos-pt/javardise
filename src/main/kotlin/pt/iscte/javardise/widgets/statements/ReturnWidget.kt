@@ -13,14 +13,14 @@ import pt.iscte.javardise.basewidgets.SequenceWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
 import pt.iscte.javardise.external.observeProperty
 import pt.iscte.javardise.external.row
-import pt.iscte.javardise.widgets.expressions.ExpWidget
+import pt.iscte.javardise.widgets.expressions.ExpressionWidget
 import pt.iscte.javardise.widgets.expressions.createExpressionWidget
 import pt.iscte.javardise.widgets.members.addInsert
 
 class ReturnWidget(parent: SequenceWidget, node: ReturnStmt, override val block: BlockStmt) :
     StatementWidget<ReturnStmt>(parent, node) {
     lateinit var keyword: TokenWidget
-    var exp: ExpWidget<*>? = null
+    var exp: ExpressionWidget<*>? = null
     lateinit var semiColon: TokenWidget
     val row: Composite
 

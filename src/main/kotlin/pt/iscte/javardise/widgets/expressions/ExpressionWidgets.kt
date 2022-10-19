@@ -10,7 +10,7 @@ import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.external.binaryOperators
 import pt.iscte.javardise.external.unaryOperators
 
-abstract class ExpWidget<T : Expression>(parent: Composite)
+abstract class ExpressionWidget<T : Expression>(parent: Composite)
     : Composite(parent, SWT.NONE), NodeWidget<T> {
 
     abstract val tail: TextWidget
@@ -28,13 +28,14 @@ fun createExpressionWidget(
     parent: Composite,
     node: Expression,
     editEvent: (Expression) -> Unit
-): ExpWidget<*> =
+): ExpressionWidget<*> =
     when (node) {
         is UnaryExpr -> UnaryExpressionWidget(parent, node)
         is BinaryExpr -> BinaryExpressionWidget(parent, node)
         is CharLiteralExpr -> CharacterExpressionWidget(parent, node)
         is StringLiteralExpr -> StringExpressionWidget(parent, node)
         is MethodCallExpr -> CallExpressionWidget(parent, node)
+        is ArrayCreationExpr -> NewExpressionWidget(parent, node)
         else -> SimpleExpressionWidget(parent, node, editEvent)
     }.apply {
         if (this !is SimpleExpressionWidget)

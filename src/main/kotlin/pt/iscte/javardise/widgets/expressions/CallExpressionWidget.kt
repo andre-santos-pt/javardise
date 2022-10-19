@@ -20,7 +20,7 @@ import pt.iscte.javardise.external.*
 class CallExpressionWidget(
     parent: Composite,
     override val node: MethodCallExpr
-) : ExpWidget<MethodCallExpr>(parent) {
+) : ExpressionWidget<MethodCallExpr>(parent) {
 
     private var target: Id? = null
     private var methodName: Id
@@ -30,7 +30,7 @@ class CallExpressionWidget(
 
     private val argumentWidgets = mutableListOf<ArgWidget>()
 
-    private data class ArgWidget(val comma: FixedToken?, var arg: ExpWidget<*>) {
+    private data class ArgWidget(val comma: FixedToken?, var arg: ExpressionWidget<*>) {
         fun dispose() {
             comma?.dispose()
             arg.dispose()
@@ -131,7 +131,7 @@ class CallExpressionWidget(
     }
 
     private fun createArgument(exp: Expression, index: Int, replace: Boolean):
-            ExpWidget<*> {
+            ExpressionWidget<*> {
         val arg = createExpressionWidget(this, exp) {
             Commands.execute(object : Command {
                 override val target = node

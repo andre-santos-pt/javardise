@@ -142,7 +142,7 @@ fun createInsert(seq: SequenceWidget, block: BlockStmt): TextWidget {
     }
 
     insert.addKeyEvent(';', precondition = {
-        insert.isAtEnd && it.split(Regex("\\s+")).size == 2 && tryParseType(it.split(Regex("\\s+"))[0]) && tryParse<NameExpr>(
+        insert.isAtEnd && it.split(Regex("\\s+")).size == 2 && isValidType(it.split(Regex("\\s+"))[0]) && tryParse<NameExpr>(
             it.split(Regex("\\s+"))[1]
         )
     }) {
@@ -154,7 +154,7 @@ fun createInsert(seq: SequenceWidget, block: BlockStmt): TextWidget {
     }
 
     insert.addKeyEvent('=', precondition = {
-        insert.isAtEnd && it.split(Regex("\\s+")).size == 2 && tryParseType(it.split(Regex("\\s+"))[0]) && tryParse<NameExpr>(
+        insert.isAtEnd && it.split(Regex("\\s+")).size == 2 && isValidType(it.split(Regex("\\s+"))[0]) && tryParse<NameExpr>(
             it.split(Regex("\\s+"))[1]
         )
     }) {

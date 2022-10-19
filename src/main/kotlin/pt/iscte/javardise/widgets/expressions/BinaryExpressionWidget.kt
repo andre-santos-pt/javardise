@@ -17,11 +17,11 @@ import pt.iscte.javardise.external.binaryOperators
 import pt.iscte.javardise.external.observeProperty
 
 class BinaryExpressionWidget(parent: Composite, override val node: BinaryExpr) :
-    ExpWidget<BinaryExpr>(parent) {
+    ExpressionWidget<BinaryExpr>(parent) {
 
-    var left: ExpWidget<*>
+    var left: ExpressionWidget<*>
     var operator: TokenWidget
-    var right: ExpWidget<*>
+    var right: ExpressionWidget<*>
     val leftObserver: AstObserver
     val rightObserver: AstObserver
     val operatorObserver: AstObserver
@@ -79,7 +79,7 @@ class BinaryExpressionWidget(parent: Composite, override val node: BinaryExpr) :
     private fun drawLeft(
         parent: Composite,
         expression: Expression
-    ): ExpWidget<*> {
+    ): ExpressionWidget<*> {
         left = createExpressionWidget(parent, expression) {
             Commands.execute(object :
                 ModifyCommand<Expression>(node, node.left) {
@@ -103,7 +103,7 @@ class BinaryExpressionWidget(parent: Composite, override val node: BinaryExpr) :
     private fun drawRight(
         parent: Composite,
         expression: Expression
-    ): ExpWidget<*> {
+    ): ExpressionWidget<*> {
         right = createExpressionWidget(parent, expression) {
             Commands.execute(object :
                 ModifyCommand<Expression>(node, node.right) {

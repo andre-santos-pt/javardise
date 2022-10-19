@@ -219,7 +219,7 @@ class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: In
             insert = TextWidget.create(this, " ") { c, s ->
                 c.toString().matches(TYPE_CHARS)
             }
-            insert.addKeyEvent(SWT.SPACE, precondition = { tryParseType(it) }) {
+            insert.addKeyEvent(SWT.SPACE, precondition = { isValidType(it) }) {
                 Commands.execute(object : Command {
                     override val target = dec
                     override val kind = CommandKind.ADD

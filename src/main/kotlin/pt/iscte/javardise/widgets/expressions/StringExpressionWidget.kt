@@ -8,7 +8,7 @@ import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
 import pt.iscte.javardise.external.ROW_LAYOUT_H_STRING
 
-class StringExpressionWidget(parent: Composite, override val node: StringLiteralExpr) : ExpWidget<StringLiteralExpr>(parent) {
+class StringExpressionWidget(parent: Composite, override val node: StringLiteralExpr) : ExpressionWidget<StringLiteralExpr>(parent) {
     val text: TextWidget
     val close: TokenWidget
 

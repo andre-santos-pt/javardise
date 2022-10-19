@@ -16,9 +16,8 @@ import pt.iscte.javardise.basewidgets.FixedToken
 import pt.iscte.javardise.basewidgets.Id
 import pt.iscte.javardise.basewidgets.SequenceWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
-import pt.iscte.javardise.widgets.*
 import pt.iscte.javardise.external.*
-import pt.iscte.javardise.widgets.expressions.ExpWidget
+import pt.iscte.javardise.widgets.expressions.ExpressionWidget
 import pt.iscte.javardise.widgets.expressions.createExpressionWidget
 import pt.iscte.javardise.widgets.members.addInsert
 
@@ -30,7 +29,7 @@ class VariableWidget(
 ) : StatementWidget<ExpressionStmt>(parent, node) {
     var type: Id
     var name: Id
-    var expression: ExpWidget<*>? = null
+    var expression: ExpressionWidget<*>? = null
 
     init {
         require(node.expression is VariableDeclarationExpr)
@@ -44,7 +43,7 @@ class VariableWidget(
         type = SimpleTypeWidget(this, decl.type) { it.asString() }
         type.addFocusLostAction {
             if (type.text != decl.typeAsString)
-                if (tryParseType(type.text))
+                if (isValidType(type.text))
                     Commands.execute(object : ModifyCommand<Type>(assignment, assignment.commonType) {
                         override fun run() {
                             assignment.setAllTypes(StaticJavaParser.parseType(type.text))

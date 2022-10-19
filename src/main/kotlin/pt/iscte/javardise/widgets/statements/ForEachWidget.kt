@@ -7,7 +7,7 @@ import org.eclipse.swt.layout.RowLayout
 import pt.iscte.javardise.basewidgets.FixedToken
 import pt.iscte.javardise.basewidgets.SequenceWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
-import pt.iscte.javardise.widgets.expressions.ExpWidget
+import pt.iscte.javardise.widgets.expressions.ExpressionWidget
 import pt.iscte.javardise.widgets.expressions.createExpressionWidget
 
 // TODO for each
@@ -15,7 +15,7 @@ class ForEachWidget(parent: SequenceWidget, node: ForEachStmt, override val bloc
     StatementWidget<ForEachStmt>(parent, node) {
 
     lateinit var keyword: TokenWidget
-    lateinit var iterable: ExpWidget<*>
+    lateinit var iterable: ExpressionWidget<*>
     lateinit var body: SequenceWidget
 
     init {

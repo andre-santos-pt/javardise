@@ -245,7 +245,7 @@ fun <E : Expression> tryParse(exp: String): Boolean {
     }
 }
 
-fun tryParseType(type: String): Boolean =
+fun isValidType(type: String): Boolean =
     try {
         StaticJavaParser.parseType(type)
         true

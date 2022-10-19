@@ -14,8 +14,7 @@ import pt.iscte.javardise.Commands
 import pt.iscte.javardise.ModifyCommand
 import pt.iscte.javardise.basewidgets.SequenceWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
-import pt.iscte.javardise.widgets.*
-import pt.iscte.javardise.widgets.expressions.ExpWidget
+import pt.iscte.javardise.widgets.expressions.ExpressionWidget
 import pt.iscte.javardise.widgets.expressions.createExpressionWidget
 import pt.iscte.javardise.widgets.members.addInsert
 
@@ -25,9 +24,9 @@ class AssignWidget(
     node: ExpressionStmt,
     override val block: BlockStmt
 ) : StatementWidget<ExpressionStmt>(parent, node) {
-    var target: ExpWidget<*>
+    var target: ExpressionWidget<*>
     var operator: TokenWidget
-    var value: ExpWidget<*>
+    var value: ExpressionWidget<*>
     val assignment = node.expression as AssignExpr
 
     init {
