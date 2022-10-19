@@ -35,7 +35,9 @@ fun createExpressionWidget(
         is CharLiteralExpr -> CharacterExpressionWidget(parent, node)
         is StringLiteralExpr -> StringExpressionWidget(parent, node)
         is MethodCallExpr -> CallExpressionWidget(parent, node)
-        is ArrayCreationExpr -> NewExpressionWidget(parent, node)
+        is ArrayCreationExpr -> NewArrayExpressionWidget(parent, node)
+        is ArrayInitializerExpr -> NewArrayInitExpressionWidget(parent, node)
+        is ObjectCreationExpr -> NewObjectExpressionWidget(parent, node)
         else -> SimpleExpressionWidget(parent, node, editEvent)
     }.apply {
         if (this !is SimpleExpressionWidget)

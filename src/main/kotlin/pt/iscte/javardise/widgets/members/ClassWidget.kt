@@ -284,12 +284,13 @@ class ClassWidget(parent: Composite, type: ClassOrInterfaceDeclaration) :
             insert.delete()
         }
 
+
         insert.addKeyEvent('(', precondition = { it.matches(MEMBER_REGEX) }) {
             val split = insert.text.split(Regex("\\s+"))
             val newMethod = MethodDeclaration(
                 modifiers(2),
                 split.last(),
-                StaticJavaParser.parseType(split[split.lastIndex - 1]),
+                StaticJavaParser.parseType(split[split.lastIndex - 1]),    // BUG parse type
                 NodeList()
             )
             if(node.isInterface)

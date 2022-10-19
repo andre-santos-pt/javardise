@@ -1,6 +1,5 @@
 package pt.iscte.javardise
 
-import pt.iscte.javardise.external.*
 import com.github.javaparser.ParseProblemException
 import com.github.javaparser.StaticJavaParser
 import com.github.javaparser.ast.CompilationUnit
@@ -9,7 +8,9 @@ import com.github.javaparser.ast.NodeList
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration
 import com.github.javaparser.ast.body.FieldDeclaration
 import com.github.javaparser.ast.body.MethodDeclaration
-import com.github.javaparser.ast.expr.*
+import com.github.javaparser.ast.expr.DoubleLiteralExpr
+import com.github.javaparser.ast.expr.NameExpr
+import com.github.javaparser.ast.expr.SimpleName
 import com.github.javaparser.ast.observer.ObservableProperty
 import com.github.javaparser.printer.DefaultPrettyPrinter
 import com.github.javaparser.printer.DefaultPrettyPrinterVisitor
@@ -22,6 +23,7 @@ import org.eclipse.swt.layout.FillLayout
 import org.eclipse.swt.layout.RowLayout
 import org.eclipse.swt.widgets.*
 import pt.iscte.javardise.basewidgets.*
+import pt.iscte.javardise.external.*
 import pt.iscte.javardise.widgets.members.ClassWidget
 import java.io.File
 import java.io.PrintWriter
@@ -54,11 +56,7 @@ class JavardiseWindow(var file: File) {
     init {
         shell.layout = FillLayout()
         val form = SashForm(shell, SWT.HORIZONTAL)
-
-        col = form.column {
-
-        }
-
+        col = form.column { }
         val sash = SashForm(form, SWT.NONE)
         val textArea = Composite(sash, SWT.NONE)
         textArea.layout = FillLayout()
@@ -69,16 +67,13 @@ class JavardiseWindow(var file: File) {
         createStackView(sash)
 
         model = load(file)
-
         model?.let {
             val mirror = ClassWidget(form, it)
             mirror.enabled = false
         }
-
         col.row {
             addButtons(this)
         }
-
 
         // BUG lost focus
         display.addFilter(SWT.KeyDown) {
@@ -169,11 +164,7 @@ class JavardiseWindow(var file: File) {
                 )
                 list.add(pos)
             }
-
-
-
         }
-
 
         composite.button("compile") {
             classWidget!!.backgroundDefault()

@@ -253,6 +253,14 @@ fun isValidType(type: String): Boolean =
         false
     }
 
+fun isValidClassType(type: String): Boolean =
+    try {
+        StaticJavaParser.parseClassOrInterfaceType(type)
+        true
+    } catch (_: ParseProblemException) {
+        false
+    }
+
 fun tryParseExpression(exp: String): Boolean =
     try {
         StaticJavaParser.parseExpression<Expression>(exp)

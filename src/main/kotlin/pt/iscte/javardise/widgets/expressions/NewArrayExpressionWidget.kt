@@ -18,7 +18,7 @@ import pt.iscte.javardise.basewidgets.TokenWidget
 import pt.iscte.javardise.external.*
 
 // TODO multi level arrays
-class NewExpressionWidget(
+class NewArrayExpressionWidget(
     parent: Composite,
     override val node: ArrayCreationExpr
 ) : ExpressionWidget<ArrayCreationExpr>(parent) {

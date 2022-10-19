@@ -133,10 +133,11 @@ fun createInsert(seq: SequenceWidget, block: BlockStmt): TextWidget {
     }
 
     insert.addKeyEvent('=', precondition = {
-        insert.isAtEnd && (tryParse<NameExpr>(it) || tryParse<ArrayAccessExpr>(it) || tryParse<FieldAccessExpr>(it))
+        val trim = it.trim()
+        tryParse<NameExpr>(trim) || tryParse<ArrayAccessExpr>(trim) || tryParse<FieldAccessExpr>(trim)
     }) {
         val insertIndex = seq.findIndexByModel(insert.widget)
-        val stmt = ExpressionStmt(AssignExpr(NameExpr(insert.text), NameExpr("exp"), AssignExpr.Operator.ASSIGN))
+        val stmt = ExpressionStmt(AssignExpr(NameExpr(insert.text.trim()), NameExpr("exp"), AssignExpr.Operator.ASSIGN))
         insert.delete()
         Commands.execute(AddStatementCommand(stmt, block, insertIndex))
     }
@@ -154,9 +155,8 @@ fun createInsert(seq: SequenceWidget, block: BlockStmt): TextWidget {
     }
 
     insert.addKeyEvent('=', precondition = {
-        insert.isAtEnd && it.split(Regex("\\s+")).size == 2 && isValidType(it.split(Regex("\\s+"))[0]) && tryParse<NameExpr>(
-            it.split(Regex("\\s+"))[1]
-        )
+        val parts = it.split(Regex("\\s+"))
+        insert.isAtEnd && parts.size == 2 && isValidType(parts[0]) && tryParse<NameExpr>(parts[1])
     }) {
         val insertIndex = seq.findIndexByModel(insert.widget)
         val split = insert.text.split(Regex("\\s+"))

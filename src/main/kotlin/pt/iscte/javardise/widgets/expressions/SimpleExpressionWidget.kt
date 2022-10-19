@@ -16,7 +16,7 @@ import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.external.*
 import pt.iscte.javardise.updateColor
 
-val ARRAYTYPE = Regex("[a-zA-Z][a-zA-Z0-9_]+")
+val TYPE = Regex("[a-zA-Z][a-zA-Z0-9_]+")
 
 class SimpleExpressionWidget(
     parent: Composite,
@@ -94,13 +94,25 @@ class SimpleExpressionWidget(
         }
 
         expression.addKeyEvent('[', precondition = {
-            it.matches(Regex("new\\s+${ARRAYTYPE.pattern}"))}) {
+            it.matches(Regex("new\\s+${TYPE.pattern}"))}) {
             val arrayCreationExpr = ArrayCreationExpr(
                 StaticJavaParser.parseType(expression.text.split(Regex("\\s+"))[1]),
                 NodeList.nodeList(ArrayCreationLevel(NameExpr("expression"))),
                 null
             )
             editEvent(arrayCreationExpr)
+        }
+
+        expression.addKeyEvent('(', precondition = {
+            it.matches(Regex("new\\s+${TYPE.pattern}")) && isValidClassType(expression.text.split(Regex("\\s+"))[1])
+
+        }) {
+            val objectCreationExpr = ObjectCreationExpr(null,
+                StaticJavaParser.parseClassOrInterfaceType(expression.text.split(Regex("\\s+"))[1]),
+                NodeList.nodeList(),
+
+            )
+            editEvent(objectCreationExpr)
         }
 
         expression.addKeyEvent(
