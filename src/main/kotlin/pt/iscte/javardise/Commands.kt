@@ -1,9 +1,11 @@
 package pt.iscte.javardise
 
 import com.github.javaparser.ast.Node
+import com.github.javaparser.ast.expr.AssignExpr
 import com.github.javaparser.ast.stmt.BlockStmt
 import com.github.javaparser.ast.stmt.Statement
 import pt.iscte.javardise.external.AddStatementCommand
+import kotlin.reflect.KFunction1
 
 object Commands {
     val stack = ArrayDeque<Command>()
@@ -48,6 +50,22 @@ interface Command {
     fun asString(): String = "$kind - ${target::class.simpleName} - $element"
 
 }
+
+fun <E: Any> Node.modifyCommand(old: E, new: E, setOperation: KFunction1<E, Node>) =
+    Commands.execute(object : Command {
+        override val target = this@modifyCommand
+        override val kind: CommandKind = CommandKind.MODIFY
+        override val element: E = old
+
+        override fun run() {
+            setOperation(new)
+        }
+
+        override fun undo() {
+            setOperation(old)
+        }
+    })
+
 
 abstract class AbstractCommand<E : Node>(
     override val target: Node,

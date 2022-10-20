@@ -17,6 +17,7 @@ import pt.iscte.javardise.widgets.expressions.ExpressionWidget
 import pt.iscte.javardise.widgets.expressions.createExpressionWidget
 import pt.iscte.javardise.widgets.members.addInsert
 
+// TODO adapt to throw?
 class ReturnWidget(parent: SequenceWidget, node: ReturnStmt, override val block: BlockStmt) :
     StatementWidget<ReturnStmt>(parent, node) {
     lateinit var keyword: TokenWidget

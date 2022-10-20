@@ -109,10 +109,13 @@ class SimpleExpressionWidget(
         }) {
             val objectCreationExpr = ObjectCreationExpr(null,
                 StaticJavaParser.parseClassOrInterfaceType(expression.text.split(Regex("\\s+"))[1]),
-                NodeList.nodeList(),
-
+                NodeList.nodeList()
             )
             editEvent(objectCreationExpr)
+        }
+
+        expression.addKeyEvent('(', precondition = {it.isBlank()}) {
+            editEvent(EnclosedExpr(NameExpr("expression")))
         }
 
         expression.addKeyEvent(
@@ -134,6 +137,7 @@ class SimpleExpressionWidget(
                 val newExp =
                     StaticJavaParser.parseExpression<Expression>(expression.text)
                 if (!newExp.equals(node)) {
+                    node.setComment(null)
                     node = newExp
                     editEvent(node)
                 }

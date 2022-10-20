@@ -15,6 +15,7 @@ import pt.iscte.javardise.basewidgets.FixedToken
 import pt.iscte.javardise.basewidgets.Id
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.external.ROW_LAYOUT_H_SHRINK
+import pt.iscte.javardise.external.ROW_LAYOUT_H_STRING
 import pt.iscte.javardise.external.observeProperty
 
 class CallExpressionWidget(
@@ -27,7 +28,7 @@ class CallExpressionWidget(
     private val args: ArgumentListWidget
 
     init {
-        layout = ROW_LAYOUT_H_SHRINK
+        layout = ROW_LAYOUT_H_STRING
         if (node.scope.isPresent) {
             target = SimpleNameWidget(this, node.scope.get()) { it.toString() }
             target!!.addKeyEvent(SWT.BS, precondition = { it.isEmpty() }) {

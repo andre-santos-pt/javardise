@@ -33,11 +33,12 @@ fun createExpressionWidget(
         is UnaryExpr -> UnaryExpressionWidget(parent, node)
         is BinaryExpr -> BinaryExpressionWidget(parent, node)
         is CharLiteralExpr -> CharacterExpressionWidget(parent, node)
-        is StringLiteralExpr -> StringExpressionWidget(parent, node)
+        is StringLiteralExpr -> StringExpressionWidget(parent, node, editEvent)
         is MethodCallExpr -> CallExpressionWidget(parent, node)
         is ArrayCreationExpr -> NewArrayExpressionWidget(parent, node)
         is ArrayInitializerExpr -> NewArrayInitExpressionWidget(parent, node)
         is ObjectCreationExpr -> NewObjectExpressionWidget(parent, node)
+        is EnclosedExpr -> BracketsExpressionWidget(parent, node, editEvent)
         else -> SimpleExpressionWidget(parent, node, editEvent)
     }.apply {
         if (this !is SimpleExpressionWidget)

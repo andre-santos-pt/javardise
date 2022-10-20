@@ -133,7 +133,7 @@ abstract class MemberWidget<T : NodeWithModifiers<*>>(
 
     private fun TokenWidget.addDeleteListener(modifier: Modifier) {
         val modifierString = modifier.keyword.asString()
-        addDeleteListener {
+        addDeleteEmptyListener {
             Commands.execute(object : Command {
                 override val target = node as BodyDeclaration<*>
                 override val kind = CommandKind.REMOVE

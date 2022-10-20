@@ -4,9 +4,7 @@ import org.eclipse.swt.SWT
 import org.eclipse.swt.layout.GridLayout
 import org.eclipse.swt.widgets.Composite
 import org.eclipse.swt.widgets.Control
-import org.eclipse.swt.widgets.Display
 import pt.iscte.javardise.Configuration
-import kotlin.reflect.KClass
 
 open class SequenceWidget(
         parent: Composite,
@@ -62,7 +60,7 @@ open class SequenceWidget(
     }
 
     private fun addDeleteBehavior(insert: TextWidget) {
-        insert.addDeleteListener {
+        insert.addDeleteEmptyListener {
             val index = children.indexOf(insert.widget) - 1
             insert.delete()
             if (children.isNotEmpty() && index != -1)

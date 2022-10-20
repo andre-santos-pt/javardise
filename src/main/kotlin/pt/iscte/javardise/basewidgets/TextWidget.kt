@@ -104,8 +104,13 @@ interface TextWidget {
         return listener
     }
 
-    fun addDeleteListener(action: () -> Unit) =
+    fun addDeleteEmptyListener(action: () -> Unit) =
         addKeyEvent(SWT.BS, precondition = { widget.text.isEmpty() && widget.caretPosition == 0 }) {
+            action()
+        }
+
+    fun addDeleteListener(action: () -> Unit) =
+        addKeyEvent(SWT.BS) {
             action()
         }
 

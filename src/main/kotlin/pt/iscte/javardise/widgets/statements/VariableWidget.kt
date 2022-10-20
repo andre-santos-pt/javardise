@@ -22,6 +22,7 @@ import pt.iscte.javardise.widgets.expressions.createExpressionWidget
 import pt.iscte.javardise.widgets.members.addInsert
 
 // TODO delete initializer
+// to expression?
 class VariableWidget(
     parent: SequenceWidget,
     node: ExpressionStmt,

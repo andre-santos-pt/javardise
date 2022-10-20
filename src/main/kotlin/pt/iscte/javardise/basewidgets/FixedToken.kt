@@ -10,7 +10,6 @@ import pt.iscte.javardise.CODE_FONT
 class FixedToken(parent: Composite, token: String) {
 
     val label = Label(parent, SWT.NONE)
-
     init {
         label.font = CODE_FONT()
         label.text = token

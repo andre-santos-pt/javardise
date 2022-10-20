@@ -14,6 +14,7 @@ import pt.iscte.javardise.ModifyCommand
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
 import pt.iscte.javardise.external.ROW_LAYOUT_H_SHRINK
+import pt.iscte.javardise.external.moveAbove
 import pt.iscte.javardise.external.observeProperty
 import pt.iscte.javardise.external.unaryOperators
 
@@ -44,12 +45,15 @@ class UnaryExpressionWidget(parent: Composite, override val node: UnaryExpr) : E
 
         expressionWidget = drawExpression(this, node.expression)
 
+        if(node.isPostfix)
+            expressionWidget.moveAbove(operator)
+
         expressionObserver = node.observeProperty<Expression>(ObservableProperty.EXPRESSION) {
             expressionWidget.dispose()
             drawExpression(this, node.expression)
         }
 
-        operatorObserver = node.observeProperty<BinaryExpr.Operator>(ObservableProperty.OPERATOR) {
+        operatorObserver = node.observeProperty<UnaryExpr.Operator>(ObservableProperty.OPERATOR) {
             operator.set(it?.asString() ?: "??")
             operator.setFocus()
         }

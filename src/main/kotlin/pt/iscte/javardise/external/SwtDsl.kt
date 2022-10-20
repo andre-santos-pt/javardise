@@ -12,6 +12,7 @@ import org.eclipse.swt.layout.GridData
 import org.eclipse.swt.layout.GridLayout
 import org.eclipse.swt.layout.RowLayout
 import org.eclipse.swt.widgets.*
+import pt.iscte.javardise.basewidgets.TextWidget
 import java.io.File
 import java.util.*
 
@@ -260,6 +261,7 @@ fun Control.isChild(comp: Composite): Boolean =
     else
         parent.isChild(comp)
 
+fun Control.moveAbove(widget: TextWidget) = moveAbove(widget.widget)
 
 fun create(style: Int, top: Int = 0, spacing: Int = 0): RowLayout {
     val layout = RowLayout(style)
