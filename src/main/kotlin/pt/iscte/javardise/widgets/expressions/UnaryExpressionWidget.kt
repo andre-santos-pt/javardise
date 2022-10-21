@@ -29,11 +29,19 @@ class UnaryExpressionWidget(
         layout = ROW_LAYOUT_H_SHRINK
         operator = TokenWidget(this, node.operator.asString(),
             alternatives = {
-                unaryOperators.filter { it.isPrefix }.map { it.asString() }
+                if (node.isPrefix)
+                    unaryOperators.filter { it.isPrefix }.map { it.asString() }
+                else
+                    unaryOperators.filter { it.isPostfix }.map { it.asString() }
             }) {
             node.modifyCommand(
                 node.operator,
-                unaryOperators.find { op -> op.asString() == it },
+                if (node.isPrefix)
+                    unaryOperators.filter { it.isPrefix }
+                        .find { op -> op.asString() == it }
+                else
+                    unaryOperators.filter { it.isPostfix }
+                        .find { op -> op.asString() == it },
                 node::setOperator
             )
         }
@@ -43,8 +51,11 @@ class UnaryExpressionWidget(
 
         expressionWidget = drawExpression(this, node.expression)
 
-        if (node.isPostfix)
-            expressionWidget.moveAbove(operator)
+
+
+        operator.addDeleteListener {
+            editEvent(null)
+        }
 
         expressionObserver =
             node.observeProperty<Expression>(ObservableProperty.EXPRESSION) {
@@ -69,6 +80,8 @@ class UnaryExpressionWidget(
             if (it != null)
                 drawExpression(parent, it)
         }
+        if (node.isPostfix)
+            expressionWidget.moveAbove(operator)
         expressionWidget.requestLayout()
         expressionWidget.setFocusOnCreation()
         return expressionWidget
@@ -81,7 +94,7 @@ class UnaryExpressionWidget(
     }
 
     override fun setFocusOnCreation(firstFlag: Boolean) {
-        expressionWidget.setFocusOnCreation(firstFlag)
+        operator.setFocus()
     }
 
     override val tail: TextWidget

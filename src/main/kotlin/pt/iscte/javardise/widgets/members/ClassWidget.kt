@@ -32,8 +32,10 @@ import pt.iscte.javardise.widgets.statements.findIndexByModel
 
 
 val MODIFIERS = "(${Modifier.Keyword.values().joinToString(separator = "|") { it.asString() }})"
+val TYPE = Regex("$ID(<$ID(,$ID)*>)?(\\[\\])*")
+
 val MEMBER_REGEX = Regex(
-    "($MODIFIERS\\s+)*$ID\\s+$ID"
+    "($MODIFIERS\\s+)*$TYPE\\s+$ID"
 )
 
 
@@ -249,7 +251,7 @@ class ClassWidget(parent: Composite, type: ClassOrInterfaceDeclaration) :
         val CONSTRUCTOR_REGEX = { Regex("($MODIFIERS\\s+)*${node.nameAsString}") }
 
         val insert = TextWidget.create(seq) { c, s ->
-            Character.isLetter(c) || c == SWT.SPACE && s.isNotEmpty() || c == SWT.BS
+            c.toString().matches(Regex("[\\w\\d\\[\\]<>]")) || c == SWT.SPACE && s.isNotEmpty() || c == SWT.BS
         }
 
         fun modifiers(tail: Int): NodeList<Modifier> {
@@ -266,7 +268,7 @@ class ClassWidget(parent: Composite, type: ClassOrInterfaceDeclaration) :
             val split = insert.text.split(Regex("\\s+"))
             val newField = FieldDeclaration(
                 modifiers(2),
-                StaticJavaParser.parseType(split[split.lastIndex - 1]),
+                StaticJavaParser.parseType(split[split.lastIndex - 1]), // TODO possible bug
                 split.last()
             )
             if (it.character == '=')
@@ -290,7 +292,7 @@ class ClassWidget(parent: Composite, type: ClassOrInterfaceDeclaration) :
             val newMethod = MethodDeclaration(
                 modifiers(2),
                 split.last(),
-                StaticJavaParser.parseType(split[split.lastIndex - 1]),    // BUG parse type
+                StaticJavaParser.parseType(split[split.lastIndex - 1]),    // TODO BUG parse type
                 NodeList()
             )
             if(node.isInterface)

@@ -38,22 +38,6 @@ class CallExpressionWidget(
         methodName = SimpleNameWidget(this, node.name) { it.asString() }
         methodName.addFocusLostAction(::isValidSimpleName) {
             node.modifyCommand(node.name, SimpleName(methodName.text), node::setName)
-//            if (methodName.text.isEmpty())
-//                methodName.set(node.name.asString())
-//            else if (methodName.text != node.name.asString()) {
-//                Commands.execute(object : Command {
-//                    override val target = node
-//                    override val kind = CommandKind.MODIFY
-//                    override val element = node.name
-//                    override fun run() {
-//                        target.name = SimpleName(methodName.text)
-//                    }
-//
-//                    override fun undo() {
-//                        target.name = element
-//                    }
-//                })
-//            }
         }
         args = ArgumentListWidget(this, "(", ")", node, node.arguments)
 
@@ -65,18 +49,11 @@ class CallExpressionWidget(
     override val tail: TextWidget
         get() = args.closeBracket
 
-    fun <T : Node> NodeList<T>.indexOfIdentity(e: T): Int {
-        for (i in 0..lastIndex)
-            if (get(i) === e)
-                return i
-        return -1
-    }
-
     override fun setFocus(): Boolean {
         return methodName.setFocus()
     }
 
     override fun setFocusOnCreation(firstFlag: Boolean) {
-        methodName.setFocus()
+        args.setFocus()
     }
 }

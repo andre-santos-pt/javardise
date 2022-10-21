@@ -16,7 +16,6 @@ import javax.lang.model.SourceVersion
 val ID = Regex("[a-zA-Z][a-zA-Z0-9_]*")
 val ID_CHARS = Regex("[a-zA-Z0-9_]")
 
-val TYPE = Regex("[a-zA-Z0-9_\\[\\]<>]")
 val TYPE_CHARS = Regex("[a-zA-Z0-9_\\[\\]<>]")
 
 data class Validation(val ok: Boolean, val msg: String) {

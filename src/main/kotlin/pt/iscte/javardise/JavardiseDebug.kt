@@ -8,6 +8,7 @@ import com.github.javaparser.ast.NodeList
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration
 import com.github.javaparser.ast.body.FieldDeclaration
 import com.github.javaparser.ast.body.MethodDeclaration
+import com.github.javaparser.ast.expr.ArrayAccessExpr
 import com.github.javaparser.ast.expr.DoubleLiteralExpr
 import com.github.javaparser.ast.expr.NameExpr
 import com.github.javaparser.ast.expr.SimpleName
@@ -132,7 +133,7 @@ class JavardiseWindow(var file: File) {
 
             override fun visit(n: SimpleName, arg: Void?) {
                 super.visit(n, arg)
-                addToken(n)
+                addToken(n.parentNode.get())
             }
 
             override fun visit(n: NameExpr, arg: Void?) {
@@ -140,6 +141,10 @@ class JavardiseWindow(var file: File) {
                 addToken(n)
             }
 
+            override fun visit(n: ArrayAccessExpr, arg: Void?) {
+                super.visit(n, arg)
+                addToken(n)
+            }
             override fun visit(m: MethodDeclaration, arg: Void?) {
                 super.visit(m, arg)
                // addToken(m.type)
@@ -180,7 +185,10 @@ class JavardiseWindow(var file: File) {
                 t?.let {
                     val child = classWidget!!.findChild(t.node)
                     child?.let {
-                        child.background = ERROR_COLOR()
+                        child.traverse {
+                            it.background = ERROR_COLOR()
+                            true
+                        }
                         child.toolTipText = e.getMessage(null)
                         child.requestLayout()
                     }
@@ -297,11 +305,16 @@ fun Composite.findChild(model: Node): Control? {
         if (it is NodeWidget<*> && it.node === model) {
             n = it
             return@traverse false
-        } else if (it is Text && it.data === model) {
+        }
+
+        if(it is Text && it.data != null)
+            println(it.text + " " + it.data::class.java)
+
+        if (it is Text && it.data === model) {
             n = it
             return@traverse false
-        } else
-            return@traverse true
+        }
+        return@traverse true
     }
     return n
 }

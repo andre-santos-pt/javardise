@@ -78,6 +78,7 @@ class VariableWidget(
             expression = this.createExpWidget(decl, it ?: NameExpr("expression"))
             expression!!.moveAbove(semiColon.widget)
             expression!!.requestLayout()
+            expression!!.setFocusOnCreation()
         }
     }
 

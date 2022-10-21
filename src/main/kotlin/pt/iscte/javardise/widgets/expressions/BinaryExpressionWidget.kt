@@ -1,17 +1,16 @@
 package pt.iscte.javardise.widgets.expressions
 
-import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.expr.BinaryExpr
 import com.github.javaparser.ast.expr.Expression
 import com.github.javaparser.ast.observer.AstObserver
 import com.github.javaparser.ast.observer.ObservableProperty
 import org.eclipse.swt.widgets.Composite
-import pt.iscte.javardise.*
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
 import pt.iscte.javardise.external.ROW_LAYOUT_H_SHRINK
 import pt.iscte.javardise.external.binaryOperators
 import pt.iscte.javardise.external.observeProperty
+import pt.iscte.javardise.modifyCommand
 
 class BinaryExpressionWidget(
     parent: Composite,
@@ -41,17 +40,13 @@ class BinaryExpressionWidget(
         right = drawRight(this, node.right)
         leftObserver =
             node.observeProperty<Expression>(ObservableProperty.LEFT) {
-                //if (!this.isDisposed) {
                 left.dispose()
                 drawLeft(this, it!!)
-                //}
             }
         rightObserver =
             node.observeProperty<Expression>(ObservableProperty.RIGHT) {
-                // if (!this.isDisposed) {
                 right.dispose()
                 drawRight(this, it!!)
-                //
             }
         operatorObserver =
             node.observeProperty<BinaryExpr.Operator>(ObservableProperty.OPERATOR) {

@@ -6,6 +6,7 @@ import com.github.javaparser.ast.CompilationUnit
 import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.NodeList
 import com.github.javaparser.ast.body.*
+import com.github.javaparser.ast.expr.AssignExpr
 import com.github.javaparser.ast.expr.BinaryExpr
 import com.github.javaparser.ast.expr.Expression
 import com.github.javaparser.ast.expr.UnaryExpr
@@ -286,3 +287,5 @@ fun isValidSimpleName(name: String): Boolean =
 val binaryOperators : List<BinaryExpr.Operator> = BinaryExpr.Operator.values().toList()
 
 val unaryOperators : List<UnaryExpr.Operator> = UnaryExpr.Operator.values().toList()
+
+val assignOperators : List<AssignExpr.Operator> = AssignExpr.Operator.values().toList()

@@ -19,7 +19,10 @@ import pt.iscte.javardise.basewidgets.TokenWidget
 import pt.iscte.javardise.external.*
 import pt.iscte.javardise.widgets.members.CommentWidget
 
-abstract class StatementWidget<T : Statement>(parent: SequenceWidget, override val node: T) :
+abstract class StatementWidget<T : Statement>(
+    parent: SequenceWidget,
+    override val node: T
+) :
     Composite(parent, SWT.NONE), NodeWidget<T> {
 
     abstract val block: BlockStmt
@@ -33,7 +36,10 @@ abstract class StatementWidget<T : Statement>(parent: SequenceWidget, override v
             override fun keyPressed(e: KeyEvent) {
                 if ((e.stateMask == SWT.MOD1) && (e.keyCode == 'c'.code)) {
                     Clipboard.copy(node) { node, dest, index ->
-                        if (index != null) (dest as BlockStmt).statements.add(index, node as Statement)
+                        if (index != null) (dest as BlockStmt).statements.add(
+                            index,
+                            node as Statement
+                        )
                     }
                 }
 //                else if ((e.stateMask == SWT.MOD1) && (e.keyCode == 'x'.code)) {
@@ -81,7 +87,7 @@ fun addWidget(
     is ReturnStmt -> ReturnWidget(parent, stmt, block)
     is IfStmt -> IfWidget(parent, stmt, block)
     is WhileStmt -> WhileWidget(parent, stmt, block)
-    is ExpressionStmt -> when(stmt.expression) {
+    is ExpressionStmt -> when (stmt.expression) {
         is VariableDeclarationExpr -> VariableWidget(parent, stmt, block)
         //is AssignExpr -> AssignWidget(parent, stmt, block)
         else -> ExpressionStatementWidget(parent, stmt, block)
@@ -102,16 +108,23 @@ fun SequenceWidget.findIndexByModel(control: Control): Int {
 
 fun createInsert(seq: SequenceWidget, block: BlockStmt): TextWidget {
     val insert = TextWidget.create(seq) { c, s ->
-        c.toString().matches(Regex("\\w|\\[|]|\\.|\\+|-"))
+        c.toString().matches(Regex("\\w|\\[|]|\\.|\\+|-|\\*|/|%"))
                 || c == SWT.SPACE && !s.endsWith(SWT.SPACE)
                 || c == SWT.BS
     }
 
-    insert.addKeyEvent(SWT.SPACE, '(', precondition = { it.matches(Regex("if|while")) }) {
+    insert.addKeyEvent(
+        SWT.SPACE,
+        '(',
+        precondition = { it.matches(Regex("if|while")) }) {
         val keyword = insert.text
         val insertIndex = seq.findIndexByModel(insert.widget)
         insert.delete()
-        val stmt = if (keyword == "if") IfStmt(BooleanLiteralExpr(true), BlockStmt(), null)
+        val stmt = if (keyword == "if") IfStmt(
+            BooleanLiteralExpr(true),
+            BlockStmt(),
+            null
+        )
         else WhileStmt(BooleanLiteralExpr(true), BlockStmt())
         Commands.execute(AddStatementCommand(stmt, block, insertIndex))
     }
@@ -128,49 +141,83 @@ fun createInsert(seq: SequenceWidget, block: BlockStmt): TextWidget {
     }
     insert.addKeyEvent(SWT.SPACE, ';', precondition = { it == "return" }) {
         val insertIndex = seq.findIndexByModel(insert.widget)
-        val stmt = if (it.character == SWT.SPACE) ReturnStmt(NameExpr("expression"))
-        else ReturnStmt()
+        val stmt =
+            if (it.character == SWT.SPACE) ReturnStmt(NameExpr("expression"))
+            else ReturnStmt()
         insert.delete()
         Commands.execute(AddStatementCommand(stmt, block, insertIndex))
     }
 
     insert.addKeyEvent('=', precondition = {
-        val trim = it.trim()
-        tryParse<NameExpr>(trim) || tryParse<ArrayAccessExpr>(trim) || tryParse<FieldAccessExpr>(trim)
+        var target = it.trim()
+        if (target.isNotEmpty() && assignOperators.any { it.asString().startsWith(target.last()) }) {
+            target = target.dropLast(1)
+        }
+        tryParse<NameExpr>(target) || tryParse<ArrayAccessExpr>(target) || tryParse<FieldAccessExpr>(
+            target
+        )
     }) {
+        var target = insert.text.trim()
+        val operator = assignOperators.find { it.asString().startsWith(target.last()) } ?: AssignExpr.Operator.ASSIGN
+        if(operator != AssignExpr.Operator.ASSIGN)
+            target = target.dropLast(1)
         val insertIndex = seq.findIndexByModel(insert.widget)
-        val stmt = ExpressionStmt(AssignExpr(NameExpr(insert.text.trim()), NameExpr("exp"), AssignExpr.Operator.ASSIGN))
+        val stmt = ExpressionStmt(
+            AssignExpr(
+                StaticJavaParser.parseExpression(target),
+                NameExpr("expression"),
+                operator
+            )
+        )
         insert.delete()
         Commands.execute(AddStatementCommand(stmt, block, insertIndex))
     }
 
     insert.addKeyEvent(';', precondition = {
-        insert.isAtEnd && it.split(Regex("\\s+")).size == 2 && isValidType(it.split(Regex("\\s+"))[0]) && tryParse<NameExpr>(
+        insert.isAtEnd && it.split(Regex("\\s+")).size == 2 && isValidType(
+            it.split(
+                Regex("\\s+")
+            )[0]
+        ) && tryParse<NameExpr>(
             it.split(Regex("\\s+"))[1]
         )
     }) {
         val insertIndex = seq.findIndexByModel(insert.widget)
         val split = insert.text.split(Regex("\\s+"))
-        val stmt = ExpressionStmt(VariableDeclarationExpr(StaticJavaParser.parseType(split[0]), split[1]))
+        val stmt = ExpressionStmt(
+            VariableDeclarationExpr(
+                StaticJavaParser.parseType(split[0]), split[1]
+            )
+        )
         insert.delete()
         Commands.execute(AddStatementCommand(stmt, block, insertIndex))
     }
 
     insert.addKeyEvent('=', precondition = {
         val parts = it.trim().split(Regex("\\s+"))
-        insert.isAtEnd && parts.size == 2 && isValidType(parts[0]) && tryParse<NameExpr>(parts[1])
+        insert.isAtEnd && parts.size == 2 && isValidType(parts[0]) && tryParse<NameExpr>(
+            parts[1]
+        )
     }) {
         val insertIndex = seq.findIndexByModel(insert.widget)
         val split = insert.text.split(Regex("\\s+"))
-        val dec = VariableDeclarator(StaticJavaParser.parseType(split[0]), split[1], NameExpr("expression"))
+        val dec = VariableDeclarator(
+            StaticJavaParser.parseType(split[0]),
+            split[1],
+            NameExpr("expression")
+        )
         val stmt = ExpressionStmt(VariableDeclarationExpr(dec))
         insert.delete()
         Commands.execute(AddStatementCommand(stmt, block, insertIndex))
     }
 
     insert.addKeyEvent('(',
-        precondition = { insert.isAtEnd &&
-                (tryParse<NameExpr>(it) || tryParse<FieldAccessExpr>(it) || tryParse<ArrayAccessExpr>(it)) }) {
+        precondition = {
+            insert.isAtEnd &&
+                    (tryParse<NameExpr>(it) || tryParse<FieldAccessExpr>(it) || tryParse<ArrayAccessExpr>(
+                        it
+                    ))
+        }) {
         val insertIndex = seq.findIndexByModel(insert.widget)
         var e: Expression? = null
         try {
@@ -179,18 +226,30 @@ fun createInsert(seq: SequenceWidget, block: BlockStmt): TextWidget {
         }
 
         if (e != null) {
-            val stmt = if (e is NameExpr) ExpressionStmt(MethodCallExpr(null, e.name, NodeList()))
+            val stmt = if (e is NameExpr) ExpressionStmt(
+                MethodCallExpr(
+                    null,
+                    e.name,
+                    NodeList()
+                )
+            )
 //            else if(e is ArrayAccessExpr)
 //                ExpressionStmt(MethodCallExpr(e, e.name, NodeList()))
             else ExpressionStmt(
-                MethodCallExpr((e as FieldAccessExpr).scope, e.nameAsString, NodeList())
+                MethodCallExpr(
+                    (e as FieldAccessExpr).scope,
+                    e.nameAsString,
+                    NodeList()
+                )
             )
             insert.delete()
             Commands.execute(AddStatementCommand(stmt, block, insertIndex))
         }
     }
 
-    insert.addKeyEvent(';',precondition = {insert.isAtEnd && tryParseExpression(it) }) {
+    insert.addKeyEvent(
+        ';',SWT.CR,
+        precondition = { insert.isAtEnd && tryParseExpression(it) }) {
         val insertIndex = seq.findIndexByModel(insert.widget)
         val stmt = ExpressionStmt(StaticJavaParser.parseExpression(insert.text))
         insert.delete()
@@ -225,7 +284,11 @@ fun populateSequence(seq: SequenceWidget, block: BlockStmt) {
         addWidget(it, block, seq)
     }
     block.statements.register(object : ListAddRemoveObserver<Statement>() {
-        override fun elementAdd(list: NodeList<Statement>, index: Int, node: Statement) {
+        override fun elementAdd(
+            list: NodeList<Statement>,
+            index: Int,
+            node: Statement
+        ) {
             val prev = seq.findByModelIndex(index) as? Control
             val w = addWidget(node, block, seq)
             if (prev != null) (w as Composite).moveAbove(prev) // bug with comments?
@@ -233,7 +296,11 @@ fun populateSequence(seq: SequenceWidget, block: BlockStmt) {
             w.setFocusOnCreation()
         }
 
-        override fun elementRemove(list: NodeList<Statement>, index: Int, node: Statement) {
+        override fun elementRemove(
+            list: NodeList<Statement>,
+            index: Int,
+            node: Statement
+        ) {
             val control = seq.find(node) as? Control
             val index = seq.children.indexOf(control)
 
@@ -274,23 +341,24 @@ fun SequenceWidget.findByModelIndex(index: Int): NodeWidget<*>? {
 fun TokenWidget.addDelete(node: Statement, block: BlockStmt) =
     addKeyEvent(SWT.BS, action = createDeleteEvent(node, block))
 
-fun createDeleteEvent(node: Statement, block: BlockStmt) = { keyEvent: KeyEvent ->
-    Commands.execute(object : Command {
-        val index = block.statements.indexOf(node)
-        override val target: Node = block
-        override val kind = CommandKind.REMOVE
-        override val element: Node = node
+fun createDeleteEvent(node: Statement, block: BlockStmt) =
+    { keyEvent: KeyEvent ->
+        Commands.execute(object : Command {
+            val index = block.statements.indexOf(node)
+            override val target: Node = block
+            override val kind = CommandKind.REMOVE
+            override val element: Node = node
 
-        override fun run() {
-            block.statements.remove(node)
-        }
+            override fun run() {
+                block.statements.remove(node)
+            }
 
-        override fun undo() {
-            // BUG statements list, after parent removal, is not the same (EXC: Widget is disposed)
-            // possible solution: locate by indexing
-            block.statements.add(index, node.clone())
-        }
-    })
-}
+            override fun undo() {
+                // BUG statements list, after parent removal, is not the same (EXC: Widget is disposed)
+                // possible solution: locate by indexing
+                block.statements.add(index, node.clone())
+            }
+        })
+    }
 
 

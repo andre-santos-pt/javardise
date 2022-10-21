@@ -36,7 +36,7 @@ class IfWidget(
     var column: Composite
     lateinit var firstRow: Composite
     lateinit var keyword: TokenWidget
-    lateinit var exp: ExpressionWidget<*>
+    lateinit var condition: ExpressionWidget<*>
     override lateinit var body: SequenceWidget
 
     var elseWidget: ElseWidget? = null
@@ -53,7 +53,7 @@ class IfWidget(
                 keyword.setCopySource()
                 keyword.addDelete(node, block)
                 openClause = FixedToken(this, "(")
-                exp = this.createExpWidget(node.condition)
+                condition = this.createExpWidget(node.condition)
                 FixedToken(this, ")")
             }
 
@@ -81,10 +81,11 @@ class IfWidget(
         })
 
         node.observeProperty<Expression>(ObservableProperty.CONDITION) {
-            exp.dispose()
-            exp = firstRow.createExpWidget(it!!)
-            exp.moveBelow(openClause.label)
-            firstRow.requestLayout()
+            condition.dispose()
+            condition = firstRow.createExpWidget(it!!)
+            condition.moveBelow(openClause.label)
+            condition.requestLayout()
+            condition.setFocusOnCreation()
         }
 
         if (node.hasElseBranch())
@@ -158,6 +159,6 @@ class IfWidget(
     override fun setFocus(): Boolean = keyword.setFocus()
 
     override fun setFocusOnCreation(firstFlag: Boolean) {
-        exp.setFocus()
+        condition.setFocus()
     }
 }

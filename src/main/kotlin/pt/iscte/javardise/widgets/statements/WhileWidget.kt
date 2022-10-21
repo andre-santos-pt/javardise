@@ -1,6 +1,7 @@
 package pt.iscte.javardise.widgets.statements
 
 import com.github.javaparser.ast.expr.Expression
+import com.github.javaparser.ast.expr.NameExpr
 import com.github.javaparser.ast.observer.ObservableProperty
 import com.github.javaparser.ast.stmt.BlockStmt
 import com.github.javaparser.ast.stmt.WhileStmt
@@ -21,7 +22,7 @@ class WhileWidget(
     StatementWidget<WhileStmt>(parent, node), SequenceContainer {
 
     lateinit var keyword: TokenWidget
-    lateinit var exp: ExpressionWidget<*>
+    lateinit var condition: ExpressionWidget<*>
     lateinit var firstRow: Composite
     override lateinit var body: SequenceWidget
     lateinit var openClause: FixedToken
@@ -35,7 +36,7 @@ class WhileWidget(
                 keyword = Factory.newKeywordWidget(this, "while")
                 keyword.setCopySource()
                 openClause = FixedToken(this, "(")
-                exp = createExpWidget(node.condition)
+                condition = createExpWidget(node.condition)
                 FixedToken(this, ")")
                 openBracket = TokenWidget(this, "{")
             }
@@ -49,10 +50,11 @@ class WhileWidget(
         keyword.addDelete(node, block)
 
         node.observeProperty<Expression>(ObservableProperty.CONDITION) {
-            exp.dispose()
-            exp = firstRow.createExpWidget(it!!)
-            exp.moveBelow(openClause.label)
-            firstRow.requestLayout()
+            condition.dispose()
+            condition = firstRow.createExpWidget(it ?: NameExpr("condition"))
+            condition.moveBelow(openClause.label)
+            condition.requestLayout()
+            condition.setFocusOnCreation()
         }
     }
 
@@ -72,6 +74,6 @@ class WhileWidget(
     override fun setFocus(): Boolean = keyword.setFocus()
 
     override fun setFocusOnCreation(firstFlag: Boolean) {
-        exp.setFocus()
+        condition.setFocus()
     }
 }

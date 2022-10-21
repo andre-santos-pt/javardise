@@ -43,38 +43,42 @@ fun createExpressionWidget(
         is AssignExpr -> AssignExpressionWidget(parent, expression, editEvent)
         else -> SimpleExpressionWidget(parent, expression, editEvent)
     }.apply {
-        if (this !is SimpleExpressionWidget)
+        if (this !is SimpleExpressionWidget) {
             tail.apply {
                 addKeyListenerInternal(object : KeyAdapter() {
                     override fun keyPressed(e: KeyEvent) {
-//                        if(e.character == SWT.BS)
-//                            editEvent(null)
-//                        else
-
-                        // BUG widget is disposed
+                        if(e.character == SWT.CR) {
+                            tail.widget.traverse(SWT.TRAVERSE_TAB_NEXT)
+                        }
+                        else {
+                            // TODO BUG widget is disposed
                             if (isAtBeginning) {
-                            val op = unaryOperators.filter { it.isPrefix }
-                                .find { it.asString().startsWith(e.character) }
-                            op?.let {
-                                editEvent(UnaryExpr(expression.clone(), it))
-                            }
-                        } else if (isAtEnd) {
-                            val op = binaryOperators.find {
-                                it.asString().startsWith(e.character)
-                            }
-                            op?.let {
-                                editEvent(
-                                    BinaryExpr(
-                                        expression.clone(),
-                                        NameExpr("expression"),
-                                        it
+                                val op = unaryOperators.filter { it.isPrefix }
+                                    .find {
+                                        it.asString().startsWith(e.character)
+                                    }
+                                op?.let {
+                                    editEvent(UnaryExpr(expression.clone(), it))
+                                }
+                            } else if (isAtEnd) {
+                                val op = binaryOperators.find {
+                                    it.asString().startsWith(e.character)
+                                }
+                                op?.let {
+                                    editEvent(
+                                        BinaryExpr(
+                                            expression.clone(),
+                                            NameExpr("expression"),
+                                            it
+                                        )
                                     )
-                                )
+                                }
                             }
                         }
                     }
                 })
             }
+        }
     }
 
 

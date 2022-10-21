@@ -58,7 +58,7 @@ class AssignExpressionWidget(
             value = createValueWidget(it!!)
             value.moveBelow(operator.widget)
             value.requestLayout()
-            value.setFocus()
+            value.setFocusOnCreation()
         }
     }
 

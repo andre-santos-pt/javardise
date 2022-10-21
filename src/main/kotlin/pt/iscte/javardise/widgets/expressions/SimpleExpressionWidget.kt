@@ -41,10 +41,12 @@ class SimpleExpressionWidget(
 
         expression = TextWidget.create(this, text) { c, s ->
             c.toString()
-                .matches(Regex("[a-zA-Z\\d_\\[\\]()]")) || c == SWT.BS || c == SWT.SPACE
+                .matches(Regex("[a-zA-Z\\d_\\[\\]()\\.]")) || c == SWT.BS || c == SWT.SPACE
         }
         if (noparse)
             expression.widget.background = ERROR_COLOR()
+
+        expression.widget.data = node
 
         updateColor(expression)
 
@@ -143,6 +145,7 @@ class SimpleExpressionWidget(
                 if (!newExp.equals(node)) {
                     node.setComment(null)
                     node = newExp
+                    expression.widget.data = newExp
                     editEvent(node)
                 }
             } else {
