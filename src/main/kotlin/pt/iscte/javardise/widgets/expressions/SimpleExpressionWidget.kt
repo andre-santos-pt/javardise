@@ -21,7 +21,7 @@ val TYPE = Regex("[a-zA-Z][a-zA-Z0-9_]+")
 class SimpleExpressionWidget(
     parent: Composite,
     override var node: Expression,
-    val editEvent: (Expression) -> Unit
+    override val editEvent: (Expression?) -> Unit
 ) :
     ExpressionWidget<Expression>(parent) {
 
@@ -41,7 +41,7 @@ class SimpleExpressionWidget(
 
         expression = TextWidget.create(this, text) { c, s ->
             c.toString()
-                .matches(Regex("[a-zA-Z\\d_\\[\\]()+\\.]")) || c == SWT.BS || c == SWT.SPACE
+                .matches(Regex("[a-zA-Z\\d_\\[\\]()]")) || c == SWT.BS || c == SWT.SPACE
         }
         if (noparse)
             expression.widget.background = ERROR_COLOR()
@@ -51,15 +51,19 @@ class SimpleExpressionWidget(
         keyListener = object : KeyAdapter() {
             override fun keyPressed(e: KeyEvent) {
                 if (expression.isAtBeginning) {
-                    val unop = unaryOperators.filter { it.isPrefix }
-                        .find { it.asString().startsWith(e.character) }
-                    if (unop != null && tryParseExpression(expression.text)) {
-                        node = UnaryExpr(
-                            StaticJavaParser.parseExpression(expression.text),
-                            unop
-                        )
-                        expression.removeFocusOutListeners()
-                        editEvent(node)
+                    if(e.character == SWT.BS)
+                        editEvent(null)
+                    else {
+                        val unop = unaryOperators.filter { it.isPrefix }
+                            .find { it.asString().startsWith(e.character) }
+                        if (unop != null && tryParseExpression(expression.text)) {
+                            node = UnaryExpr(
+                                StaticJavaParser.parseExpression(expression.text),
+                                unop
+                            )
+                            expression.removeFocusOutListeners()
+                            editEvent(node)
+                        }
                     }
                 } else if (expression.isAtEnd) {
                     val biop = binaryOperators.find {
@@ -89,7 +93,7 @@ class SimpleExpressionWidget(
         expression.addKeyEvent('\'', precondition = { it.isEmpty() }) {
             editEvent(CharLiteralExpr('a'))
         }
-        expression.addKeyEvent('(', precondition = { tryParseSimpleName(it) }) {
+        expression.addKeyEvent('(', precondition = { isValidSimpleName(it) }) {
             editEvent(MethodCallExpr(expression.text))
         }
 

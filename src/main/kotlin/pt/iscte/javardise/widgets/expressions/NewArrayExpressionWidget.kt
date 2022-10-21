@@ -5,13 +5,12 @@ import com.github.javaparser.ast.ArrayCreationLevel
 import com.github.javaparser.ast.NodeList
 import com.github.javaparser.ast.expr.ArrayCreationExpr
 import com.github.javaparser.ast.expr.Expression
+import com.github.javaparser.ast.expr.NameExpr
 import com.github.javaparser.ast.observer.ObservableProperty
 import com.github.javaparser.ast.type.Type
 import org.eclipse.swt.widgets.Composite
-import pt.iscte.javardise.Commands
-import pt.iscte.javardise.Factory
-import pt.iscte.javardise.ModifyCommand
-import pt.iscte.javardise.SimpleTypeWidget
+import org.eclipse.swt.widgets.Control
+import pt.iscte.javardise.*
 import pt.iscte.javardise.basewidgets.FixedToken
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
@@ -20,16 +19,37 @@ import pt.iscte.javardise.external.*
 // TODO multi level arrays
 class NewArrayExpressionWidget(
     parent: Composite,
-    override val node: ArrayCreationExpr
+    override val node: ArrayCreationExpr,
+    override val editEvent: (Expression?) -> Unit
 ) : ExpressionWidget<ArrayCreationExpr>(parent) {
 
-    val levelWidgets = mutableListOf<ExpressionWidget<*>>()
-    val closeBrackets = mutableListOf<TokenWidget>()
+    val levelWidgets = mutableListOf<LevelWidget>()
 
+    data class LevelWidget(val open: FixedToken, var expression: Control, val close: TokenWidget) {
+        fun dispose() {
+            open.dispose()
+            expression.dispose()
+            close.dispose()
+        }
+
+        fun moveExpression() {
+            expression.moveAbove(close.widget)
+        }
+
+        fun moveAbove(c: Control) {
+            open.moveAbove(c)
+            expression.moveBelow(open.label)
+            close.widget.moveBelow(expression)
+        }
+
+        fun setFocus() {
+            expression.setFocus()
+        }
+    }
     init {
         layout = ROW_LAYOUT_H_SHRINK
         if(node.initializer.isPresent) {
-            println("init ${node.initializer.get()}")
+            TODO("init ${node.initializer.get()}")
         }
         else {
             Factory.newKeywordWidget(this, "new")
@@ -37,35 +57,46 @@ class NewArrayExpressionWidget(
                 it.asString()
             }
             id.addFocusLostAction(::isValidType) {
-                Commands.execute(object :
-                    ModifyCommand<Type>(node, node.elementType) {
-                    override fun run() {
-                        node.elementType = StaticJavaParser.parseType(id.text)
-                    }
-
-                    override fun undo() {
-                        node.elementType = element
-                    }
-                })
+                node.modifyCommand(node.elementType, StaticJavaParser.parseType(id.text), node::setElementType)
             }
             node.levels.forEachIndexed { i, level ->
-                FixedToken(this, "[")
-                closeBrackets.add(TokenWidget(this, "]"))
-                if (level.dimension.isPresent) {
+                val open = FixedToken(this, "[")
+                val explevel = if(level.dimension.isPresent)
                     createExpLevel(i, level.dimension.get())
+                else
+                    TextWidget.create(this, " ").widget
+                val close = TokenWidget(this, "]")
+                close.addDeleteListener {
+                    if(node.levels.size > 1)
+                        node.levels.removeCommand(node, level)
                 }
+                close.addKeyEvent('[') {
+                    node.levels.addCommand(node,ArrayCreationLevel(0), i+1)
+                }
+
+                levelWidgets.add(LevelWidget(open, explevel, close))
             }
 
             node.observeProperty<Type>(ObservableProperty.ELEMENT_TYPE) {
-                id.set(it!!.asString())
+                id.set(it?.asString() ?: "??")
             }
             node.levels.observeList(object : ListObserver<ArrayCreationLevel> {
                 override fun elementAdd(
                     list: NodeList<ArrayCreationLevel>,
                     index: Int,
-                    node: ArrayCreationLevel
+                    n: ArrayCreationLevel
                 ) {
-                    TODO("Not yet implemented")
+                    val open = FixedToken(this@NewArrayExpressionWidget, "[")
+                    val exp = createExpLevel(index, n.dimension.get())
+                    val close = TokenWidget(this@NewArrayExpressionWidget, "]")
+                    close.addDeleteListener {
+                        if(node.levels.size > 1)
+                            node.levels.removeCommand(node, n)
+                    }
+                    val level = LevelWidget(open, exp, close)
+                    if(index != node.levels.size)
+                        level.moveAbove(levelWidgets[index].open.label)
+                    levelWidgets.add(index, level)
                 }
 
                 override fun elementRemove(
@@ -73,7 +104,8 @@ class NewArrayExpressionWidget(
                     index: Int,
                     node: ArrayCreationLevel
                 ) {
-                    TODO("Not yet implemented")
+                    levelWidgets[index].dispose()
+                    levelWidgets.removeAt(index)
                 }
 
                 override fun elementReplace(
@@ -82,12 +114,13 @@ class NewArrayExpressionWidget(
                     old: ArrayCreationLevel,
                     new: ArrayCreationLevel
                 ) {
-                    levelWidgets[index].dispose()
-                    levelWidgets[index] = createExpLevel(
+                    levelWidgets[index].expression.dispose()
+                    levelWidgets[index].expression = createExpLevel(
                         index,
                         new.dimension.get()
                     )
-                    levelWidgets[index].requestLayout()
+                    levelWidgets[index].moveExpression()
+                    levelWidgets[index].expression.requestLayout()
                 }
 
             })
@@ -99,6 +132,7 @@ class NewArrayExpressionWidget(
         expression: Expression
     ): ExpressionWidget<*> {
         val w = createExpressionWidget(this, expression) {
+            //node.modifyCommand(node.levels[index], ArrayCreationLevel(it), node.levels::set)
             Commands.execute(object :
                 ModifyCommand<ArrayCreationLevel>(node, node.levels[index]) {
                 override fun run() {
@@ -110,8 +144,6 @@ class NewArrayExpressionWidget(
                 }
             })
         }
-        levelWidgets.add(index, w)
-        w.moveAbove(closeBrackets[index].widget)
         return w
     }
 
@@ -120,5 +152,5 @@ class NewArrayExpressionWidget(
     }
 
     override val tail: TextWidget
-        get() = closeBrackets.last()
+        get() = levelWidgets.last().close
 }

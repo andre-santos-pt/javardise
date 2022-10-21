@@ -6,17 +6,18 @@ import com.github.javaparser.ast.expr.Expression
 import com.github.javaparser.ast.observer.AstObserver
 import com.github.javaparser.ast.observer.ObservableProperty
 import org.eclipse.swt.widgets.Composite
-import pt.iscte.javardise.Command
-import pt.iscte.javardise.CommandKind
-import pt.iscte.javardise.Commands
-import pt.iscte.javardise.ModifyCommand
+import pt.iscte.javardise.*
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
 import pt.iscte.javardise.external.ROW_LAYOUT_H_SHRINK
 import pt.iscte.javardise.external.binaryOperators
 import pt.iscte.javardise.external.observeProperty
 
-class BinaryExpressionWidget(parent: Composite, override val node: BinaryExpr) :
+class BinaryExpressionWidget(
+    parent: Composite,
+    override val node: BinaryExpr,
+    override val editEvent: (Expression?) -> Unit
+) :
     ExpressionWidget<BinaryExpr>(parent) {
 
     var left: ExpressionWidget<*>
@@ -30,21 +31,11 @@ class BinaryExpressionWidget(parent: Composite, override val node: BinaryExpr) :
         layout = ROW_LAYOUT_H_SHRINK
         operator = TokenWidget(this, node.operator.asString(),
             alternatives = { binaryOperators.map { it.asString() } }) {
-            Commands.execute(object : Command {
-                override val target: Node = node
-                override val kind = CommandKind.MODIFY
-                override val element = node.operator
-
-                override fun run() {
-                    node.operator =
-                        binaryOperators.find { op -> op.asString() == it }
-                }
-
-                override fun undo() {
-                    node.operator = element
-                }
-
-            })
+            node.modifyCommand(
+                node.operator,
+                binaryOperators.find { op -> op.asString() == it },
+                node::setOperator
+            )
         }
         left = drawLeft(this, node.left)
         right = drawRight(this, node.right)
@@ -81,18 +72,11 @@ class BinaryExpressionWidget(parent: Composite, override val node: BinaryExpr) :
         expression: Expression
     ): ExpressionWidget<*> {
         left = createExpressionWidget(parent, expression) {
-            Commands.execute(object :
-                ModifyCommand<Expression>(node, node.left) {
-                override fun run() {
-                    node.left = it
-                }
-
-                override fun undo() {
-                    node.left = element
-                }
-            })
-            left.dispose()
-            drawLeft(parent, it)
+            if (it != null) {
+                node.modifyCommand(node.left, it, node::setLeft)
+                left.dispose()
+                drawLeft(parent, it)
+            }
         }
         left.moveAbove(operator.widget)
         left.requestLayout()
@@ -105,18 +89,13 @@ class BinaryExpressionWidget(parent: Composite, override val node: BinaryExpr) :
         expression: Expression
     ): ExpressionWidget<*> {
         right = createExpressionWidget(parent, expression) {
-            Commands.execute(object :
-                ModifyCommand<Expression>(node, node.right) {
-                override fun run() {
-                    node.right = it
-                }
-
-                override fun undo() {
-                    node.right = element
-                }
-            })
-            right.dispose()
-            drawRight(parent, it)
+            if(it != null) {
+                node.modifyCommand(node.right, it, node::setRight)
+                right.dispose()
+                drawRight(parent, it)
+            }
+            else
+                editEvent(node.left)
         }
         right.moveBelow(operator.widget)
         right.requestLayout()

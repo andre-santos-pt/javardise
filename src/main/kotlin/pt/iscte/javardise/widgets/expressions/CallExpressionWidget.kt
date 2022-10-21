@@ -2,25 +2,24 @@ package pt.iscte.javardise.widgets.expressions
 
 import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.NodeList
+import com.github.javaparser.ast.expr.Expression
 import com.github.javaparser.ast.expr.MethodCallExpr
 import com.github.javaparser.ast.expr.SimpleName
 import com.github.javaparser.ast.observer.ObservableProperty
 import org.eclipse.swt.SWT
 import org.eclipse.swt.widgets.Composite
-import pt.iscte.javardise.Command
-import pt.iscte.javardise.CommandKind
-import pt.iscte.javardise.Commands
-import pt.iscte.javardise.SimpleNameWidget
+import pt.iscte.javardise.*
 import pt.iscte.javardise.basewidgets.FixedToken
 import pt.iscte.javardise.basewidgets.Id
 import pt.iscte.javardise.basewidgets.TextWidget
-import pt.iscte.javardise.external.ROW_LAYOUT_H_SHRINK
 import pt.iscte.javardise.external.ROW_LAYOUT_H_STRING
+import pt.iscte.javardise.external.isValidSimpleName
 import pt.iscte.javardise.external.observeProperty
 
 class CallExpressionWidget(
     parent: Composite,
-    override val node: MethodCallExpr
+    override val node: MethodCallExpr,
+    override val editEvent: (Expression?) -> Unit
 ) : ExpressionWidget<MethodCallExpr>(parent) {
 
     private var target: Id? = null
@@ -37,23 +36,24 @@ class CallExpressionWidget(
             FixedToken(this, ".")
         }
         methodName = SimpleNameWidget(this, node.name) { it.asString() }
-        methodName.addFocusLostAction {
-            if (methodName.text.isEmpty())
-                methodName.set(node.name.asString())
-            else if (methodName.text != node.name.asString()) {
-                Commands.execute(object : Command {
-                    override val target = node
-                    override val kind = CommandKind.MODIFY
-                    override val element = node.name
-                    override fun run() {
-                        target.name = SimpleName(methodName.text)
-                    }
-
-                    override fun undo() {
-                        target.name = element
-                    }
-                })
-            }
+        methodName.addFocusLostAction(::isValidSimpleName) {
+            node.modifyCommand(node.name, SimpleName(methodName.text), node::setName)
+//            if (methodName.text.isEmpty())
+//                methodName.set(node.name.asString())
+//            else if (methodName.text != node.name.asString()) {
+//                Commands.execute(object : Command {
+//                    override val target = node
+//                    override val kind = CommandKind.MODIFY
+//                    override val element = node.name
+//                    override fun run() {
+//                        target.name = SimpleName(methodName.text)
+//                    }
+//
+//                    override fun undo() {
+//                        target.name = element
+//                    }
+//                })
+//            }
         }
         args = ArgumentListWidget(this, "(", ")", node, node.arguments)
 

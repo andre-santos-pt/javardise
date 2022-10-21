@@ -5,8 +5,6 @@ import com.github.javaparser.ast.expr.Expression
 import com.github.javaparser.ast.observer.AstObserver
 import com.github.javaparser.ast.observer.ObservableProperty
 import org.eclipse.swt.widgets.Composite
-import pt.iscte.javardise.Commands
-import pt.iscte.javardise.ModifyCommand
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
 import pt.iscte.javardise.external.ROW_LAYOUT_H_SHRINK
@@ -17,7 +15,7 @@ import pt.iscte.javardise.modifyCommand
 class BracketsExpressionWidget(
     parent: Composite,
     override val node: EnclosedExpr,
-    editEvent: (Expression) -> Unit
+    override val editEvent: (Expression?) -> Unit
 ) : ExpressionWidget<EnclosedExpr>(parent) {
     val leftBracket: TokenWidget
     val rightBracket: TokenWidget
@@ -48,18 +46,9 @@ class BracketsExpressionWidget(
     private fun drawExpression(parent: Composite, expression: Expression): ExpressionWidget<*> {
         expressionWidget = createExpressionWidget(parent, expression) {
             node.modifyCommand(node.inner, it, node::setInner)
-//            Commands.execute(object :
-//                ModifyCommand<Expression>(node, node.inner) {
-//                override fun run() {
-//                    node.inner = it
-//                }
-//
-//                override fun undo() {
-//                    node.inner = element
-//                }
-//            })
             expressionWidget.dispose()
-            drawExpression(parent, it)
+            if(it != null)
+                drawExpression(parent, it)
         }
         expressionWidget.moveAbove(rightBracket)
         expressionWidget.requestLayout()

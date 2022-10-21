@@ -49,7 +49,6 @@ private fun performTransformations(model: CompilationUnit) {
 }
 
 fun substituteControlBlocks(node: Node) {
-    //model.types.forEach {
     node.accept(object : VoidVisitorAdapter<Any>() {
         override fun visit(n: WhileStmt, arg: Any?) {
             if (n.body !is BlockStmt)
@@ -69,7 +68,6 @@ fun substituteControlBlocks(node: Node) {
 
         // TODO DO, FOR, FOR EACH
     }, null)
-    //}
 }
 
 fun expandFieldDeclarations(type: TypeDeclaration<*>) {
@@ -236,6 +234,14 @@ class AddElseBlock(override val target: IfStmt) : Command {
     }
 }
 
+
+fun <T : Node> NodeList<T>.indexOfIdentity(e: T): Int {
+    for (i in 0..lastIndex)
+        if (get(i) === e)
+            return i
+    return -1
+}
+
 fun <E : Expression> tryParse(exp: String): Boolean {
     try {
         val e = StaticJavaParser.parseExpression<E>(exp)
@@ -269,7 +275,7 @@ fun tryParseExpression(exp: String): Boolean =
         false
     }
 
-fun tryParseSimpleName(name: String): Boolean =
+fun isValidSimpleName(name: String): Boolean =
     try {
         StaticJavaParser.parseSimpleName(name)
         true

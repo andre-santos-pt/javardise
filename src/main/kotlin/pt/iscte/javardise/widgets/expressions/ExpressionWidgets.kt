@@ -13,6 +13,7 @@ import pt.iscte.javardise.external.unaryOperators
 abstract class ExpressionWidget<T : Expression>(parent: Composite)
     : Composite(parent, SWT.NONE), NodeWidget<T> {
 
+    abstract val editEvent: (Expression?) -> Unit
     abstract val tail: TextWidget
     override fun toString(): String {
         return this::class.simpleName + ": $node"
@@ -26,30 +27,36 @@ abstract class ExpressionWidget<T : Expression>(parent: Composite)
 
 fun createExpressionWidget(
     parent: Composite,
-    node: Expression,
-    editEvent: (Expression) -> Unit
+    expression: Expression,
+    editEvent: (Expression?) -> Unit
 ): ExpressionWidget<*> =
-    when (node) {
-        is UnaryExpr -> UnaryExpressionWidget(parent, node)
-        is BinaryExpr -> BinaryExpressionWidget(parent, node)
-        is CharLiteralExpr -> CharacterExpressionWidget(parent, node)
-        is StringLiteralExpr -> StringExpressionWidget(parent, node, editEvent)
-        is MethodCallExpr -> CallExpressionWidget(parent, node)
-        is ArrayCreationExpr -> NewArrayExpressionWidget(parent, node)
-        is ArrayInitializerExpr -> NewArrayInitExpressionWidget(parent, node)
-        is ObjectCreationExpr -> NewObjectExpressionWidget(parent, node)
-        is EnclosedExpr -> BracketsExpressionWidget(parent, node, editEvent)
-        else -> SimpleExpressionWidget(parent, node, editEvent)
+        when (expression) {  // TODO edit events
+        is UnaryExpr -> UnaryExpressionWidget(parent, expression, editEvent)
+        is BinaryExpr -> BinaryExpressionWidget(parent, expression, editEvent)
+        is CharLiteralExpr -> CharacterExpressionWidget(parent, expression, editEvent)
+        is StringLiteralExpr -> StringExpressionWidget(parent, expression, editEvent)
+        is MethodCallExpr -> CallExpressionWidget(parent, expression, editEvent)
+        is ArrayCreationExpr -> NewArrayExpressionWidget(parent, expression, editEvent)
+        is ArrayInitializerExpr -> NewArrayInitExpressionWidget(parent, expression, editEvent)
+        is ObjectCreationExpr -> NewObjectExpressionWidget(parent, expression, editEvent)
+        is EnclosedExpr -> BracketsExpressionWidget(parent, expression, editEvent)
+        is AssignExpr -> AssignExpressionWidget(parent, expression, editEvent)
+        else -> SimpleExpressionWidget(parent, expression, editEvent)
     }.apply {
         if (this !is SimpleExpressionWidget)
             tail.apply {
                 addKeyListenerInternal(object : KeyAdapter() {
                     override fun keyPressed(e: KeyEvent) {
-                        if (isAtBeginning) {
+//                        if(e.character == SWT.BS)
+//                            editEvent(null)
+//                        else
+
+                        // BUG widget is disposed
+                            if (isAtBeginning) {
                             val op = unaryOperators.filter { it.isPrefix }
                                 .find { it.asString().startsWith(e.character) }
                             op?.let {
-                                editEvent(UnaryExpr(node.clone(), it))
+                                editEvent(UnaryExpr(expression.clone(), it))
                             }
                         } else if (isAtEnd) {
                             val op = binaryOperators.find {
@@ -58,7 +65,7 @@ fun createExpressionWidget(
                             op?.let {
                                 editEvent(
                                     BinaryExpr(
-                                        node.clone(),
+                                        expression.clone(),
                                         NameExpr("expression"),
                                         it
                                     )

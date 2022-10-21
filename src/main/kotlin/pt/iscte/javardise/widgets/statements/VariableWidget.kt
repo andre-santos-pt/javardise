@@ -3,6 +3,7 @@ package pt.iscte.javardise.widgets.statements
 import com.github.javaparser.StaticJavaParser
 import com.github.javaparser.ast.body.VariableDeclarator
 import com.github.javaparser.ast.expr.Expression
+import com.github.javaparser.ast.expr.NameExpr
 import com.github.javaparser.ast.expr.SimpleName
 import com.github.javaparser.ast.expr.VariableDeclarationExpr
 import com.github.javaparser.ast.observer.ObservableProperty
@@ -42,35 +43,21 @@ class VariableWidget(
 
         // TODO delete to assign
         type = SimpleTypeWidget(this, decl.type) { it.asString() }
-        type.addFocusLostAction {
-            if (type.text != decl.typeAsString)
-                if (isValidType(type.text))
-                    Commands.execute(object : ModifyCommand<Type>(assignment, assignment.commonType) {
-                        override fun run() {
-                            assignment.setAllTypes(StaticJavaParser.parseType(type.text))
-                        }
-
-                        override fun undo() {
-                            assignment.setAllTypes(element)
-                        }
-                    })
-                else
-                    type.set(decl.typeAsString)
+        type.addFocusLostAction(::isValidType) {
+            node.modifyCommand(
+                assignment.commonType,
+                StaticJavaParser.parseType(type.text),
+                assignment::setAllTypes
+            )
         }
-
         name = SimpleNameWidget(this, decl) { it.name.asString() }
-        name.addKeyEvent(SWT.BS, precondition = { it.isEmpty() }, action = createDeleteEvent(node, block))
-        name.addFocusLostAction {
-            if (name.text != decl.nameAsString)
-                Commands.execute(object : ModifyCommand<SimpleName>(decl, decl.name) {
-                    override fun run() {
-                        decl.name = SimpleName(name.text)
-                    }
-
-                    override fun undo() {
-                        decl.name = element
-                    }
-                })
+        name.addKeyEvent(
+            SWT.BS,
+            precondition = { it.isEmpty() },
+            action = createDeleteEvent(node, block)
+        )
+        name.addFocusLostAction(::isValidSimpleName) {
+            node.modifyCommand(decl.name, SimpleName(name.text), decl::setName)
         }
 
         if (decl.initializer.isPresent) {
@@ -78,7 +65,7 @@ class VariableWidget(
             expression = createExpWidget(decl, decl.initializer.get())
         }
         val semiColon = TokenWidget(this, ";")
-        semiColon.addInsert(this@VariableWidget, this@VariableWidget.parent as SequenceWidget, true)
+        semiColon.addInsert(this, this.parent as SequenceWidget, true)
 
         assignment.observeProperty<Type>(ObservableProperty.TYPE) {
             type.set(it?.asString())
@@ -88,15 +75,24 @@ class VariableWidget(
         }
         decl.observeProperty<Expression>(ObservableProperty.INITIALIZER) {
             expression?.dispose()
-            expression = this@VariableWidget.createExpWidget(decl, it!!)
+            expression = this.createExpWidget(decl, it ?: NameExpr("expression"))
             expression!!.moveAbove(semiColon.widget)
             expression!!.requestLayout()
         }
     }
 
-    private fun Composite.createExpWidget(variable: VariableDeclarator, expression: Expression) =
+    //fun VariableDeclarator.setInit(e: Expression): VariableDeclarator = setInitializer(e)
+
+    private fun Composite.createExpWidget(
+        variable: VariableDeclarator,
+        expression: Expression
+    ) =
         createExpressionWidget(this, expression) {
-            Commands.execute(object : ModifyCommand<Expression>(variable, variable.initializer.get()) {
+           // node.modifyCommand(variable.initializer, it, variable::setInit)
+            Commands.execute(object : ModifyCommand<Expression>(
+                variable,
+                if(variable.initializer.isPresent) variable.initializer.get() else null
+            ) {
                 override fun run() {
                     variable.setInitializer(it)
                 }

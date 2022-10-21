@@ -2,88 +2,76 @@ package pt.iscte.javardise.widgets.statements
 
 import com.github.javaparser.ast.expr.Expression
 import com.github.javaparser.ast.expr.NameExpr
-import com.github.javaparser.ast.observer.AstObserver
 import com.github.javaparser.ast.observer.ObservableProperty
 import com.github.javaparser.ast.stmt.BlockStmt
 import com.github.javaparser.ast.stmt.ReturnStmt
-import org.eclipse.swt.layout.FillLayout
-import org.eclipse.swt.widgets.Composite
-import pt.iscte.javardise.*
+import org.eclipse.swt.SWT
+import pt.iscte.javardise.Factory
 import pt.iscte.javardise.basewidgets.SequenceWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
+import pt.iscte.javardise.external.ROW_LAYOUT_H_SHRINK
 import pt.iscte.javardise.external.observeProperty
-import pt.iscte.javardise.external.row
+import pt.iscte.javardise.modifyCommand
 import pt.iscte.javardise.widgets.expressions.ExpressionWidget
 import pt.iscte.javardise.widgets.expressions.createExpressionWidget
 import pt.iscte.javardise.widgets.members.addInsert
 
+// TODO remove expression part
 // TODO adapt to throw?
-class ReturnWidget(parent: SequenceWidget, node: ReturnStmt, override val block: BlockStmt) :
+class ReturnWidget(
+    parent: SequenceWidget,
+    node: ReturnStmt,
+    override val block: BlockStmt
+) :
     StatementWidget<ReturnStmt>(parent, node) {
-    lateinit var keyword: TokenWidget
-    var exp: ExpressionWidget<*>? = null
-    lateinit var semiColon: TokenWidget
-    val row: Composite
+    val keyword: TokenWidget
+    var expression: ExpressionWidget<*>? = null
+    val semiColon: TokenWidget
 
-    var listener: AstObserver? = null
 
     init {
-        layout = FillLayout()
-        row = row {
-            keyword = Factory.newKeywordWidget(this, "return")
-            keyword.addDelete(node, block)
-            keyword.setCopySource()
-            keyword.setMoveSource()
+        layout = ROW_LAYOUT_H_SHRINK
+        keyword = Factory.newKeywordWidget(this, "return")
+        keyword.addKeyEvent(
+            SWT.SPACE,
+            precondition = { !node.expression.isPresent }) {
+            node.modifyCommand(
+                null,
+                NameExpr("expression"),
+                node::setExpression
+            )
+        }
+        keyword.addDelete(node, block)
+        keyword.setCopySource()
+        keyword.setMoveSource()
 
-            if (node.expression.isPresent) {
-                exp = createExpressionWidget(this, node.expression.get()) {
-                    Commands.execute(object :
-                        ModifyCommand<Expression>(node, if (node.expression.isPresent) node.expression.get() else null) {
-                        val old = if (node.expression.isPresent) node.expression.get() else null
-                        override fun run() {
-                            node.setExpression(it)
-                        }
-
-                        override fun undo() {
-                            node.setExpression(old)
-                        }
-                    })
-                }
+        if (node.expression.isPresent) {
+            expression = createExpressionWidget(this, node.expression.get()) {
+                node.modifyCommand(
+                    if (node.expression.isPresent) node.expression.get() else null,
+                    it,
+                    node::setExpression
+                )
             }
-            semiColon = TokenWidget(this, ";")
-            semiColon.addInsert(this@ReturnWidget, this@ReturnWidget.parent as SequenceWidget, true)
         }
-        keyword.addKeyEvent(' ') {
-            Commands.execute(object : AbstractCommand<Expression>(node, CommandKind.ADD, NameExpr("expression")) {
-                override fun run() {
-                    node.setExpression(element)
-                }
+        semiColon = TokenWidget(this, ";")
+        semiColon.addInsert(this, this.parent as SequenceWidget, true)
 
-                override fun undo() {
-                    node.removeExpression()
+        node.observeProperty<Expression>(ObservableProperty.EXPRESSION) {
+            if (it == null)
+                expression?.dispose()
+            else {
+                expression?.dispose()
+                expression = createExpressionWidget(this, it) { e ->
+                    node.modifyCommand(
+                        if (node.expression.isPresent) node.expression.get() else null,
+                        e,
+                        node::setExpression
+                    )
                 }
-            })
-        }
-
-        listener = node.observeProperty<Expression>(ObservableProperty.EXPRESSION) {
-            if (it != null && exp != null) {
-                exp?.dispose()
-                exp = createExpressionWidget(row, it) { e ->
-                    Commands.execute(object :
-                        ModifyCommand<Expression>(node, if (node.expression.isPresent) node.expression.get() else null) {
-                        val old = if (node.expression.isPresent) node.expression.get() else null
-                        override fun run() {
-                            node.setExpression(e)
-                        }
-
-                        override fun undo() {
-                            node.setExpression(old)
-                        }
-                    })
-                }
-                exp!!.moveAbove(semiColon.widget)
-                exp!!.requestLayout()
-                exp!!.setFocusOnCreation()
+                expression!!.moveAbove(semiColon.widget)
+                expression!!.requestLayout()
+                expression!!.setFocusOnCreation()
             }
         }
     }
@@ -94,6 +82,9 @@ class ReturnWidget(parent: SequenceWidget, node: ReturnStmt, override val block:
 
 
     override fun setFocusOnCreation(firstFlag: Boolean) {
-        exp?.setFocus()
+        if(expression != null)
+            expression!!.setFocus()
+        else
+            semiColon.setFocus()
     }
 }

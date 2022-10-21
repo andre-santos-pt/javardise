@@ -7,10 +7,7 @@ import com.github.javaparser.ast.expr.UnaryExpr
 import com.github.javaparser.ast.observer.AstObserver
 import com.github.javaparser.ast.observer.ObservableProperty
 import org.eclipse.swt.widgets.Composite
-import pt.iscte.javardise.Command
-import pt.iscte.javardise.CommandKind
-import pt.iscte.javardise.Commands
-import pt.iscte.javardise.ModifyCommand
+import pt.iscte.javardise.*
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
 import pt.iscte.javardise.external.ROW_LAYOUT_H_SHRINK
@@ -18,7 +15,11 @@ import pt.iscte.javardise.external.moveAbove
 import pt.iscte.javardise.external.observeProperty
 import pt.iscte.javardise.external.unaryOperators
 
-class UnaryExpressionWidget(parent: Composite, override val node: UnaryExpr) : ExpressionWidget<UnaryExpr>(parent) {
+class UnaryExpressionWidget(
+    parent: Composite,
+    override val node: UnaryExpr,
+    override val editEvent: (Expression?) -> Unit
+) : ExpressionWidget<UnaryExpr>(parent) {
     var operator: TokenWidget
     var expressionWidget: ExpressionWidget<*>
     val expressionObserver: AstObserver
@@ -27,52 +28,46 @@ class UnaryExpressionWidget(parent: Composite, override val node: UnaryExpr) : E
     init {
         layout = ROW_LAYOUT_H_SHRINK
         operator = TokenWidget(this, node.operator.asString(),
-            alternatives = { unaryOperators.filter { it.isPrefix }.map { it.asString() } }) {
-            Commands.execute(object : Command {
-                override val target: Node = node
-                override val kind = CommandKind.MODIFY
-                override val element = node.operator
-
-                override fun run() {
-                    node.operator = unaryOperators.find { op -> op.asString() == it }
-                }
-
-                override fun undo() {
-                    node.operator = element
-                }
-            })
+            alternatives = {
+                unaryOperators.filter { it.isPrefix }.map { it.asString() }
+            }) {
+            node.modifyCommand(
+                node.operator,
+                unaryOperators.find { op -> op.asString() == it },
+                node::setOperator
+            )
+        }
+        operator.addDeleteListener {
+            editEvent(node.expression.clone())
         }
 
         expressionWidget = drawExpression(this, node.expression)
 
-        if(node.isPostfix)
+        if (node.isPostfix)
             expressionWidget.moveAbove(operator)
 
-        expressionObserver = node.observeProperty<Expression>(ObservableProperty.EXPRESSION) {
-            expressionWidget.dispose()
-            drawExpression(this, node.expression)
-        }
+        expressionObserver =
+            node.observeProperty<Expression>(ObservableProperty.EXPRESSION) {
+                expressionWidget.dispose()
+                drawExpression(this, node.expression)
+            }
 
-        operatorObserver = node.observeProperty<UnaryExpr.Operator>(ObservableProperty.OPERATOR) {
-            operator.set(it?.asString() ?: "??")
-            operator.setFocus()
-        }
+        operatorObserver =
+            node.observeProperty<UnaryExpr.Operator>(ObservableProperty.OPERATOR) {
+                operator.set(it?.asString() ?: "??")
+                operator.setFocus()
+            }
     }
 
-    private fun drawExpression(parent: Composite, expression: Expression): ExpressionWidget<*> {
+    private fun drawExpression(
+        parent: Composite,
+        expression: Expression
+    ): ExpressionWidget<*> {
         expressionWidget = createExpressionWidget(parent, expression) {
-            Commands.execute(object :
-                ModifyCommand<Expression>(node, node.expression) {
-                override fun run() {
-                    node.expression = it
-                }
-
-                override fun undo() {
-                    node.expression = element
-                }
-            })
+            node.modifyCommand(node.expression, it, node::setExpression)
             expressionWidget.dispose()
-            drawExpression(parent, it)
+            if (it != null)
+                drawExpression(parent, it)
         }
         expressionWidget.requestLayout()
         expressionWidget.setFocusOnCreation()

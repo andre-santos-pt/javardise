@@ -83,7 +83,7 @@ fun addWidget(
     is WhileStmt -> WhileWidget(parent, stmt, block)
     is ExpressionStmt -> when(stmt.expression) {
         is VariableDeclarationExpr -> VariableWidget(parent, stmt, block)
-        is AssignExpr -> AssignWidget(parent, stmt, block)
+        //is AssignExpr -> AssignWidget(parent, stmt, block)
         else -> ExpressionStatementWidget(parent, stmt, block)
     }
     else -> throw UnsupportedOperationException("NA $stmt ${stmt::class}")
@@ -102,7 +102,9 @@ fun SequenceWidget.findIndexByModel(control: Control): Int {
 
 fun createInsert(seq: SequenceWidget, block: BlockStmt): TextWidget {
     val insert = TextWidget.create(seq) { c, s ->
-        c.toString().matches(Regex("\\w|\\[|]|\\.|\\s|\\+|-")) || c == SWT.BS
+        c.toString().matches(Regex("\\w|\\[|]|\\.|\\+|-"))
+                || c == SWT.SPACE && !s.endsWith(SWT.SPACE)
+                || c == SWT.BS
     }
 
     insert.addKeyEvent(SWT.SPACE, '(', precondition = { it.matches(Regex("if|while")) }) {
@@ -155,7 +157,7 @@ fun createInsert(seq: SequenceWidget, block: BlockStmt): TextWidget {
     }
 
     insert.addKeyEvent('=', precondition = {
-        val parts = it.split(Regex("\\s+"))
+        val parts = it.trim().split(Regex("\\s+"))
         insert.isAtEnd && parts.size == 2 && isValidType(parts[0]) && tryParse<NameExpr>(parts[1])
     }) {
         val insertIndex = seq.findIndexByModel(insert.widget)

@@ -21,7 +21,13 @@ class ExpressionStatementWidget(
     init {
         layout = ROW_LAYOUT_H_SHRINK
         expression = createExpressionWidget(this, node.expression) {
-            // TODO edit event
+           if(it == null)
+                block.remove(node)
+            else {
+               // expression.dispose()
+               // expression = createExpressionWidget(this, it)
+           }
+
             println(it)
         }
         semiColon = TokenWidget(this, ";")

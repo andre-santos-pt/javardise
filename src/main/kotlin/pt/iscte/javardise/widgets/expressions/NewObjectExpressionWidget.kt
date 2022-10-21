@@ -1,6 +1,7 @@
 package pt.iscte.javardise.widgets.expressions
 
 import com.github.javaparser.StaticJavaParser
+import com.github.javaparser.ast.expr.Expression
 import com.github.javaparser.ast.expr.ObjectCreationExpr
 import com.github.javaparser.ast.type.ClassOrInterfaceType
 import org.eclipse.swt.widgets.Composite
@@ -15,7 +16,8 @@ import pt.iscte.javardise.external.isValidClassType
 // anonymous class body
 class NewObjectExpressionWidget(
     parent: Composite,
-    override val node: ObjectCreationExpr
+    override val node: ObjectCreationExpr,
+    override val editEvent: (Expression?) -> Unit
 ) : ExpressionWidget<ObjectCreationExpr>(parent) {
 
     val id: TextWidget

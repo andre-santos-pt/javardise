@@ -9,10 +9,7 @@ import org.eclipse.swt.SWT
 import org.eclipse.swt.events.KeyAdapter
 import org.eclipse.swt.events.KeyEvent
 import org.eclipse.swt.widgets.Composite
-import pt.iscte.javardise.COMMENT_COLOR
-import pt.iscte.javardise.Command
-import pt.iscte.javardise.CommandKind
-import pt.iscte.javardise.Commands
+import pt.iscte.javardise.*
 import pt.iscte.javardise.basewidgets.FixedToken
 import pt.iscte.javardise.basewidgets.ID
 import pt.iscte.javardise.basewidgets.TextWidget
@@ -23,7 +20,7 @@ import pt.iscte.javardise.external.observeProperty
 class StringExpressionWidget(
     parent: Composite,
     override val node: StringLiteralExpr,
-    editEvent: (Expression) -> Unit
+    override val editEvent: (Expression?) -> Unit
 ) : ExpressionWidget<StringLiteralExpr>(parent) {
     val text: TextWidget
     val close: TokenWidget
@@ -47,6 +44,7 @@ class StringExpressionWidget(
         close.widget.addKeyListener(delListener)
 
         text.addFocusLostAction {
+            //node.modifyCommand(node.value, text.text, node::setValue)
             Commands.execute(object : Command {
                 override val target = node
                 override val kind = CommandKind.MODIFY

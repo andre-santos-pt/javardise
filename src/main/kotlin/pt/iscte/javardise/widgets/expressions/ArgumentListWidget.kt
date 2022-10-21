@@ -15,18 +15,24 @@ import pt.iscte.javardise.basewidgets.FixedToken
 import pt.iscte.javardise.basewidgets.TYPE_CHARS
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
-import pt.iscte.javardise.external.ListObserver
-import pt.iscte.javardise.external.ROW_LAYOUT_H_SHRINK
-import pt.iscte.javardise.external.observeList
-import pt.iscte.javardise.external.tryParseExpression
+import pt.iscte.javardise.external.*
 
-class ArgumentListWidget(parent: Composite, open: String, close: String, val owner: Node, val expressionList: NodeList<Expression>) :
+class ArgumentListWidget(
+    parent: Composite,
+    open: String,
+    close: String,
+    val owner: Node,
+    val expressionList: NodeList<Expression>
+) :
     Composite(parent, SWT.NONE) {
     val openBracket: FixedToken
     private lateinit var insert: TextWidget
     val closeBracket: TokenWidget
 
-    private data class ArgWidget(val comma: FixedToken?, var arg: ExpressionWidget<*>) {
+    private data class ArgWidget(
+        val comma: FixedToken?,
+        var arg: ExpressionWidget<*>
+    ) {
         fun dispose() {
             comma?.dispose()
             arg.dispose()
@@ -40,6 +46,7 @@ class ArgumentListWidget(parent: Composite, open: String, close: String, val own
         layout = ROW_LAYOUT_H_SHRINK
         openBracket = FixedToken(this, open)
         closeBracket = TokenWidget(this, close)
+
         if (expressionList.isEmpty())
             createInsert(this)
         expressionList.forEachIndexed { index, expression ->
@@ -72,10 +79,10 @@ class ArgumentListWidget(parent: Composite, open: String, close: String, val own
                 argumentWidgets[index].dispose()
                 argumentWidgets.removeAt(index)
                 requestLayout()
-                if(index != argumentWidgets.size)
+                if (index != argumentWidgets.size)
                     argumentWidgets[index].arg.setFocus()
-                else if(index != 0)
-                    argumentWidgets[index-1].arg.setFocus()
+                else if (index != 0)
+                    argumentWidgets[index - 1].arg.setFocus()
                 else {
                     createInsert(this@ArgumentListWidget)
                     insert.setFocus()
@@ -84,31 +91,44 @@ class ArgumentListWidget(parent: Composite, open: String, close: String, val own
         })
     }
 
-    fun <T : Node> NodeList<T>.indexOfIdentity(e: T): Int {
-        for(i in 0..lastIndex)
-            if(get(i) === e)
-                return i
-        return -1
-    }
+
 
     private fun createArgument(exp: Expression, index: Int, replace: Boolean):
             ExpressionWidget<*> {
         val arg = createExpressionWidget(this, exp) {
-            Commands.execute(object : Command {
-                override val target = owner
-                override val kind = CommandKind.MODIFY
-                override val element = exp
+            if (it == null)
+                Commands.execute(object : Command {
+                    override val target = owner
+                    override val kind = CommandKind.REMOVE
+                    override val element = exp
 
-                var i : Int = -1
-                override fun run() {
-                    i = expressionList.indexOfIdentity(element)
-                    expressionList[i] = it
-                }
+                    var i: Int = -1
+                    override fun run() {
+                        i = expressionList.indexOfIdentity(exp)
+                        expressionList.removeAt(i)
+                    }
 
-                override fun undo() {
-                    expressionList[i] = element
-                }
-            })
+                    override fun undo() {
+                        expressionList.add(i, element)
+                    }
+                })
+            else {
+                Commands.execute(object : Command {
+                    override val target = owner
+                    override val kind = CommandKind.MODIFY
+                    override val element = exp
+
+                    var i: Int = -1
+                    override fun run() {
+                        i = expressionList.indexOfIdentity(element)
+                        expressionList[i] = it
+                    }
+
+                    override fun undo() {
+                        expressionList[i] = element
+                    }
+                })
+            }
         }
 
         arg.tail.addKeyEvent(',') {
@@ -117,10 +137,10 @@ class ArgumentListWidget(parent: Composite, open: String, close: String, val own
                 override val kind = CommandKind.ADD
                 override val element get() = NameExpr("expression")
 
-                var i : Int = -1
+                var i: Int = -1
                 override fun run() {
                     i = expressionList.indexOfIdentity(arg.node)
-                    expressionList.add(i+1, element)
+                    expressionList.add(i + 1, element)
                 }
 
                 override fun undo() {
@@ -129,34 +149,33 @@ class ArgumentListWidget(parent: Composite, open: String, close: String, val own
             })
         }
 
-        arg.tail.addKeyEvent(SWT.BS, precondition = {it.isEmpty()}) {
-            Commands.execute(object : Command {
-                override val target = owner
-                override val kind = CommandKind.REMOVE
-                override val element = exp
-
-                var i : Int = -1
-                override fun run() {
-                    i = expressionList.indexOfIdentity(arg.node)
-                    expressionList.removeAt(i)
-                }
-
-                override fun undo() {
-                    expressionList.add(i, element)
-                }
-            })
-        }
+//        arg.tail.addKeyEvent(SWT.BS, precondition = {it.isEmpty()}) {
+//            Commands.execute(object : Command {
+//                override val target = owner
+//                override val kind = CommandKind.REMOVE
+//                override val element = exp
+//
+//                var i : Int = -1
+//                override fun run() {
+//                    i = expressionList.indexOfIdentity(arg.node)
+//                    expressionList.removeAt(i)
+//                }
+//
+//                override fun undo() {
+//                    expressionList.add(i, element)
+//                }
+//            })
+//        }
 
         if (argumentWidgets.isEmpty()) {
             arg.moveBelow(openBracket.label)
             argumentWidgets.add(index, ArgWidget(null, arg))
         } else {
-            if(replace) {
+            if (replace) {
                 arg.moveAbove(argumentWidgets[index].arg)
                 argumentWidgets[index].arg.dispose()
                 argumentWidgets[index].arg = arg
-            }
-            else {
+            } else {
                 val comma = FixedToken(this, ",")
                 if (index == argumentWidgets.size) {
                     comma.label.moveAbove(closeBracket.widget)

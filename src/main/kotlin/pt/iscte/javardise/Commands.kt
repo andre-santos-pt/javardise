@@ -1,10 +1,12 @@
 package pt.iscte.javardise
 
 import com.github.javaparser.ast.Node
+import com.github.javaparser.ast.NodeList
 import com.github.javaparser.ast.expr.AssignExpr
 import com.github.javaparser.ast.stmt.BlockStmt
 import com.github.javaparser.ast.stmt.Statement
 import pt.iscte.javardise.external.AddStatementCommand
+import pt.iscte.javardise.external.indexOfIdentity
 import kotlin.reflect.KFunction1
 
 object Commands {
@@ -43,7 +45,7 @@ enum class CommandKind {
 interface Command {
     val target: Node
     val kind: CommandKind
-    val element: Any
+    val element: Any?
     fun run()
     fun undo()
 
@@ -51,20 +53,58 @@ interface Command {
 
 }
 
-fun <E: Any> Node.modifyCommand(old: E, new: E, setOperation: KFunction1<E, Node>) =
+fun <E: Any> Node.modifyCommand(old: E?, new: E?, setOperation: KFunction1<E?, Node>) {
+    if (old != new)
+        Commands.execute(object : Command {
+            override val target = this@modifyCommand
+            override val kind: CommandKind = CommandKind.MODIFY
+            override val element: E? = old
+
+            override fun run() {
+                setOperation(new)
+            }
+
+            override fun undo() {
+                setOperation(old)
+            }
+        })
+}
+
+fun <N: Node> NodeList<N>.addCommand(owner: Node, e: N, index: Int = size) {
     Commands.execute(object : Command {
-        override val target = this@modifyCommand
-        override val kind: CommandKind = CommandKind.MODIFY
-        override val element: E = old
+        override val target = owner
+        override val kind: CommandKind = CommandKind.ADD
+        override val element = e
 
         override fun run() {
-            setOperation(new)
+            add(index, e)
         }
 
         override fun undo() {
-            setOperation(old)
+            removeAt(index)
         }
     })
+}
+
+fun <N: Node> NodeList<N>.removeCommand(owner: Node, e: N) {
+        Commands.execute(object : Command {
+            override val target = owner
+            override val kind: CommandKind = CommandKind.REMOVE
+            override val element = e
+
+            var i: Int = -1
+            override fun run() {
+                i = indexOfIdentity(element)
+                removeAt(i)
+            }
+
+            override fun undo() {
+                add(i, element)
+            }
+        })
+}
+
+
 
 
 abstract class AbstractCommand<E : Node>(
