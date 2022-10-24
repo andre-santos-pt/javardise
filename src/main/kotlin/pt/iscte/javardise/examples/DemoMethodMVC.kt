@@ -1,6 +1,7 @@
 package pt.iscte.javardise.examples
 
 import com.github.javaparser.ast.body.MethodDeclaration
+import com.github.javaparser.ast.expr.MethodCallExpr
 import org.eclipse.swt.SWT
 import org.eclipse.swt.layout.FillLayout
 import org.eclipse.swt.widgets.Display
@@ -46,35 +47,39 @@ private fun createShell(display: Display, model: MethodDeclaration, readonly: Bo
     shell.layout = FillLayout()
     val methodWidget = shell.column {
        layout = FillLayout()
-        val w = scrollable {
+        val methodWidget = scrollable {
             MethodWidget(it, model, SWT.BORDER)
         }
-        w.enabled = readonly
+        methodWidget.enabled = readonly
         grid(2) {
 
             label("node")
-            val t = text("") {
+            val nodeText = text("") {
                 enabled = false
                 fillGridHorizontal()
             }
 
             label("detail")
-            val detail = text("") {
+            val detailText = text("") {
                 enabled = false
                 fillGridHorizontal()
             }
-
-
-            label("part")
-            val tt = text("") {
-                enabled = false
-                fillGridHorizontal()
+            methodWidget.addObserver { node, data ->
+                nodeText.text = node?.let { node::class.simpleName } ?: ""
+                detailText.text = data?.let { data.toString() } ?: ""
             }
-            w.addObserver { node, data ->
-                t.text = node?.let { node::class.simpleName } ?: ""
-                //detail.text = if(node is ExpressionStmt) node.expression::class.simpleName else ""
 
-                tt.text = data?.let { data.toString() } ?: ""
+            button("on focus") {
+                val child = methodWidget.getChildOnFocus()
+                message {
+                    column {
+                        child?.let {
+                            label(child::class.simpleName!!)
+                        }
+                        label(child?.toString() ?: "no selection")
+                    }
+
+                }
             }
         }
 

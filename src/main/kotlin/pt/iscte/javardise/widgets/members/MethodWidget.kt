@@ -36,6 +36,15 @@ class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: In
     override val closingBracket: TokenWidget
 
 
+
+
+
+    private val observers = mutableListOf<(Node?, Any?) -> Unit>()
+
+    fun addObserver(action: (Node?, Any?) -> Unit) {
+        observers.add(action)
+    }
+
     val focusListener = { event: Event ->
         if ((event.widget as Control).isChild(this@MethodWidget)) {
             val w = (event.widget as Control).findAncestor<NodeWidget<*>>()
@@ -48,11 +57,16 @@ class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: In
         }
     }
 
-
-    private val observers = mutableListOf<(Node?, Any?) -> Unit>()
-
-    fun addObserver(action: (Node?, Any?) -> Unit) {
-        observers.add(action)
+    fun getChildOnFocus() : Node? {
+        val onFocus = Display.getDefault().focusControl
+        return if(onFocus.isChild(this)) {
+            val w = onFocus.findAncestor<NodeWidget<*>>()
+            var n = w?.node as? Node
+            if (n is ExpressionStmt)
+                n = n.expression
+            n
+        }
+        else null
     }
 
     init {

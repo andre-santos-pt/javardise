@@ -20,7 +20,7 @@ fun Composite.add(action: Composite.() -> Unit) {
     action()
 }
 
-fun Composite.button(text: String, action: Button.() -> Unit) : Button {
+fun Composite.button(text: String, action: Button.() -> Unit): Button {
     val b = Button(this, SWT.PUSH)
     b.text = text
     b.addSelectionListener(object : SelectionAdapter() {
@@ -31,10 +31,14 @@ fun Composite.button(text: String, action: Button.() -> Unit) : Button {
     return b
 }
 
-fun Composite.check(text: String, style: Int = SWT.NONE, action: (Boolean) -> Unit = {}) : Button {
+fun Composite.check(
+    text: String,
+    style: Int = SWT.NONE,
+    action: (Boolean) -> Unit = {}
+): Button {
     val b = Button(this, style or SWT.CHECK)
     b.text = text
-    b.addSelectionListener(object: SelectionAdapter() {
+    b.addSelectionListener(object : SelectionAdapter() {
         override fun widgetSelected(e: SelectionEvent?) {
             action(b.selection)
         }
@@ -42,22 +46,30 @@ fun Composite.check(text: String, style: Int = SWT.NONE, action: (Boolean) -> Un
     return b
 }
 
-fun Composite.text(text: String, style: Int = SWT.BORDER, init: Text.() -> Unit = {}) : Text {
+fun Composite.text(
+    text: String,
+    style: Int = SWT.BORDER,
+    init: Text.() -> Unit = {}
+): Text {
     val t = Text(this, style)
     t.text = text
     init(t)
     return t
 }
 
-fun Composite.multitext(text: String, style: Int = SWT.BORDER) = text(text, style or SWT.MULTI)
+fun Composite.multitext(text: String, style: Int = SWT.BORDER) =
+    text(text, style or SWT.MULTI)
 
-fun Composite.combo(style: Int = SWT.BORDER, content: () -> List<String>) : Combo {
+fun Composite.combo(
+    style: Int = SWT.BORDER,
+    content: () -> List<String>
+): Combo {
     val t = Combo(this, style)
     t.setItems(*content().toTypedArray())
     return t
 }
 
-fun Control.onFocus(action: () -> Unit) : Control {
+fun Control.onFocus(action: () -> Unit): Control {
     addFocusListener(object : FocusAdapter() {
         override fun focusGained(e: FocusEvent?) {
             action()
@@ -73,41 +85,51 @@ fun Control.fillGridHorizontal() {
     layoutData = GRID_FILL_HORIZONTAL
 }
 
-fun Composite.label(text: String, style: Int = SWT.WRAP or SWT.BORDER, font: Font? = null, init: Label.() -> Unit = {}) : Label {
+fun Composite.label(
+    text: String,
+    style: Int = SWT.WRAP or SWT.BORDER,
+    font: Font? = null,
+    init: Label.() -> Unit = {}
+): Label {
     val t = Label(this, style)
     t.text = text
-    font?.let{ t.font = font}
+    font?.let { t.font = font }
     init(t)
     return t
 }
 
-fun Composite.label(file: File, style: Int = SWT.NONE, font: Font? = null, init: Label.() -> Unit = {}) : Label {
+fun Composite.label(
+    file: File,
+    style: Int = SWT.NONE,
+    font: Font? = null,
+    init: Label.() -> Unit = {}
+): Label {
     val s = Scanner(file)
     val buf = StringBuffer()
-    while(s.hasNextLine())
+    while (s.hasNextLine())
         buf.appendLine(s.nextLine())
     s.close()
     return label(buf.toString(), style, font, init)
 }
 
-fun Composite.toggle(text: String, action: (Boolean) -> Unit = {}) : Button {
+fun Composite.toggle(text: String, action: (Boolean) -> Unit = {}): Button {
     val t = Button(this, SWT.TOGGLE)
     t.text = text
-    t.addSelectionListener(object: SelectionAdapter() {
+    t.addSelectionListener(object : SelectionAdapter() {
         override fun widgetSelected(e: SelectionEvent?) {
-           action(t.selection)
+            action(t.selection)
         }
     })
     return t
 }
 
-fun Composite.separator() : Label {
+fun Composite.separator(): Label {
     val t = Label(this, SWT.SEPARATOR)
     return t
 }
 
 
-fun Composite.row(content: Composite.() -> Unit) : Composite {
+fun Composite.row(content: Composite.() -> Unit): Composite {
     val c = Composite(this, SWT.NONE)
     c.layout = ROW_LAYOUT_H_ZERO
     c.background = this.background
@@ -116,30 +138,37 @@ fun Composite.row(content: Composite.() -> Unit) : Composite {
     return c
 }
 
-fun Composite.column(margin: Boolean = false, content: Composite.() -> Unit) : Composite {
+fun Composite.column(
+    margin: Boolean = false,
+    content: Composite.() -> Unit
+): Composite {
     val c = Composite(this, SWT.NONE)
-    c.layout = if(margin) ROW_LAYOUT_V_SPACED else ROW_LAYOUT_V_ZERO
+    c.layout = if (margin) ROW_LAYOUT_V_SPACED else ROW_LAYOUT_V_ZERO
     c.background = this.background
     c.foreground = this.foreground
     content(c)
     return c
 }
 
-fun Composite.fill(content: Composite.() -> Unit) : Composite {
+fun Composite.fill(content: Composite.() -> Unit): Composite {
     val c = Composite(this, SWT.NONE)
     c.layout = FillLayout()
     content(c)
     return c
 }
 
-fun Composite.grid(cols: Int = 1, equalWidth :Boolean = false, content: Composite.() -> Unit) : Composite {
+fun Composite.grid(
+    cols: Int = 1,
+    equalWidth: Boolean = false,
+    content: Composite.() -> Unit
+): Composite {
     val c = Composite(this, SWT.NONE)
     c.layout = GridLayout(cols, equalWidth)
     content(c)
     return c
 }
 
-fun Composite.group(text: String, content: Composite.() -> Unit) : Group {
+fun Composite.group(text: String, content: Composite.() -> Unit): Group {
     val g = Group(this, SWT.BORDER)
     g.layout = RowLayout()
     g.text = text
@@ -158,15 +187,16 @@ class StackComposite(parent: Composite) : Composite(parent, SWT.NONE) {
     }
 
     fun next() {
-        val i = (children.indexOf((layout as StackLayout).topControl) + 1) % children.size
+        val i =
+            (children.indexOf((layout as StackLayout).topControl) + 1) % children.size
         set(i)
     }
 }
 
-fun Composite.stack(content: Composite.()->Unit) : StackComposite {
+fun Composite.stack(content: Composite.() -> Unit): StackComposite {
     val c = StackComposite(this)
     content(c)
-    if(children.isNotEmpty())
+    if (children.isNotEmpty())
         c.set(0)
     return c
 }
@@ -175,7 +205,7 @@ fun Composite.image(path: String, style: Int = SWT.NONE) {
     TODO()
 }
 
-fun Control.onClick(action:() -> Unit) {
+fun Control.onClick(action: () -> Unit) {
     addMouseListener(object : MouseAdapter() {
         override fun mouseDown(e: MouseEvent?) {
             action()
@@ -184,15 +214,18 @@ fun Control.onClick(action:() -> Unit) {
 }
 
 fun message(init: Shell.() -> Unit) {
-    shell(SWT.DIALOG_TRIM or SWT.APPLICATION_MODAL) {
+    val s = shell(SWT.DIALOG_TRIM or SWT.APPLICATION_MODAL) {
+        layout = RowLayout(SWT.VERTICAL)
         init(this)
         button("OK") {
             this@shell.close()
         }
-    }.open()
+    }
+    s.pack()
+    s.open()
 }
 
-fun shell(style: Int = SWT.NONE, content: Shell.() -> Unit) : Shell {
+fun shell(style: Int = SWT.NONE, content: Shell.() -> Unit): Shell {
     val s = Shell(Display.getDefault())
     s.layout = FillLayout()
     content(s)
@@ -220,7 +253,7 @@ fun Shell.launch() {
 }
 
 fun font(face: String, size: Int, style: Int = SWT.NONE) =
-        Font(Display.getDefault(), FontData(face, size, style))
+    Font(Display.getDefault(), FontData(face, size, style))
 
 fun <T : Composite> Composite.scrollable(create: (Composite) -> T): T {
     val scroll = ScrolledComposite(this, SWT.H_SCROLL or SWT.V_SCROLL)
@@ -274,7 +307,7 @@ fun create(style: Int, top: Int = 0, spacing: Int = 0): RowLayout {
 }
 
 val ROW_LAYOUT_H_STRING = create(SWT.HORIZONTAL, spacing = -3)
-val ROW_LAYOUT_H_SHRINK = create(SWT.HORIZONTAL, spacing = 1, top= 0)
+val ROW_LAYOUT_H_SHRINK = create(SWT.HORIZONTAL, spacing = 1, top = 0)
 val ROW_LAYOUT_H_ZERO = create(SWT.HORIZONTAL, 2)
 val ROW_LAYOUT_H = create(SWT.HORIZONTAL, 3)
 val ROW_LAYOUT_H_DOT = create(SWT.HORIZONTAL, 0)
