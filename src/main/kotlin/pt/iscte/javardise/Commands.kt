@@ -10,8 +10,11 @@ import pt.iscte.javardise.external.indexOfIdentity
 import kotlin.reflect.KFunction1
 
 object Commands {
-    val stack = ArrayDeque<Command>()
-    val observers = mutableListOf<(Command) -> Unit>()
+    val stackSize: Int get() = stack.size
+    val stackElements: List<Command> get() = stack.toList()
+
+    private val stack = ArrayDeque<Command>()
+    private val observers = mutableListOf<(Command) -> Unit>()
 
     fun execute(c: Command) {
         c.run()
@@ -29,6 +32,10 @@ object Commands {
                 it(cmd)
             }
         }
+    }
+
+    fun addObserver(o: (Command) -> Unit) {
+        observers.add(o)
     }
 
     fun reset() {

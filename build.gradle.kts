@@ -15,7 +15,11 @@ repositories {
 }
 
 dependencies {
-    testImplementation(kotlin("test"))
+    testImplementation("org.junit.jupiter:junit-jupiter-api:5.9.0")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.9.0")
+    implementation("org.junit.platform:junit-platform-suite:1.9.1")
+    //implementation("junit:junit:5")
+    //testImplementation(kotlin("test-junit5"))
     implementation("com.github.javaparser:javaparser-symbol-solver-core:3.24.4")
     implementation (files("libs/swt.jar"))
 }
@@ -69,8 +73,15 @@ tasks.withType<Jar> {
     }
 }
 
+tasks {
+    test {
+        useJUnitPlatform()
+    }
+}
+
 tasks.test {
     useJUnitPlatform()
+    jvmArgs = listOf("-XstartOnFirstThread")
 }
 
 tasks.withType<KotlinCompile> {

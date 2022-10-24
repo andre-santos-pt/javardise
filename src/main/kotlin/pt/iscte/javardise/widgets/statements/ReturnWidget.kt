@@ -58,8 +58,11 @@ class ReturnWidget(
         semiColon.addInsert(this, this.parent as SequenceWidget, true)
 
         node.observeProperty<Expression>(ObservableProperty.EXPRESSION) {
-            if (it == null)
+            if (it == null) {
                 expression?.dispose()
+                expression = null
+                keyword.widget.requestLayout()
+            }
             else {
                 expression?.dispose()
                 expression = createExpressionWidget(this, it) { e ->

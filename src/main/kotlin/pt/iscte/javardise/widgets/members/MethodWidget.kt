@@ -177,6 +177,7 @@ class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: In
                             c.moveAbove(n)
                         }
                     }
+                    insert.delete()
                     p.setFocusOnCreation(list.isEmpty())
                     p.requestLayout()
                 }
@@ -233,7 +234,6 @@ class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: In
                         parameters.remove(element)
                     }
                 })
-                insert.delete()
             }
             if(bodyModel != null)
                 insert.addKeyEvent(SWT.CR) {

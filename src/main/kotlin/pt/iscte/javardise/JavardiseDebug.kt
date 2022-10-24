@@ -96,10 +96,10 @@ class JavardiseWindow(var file: File) {
         stackComp = Composite(parent, SWT.NONE)
         stackComp.layout = RowLayout(SWT.VERTICAL)
 
-        Commands.observers.add {
+        Commands.addObserver {
             srcText.text = model.toString()
             stackComp.children.forEach { it.dispose() }
-            Commands.stack.forEach {
+            Commands.stackElements.forEach {
                 Label(stackComp, SWT.BORDER).text = it.asString()
             }
             stackComp.requestLayout()
