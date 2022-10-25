@@ -24,7 +24,7 @@ class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: In
     MemberWidget<CallableDeclaration<*>>(parent, dec, style = style), SequenceContainer {
 
     var typeId: Id? = null
-    val name: Id
+    override val name: Id
     override var body: SequenceWidget? = null
 
     val bodyModel: BlockStmt? =
@@ -34,10 +34,6 @@ class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: In
     val paramsWidget: ParamListWidget
 
     override val closingBracket: TokenWidget
-
-
-
-
 
     private val observers = mutableListOf<(Node?, Any?) -> Unit>()
 
@@ -72,58 +68,15 @@ class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: In
     init {
         if (node.isMethodDeclaration) {
             typeId = SimpleTypeWidget(firstRow, (node as MethodDeclaration).type) { it.asString() }
-            typeId!!.addFocusLostAction {
-                if(typeId!!.isValidAndDifferent(node.type.asString()))
-                    Commands.execute(object : Command {
-                        override val target = node.parentNode.get() as ClassOrInterfaceDeclaration // BUG
-                        override val kind: CommandKind = CommandKind.MODIFY
-                        override val element: Type = node.type
-
-                        override fun run() {
-                            node.type = StaticJavaParser.parseType(typeId!!.text)
-                        }
-
-                        override fun undo() {
-                            node.type = element
-                        }
-                    })
-                else
-                    typeId!!.set(node.typeAsString)
+            typeId!!.addFocusLostAction(::isValidType) {
+                node.modifyCommand(node.typeAsString, it, node::setType)
             }
         }
 
         name = SimpleNameWidget(firstRow, node.name) { it.asString() }
-        name.addKeyEvent(SWT.BS, precondition = { it.isEmpty() }) {
-            Commands.execute(object : Command {
-                override val target = node.parentNode.get() as ClassOrInterfaceDeclaration // BUG
-                override val kind: CommandKind = CommandKind.REMOVE
-                override val element: Node = dec
-                val index: Int = target.members.indexOf(dec)
-                override fun run() {
-                    dec.remove()
-                }
 
-                override fun undo() {
-                    target.members.add(index, dec.clone())
-                }
-            })
-            dec.remove()
-        }
-
-        name.addFocusLostAction {
-            if (name.isValidAndDifferent(node.nameAsString))
-                Commands.execute(object : ModifyCommand<SimpleName>(node, node.name) {
-                    override fun run() {
-                        node.name = SimpleName(name.text)
-                    }
-
-                    override fun undo() {
-                        node.name = element
-                    }
-                })
-            else {
-                name.set(node.name.id)
-            }
+        name.addFocusLostAction(::isValidSimpleName) {
+            node.modifyCommand(node.nameAsString, it, node::setName)
         }
 
         node.observeProperty<Type>(ObservableProperty.TYPE) {
@@ -165,10 +118,11 @@ class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: In
 
     inner class ParamListWidget(parent: Composite, val parameters: NodeList<Parameter>) :
         Composite(parent, SWT.NONE) {
-        lateinit var insert: TextWidget
+        var insert: TextWidget? = null
 
         init {
             layout = ROW_LAYOUT_H_SHRINK
+            font = parent.font
 
             if(parameters.isEmpty())
                 createInsert()
@@ -191,7 +145,7 @@ class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: In
                             c.moveAbove(n)
                         }
                     }
-                    insert.delete()
+                    insert?.delete()
                     p.setFocusOnCreation(list.isEmpty())
                     p.requestLayout()
                 }
@@ -207,10 +161,20 @@ class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: In
                         else if (i != 0)
                             children[i - 1].dispose()
                     }
-                    if (parameters.size == 1)
+                    if (parameters.size == 1) {
                         createInsert()
-
+                        insert?.setFocus()
+                    }
+                    else if(index == 0) {
+                        children[0].setFocus()
+                    }
+                    else {
+                        val prev = children.indexOfFirst { it is ParamWidget && it.node == list[index-1] }
+                        (children[prev] as ParamWidget).setFocusOnCreation(false)
+                    }
                     requestLayout()
+
+
                 }
 
                 override fun elementReplace(
@@ -231,32 +195,20 @@ class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: In
         }
 
         private fun createInsert() {
-            insert = TextWidget.create(this, " ") { c, s ->
+            val newInsert = TextWidget.create(this, " ") { c, s ->
                 c.toString().matches(TYPE_CHARS)
             }
-            insert.addKeyEvent(SWT.SPACE, precondition = { isValidType(it) }) {
-                Commands.execute(object : Command {
-                    override val target = dec
-                    override val kind = CommandKind.ADD
-                    override val element: Parameter = Parameter(StaticJavaParser.parseType(insert.text), SimpleName("parameter"))
-
-                    override fun run() {
-                        parameters.add(0, element)
-                    }
-
-                    override fun undo() {
-                        parameters.remove(element)
-                    }
-                })
+            newInsert.addKeyEvent(SWT.SPACE, precondition = { isValidType(it) }) {
+                parameters.addCommand(node, Parameter(StaticJavaParser.parseType(newInsert.text), "parameter"))
             }
             if(bodyModel != null)
-                insert.addKeyEvent(SWT.CR) {
+                newInsert.addKeyEvent(SWT.CR) {
                     this@MethodWidget.body!!.insertBeginning()
                 }
-            insert.addFocusLostAction {
-                insert.clear(" ")
+            newInsert.addFocusLostAction {
+                newInsert.clear(" ")
             }
-
+            insert = newInsert
         }
 
 
@@ -275,80 +227,29 @@ class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: In
             val name: Id
 
             init {
-                layout = RowLayout()
-                (layout as RowLayout).marginTop = 0
+                layout = ROW_LAYOUT_H_SHRINK
+                font = parent.font
                 type = SimpleTypeWidget(this, node.type) { it.asString() }
                 type.addKeyEvent(SWT.BS, precondition = { it.isEmpty() }) {
-                    Commands.execute(object : Command {
-                        override val target = dec
-                        override val kind = CommandKind.ADD
-                        override val element = node
-
-                        val index = parameters.indexOf(element)
-
-                        override fun run() {
-                            parameters.remove(element)
-                        }
-
-                        override fun undo() {
-                            parameters.add(index, element)
-                        }
-                    })
+                    parameters.removeCommand(this@MethodWidget.node, node) // TODO BUG Index -1 out of bounds for length 1
                 }
-                type.addFocusLostAction {
-                    if(type.isValidAndDifferent(node.typeAsString))
-                        Commands.execute(object : Command {
-                            override val target = node
-                            override val kind: CommandKind = CommandKind.MODIFY
-                            override val element: Type = node.type
-
-                            override fun run() {
-                                node.type = StaticJavaParser.parseType(type.text)
-                            }
-
-                            override fun undo() {
-                                node.type = element
-                            }
-                        })
-                    else
-                        type.set(node.typeAsString)
+                type.addFocusLostAction(::isValidType) {
+                    node.modifyCommand(node.typeAsString, it, node::setType)
                 }
 
                 name = SimpleNameWidget(this, node.name) { it.asString() }
                 name.addKeyEvent(',') {
-                    Commands.execute(object : Command {
-                        override val target = dec
-                        override val kind = CommandKind.ADD
-                        override val element: Parameter
-                            get() = Parameter(StaticJavaParser.parseType("type"), SimpleName("parameter"))
-
-                        override fun run() {
-                            parameters.add(index + 1, element)
-                        }
-
-                        override fun undo() {
-                            parameters.remove(element)
-                        }
-                    })
+                    parameters.addCommand(this@MethodWidget.node, Parameter(StaticJavaParser.parseType("type"), SimpleName("parameter")))
+                }
+                name.addKeyEvent(SWT.BS, precondition = { it.isEmpty() }) {
+                    parameters.removeCommand(this@MethodWidget.node, node)
                 }
                 if(bodyModel != null)
                     name.addKeyEvent(SWT.CR, precondition= {this@ParamListWidget.children.last() === this}) {
                         this@MethodWidget.body!!.insertBeginning()
                     }
-                name.addFocusLostAction {
-                    if (name.isValidAndDifferent(node.nameAsString))
-                        Commands.execute(object : ModifyCommand<SimpleName>(node, node.name) {
-                            override fun run() {
-                                node.name = SimpleName(name.text)
-                            }
-
-                            override fun undo() {
-                                node.name = element
-                            }
-                        })
-                    else {
-                        name.set(node.name.id)
-                    }
+                name.addFocusLostAction(::isValidSimpleName) {
+                    node.modifyCommand(node.name, SimpleName(name.text), node::setName)
                 }
 
                 node.observeProperty<Type>(ObservableProperty.TYPE) {

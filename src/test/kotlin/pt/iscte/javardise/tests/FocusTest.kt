@@ -26,7 +26,7 @@ class FocusTest : SWTTest(TEST_SPEED) {
     """
         val model = StaticJavaParser.parse(code)
         val w = ClassWidget(shell, model.types[0] as ClassOrInterfaceDeclaration)
-        w.addMemberFocusObserver { member, node ->
+        w.addFocusObserver { member, node ->
             println("${member!!::class.java.simpleName} $node")
         }
         w.setFocus()

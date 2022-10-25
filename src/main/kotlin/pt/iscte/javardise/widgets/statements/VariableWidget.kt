@@ -82,26 +82,11 @@ class VariableWidget(
         }
     }
 
-    //fun VariableDeclarator.setInit(e: Expression): VariableDeclarator = setInitializer(e)
-
     private fun Composite.createExpWidget(
         variable: VariableDeclarator,
         expression: Expression
-    ) =
-        createExpressionWidget(this, expression) {
-           // node.modifyCommand(variable.initializer, it, variable::setInit)
-            Commands.execute(object : ModifyCommand<Expression>(
-                variable,
-                if(variable.initializer.isPresent) variable.initializer.get() else null
-            ) {
-                override fun run() {
-                    variable.setInitializer(it)
-                }
-
-                override fun undo() {
-                    variable.setInitializer(element)
-                }
-            })
+    ) = createExpressionWidget(this, expression) {
+           variable.modifyCommand(variable.initializer.getOrNull, it, variable::setInitializer)
         }
 
     override fun setFocus(): Boolean {

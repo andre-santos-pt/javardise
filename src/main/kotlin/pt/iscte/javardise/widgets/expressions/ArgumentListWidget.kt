@@ -44,6 +44,7 @@ class ArgumentListWidget(
 
     init {
         layout = ROW_LAYOUT_H_SHRINK
+        font = parent.font
         openBracket = FixedToken(this, open)
         closeBracket = TokenWidget(this, close)
 
@@ -223,13 +224,13 @@ class ArgumentListWidget(
         insert.moveAboveInternal(closeBracket.widget)
 
         insert.addFocusLostAction {
-            if (tryParseExpression(insert.text)) {
+            if (tryParse<Expression>(insert.text)) {
                 doAddArgummentCommand(StaticJavaParser.parseExpression(insert.text))
                 insert.delete()
             } else
                 insert.clear()
         }
-        insert.addKeyEvent(',', precondition = { tryParseExpression(it) }) {
+        insert.addKeyEvent(',', precondition = { tryParse<Expression>(it) }) {
             val insertExp =
                 StaticJavaParser.parseExpression<Expression>(insert.text)
             insert.delete()

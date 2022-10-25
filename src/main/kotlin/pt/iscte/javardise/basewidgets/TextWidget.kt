@@ -7,6 +7,7 @@ import pt.iscte.javardise.*
 import pt.iscte.javardise.widgets.members.MemberWidget
 import pt.iscte.javardise.widgets.statements.StatementWidget
 
+// TODO remove deps from javardise
 interface TextWidget {
     val widget: Text
 
@@ -39,10 +40,9 @@ interface TextWidget {
 
 
     fun delete() {
-        //removeKeyListeners()
-        //removeFocusOutListeners()
         widget.dispose()
     }
+
     fun setAtLeft() = widget.setSelection(0, 0)
     fun setAtRight() = widget.setSelection(widget.text.length)
     fun setFocus() = widget.setFocus()
@@ -66,7 +66,10 @@ interface TextWidget {
     ): KeyListener {
         val l = object : KeyAdapter() {
             override fun keyPressed(e: KeyEvent) {
-                if (!widget.isDisposed && precondition(widget.text) && chars.contains(e.character)) {
+                if (!widget.isDisposed && precondition(widget.text) && chars.contains(
+                        e.character
+                    )
+                ) {
                     action(e)
                     e.doit = false
                 }
@@ -89,14 +92,16 @@ interface TextWidget {
         return listener
     }
 
-    fun addFocusLostAction(isValid: (String) -> Boolean, action: () -> Unit): FocusListener {
+    fun addFocusLostAction(
+        isValid: (String) -> Boolean,
+        action: (String) -> Unit
+    ): FocusListener {
         val listener = object : FocusAdapter() {
             override fun focusLost(e: FocusEvent?) {
-                if(isValid(widget.text)) {
-                    action()
+                if (isValid(widget.text)) {
+                    action(widget.text)
                     widget.background = BACKGROUND_COLOR()
-                }
-                else
+                } else
                     widget.background = ERROR_COLOR()
             }
         }
@@ -105,7 +110,9 @@ interface TextWidget {
     }
 
     fun addDeleteEmptyListener(action: () -> Unit) =
-        addKeyEvent(SWT.BS, precondition = { widget.text.isEmpty() && widget.caretPosition == 0 }) {
+        addKeyEvent(
+            SWT.BS,
+            precondition = { widget.text.isEmpty() && widget.caretPosition == 0 }) {
             action()
         }
 
@@ -127,7 +134,7 @@ interface TextWidget {
     }
 
     companion object {
-        @JvmStatic
+
         fun createText(
             parent: Composite,
             text: String,
@@ -137,10 +144,9 @@ interface TextWidget {
             t.background = parent.background
             t.foreground = parent.foreground
             t.text = text
-            t.font = CODE_FONT()
+            t.font = CODE_FONT
             t.cursor = Display.getCurrent().getSystemCursor(SWT.CURSOR_HAND)
-
-            t.menu = Menu(t)
+            t.menu = Menu(t) // to disable system menu
 
             accept?.let {
                 t.addVerifyListener {
@@ -153,15 +159,13 @@ interface TextWidget {
                     e.doit = true
             }
             t.addFocusListener(FOCUS_SELECTALL)
-            //t.addMouseTrackListener(MOUSE_FOCUS)
             t.addModifyListener(MODIFY_PACK)
             t.addKeyListener(LISTENER_ARROW_KEYS)  // TODO BUGS
+            //t.addMouseTrackListener(MOUSE_FOCUS)
 
             return t
         }
 
-
-        @JvmStatic
         fun create(
             parent: Composite,
             text: String = "",
@@ -211,11 +215,7 @@ interface TextWidget {
             }
         }
 
-        private val MODIFY_PACK =
-            ModifyListener { e -> //			((Control) e.widget).setLayoutData(new RowData(SWT.DEFAULT, SWT.DEFAULT));
-                (e.widget as Control).pack()
-                (e.widget as Control).requestLayout()
-            }
+
 
         inline fun <reified T> Control.findAncestorOfType(): T? {
             var w: Control? = this.parent
@@ -244,7 +244,8 @@ interface TextWidget {
                         text.traverse(SWT.TRAVERSE_TAB_PREVIOUS)
                         e.doit = false
                     } else if (e.keyCode == SWT.ARROW_UP || e.keyCode == SWT.ARROW_DOWN) {
-                        val sw = text.findAncestorOfType<StatementWidget<*>>() ?: text.findAncestorOfType<MemberWidget<*>>()
+                        val sw = text.findAncestorOfType<StatementWidget<*>>()
+                            ?: text.findAncestorOfType<MemberWidget<*>>()
 
                         if (sw != null) {
                             val index = sw.parent.children.indexOf(sw)
@@ -253,27 +254,27 @@ interface TextWidget {
                                     sw.focusLast()
                                 else if (index > 0) {
                                     val prev = sw.parent.children[index - 1]
-                                    if(prev is SequenceContainer)
+                                    if (prev is SequenceContainer)
                                         prev.focusLast()
                                     else
                                         prev.setFocus()
-                                }
-                                else {
-                                    val levelUp = sw.findAncestorOfType<SequenceContainer>()
+                                } else {
+                                    val levelUp =
+                                        sw.findAncestorOfType<SequenceContainer>()
                                     levelUp?.setFocus()
                                 }
 
                             } else {
                                 if (sw is SequenceContainer && text != sw.closingBracket.widget) {
-                                    if(sw.body?.isEmpty() == true)
+                                    if (sw.body?.isEmpty() == true)
                                         sw.closingBracket.setFocus()
                                     else
                                         sw.body?.setFocus()
-                                }
-                                else if (index + 1 < sw.parent.children.size)
+                                } else if (index + 1 < sw.parent.children.size)
                                     sw.parent.children[index + 1].setFocus()
                                 else {
-                                    val levelUp = sw.findAncestorOfType<SequenceContainer>()
+                                    val levelUp =
+                                        sw.findAncestorOfType<SequenceContainer>()
                                     levelUp?.closingBracket?.setFocus()
                                 }
                             }
@@ -284,28 +285,33 @@ interface TextWidget {
             }
         }
 
+        private val MODIFY_PACK =
+            ModifyListener { e ->
+                (e.widget as Control).pack()
+                (e.widget as Control).requestLayout()
+            }
+
         private val FOCUS_SELECTALL: FocusListener = object : FocusAdapter() {
             override fun focusGained(e: FocusEvent) {
                 (e.widget as Text).selectAll()
             }
         }
 
-        private val MOUSE_FOCUS: MouseTrackListener = object : MouseTrackAdapter() {
-            override fun mouseEnter(e: MouseEvent) {
-                if (Configuration.focusFollowsMouse) {
+        private val MOUSE_FOCUS: MouseTrackListener =
+            object : MouseTrackAdapter() {
+                override fun mouseEnter(e: MouseEvent) {
                     val c = e.widget as Control
-                    c.foreground = Display.getDefault().getSystemColor(SWT.COLOR_YELLOW)
+                    c.foreground =
+                        Display.getDefault().getSystemColor(SWT.COLOR_YELLOW)
                     c.requestLayout()
                 }
-            }
 
-            override fun mouseExit(e: MouseEvent) {
-                val c = e.widget as Control
-                if (Configuration.focusFollowsMouse) {
-                    c.foreground = Display.getDefault().getSystemColor(SWT.COLOR_WHITE)
+                override fun mouseExit(e: MouseEvent) {
+                    val c = e.widget as Control
+                    c.foreground =
+                        Display.getDefault().getSystemColor(SWT.COLOR_WHITE)
                     c.requestLayout()
                 }
             }
-        }
     }
 }

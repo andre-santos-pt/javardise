@@ -13,6 +13,10 @@ import pt.iscte.javardise.external.unaryOperators
 abstract class ExpressionWidget<T : Expression>(parent: Composite)
     : Composite(parent, SWT.NONE), NodeWidget<T> {
 
+    init {
+        font = parent.font
+    }
+
     abstract val editEvent: (Expression?) -> Unit
     abstract val tail: TextWidget
     override fun toString(): String {

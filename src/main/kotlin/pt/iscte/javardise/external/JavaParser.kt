@@ -22,6 +22,7 @@ import com.github.javaparser.ast.visitor.VoidVisitorAdapter
 import pt.iscte.javardise.Command
 import pt.iscte.javardise.CommandKind
 import java.io.File
+import java.util.*
 
 val IfStmt.thenBlock: BlockStmt get() = thenStmt as BlockStmt
 val IfStmt.elseBlock: BlockStmt get() = elseStmt.get() as BlockStmt
@@ -157,6 +158,8 @@ abstract class ListAddRemoveObserver<T : Node> : AstObserverAdapter() {
     abstract fun elementReplace(list: NodeList<T>, index: Int, old: T, new: T)
 }
 
+val <T> Optional<T>.getOrNull: T? get() = if(isPresent) get() else null
+
 abstract class PropertyObserver<T>(val prop: ObservableProperty) : AstObserverAdapter() {
     override fun propertyChange(observedNode: Node?, property: ObservableProperty, oldValue: Any?, newValue: Any?) {
         if (property == prop)
@@ -177,63 +180,7 @@ fun <T> Observable.observeProperty(prop: ObservableProperty, event: (T?) -> Unit
 }
 
 
-class AddMemberCommand(val member: BodyDeclaration<*>, val type: ClassOrInterfaceDeclaration, val index: Int) :
-    Command {
-    override val kind: CommandKind = CommandKind.ADD
-    override val target = type
-    override val element = member
 
-    override fun run() {
-        type.members.add(index, member)
-    }
-
-    override fun undo() {
-        type.members.remove(member)
-    }
-}
-
-class AddStatementCommand(val stmt: Statement, val block: BlockStmt, val index: Int) : Command {
-    override val kind: CommandKind = CommandKind.ADD
-    override val target = block
-    override val element = stmt
-
-    override fun run() {
-        block.addStatement(index, stmt)
-    }
-
-    override fun undo() {
-        block.remove(stmt)
-    }
-}
-
-class RemoveStatementCommand(val stmt: Statement, val block: BlockStmt) : Command {
-    override val kind: CommandKind = CommandKind.REMOVE
-    override val target = block
-    override val element = stmt
-
-    val index = block.statements.indexOf(stmt)
-
-    override fun run() {
-        block.statements.remove(stmt)
-    }
-
-    override fun undo() {
-        block.statements.add(index, element.clone())
-    }
-}
-
-class AddElseBlock(override val target: IfStmt) : Command {
-    override val kind = CommandKind.ADD
-    override val element: Statement = BlockStmt()
-
-    override fun run() {
-        target.setElseStmt(element)
-    }
-
-    override fun undo() {
-        target.setElseStmt(null)
-    }
-}
 
 
 fun <T : Node> NodeList<T>.indexOfIdentity(e: T): Int {
@@ -268,13 +215,7 @@ fun isValidClassType(type: String): Boolean =
         false
     }
 
-fun tryParseExpression(exp: String): Boolean =
-    try {
-        StaticJavaParser.parseExpression<Expression>(exp)
-        true
-    } catch (_: ParseProblemException) {
-        false
-    }
+
 
 fun isValidSimpleName(name: String): Boolean =
     try {

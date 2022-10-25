@@ -131,7 +131,8 @@ fun Composite.separator(): Label {
 
 fun Composite.row(content: Composite.() -> Unit): Composite {
     val c = Composite(this, SWT.NONE)
-    c.layout = ROW_LAYOUT_H_ZERO
+    c.layout = ROW_LAYOUT_H_SHRINK
+    c.font = this.font
     c.background = this.background
     c.foreground = this.foreground
     content(c)
@@ -144,6 +145,7 @@ fun Composite.column(
 ): Composite {
     val c = Composite(this, SWT.NONE)
     c.layout = if (margin) ROW_LAYOUT_V_SPACED else ROW_LAYOUT_V_ZERO
+    c.font = this.font
     c.background = this.background
     c.foreground = this.foreground
     content(c)

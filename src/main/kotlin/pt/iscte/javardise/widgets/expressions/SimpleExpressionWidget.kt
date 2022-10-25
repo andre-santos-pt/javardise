@@ -58,7 +58,7 @@ class SimpleExpressionWidget(
                     else {
                         val unop = unaryOperators.filter { it.isPrefix }
                             .find { it.asString().startsWith(e.character) }
-                        if (unop != null && tryParseExpression(expression.text)) {
+                        if (unop != null && tryParse<Expression>(expression.text)) {
                             node = UnaryExpr(
                                 StaticJavaParser.parseExpression(expression.text),
                                 unop
@@ -72,7 +72,7 @@ class SimpleExpressionWidget(
                         it.asString().startsWith(e.character)
                     }
                     if (biop != null && expression.isAtEnd &&
-                        tryParseExpression(expression.text)
+                        tryParse<Expression>(expression.text)
                     ) {
                         node =
                             BinaryExpr(
@@ -139,7 +139,7 @@ class SimpleExpressionWidget(
         }
 
         expression.addFocusLostAction {
-            if (tryParseExpression(expression.text)) {
+            if (tryParse<Expression>(expression.text)) {
                 val newExp =
                     StaticJavaParser.parseExpression<Expression>(expression.text)
                 if (!newExp.equals(node)) {
@@ -165,7 +165,7 @@ class SimpleExpressionWidget(
     }
 
     override fun dispose() {
-        expression.widget.removeKeyListener(keyListener)
+        expression.widget.removeKeyListener(keyListener) // TODO BUG Widget is disposed
         super.dispose()
     }
 }

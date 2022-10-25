@@ -11,7 +11,7 @@ class FixedToken(parent: Composite, token: String) {
 
     val label = Label(parent, SWT.NONE)
     init {
-        label.font = CODE_FONT()
+        label.font = parent.font
         label.text = token
         label.background = parent.background
         label.foreground = parent.foreground

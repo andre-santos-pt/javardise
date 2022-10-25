@@ -13,10 +13,7 @@ import org.eclipse.swt.SWT
 import org.eclipse.swt.layout.FillLayout
 import org.eclipse.swt.layout.RowLayout
 import org.eclipse.swt.widgets.Composite
-import pt.iscte.javardise.AbstractCommand
-import pt.iscte.javardise.CommandKind
-import pt.iscte.javardise.Commands
-import pt.iscte.javardise.Factory
+import pt.iscte.javardise.*
 import pt.iscte.javardise.basewidgets.FixedToken
 import pt.iscte.javardise.basewidgets.SequenceContainer
 import pt.iscte.javardise.basewidgets.SequenceWidget
@@ -105,15 +102,7 @@ class IfWidget(
 
     private fun Composite.createExpWidget(condition: Expression) =
         createExpressionWidget(this, condition) {
-            Commands.execute(object : AbstractCommand<Expression>(node, CommandKind.MODIFY, condition) {
-                override fun run() {
-                    node.condition = it
-                }
-
-                override fun undo() {
-                    node.condition = element
-                }
-            })
+            node.modifyCommand(node.condition, it, node::setCondition)
         }
 
     private fun setThenBracketsVisibility(bodySize: Int, open: TokenWidget, close: TokenWidget) {
@@ -127,20 +116,13 @@ class IfWidget(
         var closeBracketElse: TokenWidget? = null
 
         init {
-            layout = FillLayout()
+            layout = ROW_LAYOUT_H_SHRINK
+            font = parent.font
             column {
                 row {
                     val keyword = Factory.newKeywordWidget(this, "else")
                     keyword.addKeyEvent(SWT.BS) {
-                        Commands.execute(object : AbstractCommand<Statement>(node, CommandKind.REMOVE, elseStatement) {
-                            override fun run() {
-                                node.removeElseStmt()
-                            }
-
-                            override fun undo() {
-                                node.setElseStmt(elseStatement.clone())
-                            }
-                        })
+                        node.modifyCommand(node.elseStmt.getOrNull, null, node::setElseStmt)
                     }
                     openBracketElse = TokenWidget(this, "{")
                 }

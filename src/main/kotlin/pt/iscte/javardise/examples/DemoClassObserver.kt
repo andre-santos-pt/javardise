@@ -67,7 +67,7 @@ public class Student {
             fillGridHorizontal()
         }
         var dec : ICodeDecoration<*>? = null
-        classWidget.addMemberFocusObserver { node, widget ->
+        classWidget.addFocusObserver { node, widget ->
             nodeClass.text = if(node == null) "" else node::class.simpleName
             widgetClass.text = if(widget == null) "" else widget::class.simpleName
            // detailWidget.text = widget?.getNodeOnFocus()?.toString() ?: ""

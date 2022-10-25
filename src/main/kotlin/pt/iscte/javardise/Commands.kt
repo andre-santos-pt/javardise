@@ -2,10 +2,8 @@ package pt.iscte.javardise
 
 import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.NodeList
-import com.github.javaparser.ast.expr.AssignExpr
 import com.github.javaparser.ast.stmt.BlockStmt
 import com.github.javaparser.ast.stmt.Statement
-import pt.iscte.javardise.external.AddStatementCommand
 import pt.iscte.javardise.external.indexOfIdentity
 import kotlin.reflect.KFunction1
 
@@ -72,12 +70,15 @@ fun <E: Any> Node.modifyCommand(old: E?, new: E?, setOperation: KFunction1<E?, N
             }
 
             override fun undo() {
-                setOperation(old)
+                if(old is Node)
+                    setOperation(old.clone() as E)
+                else
+                    setOperation(old)
             }
         })
 }
 
-fun <N: Node> NodeList<N>.addCommand(owner: Node, e: N, index: Int = size) {
+fun <N: Node> NodeList<in N>.addCommand(owner: Node, e: N, index: Int = size) {
     Commands.execute(object : Command {
         override val target = owner
         override val kind: CommandKind = CommandKind.ADD
@@ -93,7 +94,23 @@ fun <N: Node> NodeList<N>.addCommand(owner: Node, e: N, index: Int = size) {
     })
 }
 
-fun <N: Node> NodeList<N>.removeCommand(owner: Node, e: N) {
+fun <N: Node> NodeList<in N>.changeCommand(owner: Node, e: N, index: Int = size) {
+    Commands.execute(object : Command {
+        override val target = owner
+        override val kind: CommandKind = CommandKind.MODIFY
+        override val element: Node = e
+
+        override fun run() {
+            set(index, e)
+        }
+
+        override fun undo() {
+            set(index, element.clone() as N)
+        }
+    })
+}
+
+fun <N: Node> NodeList<in N>.removeCommand(owner: Node, e: N) {
         Commands.execute(object : Command {
             override val target = owner
             override val kind: CommandKind = CommandKind.REMOVE
@@ -106,26 +123,10 @@ fun <N: Node> NodeList<N>.removeCommand(owner: Node, e: N) {
             }
 
             override fun undo() {
-                add(i, element)
+                add(i, element.clone() as N)
             }
         })
 }
-
-
-
-
-abstract class AbstractCommand<E : Node>(
-    override val target: Node,
-    override val kind: CommandKind,
-    override val element: E
-) : Command
-
-abstract class AddCommand<E : Node>(target: Node, element: E) :
-    AbstractCommand<E>(target, CommandKind.ADD, element)
-
-abstract class ModifyCommand<E : Node>(target: Node, previous: E?) :
-    AbstractCommand<E>(target, CommandKind.MODIFY, previous?.clone() as E)
-
 
 
 
@@ -143,6 +144,19 @@ object Clipboard {
 //    }
 
     fun paste(block: BlockStmt, index: Int) {
+        class AddStatementCommand(val stmt: Statement, val block: BlockStmt, val index: Int) : Command {
+            override val kind: CommandKind = CommandKind.ADD
+            override val target = block
+            override val element = stmt
+
+            override fun run() {
+                block.addStatement(index, stmt)
+            }
+
+            override fun undo() {
+                block.remove(stmt)
+            }
+        }
         Commands.execute(AddStatementCommand(onCopy!!.first.clone() as Statement, block, index))
     }
 }

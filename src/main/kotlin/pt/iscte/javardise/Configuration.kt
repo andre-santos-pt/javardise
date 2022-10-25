@@ -16,12 +16,13 @@ val COMMENT_COLOR = { Display.getDefault().getSystemColor(SWT.COLOR_GREEN) }
 
 val KEYWORD_COLOR = { Display.getDefault().getSystemColor(SWT.COLOR_MAGENTA) }
 
-val CODE_FONT = {  Font(Display.getDefault(), "Menlo", 16, SWT.NORMAL) }
+val CODE_FONT by lazy {  Font(Display.getDefault(), Configuration.fontFace, Configuration.fontSize, SWT.NORMAL) }
 
 object Configuration {
     const val tabLength = 4
-    const val focusFollowsMouse = false
     const val NOPARSE = "\$NOPARSE"
+    const val fontSize = 18
+    const val fontFace = "Menlo"
 }
 
 fun updateColor(textWidget: TextWidget) {

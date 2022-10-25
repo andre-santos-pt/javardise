@@ -60,15 +60,7 @@ class WhileWidget(
 
     private fun Composite.createExpWidget(condition: Expression) =
         createExpressionWidget(this, condition) {
-            Commands.execute(object : AbstractCommand<Expression>(node, CommandKind.MODIFY, condition) {
-                override fun run() {
-                    node.condition = it
-                }
-
-                override fun undo() {
-                    node.condition = element
-                }
-            })
+            node.modifyCommand(node.condition, it, node::setCondition)
         }
 
     override fun setFocus(): Boolean = keyword.setFocus()

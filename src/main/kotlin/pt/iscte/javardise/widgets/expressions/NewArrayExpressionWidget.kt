@@ -91,12 +91,14 @@ class NewArrayExpressionWidget(
                     val close = TokenWidget(this@NewArrayExpressionWidget, "]")
                     close.addDeleteListener {
                         if(node.levels.size > 1)
-                            node.levels.removeCommand(node, n)
+                            node.levels.removeCommand(node, n)  // TODO BUG Index -1 out of bounds for length 3
                     }
                     val level = LevelWidget(open, exp, close)
                     if(index != node.levels.size)
                         level.moveAbove(levelWidgets[index].open.label)
                     levelWidgets.add(index, level)
+                    level.expression.requestLayout()
+                    level.expression.setFocus()
                 }
 
                 override fun elementRemove(
@@ -106,6 +108,8 @@ class NewArrayExpressionWidget(
                 ) {
                     levelWidgets[index].dispose()
                     levelWidgets.removeAt(index)
+                    setFocus()
+                    requestLayout()
                 }
 
                 override fun elementReplace(
@@ -132,17 +136,18 @@ class NewArrayExpressionWidget(
         expression: Expression
     ): ExpressionWidget<*> {
         val w = createExpressionWidget(this, expression) {
+            node.levels.changeCommand(node, ArrayCreationLevel(it), index )
             //node.modifyCommand(node.levels[index], ArrayCreationLevel(it), node.levels::set)
-            Commands.execute(object :
-                ModifyCommand<ArrayCreationLevel>(node, node.levels[index]) {
-                override fun run() {
-                    node.levels[index] = ArrayCreationLevel(it)
-                }
-
-                override fun undo() {
-                    node.levels[index] = element
-                }
-            })
+//            Commands.execute(object :
+//                ModifyCommand<ArrayCreationLevel>(node, node.levels[index]) {
+//                override fun run() {
+//                    node.levels[index] = ArrayCreationLevel(it)
+//                }
+//
+//                override fun undo() {
+//                    node.levels[index] = element
+//                }
+//            })
         }
         return w
     }

@@ -12,6 +12,8 @@ import com.github.javaparser.ast.expr.ArrayAccessExpr
 import com.github.javaparser.ast.expr.DoubleLiteralExpr
 import com.github.javaparser.ast.expr.NameExpr
 import com.github.javaparser.ast.expr.SimpleName
+import com.github.javaparser.ast.observer.AstObserver
+import com.github.javaparser.ast.observer.Observable
 import com.github.javaparser.ast.observer.ObservableProperty
 import com.github.javaparser.printer.DefaultPrettyPrinter
 import com.github.javaparser.printer.DefaultPrettyPrinterVisitor
@@ -273,6 +275,17 @@ interface NodeWidget<T> {
     val node: T
 
     fun setFocusOnCreation(firstFlag: Boolean = false)
+
+    fun <T : Node> observeProperty(prop: ObservableProperty, event: (T?) -> Unit): AstObserver {
+        val obs = object : PropertyObserver<T>(prop) {
+            override fun modified(oldValue: T?, newValue: T?) {
+                event(newValue)
+            }
+        }
+        (node as Node).register(obs)
+        return obs
+    }
+
 }
 
 

@@ -3,7 +3,6 @@ package pt.iscte.javardise.basewidgets
 import org.eclipse.swt.SWT
 import org.eclipse.swt.events.*
 import org.eclipse.swt.widgets.Composite
-import org.eclipse.swt.widgets.Display
 import org.eclipse.swt.widgets.Menu
 import org.eclipse.swt.widgets.MenuItem
 import org.eclipse.swt.widgets.Text

@@ -4,12 +4,11 @@ import org.eclipse.swt.SWT
 import org.eclipse.swt.layout.GridLayout
 import org.eclipse.swt.widgets.Composite
 import org.eclipse.swt.widgets.Control
-import pt.iscte.javardise.Configuration
 
 open class SequenceWidget(
-        parent: Composite,
-        tabs: Int,
-        val insertWidgetCreator: (SequenceWidget, Boolean) -> TextWidget
+    parent: Composite,
+    tabLength: Int,
+    val insertWidgetCreator: (SequenceWidget, Boolean) -> TextWidget
 ) : Composite(parent, SWT.NONE) {
 
     var insertWidget: Control? = null
@@ -17,8 +16,9 @@ open class SequenceWidget(
     init {
         background = parent.background
         foreground = parent.foreground
+        font = parent.font
         val layout = GridLayout(1, true)
-        layout.marginLeft = tabs * Configuration.tabLength * 5
+        layout.marginLeft = tabLength * 5
         layout.marginTop = 0
         layout.marginBottom = 0
         layout.verticalSpacing = 0
@@ -85,18 +85,20 @@ open class SequenceWidget(
 
     fun isFirst(c: Control) = children.first() === c
 
-    fun focusFirst() = if(children.isNotEmpty()) children.first().setFocus() else {}
+    fun focusFirst() = if(children.isNotEmpty()) children.first().setFocus() else { parent.setFocus() }
 
-    fun focusLast() = if(children.isNotEmpty())  children.last().setFocus() else {}
+    fun focusLast() = if(children.isNotEmpty())  children.last().setFocus() else { parent.setFocus()}
+
+    fun focusAt(index: Int) = if(index <= 0)
+        focusFirst()
+    else if(index >= children.size)
+        focusLast()
+    else
+        children[index].setFocus()
 
     fun clear() {
         children.forEach { if(it != insertWidget) it.dispose() }
     }
 
     fun isEmpty(): Boolean = children.isEmpty()
-
-    //override fun setReadOnly(readonly: Boolean) {
-        //super.setReadOnly(readonly)
-        //insertWidget.visible = false
-    //}
 }

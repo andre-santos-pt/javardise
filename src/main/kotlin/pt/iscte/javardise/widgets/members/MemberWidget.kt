@@ -14,6 +14,7 @@ import org.eclipse.swt.widgets.Display
 import pt.iscte.javardise.*
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
+import pt.iscte.javardise.external.ROW_LAYOUT_H_SHRINK
 import pt.iscte.javardise.external.column
 import pt.iscte.javardise.external.row
 
@@ -28,12 +29,15 @@ abstract class MemberWidget<T : NodeWithModifiers<*>>(
     val column: Composite
     lateinit var firstRow: Composite
 
+    abstract val name: TextWidget
+
     private val filterModifiers = {
         validModifiers.filter { !node.modifiers.map { it.keyword  }.contains(it) }.map { it.asString() }
     }
 
     init {
-        layout = RowLayout()
+        layout = ROW_LAYOUT_H_SHRINK
+        font = CODE_FONT
 
         column = column {
             firstRow = row {

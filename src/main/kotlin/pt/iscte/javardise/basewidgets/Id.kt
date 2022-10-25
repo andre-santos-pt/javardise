@@ -66,7 +66,7 @@ open class Id(parent: Composite, id: String, allowedChars: Regex,
 
     open fun isValid() = true
 
-    fun isValidAndDifferent(previous: String) = isValid() && text != previous
+   // fun isValidAndDifferent(previous: String) = isValid() && text != previous
 
     override val widget: Text get() = textWidget
 

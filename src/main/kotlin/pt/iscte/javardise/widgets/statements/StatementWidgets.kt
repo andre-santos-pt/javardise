@@ -28,6 +28,7 @@ abstract class StatementWidget<T : Statement>(
     abstract val block: BlockStmt
 
     init {
+        font = parent.font
         if (node.comment.isPresent) CommentWidget(parent, node)
     }
 
@@ -89,7 +90,6 @@ fun addWidget(
     is WhileStmt -> WhileWidget(parent, stmt, block)
     is ExpressionStmt -> when (stmt.expression) {
         is VariableDeclarationExpr -> VariableWidget(parent, stmt, block)
-        //is AssignExpr -> AssignWidget(parent, stmt, block)
         else -> ExpressionStatementWidget(parent, stmt, block)
     }
     else -> throw UnsupportedOperationException("NA $stmt ${stmt::class}")
@@ -113,20 +113,26 @@ fun createInsert(seq: SequenceWidget, block: BlockStmt): TextWidget {
                 || c == SWT.BS
     }
 
+    fun insert(stmt: Statement) {
+        val insertIndex = seq.findIndexByModel(insert.widget)
+        insert.delete()
+        block.statements.addCommand(block.parentNode.get(), stmt, insertIndex)
+    }
+
     insert.addKeyEvent(
         SWT.SPACE,
         '(',
         precondition = { it.matches(Regex("if|while")) }) {
         val keyword = insert.text
-        val insertIndex = seq.findIndexByModel(insert.widget)
-        insert.delete()
         val stmt = if (keyword == "if") IfStmt(
             BooleanLiteralExpr(true),
             BlockStmt(),
             null
         )
-        else WhileStmt(BooleanLiteralExpr(true), BlockStmt())
-        Commands.execute(AddStatementCommand(stmt, block, insertIndex))
+        else
+            WhileStmt(BooleanLiteralExpr(true), BlockStmt())
+
+        insert(stmt)
     }
 
     insert.addKeyEvent(SWT.SPACE, '{', precondition = { it == "else" }) {
@@ -135,17 +141,16 @@ fun createInsert(seq: SequenceWidget, block: BlockStmt): TextWidget {
             val prev = seq.children[seqIndex - 1]
             if (prev is IfWidget && !prev.node.hasElseBranch()) {
                 insert.delete()
-                Commands.execute(AddElseBlock(prev.node))
+                prev.node.modifyCommand(null, BlockStmt(), prev.node::setElseStmt)
             }
         }
     }
+
     insert.addKeyEvent(SWT.SPACE, ';', precondition = { it == "return" }) {
-        val insertIndex = seq.findIndexByModel(insert.widget)
         val stmt =
             if (it.character == SWT.SPACE) ReturnStmt(NameExpr("expression"))
             else ReturnStmt()
-        insert.delete()
-        Commands.execute(AddStatementCommand(stmt, block, insertIndex))
+        insert(stmt)
     }
 
     insert.addKeyEvent('=', precondition = {
@@ -161,7 +166,6 @@ fun createInsert(seq: SequenceWidget, block: BlockStmt): TextWidget {
         val operator = assignOperators.find { it.asString().startsWith(target.last()) } ?: AssignExpr.Operator.ASSIGN
         if(operator != AssignExpr.Operator.ASSIGN)
             target = target.dropLast(1)
-        val insertIndex = seq.findIndexByModel(insert.widget)
         val stmt = ExpressionStmt(
             AssignExpr(
                 StaticJavaParser.parseExpression(target),
@@ -169,8 +173,7 @@ fun createInsert(seq: SequenceWidget, block: BlockStmt): TextWidget {
                 operator
             )
         )
-        insert.delete()
-        Commands.execute(AddStatementCommand(stmt, block, insertIndex))
+        insert(stmt)
     }
 
     insert.addKeyEvent(';', precondition = {
@@ -182,15 +185,13 @@ fun createInsert(seq: SequenceWidget, block: BlockStmt): TextWidget {
             it.split(Regex("\\s+"))[1]
         )
     }) {
-        val insertIndex = seq.findIndexByModel(insert.widget)
         val split = insert.text.split(Regex("\\s+"))
         val stmt = ExpressionStmt(
             VariableDeclarationExpr(
                 StaticJavaParser.parseType(split[0]), split[1]
             )
         )
-        insert.delete()
-        Commands.execute(AddStatementCommand(stmt, block, insertIndex))
+        insert(stmt)
     }
 
     insert.addKeyEvent('=', precondition = {
@@ -199,7 +200,6 @@ fun createInsert(seq: SequenceWidget, block: BlockStmt): TextWidget {
             parts[1]
         )
     }) {
-        val insertIndex = seq.findIndexByModel(insert.widget)
         val split = insert.text.split(Regex("\\s+"))
         val dec = VariableDeclarator(
             StaticJavaParser.parseType(split[0]),
@@ -207,8 +207,7 @@ fun createInsert(seq: SequenceWidget, block: BlockStmt): TextWidget {
             NameExpr("expression")
         )
         val stmt = ExpressionStmt(VariableDeclarationExpr(dec))
-        insert.delete()
-        Commands.execute(AddStatementCommand(stmt, block, insertIndex))
+        insert(stmt)
     }
 
     insert.addKeyEvent('(',
@@ -218,7 +217,6 @@ fun createInsert(seq: SequenceWidget, block: BlockStmt): TextWidget {
                         it
                     ))
         }) {
-        val insertIndex = seq.findIndexByModel(insert.widget)
         var e: Expression? = null
         try {
             e = StaticJavaParser.parseExpression(insert.text)
@@ -242,37 +240,34 @@ fun createInsert(seq: SequenceWidget, block: BlockStmt): TextWidget {
                     NodeList()
                 )
             )
-            insert.delete()
-            Commands.execute(AddStatementCommand(stmt, block, insertIndex))
+            insert(stmt)
         }
     }
 
     insert.addKeyEvent(
         ';',SWT.CR,
-        precondition = { insert.isAtEnd && tryParseExpression(it) }) {
-        val insertIndex = seq.findIndexByModel(insert.widget)
+        precondition = { insert.isAtEnd && tryParse<Expression>(it) }) {
         val stmt = ExpressionStmt(StaticJavaParser.parseExpression(insert.text))
-        insert.delete()
-        Commands.execute(AddStatementCommand(stmt, block, insertIndex))
+        insert(stmt)
     }
 
     insert.addFocusLostAction {
         insert.clear()
     }
 
-    insert.addKeyListenerInternal(object : KeyAdapter() {
-        override fun keyPressed(e: KeyEvent) {
-            if ((e.stateMask == SWT.MOD1) && (e.keyCode == 'v'.code)) {
-                Clipboard.paste(block, seq.findIndexByModel(insert.widget))
-            }
-        }
-    })
+//    insert.addKeyListenerInternal(object : KeyAdapter() {
+//        override fun keyPressed(e: KeyEvent) {
+//            if ((e.stateMask == SWT.MOD1) && (e.keyCode == 'v'.code)) {
+//                Clipboard.paste(block, seq.findIndexByModel(insert.widget))
+//            }
+//        }
+//    })
     return insert
 }
 
 
 fun createSequence(parent: Composite, block: BlockStmt): SequenceWidget {
-    val seq = SequenceWidget(parent, 1) { w, e ->
+    val seq = SequenceWidget(parent, Configuration.tabLength) { w, e ->
         createInsert(w, block)
     }
     populateSequence(seq, block)
