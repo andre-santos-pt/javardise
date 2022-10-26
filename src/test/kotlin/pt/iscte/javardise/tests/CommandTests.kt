@@ -6,42 +6,25 @@ import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration
 import com.github.javaparser.ast.body.MethodDeclaration
 import com.github.javaparser.ast.expr.SimpleName
 import com.github.javaparser.ast.type.VoidType
-import org.eclipse.swt.SWT
-import org.eclipse.swt.custom.SashForm
-import org.eclipse.swt.widgets.Shell
-import org.eclipse.swt.widgets.Text
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import pt.iscte.javardise.Commands
 import pt.iscte.javardise.addCommand
-import pt.iscte.javardise.external.scrollable
 import pt.iscte.javardise.modifyCommand
-import pt.iscte.javardise.widgets.members.ClassWidget
 
-class CommandTests : SWTTest(TEST_SPEED) {
-
-    lateinit var c: ClassOrInterfaceDeclaration
-    lateinit var code: Text
-
-    override fun addContent(shell: Shell) {
-        c = ClassOrInterfaceDeclaration(NodeList(), false, "Test")
-        val sash = SashForm(shell, SWT.HORIZONTAL)
-        val scrollable = sash.scrollable {
-            ClassWidget(it, c)
-        }
-
-        code = Text(sash, SWT.MULTI)
-    }
+class CommandTests : SWTTest(
+    ClassOrInterfaceDeclaration(NodeList(), false, "Test")
+) {
 
     @Test
     fun testAuto() {
         val actions: List<(Node)-> Node> = listOf(
-            { c.modifyCommand(c.name, SimpleName("AutoTest"), c::setName); c},
+            { classModel.modifyCommand(classModel.name, SimpleName("AutoTest"), classModel::setName); classModel},
             {
                 val m = MethodDeclaration(NodeList(), VoidType(),"method")
-                c.members.addCommand(c, m); m
+                classModel.members.addCommand(classModel, m); m
             },
-            { c.modifyCommand(c.name, SimpleName("AutoTest2"), c::setName); c},
+            { classModel.modifyCommand(classModel.name, SimpleName("AutoTest2"), classModel::setName); classModel},
 //            {
 //                (it as MethodDeclaration).name = SimpleName("fact"); it
 //            },
@@ -91,12 +74,11 @@ class CommandTests : SWTTest(TEST_SPEED) {
 //            }
         )
 
-        var prev:Node = c
+        var prev:Node = classModel
 
         actions.forEachIndexed { i, a ->
             step {
                 prev = a(prev)
-                code.text = c.toString()
                 assertEquals(i+1, Commands.stackSize)
             }
         }
@@ -104,9 +86,7 @@ class CommandTests : SWTTest(TEST_SPEED) {
         actions.forEachIndexed { i, _ ->
             step {
                 Commands.undo()
-                code.text = c.toString()
                 assertEquals(actions.size-(i+1), Commands.stackSize)
-                //println("undo $i")
             }
         }
 

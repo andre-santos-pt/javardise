@@ -26,7 +26,9 @@ import org.junit.jupiter.api.fail
 import pt.iscte.javardise.external.scrollable
 import pt.iscte.javardise.widgets.members.ClassWidget
 
-class ObserverTests : SWTTest(TEST_SPEED) {
+class ObserverTests : SWTTest(
+    ClassOrInterfaceDeclaration(NodeList(), false, "Test")
+) {
     val finalCode = """
         class AutoTest {
             static int fact(int n) {
@@ -40,22 +42,10 @@ class ObserverTests : SWTTest(TEST_SPEED) {
         }
     """
 
-    lateinit var clazz: ClassOrInterfaceDeclaration
-    lateinit var code: Text
-
-    override fun addContent(shell: Shell) {
-        clazz = ClassOrInterfaceDeclaration(NodeList(), false, "Test")
-        val sash = SashForm(shell, SWT.HORIZONTAL)
-        sash.scrollable {
-            ClassWidget(it, clazz)
-        }
-        code = Text(sash, SWT.MULTI)
-    }
-
     @Test
     fun writeFactorial() {
         val steps: List<(Node?)-> Node> = listOf(
-            { clazz.name = SimpleName("AutoTest"); clazz},
+            { classModel.name = SimpleName("AutoTest"); classModel},
             {
                 (it as ClassOrInterfaceDeclaration).addMethod("method")
             },
@@ -118,15 +108,14 @@ class ObserverTests : SWTTest(TEST_SPEED) {
                     prev = a(prev)
                 }
                 catch (e: Exception) {
-                    fail(clazz.toString())
+                    fail(classModel.toString())
                 }
-                code.text = clazz.toString()
             }
         }
 
         step {
             val parse = StaticJavaParser.parse(finalCode)
-            assertEquals(parse.types[0], clazz)
+            assertEquals(parse.types[0], classModel)
         }
         terminate()
     }

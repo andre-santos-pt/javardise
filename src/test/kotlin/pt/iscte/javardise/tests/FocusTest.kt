@@ -1,18 +1,12 @@
 package pt.iscte.javardise.tests
 
-import com.github.javaparser.StaticJavaParser
-import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration
-import org.eclipse.swt.widgets.Shell
 import org.junit.jupiter.api.Test
-import pt.iscte.javardise.widgets.members.ClassWidget
 import java.awt.Robot
 import java.awt.event.KeyEvent
 
 
-class FocusTest : SWTTest(TEST_SPEED) {
-
-    override fun addContent(shell: Shell) {
-        val code = """
+class FocusTest : SWTTest(
+        """
         class AutoTest {
             static int fact(int n) {
                 if(n == 1) {
@@ -24,12 +18,12 @@ class FocusTest : SWTTest(TEST_SPEED) {
             }
         }
     """
-        val model = StaticJavaParser.parse(code)
-        val w = ClassWidget(shell, model.types[0] as ClassOrInterfaceDeclaration)
-        w.addFocusObserver { member, node ->
+) {
+    init {
+        classWidget.addFocusObserver { member, node ->
             println("${member!!::class.java.simpleName} $node")
         }
-        w.setFocus()
+        classWidget.setFocus()
     }
 
     @Test
@@ -41,9 +35,12 @@ class FocusTest : SWTTest(TEST_SPEED) {
         for(i in 1..30)
            step {
                robot.keyPress(KeyEvent.VK_TAB)
-               //println(it::class.java)
            }
 
         terminate()
     }
+
+
+
+
 }
