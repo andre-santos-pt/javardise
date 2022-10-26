@@ -1,6 +1,7 @@
 package pt.iscte.javardise.basewidgets
 
-import org.w3c.dom.Text
+import pt.iscte.javardise.widgets.statements.IfWidget
+
 
 interface SequenceContainer {
     val body: SequenceWidget?
@@ -14,7 +15,10 @@ interface SequenceContainer {
         if(body?.children?.isNotEmpty() == true) {
             val last = body!!.children.last()
             if(last is SequenceContainer)
-                last.closingBracket.setFocus()
+                if(last is IfWidget && last.elseWidget != null)
+                    last.elseWidget?.closingBracket?.setFocus()
+                else
+                    last.closingBracket.setFocus()
             else
                 last.setFocus()
         }

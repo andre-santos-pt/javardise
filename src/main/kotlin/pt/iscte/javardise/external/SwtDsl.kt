@@ -286,7 +286,7 @@ fun <T : Composite> Composite.scrollable(create: (Composite) -> T): T {
 }
 
 
-fun Control.isChild(comp: Composite): Boolean =
+fun Control.isChildOf(comp: Composite): Boolean =
     if (this == comp)
         true
     else if (parent == null)
@@ -294,7 +294,7 @@ fun Control.isChild(comp: Composite): Boolean =
     else if (parent == comp)
         true
     else
-        parent.isChild(comp)
+        parent.isChildOf(comp)
 
 fun Control.moveAbove(widget: TextWidget) = moveAbove(widget.widget)
 

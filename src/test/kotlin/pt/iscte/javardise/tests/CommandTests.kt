@@ -4,27 +4,67 @@ import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.NodeList
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration
 import com.github.javaparser.ast.body.MethodDeclaration
+import com.github.javaparser.ast.expr.AssignExpr
+import com.github.javaparser.ast.expr.IntegerLiteralExpr
+import com.github.javaparser.ast.expr.NameExpr
 import com.github.javaparser.ast.expr.SimpleName
+import com.github.javaparser.ast.stmt.BlockStmt
+import com.github.javaparser.ast.stmt.ExpressionStmt
+import com.github.javaparser.ast.stmt.WhileStmt
 import com.github.javaparser.ast.type.VoidType
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import pt.iscte.javardise.Commands
 import pt.iscte.javardise.addCommand
 import pt.iscte.javardise.modifyCommand
+import pt.iscte.javardise.removeCommand
 
 class CommandTests : SWTTest(
     ClassOrInterfaceDeclaration(NodeList(), false, "Test")
 ) {
 
     @Test
-    fun testAuto() {
-        val actions: List<(Node)-> Node> = listOf(
-            { classModel.modifyCommand(classModel.name, SimpleName("AutoTest"), classModel::setName); classModel},
+    fun testSteps() {
+        val actions: List<(Node) -> Node> = listOf(
             {
-                val m = MethodDeclaration(NodeList(), VoidType(),"method")
+                classModel.modifyCommand(
+                    classModel.name,
+                    SimpleName("AutoTest"),
+                    classModel::setName
+                ); classModel
+            },
+            {
+                val m = MethodDeclaration(NodeList(), VoidType(), "method")
                 classModel.members.addCommand(classModel, m); m
             },
-            { classModel.modifyCommand(classModel.name, SimpleName("AutoTest2"), classModel::setName); classModel},
+            {
+                val block = BlockStmt()
+                val w = WhileStmt(NameExpr("expression"), block)
+                (it as MethodDeclaration).body.get().statements.addCommand(
+                    it,
+                    w
+                ); block
+            },
+            {
+                val ass = AssignExpr(
+                    NameExpr("i"),
+                    IntegerLiteralExpr("1"),
+                    AssignExpr.Operator.ASSIGN
+                )
+                (it as BlockStmt).statements.addCommand(
+                    it.parentNode.get(),
+                    ExpressionStmt(ass)
+                )
+                it
+            },
+            {
+                (it as BlockStmt).statements.removeCommand(
+                    it.parentNode.get(),
+                    it.statements[0]
+                )
+                it
+            }
+            //  { classModel.modifyCommand(classModel.name, SimpleName("AutoTest2"), classModel::setName); classModel},
 //            {
 //                (it as MethodDeclaration).name = SimpleName("fact"); it
 //            },
@@ -74,19 +114,19 @@ class CommandTests : SWTTest(
 //            }
         )
 
-        var prev:Node = classModel
+        var prev: Node = classModel
 
         actions.forEachIndexed { i, a ->
             step {
                 prev = a(prev)
-                assertEquals(i+1, Commands.stackSize)
+                assertEquals(i + 1, Commands.stackSize)
             }
         }
 
         actions.forEachIndexed { i, _ ->
             step {
                 Commands.undo()
-                assertEquals(actions.size-(i+1), Commands.stackSize)
+                assertEquals(actions.size - (i + 1), Commands.stackSize)
             }
         }
 

@@ -10,7 +10,6 @@ import com.github.javaparser.ast.stmt.BlockStmt
 import com.github.javaparser.ast.stmt.ExpressionStmt
 import com.github.javaparser.ast.type.Type
 import org.eclipse.swt.SWT
-import org.eclipse.swt.layout.RowLayout
 import org.eclipse.swt.widgets.Composite
 import org.eclipse.swt.widgets.Control
 import org.eclipse.swt.widgets.Display
@@ -18,6 +17,7 @@ import org.eclipse.swt.widgets.Event
 import pt.iscte.javardise.*
 import pt.iscte.javardise.basewidgets.*
 import pt.iscte.javardise.external.*
+import pt.iscte.javardise.widgets.statements.addInsert
 import pt.iscte.javardise.widgets.statements.createSequence
 
 class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: Int = SWT.NONE) :
@@ -42,7 +42,7 @@ class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: In
     }
 
     val focusListener = { event: Event ->
-        if ((event.widget as Control).isChild(this@MethodWidget)) {
+        if ((event.widget as Control).isChildOf(this@MethodWidget)) {
             val w = (event.widget as Control).findAncestor<NodeWidget<*>>()
             observers.forEach {
                 var n = w?.node as? Node
@@ -51,18 +51,6 @@ class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: In
                 it(n, event.widget.data)
             }
         }
-    }
-
-    fun getChildOnFocus() : Node? {
-        val onFocus = Display.getDefault().focusControl
-        return if(onFocus.isChild(this)) {
-            val w = onFocus.findAncestor<NodeWidget<*>>()
-            var n = w?.node as? Node
-            if (n is ExpressionStmt)
-                n = n.expression
-            n
-        }
-        else null
     }
 
     init {

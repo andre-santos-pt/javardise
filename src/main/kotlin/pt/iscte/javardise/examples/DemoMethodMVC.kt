@@ -1,7 +1,6 @@
 package pt.iscte.javardise.examples
 
 import com.github.javaparser.ast.body.MethodDeclaration
-import com.github.javaparser.ast.expr.MethodCallExpr
 import org.eclipse.swt.SWT
 import org.eclipse.swt.layout.FillLayout
 import org.eclipse.swt.widgets.Display
@@ -70,7 +69,7 @@ private fun createShell(display: Display, model: MethodDeclaration, readonly: Bo
             }
 
             button("on focus") {
-                val child = methodWidget.getChildOnFocus()
+                val child = methodWidget.getChildNodeOnFocus()
                 message {
                     column {
                         child?.let {

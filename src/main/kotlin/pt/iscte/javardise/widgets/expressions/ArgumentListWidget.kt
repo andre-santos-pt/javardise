@@ -150,24 +150,6 @@ class ArgumentListWidget(
             })
         }
 
-//        arg.tail.addKeyEvent(SWT.BS, precondition = {it.isEmpty()}) {
-//            Commands.execute(object : Command {
-//                override val target = owner
-//                override val kind = CommandKind.REMOVE
-//                override val element = exp
-//
-//                var i : Int = -1
-//                override fun run() {
-//                    i = expressionList.indexOfIdentity(arg.node)
-//                    expressionList.removeAt(i)
-//                }
-//
-//                override fun undo() {
-//                    expressionList.add(i, element)
-//                }
-//            })
-//        }
-
         if (argumentWidgets.isEmpty()) {
             arg.moveBelow(openBracket.label)
             argumentWidgets.add(index, ArgWidget(null, arg))

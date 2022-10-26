@@ -51,11 +51,13 @@ fun createExpressionWidget(
             tail.apply {
                 addKeyListenerInternal(object : KeyAdapter() {
                     override fun keyPressed(e: KeyEvent) {
+                        if(widget.isDisposed)
+                            return
+
                         if(e.character == SWT.CR) {
                             tail.widget.traverse(SWT.TRAVERSE_TAB_NEXT)
                         }
                         else {
-                            // TODO BUG widget is disposed
                             if (isAtBeginning) {
                                 val op = unaryOperators.filter { it.isPrefix }
                                     .find {

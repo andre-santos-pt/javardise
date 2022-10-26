@@ -20,7 +20,7 @@ import pt.iscte.javardise.basewidgets.TokenWidget
 import pt.iscte.javardise.external.*
 import pt.iscte.javardise.widgets.expressions.ExpressionWidget
 import pt.iscte.javardise.widgets.expressions.createExpressionWidget
-import pt.iscte.javardise.widgets.members.addInsert
+import pt.iscte.javardise.widgets.statements.addInsert
 
 // TODO delete initializer
 // to expression?
@@ -90,7 +90,7 @@ class VariableWidget(
         }
 
     override fun setFocus(): Boolean {
-        return name.setFocus()
+        return type.setFocus()
     }
 
     override fun setFocusOnCreation(firstFlag: Boolean) {

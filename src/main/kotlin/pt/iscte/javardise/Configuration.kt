@@ -16,18 +16,31 @@ val COMMENT_COLOR = { Display.getDefault().getSystemColor(SWT.COLOR_GREEN) }
 
 val KEYWORD_COLOR = { Display.getDefault().getSystemColor(SWT.COLOR_MAGENTA) }
 
-val CODE_FONT by lazy {  Font(Display.getDefault(), Configuration.fontFace, Configuration.fontSize, SWT.NORMAL) }
+val NUMBER_COLOR by lazy { Display.getDefault().getSystemColor(SWT.COLOR_CYAN) }
+
+
 
 object Configuration {
     const val tabLength = 4
     const val NOPARSE = "\$NOPARSE"
+
     const val fontSize = 18
     const val fontFace = "Menlo"
+
+    val CODE_FONT by lazy {  Font(Display.getDefault(), fontFace, fontSize, SWT.NORMAL) }
 }
 
 fun updateColor(textWidget: TextWidget) {
     if (SourceVersion.isKeyword(textWidget.text))
         textWidget.widget.foreground = KEYWORD_COLOR()
+
+    else if(isNumeric(textWidget.text))
+        textWidget.widget.foreground = NUMBER_COLOR
     else
         textWidget.widget.foreground = FOREGROUND_COLOR()
+}
+
+fun isNumeric(toCheck: String): Boolean {
+    val regex = "-?\\d+(\\.\\d+)?".toRegex()
+    return toCheck.matches(regex)
 }

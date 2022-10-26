@@ -66,7 +66,8 @@ class AssignExpressionWidget(
         createExpressionWidget(this, target) {
             if(it == null)
                 editEvent(null)
-            else node.modifyCommand(node.target, it, node::setTarget)
+            else
+                node.modifyCommand(node.target, it, node::setTarget)
         }
 
     private fun Composite.createValueWidget(expression: Expression) =

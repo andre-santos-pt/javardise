@@ -8,7 +8,7 @@ import pt.iscte.javardise.external.ROW_LAYOUT_H_SHRINK
 import pt.iscte.javardise.removeCommand
 import pt.iscte.javardise.widgets.expressions.ExpressionWidget
 import pt.iscte.javardise.widgets.expressions.createExpressionWidget
-import pt.iscte.javardise.widgets.members.addInsert
+import pt.iscte.javardise.widgets.statements.addInsert
 
 class ExpressionStatementWidget(
     parent: SequenceWidget,

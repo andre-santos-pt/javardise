@@ -5,9 +5,10 @@ import org.junit.platform.suite.api.Suite
 
 @Suite
 @SelectClasses(
+    MethodSignatureTest::class,
     CommandTests::class,
     FocusTest::class,
     ObserverTests::class)
 class TestSuite
 
-const val TEST_SPEED = 200
+const val TEST_SPEED = 500

@@ -19,6 +19,7 @@ import org.eclipse.swt.widgets.Event
 import pt.iscte.javardise.*
 import pt.iscte.javardise.basewidgets.*
 import pt.iscte.javardise.external.*
+import pt.iscte.javardise.widgets.statements.addInsert
 import pt.iscte.javardise.widgets.statements.find
 import pt.iscte.javardise.widgets.statements.findByModelIndex
 import pt.iscte.javardise.widgets.statements.findIndexByModel
@@ -55,7 +56,7 @@ class ClassWidget(parent: Composite, type: ClassOrInterfaceDeclaration) :
 
     private val focusListenerGlobal = { event: Event ->
         val control = event.widget as Control
-        if (control.isChild(this@ClassWidget)) {
+        if (control.isChildOf(this@ClassWidget)) {
             val memberWidget = control.findNode<BodyDeclaration<*>>()
             val nodeWidget = control.findNode<Node>()
             observers.forEach {
@@ -92,7 +93,6 @@ class ClassWidget(parent: Composite, type: ClassOrInterfaceDeclaration) :
 
     init {
         layout = ROW_LAYOUT_H_SHRINK
-        font = CODE_FONT
         keyword = Factory.newKeywordWidget(firstRow, "class",
             alternatives = { TypeTypes.values().map { it.name.lowercase() } }) {
             Commands.execute(object : Command {
@@ -310,17 +310,3 @@ class ClassWidget(parent: Composite, type: ClassOrInterfaceDeclaration) :
     }
 }
 
-internal fun TokenWidget.addInsert(
-    member: Control?,
-    body: SequenceWidget,
-    after: Boolean
-) {
-    addKeyEvent(SWT.CR) {
-        if (member == null)
-            body.insertBeginning()
-        else if (after)
-            body.insertLineAfter(member)
-        else
-            body.insertLineAt(member)
-    }
-}

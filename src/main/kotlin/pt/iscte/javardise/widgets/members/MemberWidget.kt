@@ -7,15 +7,17 @@ import com.github.javaparser.ast.body.BodyDeclaration
 import com.github.javaparser.ast.nodeTypes.NodeWithModifiers
 import com.github.javaparser.ast.observer.AstObserver
 import com.github.javaparser.ast.observer.AstObserverAdapter
+import com.github.javaparser.ast.stmt.ExpressionStmt
 import org.eclipse.swt.SWT
-import org.eclipse.swt.layout.RowLayout
 import org.eclipse.swt.widgets.Composite
 import org.eclipse.swt.widgets.Display
+import org.eclipse.swt.widgets.Text
 import pt.iscte.javardise.*
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
 import pt.iscte.javardise.external.ROW_LAYOUT_H_SHRINK
 import pt.iscte.javardise.external.column
+import pt.iscte.javardise.external.isChildOf
 import pt.iscte.javardise.external.row
 
 abstract class MemberWidget<T : NodeWithModifiers<*>>(
@@ -32,13 +34,14 @@ abstract class MemberWidget<T : NodeWithModifiers<*>>(
     abstract val name: TextWidget
 
     private val filterModifiers = {
-        validModifiers.filter { !node.modifiers.map { it.keyword  }.contains(it) }.map { it.asString() }
+        validModifiers.filter {
+            !node.modifiers.map { it.keyword }.contains(it)
+        }.map { it.asString() }
     }
 
     init {
         layout = ROW_LAYOUT_H_SHRINK
-        font = CODE_FONT
-
+        font = Configuration.CODE_FONT
         column = column {
             firstRow = row {
                 node.modifiers.forEach {
@@ -76,7 +79,8 @@ abstract class MemberWidget<T : NodeWithModifiers<*>>(
                             modifiers.add(token)
                             token.setFocus()
                         } else {
-                            val index = modifiers.indexOfFirst { it.text == mod.keyword.asString() }
+                            val index =
+                                modifiers.indexOfFirst { it.text == mod.keyword.asString() }
                             if (index != -1) {
                                 modifiers[index].dispose()
                                 modifiers.removeAt(index)
@@ -93,12 +97,20 @@ abstract class MemberWidget<T : NodeWithModifiers<*>>(
         }
     }
 
-    private fun createModifierToken(parent: Composite, modifier: Modifier): TokenWidget {
-        val mod = Factory.newKeywordWidget(parent, modifier.keyword.asString(), filterModifiers) { token ->
+    private fun createModifierToken(
+        parent: Composite,
+        modifier: Modifier
+    ): TokenWidget {
+        val mod = Factory.newKeywordWidget(
+            parent,
+            modifier.keyword.asString(),
+            filterModifiers
+        ) { token ->
             Commands.execute(object : Command {
                 override val target: Node = node as Node
                 override val kind: CommandKind = CommandKind.MODIFY
-                override val element = Modifier(Modifier.Keyword.valueOf(token.uppercase()))
+                override val element =
+                    Modifier(Modifier.Keyword.valueOf(token.uppercase()))
                 val index = node.modifiers.indexOf(modifier)
                 override fun run() {
                     node.modifiers[index] = element
@@ -143,7 +155,8 @@ abstract class MemberWidget<T : NodeWithModifiers<*>>(
                 override val kind = CommandKind.REMOVE
                 override val element = modifier
 
-                val index = node.modifiers.indexOfFirst { it.keyword.asString() == modifierString }
+                val index =
+                    node.modifiers.indexOfFirst { it.keyword.asString() == modifierString }
 
                 override fun run() {
                     node.modifiers.removeAt(index)
@@ -163,7 +176,10 @@ abstract class MemberWidget<T : NodeWithModifiers<*>>(
                 override val kind = CommandKind.ADD
                 override val element = Modifier(Modifier.Keyword.PUBLIC)
 
-                val index = if (atModifier == null) 0 else node.modifiers.indexOf(atModifier)
+                val index =
+                    if (atModifier == null) 0 else node.modifiers.indexOf(
+                        atModifier
+                    )
 
                 override fun run() {
                     node.modifiers.add(index, element)
@@ -176,16 +192,22 @@ abstract class MemberWidget<T : NodeWithModifiers<*>>(
         }
     }
 
-    fun getNodeOnFocus(): Node? {
-        val control = Display.getDefault().focusControl
-        var w = control.parent
-        while (w != null && w !is NodeWidget<*>)
-            w = w.parent
+    fun getChildNodeOnFocus(): Node? {
+        val onFocus = Display.getDefault().focusControl
+        return if (onFocus.isChildOf(this)) {
+            val w = onFocus.findAncestor<NodeWidget<*>>()
+            var n = w?.node as? Node
+            if (n is ExpressionStmt)
+                n = n.expression
+            n
+        } else null
+    }
 
-        if (w is NodeWidget<*>)
-            return w.node as Node
-        else
-            return null
+    fun getChildOnFocus(): Text? {
+        val onFocus = Display.getDefault().focusControl
+        return if (onFocus is Text && onFocus.isChildOf(this))
+            onFocus
+        else null
     }
 }
 

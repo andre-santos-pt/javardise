@@ -1,6 +1,5 @@
 package pt.iscte.javardise.tests
 
-import com.github.javaparser.StaticJavaParser
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration
 import org.eclipse.swt.SWT
 import org.eclipse.swt.custom.SashForm
@@ -11,6 +10,7 @@ import org.eclipse.swt.widgets.Shell
 import org.eclipse.swt.widgets.Text
 import org.junit.jupiter.api.AfterEach
 import pt.iscte.javardise.external.findMainClass
+import pt.iscte.javardise.external.loadCompilationUnit
 import pt.iscte.javardise.external.scrollable
 import pt.iscte.javardise.widgets.members.ClassWidget
 
@@ -21,10 +21,11 @@ abstract class SWTTest(val classModel: ClassOrInterfaceDeclaration, val speed: I
     private val code: Text
     internal val classWidget: ClassWidget
     constructor(src: String, speed: Int = TEST_SPEED)
-            : this(StaticJavaParser.parse(src).findMainClass()!!, speed)
+            : this(loadCompilationUnit(src).findMainClass()!!, speed)
 
     init {
         shell.layout = FillLayout()
+        shell.text = this::class.simpleName
         val sash = SashForm(shell, SWT.HORIZONTAL)
         classWidget = sash.scrollable {
             ClassWidget(it, classModel)

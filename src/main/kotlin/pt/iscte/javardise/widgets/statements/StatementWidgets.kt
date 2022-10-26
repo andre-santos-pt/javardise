@@ -5,6 +5,7 @@ import com.github.javaparser.StaticJavaParser
 import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.NodeList
 import com.github.javaparser.ast.body.VariableDeclarator
+import com.github.javaparser.ast.comments.LineComment
 import com.github.javaparser.ast.expr.*
 import com.github.javaparser.ast.stmt.*
 import org.eclipse.swt.SWT
@@ -28,6 +29,7 @@ abstract class StatementWidget<T : Statement>(
     abstract val block: BlockStmt
 
     init {
+        layout = ROW_LAYOUT_H_SHRINK
         font = parent.font
         if (node.comment.isPresent) CommentWidget(parent, node)
     }
@@ -88,6 +90,7 @@ fun addWidget(
     is ReturnStmt -> ReturnWidget(parent, stmt, block)
     is IfStmt -> IfWidget(parent, stmt, block)
     is WhileStmt -> WhileWidget(parent, stmt, block)
+    is EmptyStmt -> EmptyStatement(parent, stmt, block)
     is ExpressionStmt -> when (stmt.expression) {
         is VariableDeclarationExpr -> VariableWidget(parent, stmt, block)
         else -> ExpressionStatementWidget(parent, stmt, block)
@@ -112,6 +115,12 @@ fun createInsert(seq: SequenceWidget, block: BlockStmt): TextWidget {
                 || c == SWT.SPACE && !s.endsWith(SWT.SPACE)
                 || c == SWT.BS
     }
+
+//    val insert = EmptyStatement(seq, EmptyStmt(), block) { c, s ->
+//                c.toString().matches(Regex("\\w|\\[|]|\\.|\\+|-|\\*|/|%"))
+//                || c == SWT.SPACE && !s.endsWith(SWT.SPACE)
+//                || c == SWT.BS
+//    }
 
     fun insert(stmt: Statement) {
         val insertIndex = seq.findIndexByModel(insert.widget)
@@ -150,6 +159,12 @@ fun createInsert(seq: SequenceWidget, block: BlockStmt): TextWidget {
         val stmt =
             if (it.character == SWT.SPACE) ReturnStmt(NameExpr("expression"))
             else ReturnStmt()
+        insert(stmt)
+    }
+
+    insert.addKeyEvent(SWT.SPACE, ';', precondition = { it.isEmpty() }) {
+        val stmt = EmptyStmt()
+        stmt.setComment(LineComment("NOP"))
         insert(stmt)
     }
 
@@ -231,8 +246,6 @@ fun createInsert(seq: SequenceWidget, block: BlockStmt): TextWidget {
                     NodeList()
                 )
             )
-//            else if(e is ArrayAccessExpr)
-//                ExpressionStmt(MethodCallExpr(e, e.name, NodeList()))
             else ExpressionStmt(
                 MethodCallExpr(
                     (e as FieldAccessExpr).scope,
@@ -356,4 +369,40 @@ fun createDeleteEvent(node: Statement, block: BlockStmt) =
         })
     }
 
+
+internal fun TokenWidget.addInsert(
+    member: Control?,
+    body: SequenceWidget,
+    after: Boolean
+) {
+    fun TextWidget.addInsert(
+        member: Control?,
+        body: SequenceWidget,
+        after: Boolean
+    ) {
+        addKeyEvent(SWT.CR) {
+            val w = if (member == null)
+                body.insertBeginning()
+            else if (after)
+                body.insertLineAfter(member)
+            else
+                body.insertLineAt(member)
+            w.addInsert(w.widget, body, true)
+        }
+    }
+
+    addKeyEvent(SWT.CR) {
+        val w = if (member == null) {
+            body.insertBeginning()
+        }
+        else if (after) {
+            body.insertLineAfter(member)
+        }
+        else
+            body.insertLineAt(member)
+        w.addInsert(w.widget, body, true)
+    }
+
+
+}
 

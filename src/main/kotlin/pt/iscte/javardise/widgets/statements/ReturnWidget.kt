@@ -14,7 +14,7 @@ import pt.iscte.javardise.external.observeProperty
 import pt.iscte.javardise.modifyCommand
 import pt.iscte.javardise.widgets.expressions.ExpressionWidget
 import pt.iscte.javardise.widgets.expressions.createExpressionWidget
-import pt.iscte.javardise.widgets.members.addInsert
+import pt.iscte.javardise.widgets.statements.addInsert
 
 // TODO remove expression part
 // TODO adapt to throw?
@@ -30,7 +30,6 @@ class ReturnWidget(
 
 
     init {
-        layout = ROW_LAYOUT_H_SHRINK
         keyword = Factory.newKeywordWidget(this, "return")
         keyword.addKeyEvent(
             SWT.SPACE,

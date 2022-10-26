@@ -14,14 +14,11 @@ import org.eclipse.swt.layout.FillLayout
 import org.eclipse.swt.layout.RowLayout
 import org.eclipse.swt.widgets.Composite
 import pt.iscte.javardise.*
-import pt.iscte.javardise.basewidgets.FixedToken
-import pt.iscte.javardise.basewidgets.SequenceContainer
-import pt.iscte.javardise.basewidgets.SequenceWidget
-import pt.iscte.javardise.basewidgets.TokenWidget
+import pt.iscte.javardise.basewidgets.*
 import pt.iscte.javardise.external.*
 import pt.iscte.javardise.widgets.expressions.ExpressionWidget
 import pt.iscte.javardise.widgets.expressions.createExpressionWidget
-import pt.iscte.javardise.widgets.members.addInsert
+import pt.iscte.javardise.widgets.statements.addInsert
 
 class IfWidget(
     parent: SequenceWidget,
@@ -37,13 +34,12 @@ class IfWidget(
     override lateinit var body: SequenceWidget
 
     var elseWidget: ElseWidget? = null
-    var elseBody: SequenceWidget? = null
+
     lateinit var openClause: FixedToken
     lateinit var openThenBracket: TokenWidget
     override val closingBracket: TokenWidget
 
     init {
-        layout = RowLayout()
         column = column {
             firstRow = row {
                 keyword = Factory.newKeywordWidget(this, "if")
@@ -102,7 +98,10 @@ class IfWidget(
 
     private fun Composite.createExpWidget(condition: Expression) =
         createExpressionWidget(this, condition) {
-            node.modifyCommand(node.condition, it, node::setCondition)
+            if(it == null)
+                block.statements.removeCommand(block.parentNode.get(), node)
+            else
+                node.modifyCommand(node.condition, it, node::setCondition)
         }
 
     private fun setThenBracketsVisibility(bodySize: Int, open: TokenWidget, close: TokenWidget) {
@@ -111,16 +110,24 @@ class IfWidget(
         close.widget.visible = visible
     }
 
-    inner class ElseWidget(parent: Composite, elseStatement: Statement) : Composite(parent, SWT.NONE) {
-        var openBracketElse: TokenWidget? = null
-        var closeBracketElse: TokenWidget? = null
+    override fun setFocus(): Boolean = keyword.setFocus()
+
+    override fun setFocusOnCreation(firstFlag: Boolean) {
+        condition.setFocus()
+    }
+
+    inner class ElseWidget(parent: Composite, elseStatement: Statement) : Composite(parent, SWT.NONE), SequenceContainer {
+        lateinit var openBracketElse: TokenWidget
+        lateinit var elseBody: SequenceWidget
+        lateinit var closeBracketElse: TokenWidget
+        lateinit var keyword: TokenWidget
 
         init {
             layout = ROW_LAYOUT_H_SHRINK
             font = parent.font
             column {
                 row {
-                    val keyword = Factory.newKeywordWidget(this, "else")
+                    keyword = Factory.newKeywordWidget(this, "else")
                     keyword.addKeyEvent(SWT.BS) {
                         node.modifyCommand(node.elseStmt.getOrNull, null, node::setElseStmt)
                     }
@@ -128,19 +135,19 @@ class IfWidget(
                 }
                 elseBody = createSequence(this, elseStatement as BlockStmt)
                 closeBracketElse = TokenWidget(this, "}")
-                closeBracketElse?.addInsert(this@IfWidget, this@IfWidget.parent as SequenceWidget, true)
+                closeBracketElse.addInsert(this@IfWidget, this@IfWidget.parent as SequenceWidget, true)
             }
-            openBracketElse?.addInsert(null, elseBody!!, false)
+            openBracketElse.addInsert(null, elseBody, false)
         }
 
         fun focusOpenBracket() {
-            openBracketElse?.setFocus()
+            openBracketElse.setFocus()
         }
-    }
 
-    override fun setFocus(): Boolean = keyword.setFocus()
+        override val body: SequenceWidget
+            get() = elseBody
 
-    override fun setFocusOnCreation(firstFlag: Boolean) {
-        condition.setFocus()
+        override val closingBracket: TextWidget
+            get() = closeBracketElse
     }
 }

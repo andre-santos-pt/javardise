@@ -12,7 +12,7 @@ import pt.iscte.javardise.basewidgets.*
 import pt.iscte.javardise.external.*
 import pt.iscte.javardise.widgets.expressions.ExpressionWidget
 import pt.iscte.javardise.widgets.expressions.createExpressionWidget
-import pt.iscte.javardise.widgets.members.addInsert
+import pt.iscte.javardise.widgets.statements.addInsert
 
 class WhileWidget(
     parent: SequenceWidget,
@@ -30,7 +30,6 @@ class WhileWidget(
     lateinit var openBracket: TokenWidget
     override lateinit var closingBracket: TokenWidget
     init {
-        layout = RowLayout()
         val col = column {
             firstRow = row {
                 keyword = Factory.newKeywordWidget(this, "while")
@@ -60,7 +59,10 @@ class WhileWidget(
 
     private fun Composite.createExpWidget(condition: Expression) =
         createExpressionWidget(this, condition) {
-            node.modifyCommand(node.condition, it, node::setCondition)
+            if(it == null)
+                block.statements.removeCommand(block.parentNode.get(), node)
+            else
+                node.modifyCommand(node.condition, it, node::setCondition)
         }
 
     override fun setFocus(): Boolean = keyword.setFocus()
