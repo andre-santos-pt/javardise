@@ -127,36 +127,3 @@ fun <N: Node> NodeList<in N>.removeCommand(owner: Node, e: N) {
             }
         })
 }
-
-
-
-object Clipboard {
-    var onCopy: Pair<Node, (Node, Node, Int?) -> Unit>? = null
-    // var cut: Boolean = false
-
-    fun copy(node: Node, copy: (Node, Node, Int?) -> Unit) {
-        onCopy = Pair(node, copy)
-    }
-
-//    fun cut(node: Node, copy: (Node,Node, Int?) -> Unit) {
-//        copy(node, copy)
-//        cut = true
-//    }
-
-    fun paste(block: BlockStmt, index: Int) {
-        class AddStatementCommand(val stmt: Statement, val block: BlockStmt, val index: Int) : Command {
-            override val kind: CommandKind = CommandKind.ADD
-            override val target = block
-            override val element = stmt
-
-            override fun run() {
-                block.addStatement(index, stmt)
-            }
-
-            override fun undo() {
-                block.remove(stmt)
-            }
-        }
-        Commands.execute(AddStatementCommand(onCopy!!.first.clone() as Statement, block, index))
-    }
-}

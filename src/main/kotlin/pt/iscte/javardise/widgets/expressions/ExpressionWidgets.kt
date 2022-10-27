@@ -45,6 +45,7 @@ fun createExpressionWidget(
         is ObjectCreationExpr -> NewObjectExpressionWidget(parent, expression, editEvent)
         is EnclosedExpr -> BracketsExpressionWidget(parent, expression, editEvent)
         is AssignExpr -> AssignExpressionWidget(parent, expression, editEvent)
+            is VariableDeclarationExpr -> VariableDeclarationWidget(parent, expression, editEvent)
         else -> SimpleExpressionWidget(parent, expression, editEvent)
     }.apply {
         if (this !is SimpleExpressionWidget) {

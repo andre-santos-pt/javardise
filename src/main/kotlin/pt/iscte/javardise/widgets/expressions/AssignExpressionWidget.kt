@@ -1,15 +1,20 @@
 package pt.iscte.javardise.widgets.expressions
 
-import com.github.javaparser.ast.expr.AssignExpr
-import com.github.javaparser.ast.expr.Expression
-import com.github.javaparser.ast.expr.NameExpr
+import com.github.javaparser.StaticJavaParser
+import com.github.javaparser.ast.expr.*
 import com.github.javaparser.ast.observer.ObservableProperty
+import com.github.javaparser.ast.stmt.ExpressionStmt
+import com.github.javaparser.ast.stmt.Statement
 import org.eclipse.swt.widgets.Composite
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
 import pt.iscte.javardise.external.ROW_LAYOUT_H_SHRINK
+import pt.iscte.javardise.external.assignOperators
 import pt.iscte.javardise.external.observeProperty
+import pt.iscte.javardise.external.tryParse
 import pt.iscte.javardise.modifyCommand
+import pt.iscte.javardise.widgets.statements.ExpressionStatementWidget
+import pt.iscte.javardise.widgets.statements.StatementFeature
 
 class AssignExpressionWidget(
     parent: Composite,
@@ -38,9 +43,6 @@ class AssignExpressionWidget(
         }
 
         value = createValueWidget(node.value)
-
-//        if (this.parent is SequenceWidget)
-//            TokenWidget(this, ";").addInsert(this@AssignWidget, this@AssignWidget.parent as SequenceWidget, true)
 
         node.observeProperty<Expression>(ObservableProperty.TARGET) {
             target.dispose()
@@ -84,4 +86,39 @@ class AssignExpressionWidget(
 
     override val tail: TextWidget
         get() = value.tail
+}
+
+
+class AssignmentFeature : StatementFeature<ExpressionStmt, ExpressionStatementWidget>(ExpressionStmt::class.java, ExpressionStatementWidget::class.java) {
+    override fun configureInsert(
+        insert: TextWidget,
+        output: (Statement) -> Unit
+    ) {
+        insert.addKeyEvent('=', precondition = {
+            var target = it.trim()
+            if (target.isNotEmpty() && assignOperators.any {
+                    it.asString().startsWith(target.last())
+                }) {
+                target = target.dropLast(1)
+            }
+            tryParse<NameExpr>(target) || tryParse<ArrayAccessExpr>(target) || tryParse<FieldAccessExpr>(
+                target
+            )
+        }) {
+            var target = insert.text.trim()
+            val operator =
+                assignOperators.find { it.asString().startsWith(target.last()) }
+                    ?: AssignExpr.Operator.ASSIGN
+            if (operator != AssignExpr.Operator.ASSIGN)
+                target = target.dropLast(1)
+            val stmt = ExpressionStmt(
+                AssignExpr(
+                    StaticJavaParser.parseExpression(target),
+                    NameExpr("expression"),
+                    operator
+                )
+            )
+            output(stmt)
+        }
+    }
 }

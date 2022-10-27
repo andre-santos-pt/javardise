@@ -3,6 +3,7 @@ package pt.iscte.javardise.widgets.statements
 import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.NodeList
 import com.github.javaparser.ast.expr.Expression
+import com.github.javaparser.ast.expr.NameExpr
 import com.github.javaparser.ast.observer.AstObserver
 import com.github.javaparser.ast.observer.AstObserverAdapter
 import com.github.javaparser.ast.observer.ObservableProperty
@@ -10,15 +11,12 @@ import com.github.javaparser.ast.stmt.BlockStmt
 import com.github.javaparser.ast.stmt.IfStmt
 import com.github.javaparser.ast.stmt.Statement
 import org.eclipse.swt.SWT
-import org.eclipse.swt.layout.FillLayout
-import org.eclipse.swt.layout.RowLayout
 import org.eclipse.swt.widgets.Composite
 import pt.iscte.javardise.*
 import pt.iscte.javardise.basewidgets.*
 import pt.iscte.javardise.external.*
 import pt.iscte.javardise.widgets.expressions.ExpressionWidget
 import pt.iscte.javardise.widgets.expressions.createExpressionWidget
-import pt.iscte.javardise.widgets.statements.addInsert
 
 class IfWidget(
     parent: SequenceWidget,
@@ -43,8 +41,8 @@ class IfWidget(
         column = column {
             firstRow = row {
                 keyword = Factory.newKeywordWidget(this, "if")
-                keyword.setCopySource()
                 keyword.addDelete(node, block)
+                //keyword.setCopySource(node)
                 openClause = FixedToken(this, "(")
                 condition = this.createExpWidget(node.condition)
                 FixedToken(this, ")")
@@ -87,6 +85,7 @@ class IfWidget(
         node.observeProperty<Statement>(ObservableProperty.ELSE_STMT) {
             if (it == null) {
                 elseWidget?.dispose()
+                requestLayout()
                 keyword.setFocus()
             } else {
                 elseWidget = ElseWidget(column, it)
@@ -149,5 +148,35 @@ class IfWidget(
 
         override val closingBracket: TextWidget
             get() = closeBracketElse
+    }
+}
+
+class IfFeature : StatementFeature<IfStmt, IfWidget>(IfStmt::class.java, IfWidget::class.java) {
+    override fun configureInsert(
+        insert: TextWidget,
+        output: (Statement) -> Unit
+    ) {
+        insert.addKeyEvent(SWT.SPACE, '(', precondition = { it == "if" }) {
+            output(IfStmt(
+                NameExpr("condition"),
+                BlockStmt(),
+                null
+            ))
+        }
+        insert.addKeyEvent(SWT.SPACE, '{', precondition = { it == "else" }) {
+            val seq = insert.widget.parent
+            val seqIndex = seq.children.indexOf(insert.widget)
+            if (seqIndex > 0) {
+                val prev = seq.children[seqIndex - 1]
+                if (prev is IfWidget && !prev.node.hasElseBranch()) {
+                    insert.delete()
+                    prev.node.modifyCommand(
+                        null,
+                        BlockStmt(),
+                        prev.node::setElseStmt
+                    )
+                }
+            }
+        }
     }
 }

@@ -5,18 +5,17 @@ import com.github.javaparser.ast.expr.NameExpr
 import com.github.javaparser.ast.observer.ObservableProperty
 import com.github.javaparser.ast.stmt.BlockStmt
 import com.github.javaparser.ast.stmt.ReturnStmt
+import com.github.javaparser.ast.stmt.Statement
 import org.eclipse.swt.SWT
 import pt.iscte.javardise.Factory
 import pt.iscte.javardise.basewidgets.SequenceWidget
+import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
-import pt.iscte.javardise.external.ROW_LAYOUT_H_SHRINK
 import pt.iscte.javardise.external.observeProperty
 import pt.iscte.javardise.modifyCommand
 import pt.iscte.javardise.widgets.expressions.ExpressionWidget
 import pt.iscte.javardise.widgets.expressions.createExpressionWidget
-import pt.iscte.javardise.widgets.statements.addInsert
 
-// TODO remove expression part
 // TODO adapt to throw?
 class ReturnWidget(
     parent: SequenceWidget,
@@ -41,8 +40,8 @@ class ReturnWidget(
             )
         }
         keyword.addDelete(node, block)
-        keyword.setCopySource()
-        keyword.setMoveSource()
+       // keyword.setCopySource()
+        // keyword.setMoveSource()
 
         if (node.expression.isPresent) {
             expression = createExpressionWidget(this, node.expression.get()) {
@@ -88,5 +87,19 @@ class ReturnWidget(
             expression!!.setFocus()
         else
             semiColon.setFocus()
+    }
+}
+
+class ReturnFeature : StatementFeature<ReturnStmt, ReturnWidget>(ReturnStmt::class.java, ReturnWidget::class.java) {
+    override fun configureInsert(
+        insert: TextWidget,
+        output: (Statement) -> Unit
+    ) {
+        insert.addKeyEvent(SWT.SPACE, ';', precondition = { it == "return" }) {
+            output(
+                if (it.character == SWT.SPACE) ReturnStmt(NameExpr("expression"))
+                else ReturnStmt()
+            )
+        }
     }
 }

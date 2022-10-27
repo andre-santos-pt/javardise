@@ -29,6 +29,7 @@ class ArrowsUpDownTest : SWTTest(
 			return subArray(0, array.length / 2, array);
 		}
 		else {
+
 			return subArray(0, array.length / 2 - 1, array);
 		}
 	}
@@ -39,9 +40,6 @@ class ArrowsUpDownTest : SWTTest(
     val robot = Robot()
 
     init {
-        classWidget.addFocusObserver { member, node ->
-            println("${member!!::class.java.simpleName} $node")
-        }
         classWidget.setFocus()
     }
 
@@ -67,6 +65,9 @@ class ArrowsUpDownTest : SWTTest(
 
 
     @Test
+    fun dummy() {}
+
+    @Test
     fun focus() {
         listOf("class", "static", "int[]", "int", "while", "sub[i]", "i", "}", "return", "}").forEach {
             down(it)
@@ -78,15 +79,13 @@ class ArrowsUpDownTest : SWTTest(
         down("return")
         down("}")
 
-        listOf("static", "if", "return", "}", "else", "if", "return", "}", "else", "i", "return", "}").forEach {
+        listOf("static", "if", "return", "}", "else", "if", "return", "}", "else", "return", "}", "}", "}", "}").forEach {
             down(it)
         }
 
-        up("}")
-        up("}")
-        up("return")
-
-
+        listOf("class", "}", "}", "}", "}", "return", "else", "}", "if", "else", "}", "return", "if", "static").forEach{
+            up(it)
+        }
         terminate()
     }
 }

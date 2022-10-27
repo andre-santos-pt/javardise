@@ -4,15 +4,15 @@ import com.github.javaparser.ast.expr.Expression
 import com.github.javaparser.ast.expr.NameExpr
 import com.github.javaparser.ast.observer.ObservableProperty
 import com.github.javaparser.ast.stmt.BlockStmt
+import com.github.javaparser.ast.stmt.Statement
 import com.github.javaparser.ast.stmt.WhileStmt
-import org.eclipse.swt.layout.RowLayout
+import org.eclipse.swt.SWT
 import org.eclipse.swt.widgets.Composite
 import pt.iscte.javardise.*
 import pt.iscte.javardise.basewidgets.*
 import pt.iscte.javardise.external.*
 import pt.iscte.javardise.widgets.expressions.ExpressionWidget
 import pt.iscte.javardise.widgets.expressions.createExpressionWidget
-import pt.iscte.javardise.widgets.statements.addInsert
 
 class WhileWidget(
     parent: SequenceWidget,
@@ -33,7 +33,7 @@ class WhileWidget(
         val col = column {
             firstRow = row {
                 keyword = Factory.newKeywordWidget(this, "while")
-                keyword.setCopySource()
+                //keyword.setCopySource(node)
                 openClause = FixedToken(this, "(")
                 condition = createExpWidget(node.condition)
                 FixedToken(this, ")")
@@ -69,5 +69,16 @@ class WhileWidget(
 
     override fun setFocusOnCreation(firstFlag: Boolean) {
         condition.setFocus()
+    }
+}
+
+class WhileFeature : StatementFeature<WhileStmt, WhileWidget>(WhileStmt::class.java, WhileWidget::class.java) {
+    override fun configureInsert(
+        insert: TextWidget,
+        output: (Statement) -> Unit
+    ) {
+        insert.addKeyEvent(SWT.SPACE, '{', precondition = { it == "while"}) {
+            output( WhileStmt(NameExpr("condition"), BlockStmt()))
+        }
     }
 }
