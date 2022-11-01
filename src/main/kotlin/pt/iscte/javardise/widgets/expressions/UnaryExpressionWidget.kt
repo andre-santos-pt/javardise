@@ -1,7 +1,5 @@
 package pt.iscte.javardise.widgets.expressions
 
-import com.github.javaparser.ast.Node
-import com.github.javaparser.ast.expr.BinaryExpr
 import com.github.javaparser.ast.expr.Expression
 import com.github.javaparser.ast.expr.UnaryExpr
 import com.github.javaparser.ast.observer.AstObserver

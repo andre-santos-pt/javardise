@@ -8,16 +8,14 @@ import com.github.javaparser.ast.NodeList
 import com.github.javaparser.ast.body.*
 import com.github.javaparser.ast.expr.AssignExpr
 import com.github.javaparser.ast.expr.BinaryExpr
+import com.github.javaparser.ast.expr.BooleanLiteralExpr
 import com.github.javaparser.ast.expr.Expression
 import com.github.javaparser.ast.expr.UnaryExpr
 import com.github.javaparser.ast.observer.AstObserver
 import com.github.javaparser.ast.observer.AstObserverAdapter
 import com.github.javaparser.ast.observer.Observable
 import com.github.javaparser.ast.observer.ObservableProperty
-import com.github.javaparser.ast.stmt.BlockStmt
-import com.github.javaparser.ast.stmt.IfStmt
-import com.github.javaparser.ast.stmt.Statement
-import com.github.javaparser.ast.stmt.WhileStmt
+import com.github.javaparser.ast.stmt.*
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter
 import pt.iscte.javardise.Command
 import pt.iscte.javardise.CommandKind
@@ -52,11 +50,7 @@ private fun performTransformations(model: CompilationUnit) {
 
 fun substituteControlBlocks(node: Node) {
     node.accept(object : VoidVisitorAdapter<Any>() {
-        override fun visit(n: WhileStmt, arg: Any?) {
-            if (n.body !is BlockStmt)
-                n.body = if (n.body == null) BlockStmt() else BlockStmt(NodeList(n.body))
-            super.visit(n, arg)
-        }
+
 
         override fun visit(n: IfStmt, arg: Any?) {
             if (n.thenStmt !is BlockStmt)
@@ -68,7 +62,22 @@ fun substituteControlBlocks(node: Node) {
             super.visit(n, arg)
         }
 
-        // TODO DO, FOR, FOR EACH
+        override fun visit(n: WhileStmt, arg: Any?) {
+            if (n.body !is BlockStmt)
+                n.body = if (n.body == null) BlockStmt() else BlockStmt(NodeList(n.body))
+            super.visit(n, arg)
+        }
+
+        override fun visit(n: ForStmt, arg: Any?) {
+            if (n.body !is BlockStmt)
+                n.body = if (n.body == null) BlockStmt() else BlockStmt(NodeList(n.body))
+
+            if(!n.compare.isPresent)
+                n.setCompare(BooleanLiteralExpr(true))
+
+            super.visit(n, arg)
+        }
+        // TODO DO, FOR EACH
     }, null)
 }
 
@@ -106,9 +115,9 @@ fun CompilationUnit.findMainClass(): ClassOrInterfaceDeclaration? =
         ?: if (types[0] is ClassOrInterfaceDeclaration) types[0] as ClassOrInterfaceDeclaration else null
 
 interface ListObserver<T : Node> {
-    fun elementAdd(list: NodeList<T>, index: Int, node: T)
-    fun elementRemove(list: NodeList<T>, index: Int, node: T)
-    fun elementReplace(list: NodeList<T>, index: Int, old: T, new: T)
+    fun elementAdd(list: NodeList<T>, index: Int, node: T) {}
+    fun elementRemove(list: NodeList<T>, index: Int, node: T) {}
+    fun elementReplace(list: NodeList<T>, index: Int, old: T, new: T) {}
 }
 
 fun <T : Node> NodeList<T>.observeList(observer: ListObserver<T>) {

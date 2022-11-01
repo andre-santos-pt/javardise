@@ -17,12 +17,12 @@ import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
 import pt.iscte.javardise.external.*
 
-class ArgumentListWidget(
+class ArgumentListWidget<T : Expression>(
     parent: Composite,
     open: String,
     close: String,
     val owner: Node,
-    val expressionList: NodeList<Expression>
+    val expressionList: NodeList<T>
 ) :
     Composite(parent, SWT.NONE) {
     val openBracket: FixedToken
@@ -54,28 +54,28 @@ class ArgumentListWidget(
             createArgument(expression, index, false)
         }
 
-        expressionList.observeList(object : ListObserver<Expression> {
+        expressionList.observeList(object : ListObserver<T> {
             override fun elementAdd(
-                list: NodeList<Expression>,
+                list: NodeList<T>,
                 index: Int,
-                node: Expression
+                node: T
             ) {
                 createArgument(node, index, false).setFocus()
             }
 
             override fun elementReplace(
-                list: NodeList<Expression>,
+                list: NodeList<T>,
                 index: Int,
-                old: Expression,
-                new: Expression
+                old: T,
+                new: T
             ) {
                 createArgument(new, index, true)
             }
 
             override fun elementRemove(
-                list: NodeList<Expression>,
+                list: NodeList<T>,
                 index: Int,
-                node: Expression
+                node: T
             ) {
                 argumentWidgets[index].dispose()
                 argumentWidgets.removeAt(index)
@@ -94,7 +94,7 @@ class ArgumentListWidget(
 
 
 
-    private fun createArgument(exp: Expression, index: Int, replace: Boolean):
+    private fun createArgument(exp: T, index: Int, replace: Boolean):
             ExpressionWidget<*> {
         val arg = createExpressionWidget(this, exp) {
             if (it == null)
@@ -122,7 +122,7 @@ class ArgumentListWidget(
                     var i: Int = -1
                     override fun run() {
                         i = expressionList.indexOfIdentity(element)
-                        expressionList[i] = it
+                        expressionList[i] = it as T
                     }
 
                     override fun undo() {
@@ -140,8 +140,8 @@ class ArgumentListWidget(
 
                 var i: Int = -1
                 override fun run() {
-                    i = expressionList.indexOfIdentity(arg.node)
-                    expressionList.add(i + 1, element)
+                    i = expressionList.indexOfIdentity(arg.node as T)
+                    expressionList.add(i + 1, element as T)
                 }
 
                 override fun undo() {

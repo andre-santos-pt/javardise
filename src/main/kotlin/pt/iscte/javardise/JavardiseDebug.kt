@@ -13,7 +13,6 @@ import com.github.javaparser.ast.expr.DoubleLiteralExpr
 import com.github.javaparser.ast.expr.NameExpr
 import com.github.javaparser.ast.expr.SimpleName
 import com.github.javaparser.ast.observer.AstObserver
-import com.github.javaparser.ast.observer.Observable
 import com.github.javaparser.ast.observer.ObservableProperty
 import com.github.javaparser.printer.DefaultPrettyPrinter
 import com.github.javaparser.printer.DefaultPrettyPrinterVisitor
@@ -372,12 +371,3 @@ class SimpleTypeWidget<N : Node>(parent: Composite,  override val node: N, getNa
     }
 }
 
-class UnsupportedWidget(parent: Composite, node: Node) : Composite(parent, SWT.NONE) {
-    init {
-        layout = FillLayout()
-        val label = Label(this, SWT.NONE)
-        label.text = node.toString()
-        label.foreground = ERROR_COLOR()
-        label
-    }
-}

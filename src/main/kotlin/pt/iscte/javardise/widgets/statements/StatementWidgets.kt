@@ -2,7 +2,8 @@ package pt.iscte.javardise.widgets.statements
 
 import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.NodeList
-import com.github.javaparser.ast.stmt.*
+import com.github.javaparser.ast.stmt.BlockStmt
+import com.github.javaparser.ast.stmt.Statement
 import org.eclipse.swt.SWT
 import org.eclipse.swt.events.KeyEvent
 import org.eclipse.swt.widgets.Composite
@@ -11,7 +12,8 @@ import pt.iscte.javardise.*
 import pt.iscte.javardise.basewidgets.SequenceWidget
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
-import pt.iscte.javardise.external.*
+import pt.iscte.javardise.external.ListAddRemoveObserver
+import pt.iscte.javardise.external.ROW_LAYOUT_H_SHRINK
 import pt.iscte.javardise.widgets.members.CommentWidget
 
 abstract class StatementWidget<T : Statement>(
@@ -57,8 +59,11 @@ fun addWidget(stmt: Statement, block: BlockStmt, parent: SequenceWidget): NodeWi
     if(statementFeature != null)
         return statementFeature.create(parent, stmt, block)
     else
-        throw UnsupportedOperationException("NA $stmt ${stmt::class}")
+        return UnsupportedWidget(parent, stmt)
+//        throw UnsupportedOperationException("NA $stmt ${stmt::class}")
 }
+
+
 
 fun SequenceWidget.findIndexByModel(control: Control): Int {
     var i = 0

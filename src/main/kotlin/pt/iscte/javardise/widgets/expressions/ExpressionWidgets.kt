@@ -17,7 +17,7 @@ abstract class ExpressionWidget<T : Expression>(parent: Composite)
         font = parent.font
     }
 
-    abstract val editEvent: (Expression?) -> Unit
+    abstract val editEvent: (T?) -> Unit
     abstract val tail: TextWidget
     override fun toString(): String {
         return this::class.simpleName + ": $node"
@@ -29,12 +29,12 @@ abstract class ExpressionWidget<T : Expression>(parent: Composite)
     }
 }
 
-fun createExpressionWidget(
+fun <E: Expression> createExpressionWidget(
     parent: Composite,
-    expression: Expression,
+    expression: E,
     editEvent: (Expression?) -> Unit
 ): ExpressionWidget<*> =
-        when (expression) {  // TODO edit events
+        when (expression) {
         is UnaryExpr -> UnaryExpressionWidget(parent, expression, editEvent)
         is BinaryExpr -> BinaryExpressionWidget(parent, expression, editEvent)
         is CharLiteralExpr -> CharacterExpressionWidget(parent, expression, editEvent)

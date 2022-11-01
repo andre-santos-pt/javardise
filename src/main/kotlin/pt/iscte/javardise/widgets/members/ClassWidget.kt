@@ -203,7 +203,7 @@ class ClassWidget(parent: Composite, type: ClassOrInterfaceDeclaration) :
             })
     }
 
-    fun createMember(dec: BodyDeclaration<*>) =
+    fun createMember(dec: BodyDeclaration<*>): Composite =
         when (dec) {
             is FieldDeclaration -> {
                 val w = FieldWidget(body, dec)

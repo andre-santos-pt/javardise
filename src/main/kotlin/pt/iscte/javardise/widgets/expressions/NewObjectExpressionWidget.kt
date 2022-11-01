@@ -18,12 +18,12 @@ class NewObjectExpressionWidget(
 ) : ExpressionWidget<ObjectCreationExpr>(parent) {
 
     val id: TextWidget
-    val args: ArgumentListWidget
+    val args: ArgumentListWidget<Expression>
 
     init {
         layout = ROW_LAYOUT_H_SHRINK
         if (node.scope.isPresent) {
-            TODO()
+            TODO("new Obj scope")
         }
 
         Factory.newKeywordWidget(this, "new")

@@ -1,16 +1,17 @@
 package pt.iscte.javardise
 
+import com.github.javaparser.ast.Node
 import org.eclipse.swt.SWT
 import org.eclipse.swt.graphics.Font
+import org.eclipse.swt.layout.FillLayout
+import org.eclipse.swt.widgets.Composite
 import org.eclipse.swt.widgets.Display
+import org.eclipse.swt.widgets.Label
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.widgets.expressions.AssignmentFeature
 import pt.iscte.javardise.widgets.expressions.CallFeature
 import pt.iscte.javardise.widgets.expressions.VariableDeclarationFeature
-import pt.iscte.javardise.widgets.statements.EmptyStatementFeature
-import pt.iscte.javardise.widgets.statements.IfFeature
-import pt.iscte.javardise.widgets.statements.ReturnFeature
-import pt.iscte.javardise.widgets.statements.WhileFeature
+import pt.iscte.javardise.widgets.statements.*
 import javax.lang.model.SourceVersion
 
 val ERROR_COLOR = { Display.getDefault().getSystemColor(SWT.COLOR_RED) }
@@ -49,6 +50,7 @@ object Configuration {
         ReturnFeature(),
         IfFeature(),
         WhileFeature(),
+        ForFeature(),
         VariableDeclarationFeature(),
         AssignmentFeature(),
         CallFeature()
@@ -67,4 +69,23 @@ fun updateColor(textWidget: TextWidget) {
 fun isNumeric(toCheck: String): Boolean {
     val regex = "-?\\d+(\\.\\d+)?".toRegex()
     return toCheck.matches(regex)
+}
+
+class UnsupportedWidget<T: Node> (parent: Composite, override val node: T) : Composite(parent,
+    SWT.NONE
+), NodeWidget<T> {
+    init {
+        layout = FillLayout()
+        val label = Label(this, SWT.NONE)
+        label.text = node.toString()
+        label.font = Configuration.CODE_FONT
+        label.foreground = Display.getDefault()
+            .getSystemColor(SWT.COLOR_DARK_GRAY)
+        label.toolTipText = "Unsupported"
+        label
+    }
+
+    override fun setFocusOnCreation(firstFlag: Boolean) {
+       setFocus()
+    }
 }

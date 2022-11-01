@@ -28,7 +28,7 @@ class CallExpressionWidget(
 
     private var target: Id? = null
     private var methodName: Id
-    private val args: ArgumentListWidget
+    private val args: ArgumentListWidget<Expression>
 
     init {
         layout = ROW_LAYOUT_H_STRING

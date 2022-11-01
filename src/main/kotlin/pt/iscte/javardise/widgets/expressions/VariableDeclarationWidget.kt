@@ -1,7 +1,9 @@
 package pt.iscte.javardise.widgets.expressions
 
 import com.github.javaparser.StaticJavaParser
+import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.body.VariableDeclarator
+import com.github.javaparser.ast.expr.AssignExpr
 import com.github.javaparser.ast.expr.Expression
 import com.github.javaparser.ast.expr.NameExpr
 import com.github.javaparser.ast.expr.SimpleName
@@ -16,8 +18,9 @@ import pt.iscte.javardise.basewidgets.*
 import pt.iscte.javardise.external.*
 import pt.iscte.javardise.widgets.statements.ExpressionStatementWidget
 import pt.iscte.javardise.widgets.statements.StatementFeature
+import kotlin.reflect.KFunction
+import kotlin.reflect.KFunction1
 
-// TODO delete initializer
 class VariableDeclarationWidget(
     parent: Composite,
     override val node: VariableDeclarationExpr,
@@ -25,6 +28,7 @@ class VariableDeclarationWidget(
 ) : ExpressionWidget<VariableDeclarationExpr>(parent) {
     var type: Id
     var name: Id
+    var equals: FixedToken? = null
     var expression: ExpressionWidget<*>? = null
 
     init {
@@ -32,7 +36,6 @@ class VariableDeclarationWidget(
 
         layout = ROW_LAYOUT_H_SHRINK
 
-        // TODO delete to assign
         type = SimpleTypeWidget(this, decl.type) { it.asString() }
         type.addFocusLostAction(::isValidType) {
             node.modifyCommand(
@@ -41,22 +44,32 @@ class VariableDeclarationWidget(
                 node::setAllTypes
             )
         }
+        type.addDeleteListener {
+            if(decl.initializer.isPresent)
+                editEvent(AssignExpr(decl.nameAsExpression, decl.initializer.get(),  AssignExpr.Operator.ASSIGN))
+            else
+                editEvent(null)
+        }
+
         name = SimpleNameWidget(this, decl) { it.name.asString() }
-//        name.addKeyEvent(
-//            SWT.BS,
-//            precondition = { it.isEmpty() },
-//            action = createDeleteEvent(node, block)
-//        )
         name.addFocusLostAction(::isValidSimpleName) {
             node.modifyCommand(decl.name, SimpleName(name.text), decl::setName)
         }
+        name.addKeyEvent('=') {
+            val setter: KFunction1<Expression?, Node> = decl::setInitializer
+            decl.modifyCommand(decl.initializer.getOrNull, NameExpr("expression"), setter)
+        }
+        name.addDeleteEmptyListener {
+            if(decl.initializer.isPresent)
+                editEvent(AssignExpr(decl.nameAsExpression, decl.initializer.get(),  AssignExpr.Operator.ASSIGN))
+            else
+                editEvent(null)
+        }
 
         if (decl.initializer.isPresent) {
-            FixedToken(this, "=")
+            equals = FixedToken(this, "=")
             expression = createExpWidget(decl, decl.initializer.get())
         }
-       // val semiColon = TokenWidget(this, ";")
-        //semiColon.addInsert(this, this.parent as SequenceWidget, true)
 
         node.observeProperty<Type>(ObservableProperty.TYPE) {
             type.set(it?.asString())
@@ -65,11 +78,22 @@ class VariableDeclarationWidget(
             name.set(it.toString())
         }
         decl.observeProperty<Expression>(ObservableProperty.INITIALIZER) {
-            expression?.dispose()
-            expression = this.createExpWidget(decl, it ?: NameExpr("expression"))
-            //expression!!.moveBelow(semiColon.widget)
-            expression!!.requestLayout()
-            expression!!.setFocusOnCreation()
+            if(it == null) {
+                equals?.dispose()
+                equals = null
+                expression?.dispose()
+                expression = null
+                requestLayout()
+                name.setFocus()
+            }
+            else {
+                expression?.dispose()
+                if(equals == null)
+                    equals = FixedToken(this, "=")
+                expression = this.createExpWidget(decl, it)
+                expression!!.requestLayout()
+                expression!!.setFocusOnCreation()
+            }
         }
     }
 
