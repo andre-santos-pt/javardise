@@ -24,8 +24,6 @@ class BracketsExpressionWidget(
     val expressionObserver: AstObserver
 
     init {
-        layout = ROW_LAYOUT_H_SHRINK
-
         leftBracket = TokenWidget(this, "(")
         rightBracket = TokenWidget(this, ")")
         expressionWidget = drawExpression(this, node.inner)

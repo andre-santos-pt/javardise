@@ -33,7 +33,6 @@ class StringExpressionWidget(
     }
 
     init {
-        layout = ROW_LAYOUT_H_STRING
         val open = FixedToken(this, "\"")
         open.label.foreground = COMMENT_COLOR()
         open.addKeyListener(delListener)

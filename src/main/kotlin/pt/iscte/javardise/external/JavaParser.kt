@@ -188,7 +188,16 @@ fun <T> Observable.observeProperty(prop: ObservableProperty, event: (T?) -> Unit
     return obs
 }
 
-
+fun <T> Observable.observeNotNullProperty(prop: ObservableProperty, event: (T) -> Unit): AstObserver {
+    val obs = object : AstObserverAdapter() {
+        override fun propertyChange(observedNode: Node, property: ObservableProperty, oldValue: Any, newValue: Any) {
+            if (property == prop)
+                event(newValue as T)
+        }
+    }
+    register(obs)
+    return obs
+}
 
 
 

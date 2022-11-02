@@ -18,23 +18,19 @@ import org.eclipse.swt.SWT
 import org.eclipse.swt.layout.RowLayout
 import org.eclipse.swt.widgets.Composite
 import pt.iscte.javardise.Factory
-import pt.iscte.javardise.basewidgets.FixedToken
-import pt.iscte.javardise.basewidgets.SequenceWidget
-import pt.iscte.javardise.basewidgets.TextWidget
-import pt.iscte.javardise.basewidgets.TokenWidget
+import pt.iscte.javardise.basewidgets.*
 import pt.iscte.javardise.changeCommand
 import pt.iscte.javardise.modifyCommand
 import pt.iscte.javardise.removeCommand
 import pt.iscte.javardise.widgets.expressions.ExpressionWidget
 import pt.iscte.javardise.widgets.expressions.createExpressionWidget
 
-// TODO for
 class ForWidget(
     parent: SequenceWidget,
     node: ForStmt,
     override val block: BlockStmt
 ) :
-    StatementWidget<ForStmt>(parent, node) {
+    StatementWidget<ForStmt>(parent, node), SequenceContainer {
 
     lateinit var keyword: TokenWidget
     var init: ExpressionWidget<*>? = null
@@ -44,12 +40,12 @@ class ForWidget(
     lateinit var firstRow: Composite
     var prog: ExpressionWidget<*>? = null
     lateinit var openBracket: TokenWidget
-    lateinit var body: SequenceWidget
+    override lateinit var body: SequenceWidget
+    override val closingBracket: TextWidget
 
 
     init {
-        layout = RowLayout()
-        column {
+        val col = column {
             firstRow = row {
                 keyword = Factory.newKeywordWidget(this, "for")
                 keyword.addDelete(node, block)
@@ -70,8 +66,9 @@ class ForWidget(
             }
             body = createSequence(this, node.body.asBlockStmt())
             openBracket.addInsert(null, body, true)
-            FixedToken(this, "}")
         }
+        closingBracket = TokenWidget(col, "}")
+        closingBracket.addInsert(this, parent, true)
 
         node.initialization.observeList(object : ListObserver<Expression> {
             override fun elementReplace(
@@ -124,15 +121,9 @@ class ForWidget(
                 node.update.changeCommand(node, it, 0)
         }
 
-
-
-
-
-
     override fun setFocusOnCreation(firstFlag: Boolean) {
         init?.setFocus() ?: condition.setFocus()
     }
-
 }
 
 class ForFeature : StatementFeature<ForStmt, ForWidget>(

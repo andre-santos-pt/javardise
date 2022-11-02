@@ -27,7 +27,6 @@ class BinaryExpressionWidget(
     val operatorObserver: AstObserver
 
     init {
-        layout = ROW_LAYOUT_H_SHRINK
         operator = TokenWidget(this, node.operator.asString(),
             alternatives = { binaryOperators.map { it.asString() } }) {
             node.modifyCommand(

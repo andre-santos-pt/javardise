@@ -44,7 +44,7 @@ class WhileWidget(
 
         }
         closingBracket = TokenWidget(col, "}")
-            closingBracket.addInsert(this, this.parent as SequenceWidget, true)
+            closingBracket.addInsert(this, parent, true)
 
         keyword.addDelete(node, block)
 
@@ -77,7 +77,7 @@ class WhileFeature : StatementFeature<WhileStmt, WhileWidget>(WhileStmt::class.j
         insert: TextWidget,
         output: (Statement) -> Unit
     ) {
-        insert.addKeyEvent(SWT.SPACE, '{', precondition = { it == "while"}) {
+        insert.addKeyEvent(SWT.SPACE, '(', precondition = { it == "while"}) {
             output( WhileStmt(NameExpr("condition"), BlockStmt()))
         }
     }

@@ -21,7 +21,6 @@ class NewObjectExpressionWidget(
     val args: ArgumentListWidget<Expression>
 
     init {
-        layout = ROW_LAYOUT_H_SHRINK
         if (node.scope.isPresent) {
             TODO("new Obj scope")
         }

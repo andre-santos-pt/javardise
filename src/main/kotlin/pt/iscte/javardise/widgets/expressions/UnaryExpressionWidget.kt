@@ -8,10 +8,7 @@ import org.eclipse.swt.widgets.Composite
 import pt.iscte.javardise.*
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
-import pt.iscte.javardise.external.ROW_LAYOUT_H_SHRINK
-import pt.iscte.javardise.external.moveAbove
-import pt.iscte.javardise.external.observeProperty
-import pt.iscte.javardise.external.unaryOperators
+import pt.iscte.javardise.external.*
 
 class UnaryExpressionWidget(
     parent: Composite,
@@ -24,7 +21,6 @@ class UnaryExpressionWidget(
     val operatorObserver: AstObserver
 
     init {
-        layout = ROW_LAYOUT_H_SHRINK
         operator = TokenWidget(this, node.operator.asString(),
             alternatives = {
                 if (node.isPrefix)
@@ -49,21 +45,19 @@ class UnaryExpressionWidget(
 
         expressionWidget = drawExpression(this, node.expression)
 
-
-
         operator.addDeleteListener {
             editEvent(null)
         }
 
         expressionObserver =
-            node.observeProperty<Expression>(ObservableProperty.EXPRESSION) {
+            node.observeNotNullProperty<Expression>(ObservableProperty.EXPRESSION) {
                 expressionWidget.dispose()
-                drawExpression(this, node.expression)
+                drawExpression(this, it)
             }
 
         operatorObserver =
-            node.observeProperty<UnaryExpr.Operator>(ObservableProperty.OPERATOR) {
-                operator.set(it?.asString() ?: "??")
+            node.observeNotNullProperty<UnaryExpr.Operator>(ObservableProperty.OPERATOR) {
+                operator.set(it.asString())
                 operator.setFocus()
             }
     }
@@ -73,10 +67,10 @@ class UnaryExpressionWidget(
         expression: Expression
     ): ExpressionWidget<*> {
         expressionWidget = createExpressionWidget(parent, expression) {
-            node.modifyCommand(node.expression, it, node::setExpression)
-            expressionWidget.dispose()
-            if (it != null)
-                drawExpression(parent, it)
+            if(it == null)
+                editEvent(null)
+            else
+                node.modifyCommand(node.expression, it, node::setExpression)
         }
         if (node.isPostfix)
             expressionWidget.moveAbove(operator)

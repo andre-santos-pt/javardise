@@ -31,7 +31,6 @@ class CallExpressionWidget(
     private val args: ArgumentListWidget<Expression>
 
     init {
-        layout = ROW_LAYOUT_H_STRING
         if (node.scope.isPresent) {
             target = SimpleNameWidget(this, node.scope.get()) { it.toString() }
             target!!.addKeyEvent(SWT.BS, precondition = { it.isEmpty() }) {

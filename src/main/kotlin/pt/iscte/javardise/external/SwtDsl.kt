@@ -144,7 +144,7 @@ fun Composite.column(
     content: Composite.() -> Unit
 ): Composite {
     val c = Composite(this, SWT.NONE)
-    c.layout = if (margin) ROW_LAYOUT_V_SPACED else ROW_LAYOUT_V_ZERO
+    c.layout = if (margin) ROW_LAYOUT_V_SPACED else ROW_LAYOUT_V_SHRINK
     c.font = this.font
     c.background = this.background
     c.foreground = this.foreground
@@ -315,3 +315,4 @@ val ROW_LAYOUT_H = create(SWT.HORIZONTAL, 3)
 val ROW_LAYOUT_H_DOT = create(SWT.HORIZONTAL, 0)
 val ROW_LAYOUT_V_ZERO = create(SWT.VERTICAL, 2)
 val ROW_LAYOUT_V_SPACED = create(SWT.VERTICAL, 20)
+val ROW_LAYOUT_V_SHRINK = create(SWT.VERTICAL, spacing = 1, top = 0)

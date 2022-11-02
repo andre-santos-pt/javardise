@@ -16,7 +16,6 @@ class NewArrayInitExpressionWidget(
     val args: ArgumentListWidget<Expression>
 
     init {
-        layout = ROW_LAYOUT_H_SHRINK
         args = ArgumentListWidget(this, "{", "}", node, node.values)
         args.closeBracket.addDeleteListener {
             editEvent(NameExpr("expression"))

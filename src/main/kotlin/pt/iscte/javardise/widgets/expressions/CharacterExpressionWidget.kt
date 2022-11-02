@@ -25,7 +25,6 @@ class CharacterExpressionWidget(
     val close: TokenWidget
 
     init {
-        layout = ROW_LAYOUT_H_STRING
         val open = FixedToken(this, "'")
         open.label.foreground = COMMENT_COLOR()
         text = TextWidget.create(this, node.value)

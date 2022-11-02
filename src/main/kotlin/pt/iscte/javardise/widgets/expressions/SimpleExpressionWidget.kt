@@ -31,7 +31,6 @@ class SimpleExpressionWidget(
     val keyListener: KeyListener
 
     init {
-        layout = ROW_LAYOUT_H_SHRINK
         val noparse =
             node is NameExpr && (node as NameExpr).name.asString() == Configuration.NOPARSE
         val text = if (noparse)
@@ -41,7 +40,7 @@ class SimpleExpressionWidget(
 
         expression = TextWidget.create(this, text) { c, s ->
             c.toString()
-                .matches(Regex("[a-zA-Z\\d_\\[\\]()\\.]")) || c == SWT.BS || c == SWT.SPACE
+                .matches(Regex("[a-zA-Z\\d_()\\.]")) || c == SWT.BS || c == SWT.SPACE
         }
         if (noparse)
             expression.widget.background = ERROR_COLOR()
@@ -107,6 +106,11 @@ class SimpleExpressionWidget(
                 null
             )
             editEvent(arrayCreationExpr)
+        }
+
+        expression.addKeyEvent('[', precondition = { tryParse<NameExpr>(it) }) {
+            val arrayAccess = ArrayAccessExpr(StaticJavaParser.parseExpression(expression.text), NameExpr("index"))
+            editEvent(arrayAccess)
         }
 
         expression.addKeyEvent('(', precondition = {

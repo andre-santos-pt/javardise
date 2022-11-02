@@ -3,22 +3,21 @@ package pt.iscte.javardise.widgets.expressions
 import com.github.javaparser.StaticJavaParser
 import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.body.VariableDeclarator
-import com.github.javaparser.ast.expr.AssignExpr
-import com.github.javaparser.ast.expr.Expression
-import com.github.javaparser.ast.expr.NameExpr
-import com.github.javaparser.ast.expr.SimpleName
-import com.github.javaparser.ast.expr.VariableDeclarationExpr
+import com.github.javaparser.ast.expr.*
 import com.github.javaparser.ast.observer.ObservableProperty
 import com.github.javaparser.ast.stmt.ExpressionStmt
 import com.github.javaparser.ast.stmt.Statement
 import com.github.javaparser.ast.type.Type
 import org.eclipse.swt.widgets.Composite
-import pt.iscte.javardise.*
-import pt.iscte.javardise.basewidgets.*
+import pt.iscte.javardise.SimpleNameWidget
+import pt.iscte.javardise.SimpleTypeWidget
+import pt.iscte.javardise.basewidgets.FixedToken
+import pt.iscte.javardise.basewidgets.Id
+import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.external.*
+import pt.iscte.javardise.modifyCommand
 import pt.iscte.javardise.widgets.statements.ExpressionStatementWidget
 import pt.iscte.javardise.widgets.statements.StatementFeature
-import kotlin.reflect.KFunction
 import kotlin.reflect.KFunction1
 
 class VariableDeclarationWidget(
@@ -33,8 +32,6 @@ class VariableDeclarationWidget(
 
     init {
         val decl = node.variables[0] // multi variable not supported
-
-        layout = ROW_LAYOUT_H_SHRINK
 
         type = SimpleTypeWidget(this, decl.type) { it.asString() }
         type.addFocusLostAction(::isValidType) {

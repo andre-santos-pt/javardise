@@ -1,12 +1,16 @@
 package pt.iscte.javardise.widgets.expressions
 
 import com.github.javaparser.ast.expr.*
+import com.github.javaparser.ast.stmt.BlockStmt
+import com.github.javaparser.ast.stmt.Statement
 import org.eclipse.swt.SWT
 import org.eclipse.swt.events.KeyAdapter
 import org.eclipse.swt.events.KeyEvent
 import org.eclipse.swt.widgets.Composite
 import pt.iscte.javardise.NodeWidget
+import pt.iscte.javardise.basewidgets.SequenceWidget
 import pt.iscte.javardise.basewidgets.TextWidget
+import pt.iscte.javardise.external.ROW_LAYOUT_H_SHRINK
 import pt.iscte.javardise.external.binaryOperators
 import pt.iscte.javardise.external.unaryOperators
 
@@ -14,6 +18,7 @@ abstract class ExpressionWidget<T : Expression>(parent: Composite)
     : Composite(parent, SWT.NONE), NodeWidget<T> {
 
     init {
+        layout = ROW_LAYOUT_H_SHRINK
         font = parent.font
     }
 
@@ -29,6 +34,27 @@ abstract class ExpressionWidget<T : Expression>(parent: Composite)
     }
 }
 
+// TODO Expression features
+abstract class ExpressionFeature<M: Expression, W: ExpressionWidget<*>>(val modelClass: Class<M>, val widgetClass: Class<W>) {
+    init {
+        val paramTypes = widgetClass.constructors[0].parameterTypes
+        require(paramTypes.size == 3)
+        require(paramTypes[0] == Composite::class.java)
+        require(Expression::class.java.isAssignableFrom(paramTypes[1]))
+        // TODO check third param
+        //require(paramTypes[2] == BlockStmt::class.java)
+    }
+    fun create(parent: Composite, exp: Expression, editEvent: (Expression?) -> Unit): ExpressionWidget<M> =
+        widgetClass.constructors[0].newInstance(parent, exp, editEvent) as ExpressionWidget<M>
+
+    //open fun targets(stmt: Statement) = modelClass.isInstance(stmt)
+
+    abstract fun configureInsert(
+        insert: TextWidget,
+        output: (Statement) -> Unit
+    )
+}
+
 fun <E: Expression> createExpressionWidget(
     parent: Composite,
     expression: E,
@@ -42,6 +68,7 @@ fun <E: Expression> createExpressionWidget(
         is MethodCallExpr -> CallExpressionWidget(parent, expression, editEvent)
         is ArrayCreationExpr -> NewArrayExpressionWidget(parent, expression, editEvent)
         is ArrayInitializerExpr -> NewArrayInitExpressionWidget(parent, expression, editEvent)
+            is ArrayAccessExpr -> ArrayAccessExpressionWidget(parent, expression, editEvent)
         is ObjectCreationExpr -> NewObjectExpressionWidget(parent, expression, editEvent)
         is EnclosedExpr -> BracketsExpressionWidget(parent, expression, editEvent)
         is AssignExpr -> AssignExpressionWidget(parent, expression, editEvent)

@@ -28,8 +28,6 @@ class AssignExpressionWidget(
 
 
     init {
-        layout = ROW_LAYOUT_H_SHRINK
-
         target = createTargetWidget(node.target)
         //target.widget.addKeyEvent(SWT.BS, precondition = { it.isEmpty() }, action = createDeleteEvent(node, block))
 

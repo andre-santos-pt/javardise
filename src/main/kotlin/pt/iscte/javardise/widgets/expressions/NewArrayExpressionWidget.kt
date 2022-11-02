@@ -47,7 +47,6 @@ class NewArrayExpressionWidget(
         }
     }
     init {
-        layout = ROW_LAYOUT_H_SHRINK
         if(node.initializer.isPresent) {
             TODO("init ${node.initializer.get()}")
         }
