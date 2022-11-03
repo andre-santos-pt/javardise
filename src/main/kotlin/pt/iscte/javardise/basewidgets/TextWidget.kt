@@ -283,7 +283,6 @@ interface TextWidget {
                                             .setFocus()
                                     else if (sw is IfWidget && (text == sw.elseWidget?.keyword?.widget || text == sw.elseWidget?.openBracketElse?.widget))
                                         sw.closingBracket.setFocus()
-                                        //text.traverse(SWT.TRAVERSE_TAB_PREVIOUS)
                                     else if (sw is IfWidget && text == sw.elseWidget?.closingBracket?.widget)
                                         sw.elseWidget?.focusLast()
                                     else if (sw is SequenceContainer && text == sw.closingBracket.widget)
@@ -309,7 +308,7 @@ interface TextWidget {
                                         if (sw.elseWidget?.body?.isEmpty() == true)
                                             sw.elseWidget?.closingBracket?.setFocus()
                                         else
-                                            sw.elseWidget!!.body!!.focusFirst()
+                                            sw.elseWidget!!.body.focusFirst()
                                     } else if (sw is SequenceContainer && text != sw.closingBracket.widget) {
                                         if (sw.body?.isEmpty() == true)
                                             sw.closingBracket.setFocus()

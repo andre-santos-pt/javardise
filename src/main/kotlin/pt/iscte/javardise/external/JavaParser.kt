@@ -11,10 +11,7 @@ import com.github.javaparser.ast.observer.AstObserver
 import com.github.javaparser.ast.observer.AstObserverAdapter
 import com.github.javaparser.ast.observer.Observable
 import com.github.javaparser.ast.observer.ObservableProperty
-import com.github.javaparser.ast.stmt.BlockStmt
-import com.github.javaparser.ast.stmt.ForStmt
-import com.github.javaparser.ast.stmt.IfStmt
-import com.github.javaparser.ast.stmt.WhileStmt
+import com.github.javaparser.ast.stmt.*
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter
 import java.io.File
 import java.util.*
@@ -65,6 +62,12 @@ fun substituteControlBlocks(node: Node) {
             super.visit(n, arg)
         }
 
+        override fun visit(n: DoStmt, arg: Any?) {
+            if (n.body !is BlockStmt)
+                n.body = if (n.body == null) BlockStmt() else BlockStmt(NodeList(n.body))
+            super.visit(n, arg)
+        }
+
         override fun visit(n: ForStmt, arg: Any?) {
             if (n.body !is BlockStmt)
                 n.body = if (n.body == null) BlockStmt() else BlockStmt(NodeList(n.body))
@@ -74,7 +77,13 @@ fun substituteControlBlocks(node: Node) {
 
             super.visit(n, arg)
         }
-        // TODO DO, FOR EACH
+
+        override fun visit(n: ForEachStmt, arg: Any?) {
+            if (n.body !is BlockStmt)
+                n.body = if (n.body == null) BlockStmt() else BlockStmt(NodeList(n.body))
+
+            super.visit(n, arg)
+        }
     }, null)
 }
 

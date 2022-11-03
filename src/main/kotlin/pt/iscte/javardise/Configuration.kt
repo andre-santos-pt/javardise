@@ -54,6 +54,7 @@ object Configuration {
         ReturnFeature(),
         IfFeature(),
         WhileFeature(),
+        DoWhileFeature(),
         ForFeature(),
         ForEachFeature(),
         VariableDeclarationFeature(),
