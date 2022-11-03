@@ -102,7 +102,8 @@ interface TextWidget {
             override fun focusLost(e: FocusEvent?) {
                 if (isValid(widget.text)) {
                     action(widget.text)
-                    widget.background = BACKGROUND_COLOR()
+                    if(!widget.isDisposed)
+                        widget.background = BACKGROUND_COLOR()
                 } else
                     widget.background = ERROR_COLOR()
             }
@@ -182,6 +183,7 @@ interface TextWidget {
                 }.apply {
                     background = parent.background
                     foreground = parent.foreground
+                    menu = Menu(this)
                 }
 
                 override val widget: Text

@@ -9,14 +9,12 @@ import com.github.javaparser.ast.stmt.Statement
 import javassist.compiler.ast.CallExpr
 import org.eclipse.swt.SWT
 import org.eclipse.swt.widgets.Composite
-import pt.iscte.javardise.*
+import pt.iscte.javardise.SimpleNameWidget
 import pt.iscte.javardise.basewidgets.FixedToken
 import pt.iscte.javardise.basewidgets.Id
 import pt.iscte.javardise.basewidgets.TextWidget
-import pt.iscte.javardise.external.ROW_LAYOUT_H_STRING
-import pt.iscte.javardise.external.isValidSimpleName
-import pt.iscte.javardise.external.observeProperty
-import pt.iscte.javardise.external.tryParse
+import pt.iscte.javardise.external.*
+import pt.iscte.javardise.modifyCommand
 import pt.iscte.javardise.widgets.statements.ExpressionStatementWidget
 import pt.iscte.javardise.widgets.statements.StatementFeature
 
@@ -26,18 +24,13 @@ class CallExpressionWidget(
     override val editEvent: (Expression?) -> Unit
 ) : ExpressionWidget<MethodCallExpr>(parent) {
 
-    private var target: Id? = null
+    private var scope: ExpressionWidget<*>? = null
+    private var dot: FixedToken? = null
     private var methodName: Id
     private val args: ArgumentListWidget<Expression>
 
     init {
-        if (node.scope.isPresent) {
-            target = SimpleNameWidget(this, node.scope.get()) { it.toString() }
-            target!!.addKeyEvent(SWT.BS, precondition = { it.isEmpty() }) {
-                //action = createDeleteEvent(node, block))
-            }
-            FixedToken(this, ".")
-        }
+        layout = ROW_LAYOUT_H_CALL
         methodName = SimpleNameWidget(this, node.name) { it.asString() }
         methodName.addFocusLostAction(::isValidSimpleName) {
             node.modifyCommand(
@@ -46,18 +39,70 @@ class CallExpressionWidget(
                 node::setName
             )
         }
+        methodName.addKeyEvent(
+            SWT.BS,
+            precondition = { methodName.isAtBeginning }) {
+            node.modifyCommand(
+                node.scope.get(),
+                null,
+                node::setScope
+            )
+        }
+        methodName.addKeyEvent(
+            '.',
+            precondition = { !node.scope.isPresent && !methodName.isAtBeginning && !methodName.isAtEnd }) {
+            node.modifyCommand(
+                null,
+                NameExpr(methodName.text.substring(0, methodName.caretPosition)),
+                node::setScope
+            )
+            node.modifyCommand(
+                node.name,
+                SimpleName(methodName.text.substring(methodName.caretPosition)),
+                node::setName
+            )
+        }
+
+        if (node.scope.isPresent)
+            createScope(node.scope.get())
+
         args = ArgumentListWidget(this, "(", ")", node, node.arguments)
 
-        node.observeProperty<SimpleName>(ObservableProperty.NAME) {
-            methodName.set(it?.asString() ?: node.name.asString())
+        node.observeProperty<Expression>(ObservableProperty.SCOPE) {
+            scope?.dispose()
+            scope = null
+            dot?.dispose()
+            dot = null
+            if (it != null)
+                createScope(it)
+            setFocus()
+            requestLayout()
         }
+        node.observeNotNullProperty<SimpleName>(ObservableProperty.NAME)
+        {
+            methodName.set(it.asString())
+        }
+    }
+
+    private fun createScope(e: Expression) {
+        scope = createExpressionWidget(this, e) {
+            node.modifyCommand(
+                node.scope.get(),
+                it,
+                node::setScope
+            )
+        }
+        scope!!.moveAbove(methodName.widget)
+        dot = FixedToken(this, ".")
+        dot!!.label.moveBelow(scope!!)
+        dot!!.label.requestLayout()
     }
 
     override val tail: TextWidget
         get() = args.closeBracket
 
     override fun setFocus(): Boolean {
-        return methodName.setFocus()
+        return scope?.setFocus() ?: methodName.setFocus()
     }
 
     override fun setFocusOnCreation(firstFlag: Boolean) {
@@ -71,7 +116,8 @@ class CallFeature : StatementFeature<ExpressionStmt, ExpressionStatementWidget>(
     ExpressionStatementWidget::class.java
 ) {
 
-    override fun targets(stmt: Statement): Boolean = stmt is ExpressionStmt && stmt.expression is CallExpr
+    override fun targets(stmt: Statement): Boolean =
+        stmt is ExpressionStmt && stmt.expression is CallExpr
 
     override fun configureInsert(
         insert: TextWidget,

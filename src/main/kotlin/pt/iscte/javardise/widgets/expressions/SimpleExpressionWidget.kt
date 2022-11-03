@@ -16,7 +16,7 @@ import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.external.*
 import pt.iscte.javardise.updateColor
 
-val TYPE = Regex("[a-zA-Z][a-zA-Z0-9_]+")
+val TYPE = Regex("[a-zA-Z]\\w*")
 
 class SimpleExpressionWidget(
     parent: Composite,
@@ -51,7 +51,10 @@ class SimpleExpressionWidget(
 
         keyListener = object : KeyAdapter() {
             override fun keyPressed(e: KeyEvent) {
-                if (expression.isAtBeginning) {
+                if(isDisposed)
+                    return
+
+                if (expression.isAtBeginning) { // TODO BUG widget is disposed
                     if(e.character == SWT.BS)
                         editEvent(null)
                     else {

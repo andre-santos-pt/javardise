@@ -190,7 +190,7 @@ fun <T> Observable.observeProperty(prop: ObservableProperty, event: (T?) -> Unit
 
 fun <T> Observable.observeNotNullProperty(prop: ObservableProperty, event: (T) -> Unit): AstObserver {
     val obs = object : AstObserverAdapter() {
-        override fun propertyChange(observedNode: Node, property: ObservableProperty, oldValue: Any, newValue: Any) {
+        override fun propertyChange(observedNode: Node, property: ObservableProperty, oldValue: Any?, newValue: Any?) {
             if (property == prop)
                 event(newValue as T)
         }
@@ -208,7 +208,7 @@ fun <T : Node> NodeList<T>.indexOfIdentity(e: T): Int {
     return -1
 }
 
-fun <E : Expression> tryParse(exp: String): Boolean {
+inline fun <reified E : Expression> tryParse(exp: String): Boolean {
     try {
         val e = StaticJavaParser.parseExpression<E>(exp)
         return e is E

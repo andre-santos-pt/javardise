@@ -308,6 +308,7 @@ fun create(style: Int, top: Int = 0, spacing: Int = 0): RowLayout {
     return layout
 }
 
+val ROW_LAYOUT_H_CALL = create(SWT.HORIZONTAL, spacing = 0)
 val ROW_LAYOUT_H_STRING = create(SWT.HORIZONTAL, spacing = -3)
 val ROW_LAYOUT_H_SHRINK = create(SWT.HORIZONTAL, spacing = 1, top = 0)
 val ROW_LAYOUT_H_ZERO = create(SWT.HORIZONTAL, 2)
