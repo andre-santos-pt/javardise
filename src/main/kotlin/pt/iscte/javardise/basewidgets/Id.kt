@@ -66,8 +66,6 @@ open class Id(parent: Composite, id: String, allowedChars: Regex,
 
     open fun isValid() = true
 
-   // fun isValidAndDifferent(previous: String) = isValid() && text != previous
-
     override val widget: Text get() = textWidget
 
     override fun setFocus(): Boolean {
@@ -92,13 +90,3 @@ open class Id(parent: Composite, id: String, allowedChars: Regex,
     }
 }
 
-open class TypeId(parent: Composite, id: String) : Id(parent, id, TYPE_CHARS, {
-        s ->
-        try {
-            StaticJavaParser.parseType(s)
-            Validation(true, "")
-        } catch (e: ParseProblemException) {
-            Validation(false, e.message.toString())
-        }
-
-})

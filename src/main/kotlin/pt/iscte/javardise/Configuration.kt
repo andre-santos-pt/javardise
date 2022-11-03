@@ -5,9 +5,12 @@ import org.eclipse.swt.SWT
 import org.eclipse.swt.graphics.Font
 import org.eclipse.swt.layout.FillLayout
 import org.eclipse.swt.widgets.Composite
+import org.eclipse.swt.widgets.Control
 import org.eclipse.swt.widgets.Display
 import org.eclipse.swt.widgets.Label
 import pt.iscte.javardise.basewidgets.TextWidget
+import pt.iscte.javardise.basewidgets.TokenWidget
+import pt.iscte.javardise.external.traverse
 import pt.iscte.javardise.widgets.expressions.AssignmentFeature
 import pt.iscte.javardise.widgets.expressions.CallFeature
 import pt.iscte.javardise.widgets.expressions.UnaryExpressionStatementFeature
@@ -59,6 +62,12 @@ object Configuration {
     )
 }
 
+fun Control.backgroundDefault() = this.traverse {
+    background = BACKGROUND_COLOR()
+    foreground = FOREGROUND_COLOR()
+    true
+}
+
 fun updateColor(textWidget: TextWidget) {
     if (SourceVersion.isKeyword(textWidget.text))
         textWidget.widget.foreground = KEYWORD_COLOR()
@@ -89,5 +98,17 @@ class UnsupportedWidget<T: Node> (parent: Composite, override val node: T) : Com
 
     override fun setFocusOnCreation(firstFlag: Boolean) {
        setFocus()
+    }
+}
+
+object Factory {
+    fun newKeywordWidget(
+        parent: Composite, keyword: String,
+        alternatives: () -> List<String> = { emptyList() },
+        editAtion: (String) -> Unit = {}
+    ): TokenWidget {
+        val w = TokenWidget(parent, keyword, alternatives, editAtion)
+        w.widget.foreground = KEYWORD_COLOR()
+        return w
     }
 }

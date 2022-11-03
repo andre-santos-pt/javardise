@@ -1,21 +1,20 @@
 package pt.iscte.javardise.widgets.expressions
 
-import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.expr.Expression
 import com.github.javaparser.ast.expr.NameExpr
 import com.github.javaparser.ast.expr.StringLiteralExpr
-import com.github.javaparser.ast.observer.ObservableProperty
 import org.eclipse.swt.SWT
 import org.eclipse.swt.events.KeyAdapter
 import org.eclipse.swt.events.KeyEvent
 import org.eclipse.swt.widgets.Composite
-import pt.iscte.javardise.*
+import pt.iscte.javardise.COMMENT_COLOR
+import pt.iscte.javardise.Command
+import pt.iscte.javardise.CommandKind
+import pt.iscte.javardise.Commands
 import pt.iscte.javardise.basewidgets.FixedToken
 import pt.iscte.javardise.basewidgets.ID
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
-import pt.iscte.javardise.external.ROW_LAYOUT_H_STRING
-import pt.iscte.javardise.external.observeProperty
 
 class StringExpressionWidget(
     parent: Composite,
@@ -43,7 +42,6 @@ class StringExpressionWidget(
         close.widget.addKeyListener(delListener)
 
         text.addFocusLostAction {
-            //node.modifyCommand(node.value, text.text, node::setValue)
             Commands.execute(object : Command {
                 override val target = node
                 override val kind = CommandKind.MODIFY

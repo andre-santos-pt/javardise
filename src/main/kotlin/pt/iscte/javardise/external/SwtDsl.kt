@@ -317,3 +317,10 @@ val ROW_LAYOUT_H_DOT = create(SWT.HORIZONTAL, 0)
 val ROW_LAYOUT_V_ZERO = create(SWT.VERTICAL, 2)
 val ROW_LAYOUT_V_SPACED = create(SWT.VERTICAL, 20)
 val ROW_LAYOUT_V_SHRINK = create(SWT.VERTICAL, spacing = 1, top = 0)
+
+
+fun Control.traverse(visit: (Control) -> Boolean) {
+    val enter = visit(this)
+    if (this is Composite && enter)
+        this.children.forEach { it.traverse(visit) }
+}
