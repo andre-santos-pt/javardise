@@ -28,7 +28,6 @@ class AssignExpressionWidget(
 
     init {
         target = createTargetWidget(node.target)
-        //target.widget.addKeyEvent(SWT.BS, precondition = { it.isEmpty() }, action = createDeleteEvent(node, block))
 
         operator = TokenWidget(this, node.operator.asString(), {
             AssignExpr.Operator.values().map { it.asString() }

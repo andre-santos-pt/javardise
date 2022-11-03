@@ -19,6 +19,7 @@ import pt.iscte.javardise.removeCommand
 import pt.iscte.javardise.widgets.expressions.ExpressionWidget
 import pt.iscte.javardise.widgets.expressions.createExpressionWidget
 
+// TODO multi init/update
 class ForWidget(
     parent: SequenceWidget,
     node: ForStmt,
@@ -46,14 +47,14 @@ class ForWidget(
                 FixedToken(this, "(")
 
                 init = if (node.initialization.isEmpty()) null
-                else createInitExp()
+                else createInitExp(node.initialization[0])
 
                 firstSemiColon = FixedToken(this, ";")
                 condition = createCompareExp(node.compare.get())
                 secondSemiColon = FixedToken(this, ";")
 
                 prog = if (node.update.isEmpty()) null
-                else createUpdateExp()
+                else createUpdateExp(node.update[0])
 
                 FixedToken(this, ")")
                 openBracket = TokenWidget(this, "{")
@@ -72,9 +73,10 @@ class ForWidget(
                 new: Expression
             ) {
                 init?.dispose()
-                init = firstRow.createInitExp()
+                init = firstRow.createInitExp(new)
                 init?.moveAbove(firstSemiColon.label)
                 init?.requestLayout()
+                init?.setFocus()
             }
         })
 
@@ -85,13 +87,25 @@ class ForWidget(
             condition.requestLayout()
             condition.setFocusOnCreation()
         }
+
+        node.update.observeList(object : ListObserver<Expression> {
+            override fun elementReplace(
+                list: NodeList<Expression>,
+                index: Int,
+                old: Expression,
+                new: Expression
+            ) {
+                prog?.dispose()
+                prog = firstRow.createUpdateExp(new)
+                prog?.moveBelow(secondSemiColon.label)
+                prog?.requestLayout()
+                prog?.setFocus()
+            }
+        })
     }
 
-    private fun Composite.createInitExp() =
-        createExpressionWidget(
-            this,
-            node.initialization[0]
-        ) {
+    private fun Composite.createInitExp(exp: Expression) =
+        createExpressionWidget(this, exp) {
             if (it == null)
                 block.statements.removeCommand(block.parentNode.get(), node)
             else
@@ -106,11 +120,8 @@ class ForWidget(
                 node.modifyCommand(node.compare.get(), it, node::setCompare)
         }
 
-    private fun Composite.createUpdateExp() =
-        createExpressionWidget(
-            this,
-            node.update[0]
-        ) {
+    private fun Composite.createUpdateExp(exp: Expression) =
+        createExpressionWidget(this, exp) {
             if (it != null)
                 node.update.changeCommand(node, it, 0)
         }
