@@ -38,6 +38,7 @@ class ExpressionStatementWidget(
                 expression.dispose()
                 expression = createExpression(it)
                 expression.moveAbove(semiColon.widget)
+                expression.requestLayout()
                 expression.setFocus()
             }
         }
@@ -55,6 +56,10 @@ class ExpressionStatementWidget(
     }
 
     override fun setFocusOnCreation(firstFlag: Boolean) {
-        expression.setFocusOnCreation()
+        if(node.expression.isUnaryExpr)
+            semiColon.setFocus()
+        else
+            expression.setFocusOnCreation()
     }
 }
+

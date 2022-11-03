@@ -247,4 +247,9 @@ val binaryOperators : List<BinaryExpr.Operator> = BinaryExpr.Operator.values().t
 
 val unaryOperators : List<UnaryExpr.Operator> = UnaryExpr.Operator.values().toList()
 
+val unaryOperatorsStatement : List<UnaryExpr.Operator> = listOf (
+    UnaryExpr.Operator.POSTFIX_INCREMENT, UnaryExpr.Operator.POSTFIX_DECREMENT,
+    UnaryExpr.Operator.PREFIX_INCREMENT, UnaryExpr.Operator.PREFIX_DECREMENT
+)
+
 val assignOperators : List<AssignExpr.Operator> = AssignExpr.Operator.values().toList()

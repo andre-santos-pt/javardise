@@ -1,14 +1,19 @@
 package pt.iscte.javardise.widgets.expressions
 
+import com.github.javaparser.StaticJavaParser
 import com.github.javaparser.ast.expr.Expression
 import com.github.javaparser.ast.expr.UnaryExpr
 import com.github.javaparser.ast.observer.AstObserver
 import com.github.javaparser.ast.observer.ObservableProperty
+import com.github.javaparser.ast.stmt.ExpressionStmt
+import com.github.javaparser.ast.stmt.Statement
 import org.eclipse.swt.widgets.Composite
 import pt.iscte.javardise.*
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
 import pt.iscte.javardise.external.*
+import pt.iscte.javardise.widgets.statements.ExpressionStatementWidget
+import pt.iscte.javardise.widgets.statements.StatementFeature
 
 class UnaryExpressionWidget(
     parent: Composite,
@@ -91,4 +96,23 @@ class UnaryExpressionWidget(
 
     override val tail: TextWidget
         get() = expressionWidget.tail
+}
+
+class UnaryExpressionStatementFeature : StatementFeature<ExpressionStmt, ExpressionStatementWidget>(
+    ExpressionStmt::class.java,
+    ExpressionStatementWidget::class.java
+) {
+    override fun configureInsert(
+        insert: TextWidget,
+        output: (Statement) -> Unit
+    ) {
+        insert.addKeyEvent(';', precondition = {
+            tryParse<UnaryExpr>(insert.text) &&
+                    (StaticJavaParser.parseExpression(insert.text) as UnaryExpr).operator in unaryOperatorsStatement
+
+        }) {
+            output(ExpressionStmt(StaticJavaParser.parseExpression(insert.text)))
+        }
+    }
+
 }

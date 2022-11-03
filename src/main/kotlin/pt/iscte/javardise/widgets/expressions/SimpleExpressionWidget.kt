@@ -40,7 +40,7 @@ class SimpleExpressionWidget(
 
         expression = TextWidget.create(this, text) { c, s ->
             c.toString()
-                .matches(Regex("[a-zA-Z\\d_()\\.]")) || c == SWT.BS || c == SWT.SPACE
+                .matches(Regex("[a-zA-Z\\d_().]")) || c == SWT.BS || c == SWT.SPACE
         }
         if (noparse)
             expression.widget.background = ERROR_COLOR()

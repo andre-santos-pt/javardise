@@ -10,6 +10,7 @@ import org.eclipse.swt.widgets.Label
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.widgets.expressions.AssignmentFeature
 import pt.iscte.javardise.widgets.expressions.CallFeature
+import pt.iscte.javardise.widgets.expressions.UnaryExpressionStatementFeature
 import pt.iscte.javardise.widgets.expressions.VariableDeclarationFeature
 import pt.iscte.javardise.widgets.statements.*
 import javax.lang.model.SourceVersion
@@ -53,7 +54,8 @@ object Configuration {
         ForFeature(),
         VariableDeclarationFeature(),
         AssignmentFeature(),
-        CallFeature()
+        CallFeature(),
+        UnaryExpressionStatementFeature()
     )
 }
 
