@@ -8,10 +8,10 @@ import com.github.javaparser.ast.observer.ObservableProperty
 import com.github.javaparser.ast.stmt.ExpressionStmt
 import com.github.javaparser.ast.stmt.Statement
 import org.eclipse.swt.widgets.Composite
-import pt.iscte.javardise.*
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
 import pt.iscte.javardise.external.*
+import pt.iscte.javardise.modifyCommand
 import pt.iscte.javardise.widgets.statements.ExpressionStatementWidget
 import pt.iscte.javardise.widgets.statements.StatementFeature
 

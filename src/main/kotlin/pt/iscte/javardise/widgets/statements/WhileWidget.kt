@@ -8,9 +8,14 @@ import com.github.javaparser.ast.stmt.Statement
 import com.github.javaparser.ast.stmt.WhileStmt
 import org.eclipse.swt.SWT
 import org.eclipse.swt.widgets.Composite
-import pt.iscte.javardise.*
+import pt.iscte.javardise.Factory
 import pt.iscte.javardise.basewidgets.*
-import pt.iscte.javardise.external.*
+import pt.iscte.javardise.external.block
+import pt.iscte.javardise.external.column
+import pt.iscte.javardise.external.observeProperty
+import pt.iscte.javardise.external.row
+import pt.iscte.javardise.modifyCommand
+import pt.iscte.javardise.removeCommand
 import pt.iscte.javardise.widgets.expressions.ExpressionWidget
 import pt.iscte.javardise.widgets.expressions.createExpressionWidget
 

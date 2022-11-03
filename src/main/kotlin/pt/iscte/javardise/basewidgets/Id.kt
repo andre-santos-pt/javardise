@@ -1,17 +1,11 @@
 package pt.iscte.javardise.basewidgets
 
-import com.github.javaparser.ParseProblemException
-import com.github.javaparser.StaticJavaParser
 import org.eclipse.swt.SWT
-import org.eclipse.swt.events.FocusAdapter
-import org.eclipse.swt.events.FocusEvent
-import org.eclipse.swt.events.FocusListener
 import org.eclipse.swt.events.KeyListener
 import org.eclipse.swt.widgets.Composite
 import org.eclipse.swt.widgets.Menu
 import org.eclipse.swt.widgets.Text
 import pt.iscte.javardise.updateColor
-import javax.lang.model.SourceVersion
 
 val ID = Regex("[a-zA-Z][a-zA-Z0-9_]*")
 val ID_CHARS = Regex("[a-zA-Z0-9_]")

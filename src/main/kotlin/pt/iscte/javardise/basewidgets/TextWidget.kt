@@ -3,7 +3,10 @@ package pt.iscte.javardise.basewidgets
 import org.eclipse.swt.SWT
 import org.eclipse.swt.events.*
 import org.eclipse.swt.widgets.*
-import pt.iscte.javardise.*
+import pt.iscte.javardise.BACKGROUND_COLOR
+import pt.iscte.javardise.Configuration
+import pt.iscte.javardise.ERROR_COLOR
+import pt.iscte.javardise.updateColor
 import pt.iscte.javardise.widgets.members.ClassWidget
 import pt.iscte.javardise.widgets.members.MemberWidget
 import pt.iscte.javardise.widgets.statements.IfWidget

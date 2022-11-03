@@ -5,7 +5,6 @@ import com.github.javaparser.ast.expr.Expression
 import com.github.javaparser.ast.expr.NameExpr
 import org.eclipse.swt.widgets.Composite
 import pt.iscte.javardise.basewidgets.TextWidget
-import pt.iscte.javardise.external.ROW_LAYOUT_H_SHRINK
 
 class NewArrayInitExpressionWidget(
     parent: Composite,

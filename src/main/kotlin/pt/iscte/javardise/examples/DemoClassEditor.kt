@@ -3,9 +3,9 @@ package pt.iscte.javardise.examples
 import org.eclipse.swt.layout.FillLayout
 import org.eclipse.swt.widgets.Display
 import org.eclipse.swt.widgets.Shell
-import pt.iscte.javardise.external.scrollable
 import pt.iscte.javardise.external.findMainClass
 import pt.iscte.javardise.external.loadCompilationUnit
+import pt.iscte.javardise.external.scrollable
 import pt.iscte.javardise.widgets.members.ClassWidget
 
 /*

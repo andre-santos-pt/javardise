@@ -1,14 +1,12 @@
 package pt.iscte.javardise.widgets.expressions
 
 import com.github.javaparser.ast.expr.*
-import com.github.javaparser.ast.stmt.BlockStmt
 import com.github.javaparser.ast.stmt.Statement
 import org.eclipse.swt.SWT
 import org.eclipse.swt.events.KeyAdapter
 import org.eclipse.swt.events.KeyEvent
 import org.eclipse.swt.widgets.Composite
 import pt.iscte.javardise.NodeWidget
-import pt.iscte.javardise.basewidgets.SequenceWidget
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.external.ROW_LAYOUT_H_SHRINK
 import pt.iscte.javardise.external.binaryOperators

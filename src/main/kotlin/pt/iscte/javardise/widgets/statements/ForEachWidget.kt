@@ -1,12 +1,13 @@
 package pt.iscte.javardise.widgets.statements
 
-import pt.iscte.javardise.external.*
 import com.github.javaparser.ast.stmt.BlockStmt
 import com.github.javaparser.ast.stmt.ForEachStmt
 import org.eclipse.swt.layout.RowLayout
 import pt.iscte.javardise.basewidgets.FixedToken
 import pt.iscte.javardise.basewidgets.SequenceWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
+import pt.iscte.javardise.external.column
+import pt.iscte.javardise.external.row
 import pt.iscte.javardise.widgets.expressions.ExpressionWidget
 import pt.iscte.javardise.widgets.expressions.createExpressionWidget
 

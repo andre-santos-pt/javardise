@@ -5,7 +5,6 @@ import com.github.javaparser.ast.ArrayCreationLevel
 import com.github.javaparser.ast.NodeList
 import com.github.javaparser.ast.expr.ArrayCreationExpr
 import com.github.javaparser.ast.expr.Expression
-import com.github.javaparser.ast.expr.NameExpr
 import com.github.javaparser.ast.observer.ObservableProperty
 import com.github.javaparser.ast.type.Type
 import org.eclipse.swt.widgets.Composite
@@ -14,7 +13,10 @@ import pt.iscte.javardise.*
 import pt.iscte.javardise.basewidgets.FixedToken
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
-import pt.iscte.javardise.external.*
+import pt.iscte.javardise.external.ListObserver
+import pt.iscte.javardise.external.isValidType
+import pt.iscte.javardise.external.observeList
+import pt.iscte.javardise.external.observeProperty
 
 // TODO multi level arrays
 class NewArrayExpressionWidget(

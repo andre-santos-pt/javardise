@@ -7,24 +7,14 @@ import com.github.javaparser.ast.NodeList
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration
 import com.github.javaparser.ast.body.MethodDeclaration
 import com.github.javaparser.ast.body.Parameter
-import com.github.javaparser.ast.expr.BinaryExpr
-import com.github.javaparser.ast.expr.IntegerLiteralExpr
-import com.github.javaparser.ast.expr.MethodCallExpr
-import com.github.javaparser.ast.expr.NameExpr
-import com.github.javaparser.ast.expr.SimpleName
+import com.github.javaparser.ast.expr.*
 import com.github.javaparser.ast.stmt.BlockStmt
 import com.github.javaparser.ast.stmt.IfStmt
 import com.github.javaparser.ast.stmt.ReturnStmt
 import com.github.javaparser.ast.type.PrimitiveType
-import org.eclipse.swt.SWT
-import org.eclipse.swt.custom.SashForm
-import org.eclipse.swt.widgets.Shell
-import org.eclipse.swt.widgets.Text
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.fail
-import pt.iscte.javardise.external.scrollable
-import pt.iscte.javardise.widgets.members.ClassWidget
 
 class ObserverTests : SWTTest(
     ClassOrInterfaceDeclaration(NodeList(), false, "Test")

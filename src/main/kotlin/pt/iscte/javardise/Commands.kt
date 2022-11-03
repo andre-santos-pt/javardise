@@ -2,8 +2,6 @@ package pt.iscte.javardise
 
 import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.NodeList
-import com.github.javaparser.ast.stmt.BlockStmt
-import com.github.javaparser.ast.stmt.Statement
 import pt.iscte.javardise.external.indexOfIdentity
 import kotlin.reflect.KFunction1
 

@@ -1,7 +1,5 @@
 package pt.iscte.javardise.tests
 
-import com.github.javaparser.ast.Modifier
-import com.github.javaparser.ast.type.PrimitiveType
 import org.junit.jupiter.api.Test
 
 class ForTest : SWTTest(

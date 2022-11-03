@@ -1,14 +1,13 @@
 package pt.iscte.javardise.widgets.expressions
 
-import com.github.javaparser.StaticJavaParser
 import com.github.javaparser.ast.expr.Expression
 import com.github.javaparser.ast.expr.ObjectCreationExpr
-import com.github.javaparser.ast.type.ClassOrInterfaceType
 import org.eclipse.swt.widgets.Composite
-import pt.iscte.javardise.*
+import pt.iscte.javardise.Factory
+import pt.iscte.javardise.SimpleTypeWidget
 import pt.iscte.javardise.basewidgets.TextWidget
-import pt.iscte.javardise.external.ROW_LAYOUT_H_SHRINK
 import pt.iscte.javardise.external.isValidClassType
+import pt.iscte.javardise.modifyCommand
 
 // anonymous class body
 class NewObjectExpressionWidget(

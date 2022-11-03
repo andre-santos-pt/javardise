@@ -1,6 +1,5 @@
 package pt.iscte.javardise.tests
 
-import org.eclipse.swt.widgets.Control
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import java.awt.Robot

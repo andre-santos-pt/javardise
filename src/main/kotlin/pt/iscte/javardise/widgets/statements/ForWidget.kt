@@ -2,24 +2,18 @@ package pt.iscte.javardise.widgets.statements
 
 import com.github.javaparser.ast.NodeList
 import com.github.javaparser.ast.body.VariableDeclarator
-import com.github.javaparser.ast.expr.BooleanLiteralExpr
-import com.github.javaparser.ast.expr.Expression
-import com.github.javaparser.ast.expr.IntegerLiteralExpr
-import com.github.javaparser.ast.expr.NameExpr
-import com.github.javaparser.ast.expr.UnaryExpr
-import com.github.javaparser.ast.expr.VariableDeclarationExpr
+import com.github.javaparser.ast.expr.*
 import com.github.javaparser.ast.observer.ObservableProperty
-import pt.iscte.javardise.external.*
 import com.github.javaparser.ast.stmt.BlockStmt
 import com.github.javaparser.ast.stmt.ForStmt
 import com.github.javaparser.ast.stmt.Statement
 import com.github.javaparser.ast.type.PrimitiveType
 import org.eclipse.swt.SWT
-import org.eclipse.swt.layout.RowLayout
 import org.eclipse.swt.widgets.Composite
 import pt.iscte.javardise.Factory
 import pt.iscte.javardise.basewidgets.*
 import pt.iscte.javardise.changeCommand
+import pt.iscte.javardise.external.*
 import pt.iscte.javardise.modifyCommand
 import pt.iscte.javardise.removeCommand
 import pt.iscte.javardise.widgets.expressions.ExpressionWidget

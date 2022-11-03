@@ -6,19 +6,16 @@ import com.github.javaparser.ast.CompilationUnit
 import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.NodeList
 import com.github.javaparser.ast.body.*
-import com.github.javaparser.ast.expr.AssignExpr
-import com.github.javaparser.ast.expr.BinaryExpr
-import com.github.javaparser.ast.expr.BooleanLiteralExpr
-import com.github.javaparser.ast.expr.Expression
-import com.github.javaparser.ast.expr.UnaryExpr
+import com.github.javaparser.ast.expr.*
 import com.github.javaparser.ast.observer.AstObserver
 import com.github.javaparser.ast.observer.AstObserverAdapter
 import com.github.javaparser.ast.observer.Observable
 import com.github.javaparser.ast.observer.ObservableProperty
-import com.github.javaparser.ast.stmt.*
+import com.github.javaparser.ast.stmt.BlockStmt
+import com.github.javaparser.ast.stmt.ForStmt
+import com.github.javaparser.ast.stmt.IfStmt
+import com.github.javaparser.ast.stmt.WhileStmt
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter
-import pt.iscte.javardise.Command
-import pt.iscte.javardise.CommandKind
 import java.io.File
 import java.util.*
 
