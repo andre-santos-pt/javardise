@@ -24,9 +24,7 @@ class NewObjectExpressionWidget(
         }
 
         newKeywordWidget(this, "new")
-        id = SimpleTypeWidget(this, node.type) {
-            it.asString()
-        }
+        id = SimpleTypeWidget(this, node.type)
         id.addFocusLostAction(::isValidClassType) {
             node.modifyCommand(node.typeAsString, it, node::setType)
         }

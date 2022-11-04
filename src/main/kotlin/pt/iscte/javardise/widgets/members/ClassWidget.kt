@@ -131,9 +131,7 @@ class ClassWidget(parent: Composite, type: ClassOrInterfaceDeclaration) :
             })
         }
 
-        name = SimpleNameWidget(firstRow, type) {
-            it.name.asString()
-        }
+        name = SimpleNameWidget(firstRow, type)
         name.addFocusLostAction(::isValidClassType) {
             node.modifyCommand(node.nameAsString, it, node::setName)
         }

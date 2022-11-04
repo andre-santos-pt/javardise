@@ -3,19 +3,28 @@ package pt.iscte.javardise
 import com.github.javaparser.ParseProblemException
 import com.github.javaparser.StaticJavaParser
 import com.github.javaparser.ast.Node
+import com.github.javaparser.ast.expr.SimpleName
+import com.github.javaparser.ast.nodeTypes.NodeWithSimpleName
 import com.github.javaparser.ast.observer.AstObserver
 import com.github.javaparser.ast.observer.ObservableProperty
+import com.github.javaparser.ast.type.Type
+import org.eclipse.swt.SWT
+import org.eclipse.swt.events.FocusAdapter
+import org.eclipse.swt.events.FocusEvent
+import org.eclipse.swt.events.FocusListener
+import org.eclipse.swt.events.KeyListener
 import org.eclipse.swt.widgets.Composite
 import org.eclipse.swt.widgets.Control
 import org.eclipse.swt.widgets.Text
 import pt.iscte.javardise.basewidgets.*
 import pt.iscte.javardise.external.PropertyObserver
+import pt.iscte.javardise.external.isNumeric
 import pt.iscte.javardise.external.isValidType
 import pt.iscte.javardise.external.traverse
 import javax.lang.model.SourceVersion
 
 interface NodeWidget<T> {
-    val configuration: Conf get() = Configuration
+    val configuration: Configuration get() = DefaultConfiguration
     val node: T
     fun setFocusOnCreation(firstFlag: Boolean = false)
 
@@ -39,13 +48,38 @@ interface NodeWidget<T> {
         return w
     }
 
-    fun updateColor(textWidget: TextWidget) {
-        if (SourceVersion.isKeyword(textWidget.text))
-            textWidget.widget.foreground = configuration.KEYWORD_COLOR
-        else if (isNumeric(textWidget.text))
-            textWidget.widget.foreground = configuration.NUMBER_COLOR
+    fun TextWidget.addFocusLostAction(
+        isValid: (String) -> Boolean,
+        action: (String) -> Unit
+    ): FocusListener {
+        val listener = object : FocusAdapter() {
+            override fun focusLost(e: FocusEvent?) {
+                if (isValid(widget.text)) {
+                    action(widget.text)
+                    if(!widget.isDisposed)
+                        widget.background = configuration.BACKGROUND_COLOR
+                } else
+                    widget.background = configuration.ERROR_COLOR
+            }
+        }
+        widget.addFocusListener(listener)
+        return listener
+    }
+
+    fun updateColor(text: Text) {
+        if (SourceVersion.isKeyword(text.text))
+            text.foreground = configuration.KEYWORD_COLOR
+        else if (text.isNumeric)
+            text.foreground = configuration.NUMBER_COLOR
         else
-            textWidget.widget.foreground = configuration.FOREGROUND_COLOR
+            text.foreground = configuration.FOREGROUND_COLOR
+    }
+
+    fun addUpdateColor(text: Text) {
+        updateColor(text)
+        text.addModifyListener {
+            updateColor(text)
+        }
     }
 }
 
@@ -82,18 +116,91 @@ fun Composite.findChild(model: Node): Control? {
     return n
 }
 
-open class TypeId(parent: Composite, id: String) : Id(parent, id, TYPE_CHARS, {
-        s ->
-    try {
-        StaticJavaParser.parseType(s)
-        Validation(true, "")
-    } catch (e: ParseProblemException) {
-        Validation(false, e.message.toString())
-    }
-})
 
-class SimpleNameWidget<N : Node>(parent: Composite, override val node: N, getName: (N) -> String)
-    : NodeWidget<N>, Id(parent, getName(node), ID_CHARS, {
+
+val ID = Regex("[a-zA-Z][a-zA-Z0-9_]*")
+val ID_CHARS = Regex("[a-zA-Z0-9_]")
+
+val TYPE_CHARS = Regex("[a-zA-Z0-9_\\[\\]<>]")
+
+data class Validation(val ok: Boolean, val msg: String) {
+    val fail get() = !ok
+}
+
+open class Id(parent: Composite, id: NodeWithSimpleName<*>, allowedChars: Regex,
+              validate: (String) -> Validation
+) :
+    TextWidget {
+    private var readOnly: Boolean
+    internal val textWidget: Text
+    private var skip = false
+
+    init {
+        readOnly = false
+        textWidget = TextWidget.createText(parent, id.nameAsString) { c, s ->
+            skip ||
+                    !readOnly && (
+                    c.toString().matches(allowedChars)
+                            || c == SWT.BS
+                            || c == SWT.CR)
+        }
+       // textWidget.menu = Menu(textWidget) // prevent system menu
+
+
+
+//        updateColor(textWidget)
+//
+//        textWidget.addModifyListener {
+//            updateColor(textWidget)
+//        }
+//        textWidget.addModifyListener {
+//            val validate = validate(textWidget.text)
+//            if (validate.fail) {
+//                textWidget.background = ERROR_COLOR()
+//                textWidget.toolTipText = validate.msg
+//                //textWidget.toolTipText = "Valid identifiers cannot start with a number."
+//            } else if (SourceVersion.isKeyword(textWidget.text)) {
+//                textWidget.background = ERROR_COLOR()
+//                textWidget.toolTipText = "'${textWidget.text}' is a reserved keyword in Java." // BUG shown in types
+//            } else {
+//                textWidget.background = BACKGROUND_COLOR()
+//                textWidget.toolTipText = ""
+//            }
+//        }
+    }
+
+
+    open fun isValid() = true
+
+    override val widget: Text get() = textWidget
+
+    override fun setFocus(): Boolean {
+        textWidget.setFocus()
+        textWidget.requestLayout()
+        return true
+    }
+
+
+    override fun addKeyListenerInternal(listener: KeyListener) {
+        textWidget.addKeyListener(listener)
+    }
+
+    fun setReadOnly() {
+        readOnly = true
+    }
+
+    fun set(text: String?) {
+        skip = true
+        textWidget.text = text ?: ""
+        skip = false
+    }
+}
+
+class SimpleNameWidget<N : NodeWithSimpleName<*>>(
+    parent: Composite,
+    override val node: N
+)
+    : NodeWidget<N>, Id(parent, node, ID_CHARS, {
         s ->
     try {
         StaticJavaParser.parseSimpleName(s)
@@ -104,6 +211,7 @@ class SimpleNameWidget<N : Node>(parent: Composite, override val node: N, getNam
 }) {
     init {
         textWidget.data = node
+        addUpdateColor(textWidget)
     }
 
     override fun setFocusOnCreation(firstFlag: Boolean) {
@@ -114,10 +222,29 @@ class SimpleNameWidget<N : Node>(parent: Composite, override val node: N, getNam
 
 }
 
-class SimpleTypeWidget<N : Node>(parent: Composite,  override val node: N, getName: (N) -> String)
-    : TypeId(parent, getName(node)), NodeWidget<N> {
+open class TypeId(parent: Composite, id: NodeWithSimpleName<*>) : Id(parent, id, TYPE_CHARS, {
+        s ->
+    try {
+        StaticJavaParser.parseType(s)
+        Validation(true, "")
+    } catch (e: ParseProblemException) {
+        Validation(false, e.message.toString())
+    }
+})
+
+class SimpleTypeWidget<N : Type>(parent: Composite, override val node: N)
+    : TypeId(parent, object : NodeWithSimpleName<N> {
+    override fun getName() = SimpleName(node.asString())
+
+    override fun setName(name: SimpleName?): N {
+        // do nothing, not applicable
+        return node
+    }
+
+}), NodeWidget<N> {
     init {
         textWidget.data = node
+        addUpdateColor(textWidget)
     }
 
     override fun isValid(): Boolean = isValidType(textWidget.text)
@@ -125,3 +252,7 @@ class SimpleTypeWidget<N : Node>(parent: Composite,  override val node: N, getNa
         setFocus()
     }
 }
+
+
+
+

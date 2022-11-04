@@ -3,8 +3,6 @@ package pt.iscte.javardise.basewidgets
 import org.eclipse.swt.SWT
 import org.eclipse.swt.events.*
 import org.eclipse.swt.widgets.*
-import pt.iscte.javardise.Configuration
-import pt.iscte.javardise.updateColor
 import pt.iscte.javardise.widgets.members.ClassWidget
 import pt.iscte.javardise.widgets.members.MemberWidget
 import pt.iscte.javardise.widgets.statements.IfWidget
@@ -95,23 +93,6 @@ interface TextWidget {
         return listener
     }
 
-    fun addFocusLostAction(
-        isValid: (String) -> Boolean,
-        action: (String) -> Unit
-    ): FocusListener {
-        val listener = object : FocusAdapter() {
-            override fun focusLost(e: FocusEvent?) {
-                if (isValid(widget.text)) {
-                    action(widget.text)
-                    if(!widget.isDisposed)
-                        widget.background = Configuration.BACKGROUND_COLOR
-                } else
-                    widget.background = Configuration.ERROR_COLOR
-            }
-        }
-        widget.addFocusListener(listener)
-        return listener
-    }
 
     fun addDeleteEmptyListener(action: () -> Unit) =
         addKeyEvent(
@@ -137,7 +118,19 @@ interface TextWidget {
         }
     }
 
+//    fun updateColor() {
+//        Companion.updateColor(widget)
+//    }
+
     companion object {
+//        fun updateColor(text: Text) {
+//            if (SourceVersion.isKeyword(text.text))
+//                text.foreground = Configuration.KEYWORD_COLOR
+//            else if (text.isNumeric)
+//                text.foreground = Configuration.NUMBER_COLOR
+//            else
+//                text.foreground = Configuration.FOREGROUND_COLOR
+//        }
 
         fun createText(
             parent: Composite,
@@ -148,7 +141,7 @@ interface TextWidget {
             t.background = parent.background
             t.foreground = parent.foreground
             t.text = text
-            t.font = Configuration.CODE_FONT
+            t.font = parent.font
             t.cursor = Display.getCurrent().getSystemCursor(SWT.CURSOR_HAND)
             t.menu = Menu(t) // to disable system menu
 
@@ -166,6 +159,10 @@ interface TextWidget {
             t.addModifyListener(MODIFY_PACK)
             t.addKeyListener(LISTENER_ARROW_KEYS)
             //t.addMouseTrackListener(MOUSE_FOCUS)
+//            updateColor(t)
+//            t.addModifyListener {
+//                updateColor(t)
+//            }
 
             return t
         }
@@ -218,11 +215,12 @@ interface TextWidget {
                     return listener
                 }
             }
-            w.widget.addModifyListener {
-                updateColor(w)
-            }
+
             return w
         }
+
+
+
 
 
         inline fun <reified T> Control.findAncestorOfType(): T? {

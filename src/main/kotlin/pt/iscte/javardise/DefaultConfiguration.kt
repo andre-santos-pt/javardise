@@ -6,21 +6,17 @@ import org.eclipse.swt.SWT
 import org.eclipse.swt.graphics.Color
 import org.eclipse.swt.graphics.Font
 import org.eclipse.swt.widgets.Composite
-import org.eclipse.swt.widgets.Control
 import org.eclipse.swt.widgets.Display
-import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
 import pt.iscte.javardise.external.ROW_LAYOUT_H_SHRINK
-import pt.iscte.javardise.external.traverse
 import pt.iscte.javardise.widgets.expressions.AssignmentFeature
 import pt.iscte.javardise.widgets.expressions.CallFeature
 import pt.iscte.javardise.widgets.expressions.UnaryExpressionStatementFeature
 import pt.iscte.javardise.widgets.expressions.VariableDeclarationFeature
 import pt.iscte.javardise.widgets.statements.*
-import javax.lang.model.SourceVersion
 
 
-interface Conf {
+interface Configuration {
     val tabLength: Int
     val fontSize: Int
     val fontFace: String
@@ -35,7 +31,7 @@ interface Conf {
     val statementFeatures: List<StatementFeature<out Statement, out StatementWidget<out Statement>>>
 }
 
-object Configuration : Conf {
+object DefaultConfiguration : Configuration {
     override val tabLength = 4
     override val NOPARSE = "\$NOPARSE"
 
@@ -91,25 +87,6 @@ object Configuration : Conf {
     )
 }
 
-fun Control.backgroundDefault() = this.traverse {
-    background = Configuration.BACKGROUND_COLOR
-    foreground = Configuration.FOREGROUND_COLOR
-    true
-}
-
-fun updateColor(textWidget: TextWidget) {
-    if (SourceVersion.isKeyword(textWidget.text))
-        textWidget.widget.foreground = Configuration.KEYWORD_COLOR
-    else if (isNumeric(textWidget.text))
-        textWidget.widget.foreground = Configuration.NUMBER_COLOR
-    else
-        textWidget.widget.foreground = Configuration.FOREGROUND_COLOR
-}
-
-fun isNumeric(toCheck: String): Boolean {
-    val regex = "-?\\d+(\\.\\d+)?".toRegex()
-    return toCheck.matches(regex)
-}
 
 // TODO arrow down
 class UnsupportedWidget<T : Node>(parent: Composite, override val node: T) :

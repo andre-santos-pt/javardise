@@ -179,7 +179,7 @@ class JavardiseWindow(var file: File) {
                     val child = classWidget!!.findChild(t.node)
                     child?.let {
                         child.traverse {
-                            it.background = Configuration.ERROR_COLOR
+                            it.background = (classWidget as ClassWidget).configuration.ERROR_COLOR
                             true
                         }
                         child.toolTipText = e.getMessage(null)
@@ -189,6 +189,12 @@ class JavardiseWindow(var file: File) {
                 // TODO show not handled
             }
         }
+    }
+
+    fun Control.backgroundDefault() = this.traverse {
+        background = (classWidget as ClassWidget).configuration.BACKGROUND_COLOR
+        foreground = (classWidget as ClassWidget).configuration.FOREGROUND_COLOR
+        true
     }
 
 

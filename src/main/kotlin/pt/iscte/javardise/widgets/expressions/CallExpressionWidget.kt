@@ -9,9 +9,9 @@ import com.github.javaparser.ast.stmt.Statement
 import javassist.compiler.ast.CallExpr
 import org.eclipse.swt.SWT
 import org.eclipse.swt.widgets.Composite
+import pt.iscte.javardise.Id
 import pt.iscte.javardise.SimpleNameWidget
 import pt.iscte.javardise.basewidgets.FixedToken
-import pt.iscte.javardise.basewidgets.Id
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.external.*
 import pt.iscte.javardise.modifyCommand
@@ -31,7 +31,7 @@ class CallExpressionWidget(
 
     init {
         layout = ROW_LAYOUT_H_CALL
-        methodName = SimpleNameWidget(this, node.name) { it.asString() }
+        methodName = SimpleNameWidget(this, node)
         methodName.addFocusLostAction(::isValidSimpleName) {
             node.modifyCommand(
                 node.name,

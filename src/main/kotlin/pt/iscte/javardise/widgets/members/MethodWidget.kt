@@ -63,13 +63,16 @@ class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: In
 
     init {
         if (node.isMethodDeclaration) {
-            typeId = SimpleTypeWidget(firstRow, (node as MethodDeclaration).type) { it.asString() }
+            typeId = SimpleTypeWidget(
+                firstRow,
+                (node as MethodDeclaration).type
+            )
             typeId!!.addFocusLostAction(::isValidType) {
                 node.modifyCommand(node.typeAsString, it, node::setType)
             }
         }
 
-        name = SimpleNameWidget(firstRow, node.name) { it.asString() }
+        name = SimpleNameWidget(firstRow, node)
 
         name.addFocusLostAction(::isValidSimpleName) {
             node.modifyCommand(node.nameAsString, it, node::setName)
@@ -225,7 +228,7 @@ class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: In
             init {
                 layout = ROW_LAYOUT_H_SHRINK
                 font = parent.font
-                type = SimpleTypeWidget(this, node.type) { it.asString() }
+                type = SimpleTypeWidget(this, node.type)
                 type.addKeyEvent(SWT.BS, precondition = { it.isEmpty() }) {
                     parameters.removeCommand(this@MethodWidget.node, node) // TODO BUG Index -1 out of bounds for length 1
                 }
@@ -233,7 +236,7 @@ class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: In
                     node.modifyCommand(node.typeAsString, it, node::setType)
                 }
 
-                name = SimpleNameWidget(this, node.name) { it.asString() }
+                name = SimpleNameWidget(this, node)
                 name.addKeyEvent(',') {
                     parameters.addCommand(this@MethodWidget.node, Parameter(StaticJavaParser.parseType("type"), SimpleName("parameter")))
                 }

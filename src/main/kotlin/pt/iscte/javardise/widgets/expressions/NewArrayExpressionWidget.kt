@@ -54,9 +54,7 @@ class NewArrayExpressionWidget(
         }
         else {
             newKeywordWidget(this, "new")
-            val id = SimpleTypeWidget(this, node.elementType) {
-                it.asString()
-            }
+            val id = SimpleTypeWidget(this, node.elementType)
             id.addFocusLostAction(::isValidType) {
                 node.modifyCommand(node.elementType, StaticJavaParser.parseType(id.text), node::setElementType)
             }

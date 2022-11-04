@@ -9,10 +9,10 @@ import com.github.javaparser.ast.stmt.ExpressionStmt
 import com.github.javaparser.ast.stmt.Statement
 import com.github.javaparser.ast.type.Type
 import org.eclipse.swt.widgets.Composite
+import pt.iscte.javardise.Id
 import pt.iscte.javardise.SimpleNameWidget
 import pt.iscte.javardise.SimpleTypeWidget
 import pt.iscte.javardise.basewidgets.FixedToken
-import pt.iscte.javardise.basewidgets.Id
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.external.*
 import pt.iscte.javardise.modifyCommand
@@ -33,7 +33,7 @@ class VariableDeclarationWidget(
     init {
         val decl = node.variables[0] // multi variable not supported
 
-        type = SimpleTypeWidget(this, decl.type) { it.asString() }
+        type = SimpleTypeWidget(this, decl.type)
         type.addFocusLostAction(::isValidType) {
             node.modifyCommand(
                 node.commonType,
@@ -48,7 +48,7 @@ class VariableDeclarationWidget(
                 editEvent(null)
         }
 
-        name = SimpleNameWidget(this, decl) { it.name.asString() }
+        name = SimpleNameWidget(this, decl)
         name.addFocusLostAction(::isValidSimpleName) {
             node.modifyCommand(decl.name, SimpleName(name.text), decl::setName)
         }

@@ -324,3 +324,8 @@ fun Control.traverse(visit: (Control) -> Boolean) {
     if (this is Composite && enter)
         this.children.forEach { it.traverse(visit) }
 }
+
+val Text.isNumeric: Boolean get() {
+    val regex = "-?\\d+(\\.\\d+)?".toRegex()
+    return text.matches(regex)
+}

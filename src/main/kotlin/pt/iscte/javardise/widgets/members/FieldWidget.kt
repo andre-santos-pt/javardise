@@ -9,9 +9,9 @@ import com.github.javaparser.ast.expr.NameExpr
 import com.github.javaparser.ast.expr.SimpleName
 import com.github.javaparser.ast.observer.ObservableProperty
 import org.eclipse.swt.widgets.Composite
+import pt.iscte.javardise.Id
 import pt.iscte.javardise.SimpleNameWidget
 import pt.iscte.javardise.SimpleTypeWidget
-import pt.iscte.javardise.basewidgets.Id
 import pt.iscte.javardise.basewidgets.TokenWidget
 import pt.iscte.javardise.external.getOrNull
 import pt.iscte.javardise.external.isValidSimpleName
@@ -34,15 +34,11 @@ class FieldWidget(parent: Composite, val dec: FieldDeclaration) :
     val semiColon: TokenWidget
 
     init {
-        type = SimpleTypeWidget(firstRow, dec.elementType) {
-            it.asString()
-        }
+        type = SimpleTypeWidget(firstRow, dec.elementType)
 
         type.addInsertModifier()
 
-        name = SimpleNameWidget(firstRow, dec.variable.name) {
-            it.asString()
-        }
+        name = SimpleNameWidget(firstRow, dec.variable)
 
         semiColon = TokenWidget(firstRow, ";")
 

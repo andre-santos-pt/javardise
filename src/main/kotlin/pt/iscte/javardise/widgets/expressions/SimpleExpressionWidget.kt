@@ -10,7 +10,6 @@ import org.eclipse.swt.events.KeyAdapter
 import org.eclipse.swt.events.KeyEvent
 import org.eclipse.swt.events.KeyListener
 import org.eclipse.swt.widgets.Composite
-import pt.iscte.javardise.Configuration
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.external.*
 
@@ -30,7 +29,7 @@ class SimpleExpressionWidget(
 
     init {
         val noparse =
-            node is NameExpr && (node as NameExpr).name.asString() == Configuration.NOPARSE
+            node is NameExpr && (node as NameExpr).name.asString() == configuration.NOPARSE
         val text = if (noparse)
             if (node.comment.isPresent) node.comment.get().content else ""
         else
@@ -41,11 +40,11 @@ class SimpleExpressionWidget(
                 .matches(Regex("[a-zA-Z\\d_().]")) || c == SWT.BS || c == SWT.SPACE
         }
         if (noparse)
-            expression.widget.background = Configuration.ERROR_COLOR
+            expression.widget.background = configuration.ERROR_COLOR
 
         expression.widget.data = node
 
-        updateColor(expression)
+        addUpdateColor(expression.widget)
 
         keyListener = object : KeyAdapter() {
             override fun keyPressed(e: KeyEvent) {
@@ -139,9 +138,9 @@ class SimpleExpressionWidget(
                 pp.editEvent(part.clone())
             }
         }
-        expression.widget.addModifyListener {
-            updateColor(expression)
-        }
+//        expression.widget.addModifyListener {
+//            expression.updateColor()
+//        }
 
         expression.addFocusLostAction {
             if (tryParse<Expression>(expression.text)) {
@@ -154,8 +153,8 @@ class SimpleExpressionWidget(
                     editEvent(node)
                 }
             } else {
-                expression.widget.background = Configuration.ERROR_COLOR
-                val noparse = NameExpr(Configuration.NOPARSE)
+                expression.widget.background = configuration.ERROR_COLOR
+                val noparse = NameExpr(configuration.NOPARSE)
                 noparse.setComment(BlockComment(expression.text))
                 editEvent(noparse)
             }

@@ -7,12 +7,14 @@ import com.github.javaparser.ast.stmt.Statement
 import org.eclipse.swt.SWT
 import org.eclipse.swt.widgets.Composite
 import org.eclipse.swt.widgets.Control
-import pt.iscte.javardise.Configuration
 import pt.iscte.javardise.NodeWidget
 import pt.iscte.javardise.UnsupportedWidget
 import pt.iscte.javardise.addCommand
 import pt.iscte.javardise.external.ListAddRemoveObserver
-import pt.iscte.javardise.widgets.statements.*
+import pt.iscte.javardise.widgets.statements.IfWidget
+import pt.iscte.javardise.widgets.statements.find
+import pt.iscte.javardise.widgets.statements.findByModelIndex
+import pt.iscte.javardise.widgets.statements.findIndexByModel
 
 
 interface SequenceContainer<T : Node> : NodeWidget<T>{
@@ -55,7 +57,7 @@ interface SequenceContainer<T : Node> : NodeWidget<T>{
     }
 
     fun createSequence(parent: Composite, block: BlockStmt): SequenceWidget {
-        val seq = SequenceWidget(parent, Configuration.tabLength) { w, e ->
+        val seq = SequenceWidget(parent, configuration.tabLength) { w, e ->
             createInsert(w, block)
         }
         populateSequence(seq, block)
@@ -126,7 +128,7 @@ interface SequenceContainer<T : Node> : NodeWidget<T>{
             block.statements.addCommand(block.parentNode.get(), stmt, insertIndex)
         }
 
-        Configuration.statementFeatures.forEach {
+        configuration.statementFeatures.forEach {
             it.configureInsert(insert, ::insert)
         }
 

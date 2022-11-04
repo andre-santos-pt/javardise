@@ -11,8 +11,8 @@ import org.eclipse.swt.widgets.Composite
 import pt.iscte.javardise.Command
 import pt.iscte.javardise.CommandKind
 import pt.iscte.javardise.Commands
+import pt.iscte.javardise.TYPE_CHARS
 import pt.iscte.javardise.basewidgets.FixedToken
-import pt.iscte.javardise.basewidgets.TYPE_CHARS
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
 import pt.iscte.javardise.external.*
