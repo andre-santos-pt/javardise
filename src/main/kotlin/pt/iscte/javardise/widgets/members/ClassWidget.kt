@@ -12,6 +12,7 @@ import com.github.javaparser.ast.observer.AstObserver
 import com.github.javaparser.ast.observer.AstObserverAdapter
 import com.github.javaparser.ast.observer.ObservableProperty
 import org.eclipse.swt.SWT
+import org.eclipse.swt.custom.ScrolledComposite
 import org.eclipse.swt.widgets.Composite
 import org.eclipse.swt.widgets.Control
 import org.eclipse.swt.widgets.Display
@@ -55,20 +56,40 @@ class ClassWidget(parent: Composite, type: ClassOrInterfaceDeclaration, configur
     override lateinit var body: SequenceWidget
     override val closingBracket: TokenWidget
 
-    private val observers =
+    private val modelFocusObservers =
         mutableListOf<(BodyDeclaration<*>?, Node?) -> Unit>()
+
+    private val widgetFocusObservers = mutableListOf<(Control)->Unit>()
 
     private val focusListenerGlobal = { event: Event ->
         val control = event.widget as Control
         if (control.isChildOf(this@ClassWidget)) {
+            widgetFocusObservers.forEach {
+                it(control)
+            }
             val memberWidget = control.findNode<BodyDeclaration<*>>()
             val nodeWidget = control.findNode<Node>()
-            observers.forEach {
+            modelFocusObservers.forEach {
                 it(memberWidget, nodeWidget)
             }
         }
     }
 
+    fun setAutoScroll() {
+        require(parent is ScrolledComposite)
+        val scroll = parent as ScrolledComposite
+        addFocusObserver { control ->
+            val p = Display.getDefault().map(control, scroll, control.location)
+            p.x = 0
+            p.y += 10
+            if(p.y < scroll.origin.y) {
+                scroll.origin = p
+            }
+            else if(p.y > scroll.origin.y + scroll.bounds.height) {
+                scroll.origin = p
+            }
+        }
+    }
     enum class TypeTypes {
         CLASS, INTERFACE;
         //, ENUM;
@@ -156,14 +177,18 @@ class ClassWidget(parent: Composite, type: ClassOrInterfaceDeclaration, configur
      * Changes of focus within a member do not trigger an event.
      */
     fun addFocusObserver(action: (BodyDeclaration<*>?, Node?) -> Unit) {
-        observers.add(action)
+        modelFocusObservers.add(action)
+    }
+
+    fun addFocusObserver(action: (Control) -> Unit) {
+        widgetFocusObservers.add(action)
     }
 
     /**
      * Removes a previously registered an observer.
      */
     fun removeFocusObserver(action: (BodyDeclaration<*>?, Node?) -> Unit) {
-        observers.remove(action)
+        modelFocusObservers.remove(action)
     }
 
     private fun registerObservers() {
@@ -208,12 +233,12 @@ class ClassWidget(parent: Composite, type: ClassOrInterfaceDeclaration, configur
     fun createMember(dec: BodyDeclaration<*>): Composite =
         when (dec) {
             is FieldDeclaration -> {
-                val w = FieldWidget(body, dec)
+                val w = FieldWidget(body, dec, configuration = configuration)
                 w.semiColon.addInsert(w, body, true)
                 w
             }
             is MethodDeclaration, is ConstructorDeclaration -> {
-                val w = MethodWidget(body, dec as CallableDeclaration<*>)
+                val w = MethodWidget(body, dec as CallableDeclaration<*>, configuration = configuration)
                 w.closingBracket.addInsert(w, body, true)
                 w
             }
@@ -265,8 +290,7 @@ class ClassWidget(parent: Composite, type: ClassOrInterfaceDeclaration, configur
         }
 
         insert.addKeyEvent(
-            ';',
-            '=',
+            ';', '=',
             SWT.CR,
             precondition = { it.matches(MEMBER_REGEX) }) {
             val split = insert.text.split(Regex("\\s+"))

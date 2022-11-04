@@ -118,7 +118,8 @@ class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: In
         init {
             layout = ROW_LAYOUT_H_SHRINK
             font = parent.font
-
+            background = parent.background
+            foreground = parent.foreground
             if(parameters.isEmpty())
                 createInsert()
 
@@ -224,6 +225,8 @@ class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: In
             init {
                 layout = ROW_LAYOUT_H_SHRINK
                 font = parent.font
+                background = parent.background
+                foreground = parent.foreground
                 type = SimpleTypeWidget(this, node.type)
                 type.addKeyEvent(SWT.BS, precondition = { it.isEmpty() }) {
                     parameters.removeCommand(this@MethodWidget.node, node) // TODO BUG Index -1 out of bounds for length 1

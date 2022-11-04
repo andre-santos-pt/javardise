@@ -7,6 +7,8 @@ import org.eclipse.swt.events.KeyAdapter
 import org.eclipse.swt.events.KeyEvent
 import org.eclipse.swt.widgets.Composite
 import org.eclipse.swt.widgets.Control
+import pt.iscte.javardise.Configuration
+import pt.iscte.javardise.ConfigurationRoot
 import pt.iscte.javardise.NodeWidget
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.external.ROW_LAYOUT_H_SHRINK
@@ -18,7 +20,9 @@ abstract class ExpressionWidget<T : Expression>(parent: Composite)
 
     init {
         layout = ROW_LAYOUT_H_SHRINK
-        font = parent.font
+        font = configuration.font
+        background = configuration.backgroundColor
+        foreground = configuration.foregroundColor
     }
 
     abstract val editEvent: (T?) -> Unit

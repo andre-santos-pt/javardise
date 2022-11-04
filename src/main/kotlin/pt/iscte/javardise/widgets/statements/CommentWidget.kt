@@ -1,4 +1,4 @@
-package pt.iscte.javardise.widgets.members
+package pt.iscte.javardise.widgets.statements
 
 import com.github.javaparser.ast.comments.LineComment
 import com.github.javaparser.ast.stmt.Statement

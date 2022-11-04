@@ -1,7 +1,12 @@
 package pt.iscte.javardise.examples
 
+import com.github.javaparser.ast.Node
+import com.github.javaparser.ast.body.BodyDeclaration
+import org.eclipse.swt.custom.ScrolledComposite
+import org.eclipse.swt.graphics.Point
 import org.eclipse.swt.layout.FillLayout
 import org.eclipse.swt.widgets.Display
+import org.eclipse.swt.widgets.Scrollable
 import org.eclipse.swt.widgets.Shell
 import pt.iscte.javardise.external.findMainClass
 import pt.iscte.javardise.external.loadCompilationUnit
@@ -41,7 +46,7 @@ public class Student {
     shell.layout = FillLayout()
     shell.scrollable {
         ClassWidget(it, clazz)
-   }
+    }.setAutoScroll()
     shell.pack()
     shell.open()
 

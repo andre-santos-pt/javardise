@@ -25,6 +25,9 @@ class TokenWidget(
     }
 
     init {
+        widget.font = parent.font
+        widget.background = parent.background
+        widget.foreground = parent.foreground
         widget.editable = false
         widget.addKeyListener(object : KeyAdapter() {
             override fun keyPressed(e: KeyEvent) {

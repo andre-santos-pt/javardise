@@ -145,6 +145,7 @@ interface TextWidget {
             t.cursor = Display.getCurrent().getSystemCursor(SWT.CURSOR_HAND)
             t.menu = Menu(t) // to disable system menu
 
+
             accept?.let {
                 t.addVerifyListener {
                     it.doit = accept(it.character, t.text)

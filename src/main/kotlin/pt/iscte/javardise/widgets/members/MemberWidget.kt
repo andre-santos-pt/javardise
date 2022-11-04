@@ -26,7 +26,7 @@ abstract class MemberWidget<T : NodeWithModifiers<*>>(
     override val node: T,
     validModifiers: List<Modifier.Keyword> = emptyList(),
     style: Int = SWT.NONE,
-    override val configuration: Configuration
+    final override val configuration: Configuration
 ) : Composite(parent, style), NodeWidget<T>, ConfigurationRoot {
     val modifiers = mutableListOf<TokenWidget>()
 
@@ -47,6 +47,8 @@ abstract class MemberWidget<T : NodeWithModifiers<*>>(
     init {
         layout = ROW_LAYOUT_H_SHRINK
         font = configuration.font
+        background = configuration.backgroundColor
+        foreground = configuration.foregroundColor
         column = column {
             firstRow = row {
                 node.modifiers.forEach {
