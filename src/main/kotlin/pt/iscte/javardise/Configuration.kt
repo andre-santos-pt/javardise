@@ -35,6 +35,7 @@ interface Configuration {
 interface ConfigurationRoot {
     val configuration: Configuration
 }
+
 open class DefaultConfiguration : Configuration {
     override val tabLength = 4
     override val noParseToken = "\$NOPARSE"
@@ -63,7 +64,7 @@ open class DefaultConfiguration : Configuration {
     }
 
     override val keywordColor by lazy {
-        Display.getDefault().getSystemColor(SWT.COLOR_MAGENTA)
+        Color(Display.getDefault(), 204, 120, 50)
     }
 
 

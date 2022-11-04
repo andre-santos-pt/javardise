@@ -52,9 +52,10 @@ class JavardiseClassicIDE(val folder: File) {
         fileArea.layout = stacklayout
 
         fileList.addSelectionListener(object: SelectionAdapter() {
+            var current = -1
             override fun widgetSelected(e: SelectionEvent) {
-                // TODO do nothing when selection does not change
-                if(fileList.selection.isNotEmpty()) {
+                if(fileList.selection.isNotEmpty() && current != fileList.selectionIndex)  {
+                    current = fileList.selectionIndex
                     val find = openTabs.find { it.data == fileList.selection.first() }
                     if(find != null) {
                         stacklayout.topControl = find
