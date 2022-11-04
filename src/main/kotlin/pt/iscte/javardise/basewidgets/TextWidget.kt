@@ -142,7 +142,7 @@ interface TextWidget {
             t.foreground = parent.foreground
             t.text = text
             t.font = parent.font
-            t.cursor = Display.getCurrent().getSystemCursor(SWT.CURSOR_HAND)
+         //   t.cursor = Display.getCurrent().getSystemCursor(SWT.CURSOR_HAND)
             t.menu = Menu(t) // to disable system menu
 
 

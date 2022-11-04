@@ -13,6 +13,7 @@ import com.github.javaparser.ast.stmt.BlockStmt
 import com.github.javaparser.ast.stmt.ExpressionStmt
 import com.github.javaparser.ast.type.Type
 import org.eclipse.swt.SWT
+import org.eclipse.swt.custom.ScrolledComposite
 import org.eclipse.swt.widgets.Composite
 import org.eclipse.swt.widgets.Control
 import org.eclipse.swt.widgets.Display

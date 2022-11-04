@@ -8,6 +8,7 @@ import org.eclipse.swt.widgets.Control
 open class SequenceWidget(
     parent: Composite,
     tabLength: Int,
+    spacing: Int = 0,
     val insertWidgetCreator: (SequenceWidget, Boolean) -> TextWidget
 ) : Composite(parent, SWT.NONE) {
 
@@ -21,7 +22,7 @@ open class SequenceWidget(
         layout.marginLeft = tabLength * 5
         layout.marginTop = 0
         layout.marginBottom = 0
-        layout.verticalSpacing = 0
+        layout.verticalSpacing = spacing
         layout.horizontalSpacing = 0
         setLayout(layout)
     }

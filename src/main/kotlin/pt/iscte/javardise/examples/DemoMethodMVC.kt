@@ -28,7 +28,7 @@ fun main() {
     val method = loadMethod(src)
     val display = Display()
 
-    val shell1 = createShell(display, method, false)
+    val shell1 = createShell(display, method, true)
     shell1.open()
 
     val shell2 = createShell(display, method, true)
@@ -40,7 +40,7 @@ fun main() {
     display.dispose()
 }
 
-private fun createShell(display: Display, model: MethodDeclaration, readonly: Boolean): Shell {
+private fun createShell(display: Display, model: MethodDeclaration, editable: Boolean): Shell {
     val shell = Shell(display)
     shell.layout = FillLayout()
     val methodWidget = shell.column {
@@ -48,7 +48,7 @@ private fun createShell(display: Display, model: MethodDeclaration, readonly: Bo
         val methodWidget = scrollable {
             MethodWidget(it, model, SWT.BORDER)
         }
-        methodWidget.enabled = readonly
+        methodWidget.enabled = editable
         grid(2) {
 
             label("node")

@@ -7,6 +7,7 @@ import com.github.javaparser.ast.observer.AstObserver
 import com.github.javaparser.ast.observer.ObservableProperty
 import com.github.javaparser.ast.stmt.ExpressionStmt
 import com.github.javaparser.ast.stmt.Statement
+import org.eclipse.swt.SWT
 import org.eclipse.swt.widgets.Composite
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
@@ -63,7 +64,7 @@ class UnaryExpressionWidget(
         operatorObserver =
             node.observeNotNullProperty<UnaryExpr.Operator>(ObservableProperty.OPERATOR) {
                 operator.set(it.asString())
-                operator.setFocus()
+                operator.widget.traverse(SWT.TRAVERSE_TAB_NEXT)
             }
     }
 

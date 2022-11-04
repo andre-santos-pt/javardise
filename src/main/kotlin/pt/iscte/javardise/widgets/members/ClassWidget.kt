@@ -157,7 +157,7 @@ class ClassWidget(parent: Composite, type: ClassOrInterfaceDeclaration, configur
         name.addFocusLostAction(::isValidClassType) {
             node.modifyCommand(node.nameAsString, it, node::setName)
         }
-        body = SequenceWidget(column, configuration.tabLength) { seq, _ ->
+        body = SequenceWidget(column, configuration.tabLength, 10) { seq, _ ->
             createInsert(seq)
         }
         TokenWidget(firstRow, "{").addInsert(null, body, false)
