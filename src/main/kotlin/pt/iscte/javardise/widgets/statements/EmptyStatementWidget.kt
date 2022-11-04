@@ -41,7 +41,7 @@ class EmptyStatementWidget(
     }
 }
 
-class EmptyStatementFeature : StatementFeature<EmptyStmt, EmptyStatementWidget>(EmptyStmt::class.java, EmptyStatementWidget::class.java) {
+object EmptyStatementFeature : StatementFeature<EmptyStmt, EmptyStatementWidget>(EmptyStmt::class.java, EmptyStatementWidget::class.java) {
     override fun configureInsert(
         insert: TextWidget,
         output: (Statement) -> Unit

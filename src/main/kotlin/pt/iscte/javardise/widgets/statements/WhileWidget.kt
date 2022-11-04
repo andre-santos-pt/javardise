@@ -76,7 +76,7 @@ class WhileWidget(
     }
 }
 
-class WhileFeature : StatementFeature<WhileStmt, WhileWidget>(WhileStmt::class.java, WhileWidget::class.java) {
+object WhileFeature : StatementFeature<WhileStmt, WhileWidget>(WhileStmt::class.java, WhileWidget::class.java) {
     override fun configureInsert(
         insert: TextWidget,
         output: (Statement) -> Unit

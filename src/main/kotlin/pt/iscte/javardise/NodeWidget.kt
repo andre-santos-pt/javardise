@@ -23,10 +23,23 @@ import pt.iscte.javardise.external.isValidType
 import pt.iscte.javardise.external.traverse
 import javax.lang.model.SourceVersion
 
+val DefaultConfigurationSingleton = DefaultConfiguration()
 interface NodeWidget<T> {
-    val configuration: Configuration get() = DefaultConfiguration
+    val configuration: Configuration get() {
+        val conf by lazy { findConf(control) }
+        return conf
+    }
     val node: T
+    val control: Control
     fun setFocusOnCreation(firstFlag: Boolean = false)
+
+    fun findConf(n: Control): Configuration =
+        if(n is ConfigurationRoot)
+            n.configuration
+        else if(n.parent != null)
+            findConf(n.parent)
+        else
+            DefaultConfigurationSingleton
 
     fun <T : Node> observeProperty(prop: ObservableProperty, event: (T?) -> Unit): AstObserver {
         val obs = object : PropertyObserver<T>(prop) {
@@ -44,7 +57,7 @@ interface NodeWidget<T> {
         editAtion: (String) -> Unit = {}
     ): TokenWidget {
         val w = TokenWidget(parent, keyword, alternatives, editAtion)
-        w.widget.foreground = configuration.KEYWORD_COLOR
+        w.widget.foreground = configuration.keywordColor
         return w
     }
 
@@ -57,9 +70,9 @@ interface NodeWidget<T> {
                 if (isValid(widget.text)) {
                     action(widget.text)
                     if(!widget.isDisposed)
-                        widget.background = configuration.BACKGROUND_COLOR
+                        widget.background = configuration.backgroundColor
                 } else
-                    widget.background = configuration.ERROR_COLOR
+                    widget.background = configuration.errorColor
             }
         }
         widget.addFocusListener(listener)
@@ -68,11 +81,11 @@ interface NodeWidget<T> {
 
     fun updateColor(text: Text) {
         if (SourceVersion.isKeyword(text.text))
-            text.foreground = configuration.KEYWORD_COLOR
+            text.foreground = configuration.keywordColor
         else if (text.isNumeric)
-            text.foreground = configuration.NUMBER_COLOR
+            text.foreground = configuration.numberColor
         else
-            text.foreground = configuration.FOREGROUND_COLOR
+            text.foreground = configuration.foregroundColor
     }
 
     fun addUpdateColor(text: Text) {
@@ -214,6 +227,9 @@ class SimpleNameWidget<N : NodeWithSimpleName<*>>(
         addUpdateColor(textWidget)
     }
 
+    override val control: Control
+        get() = textWidget
+
     override fun setFocusOnCreation(firstFlag: Boolean) {
         textWidget.setFocus()
     }
@@ -251,6 +267,9 @@ class SimpleTypeWidget<N : Type>(parent: Composite, override val node: N)
     override fun setFocusOnCreation(firstFlag: Boolean) {
         setFocus()
     }
+
+    override val control: Control
+        get() = textWidget
 }
 
 

@@ -85,7 +85,7 @@ class AssignExpressionWidget(
 }
 
 
-class AssignmentFeature : StatementFeature<ExpressionStmt, ExpressionStatementWidget>(ExpressionStmt::class.java, ExpressionStatementWidget::class.java) {
+object AssignmentFeature : StatementFeature<ExpressionStmt, ExpressionStatementWidget>(ExpressionStmt::class.java, ExpressionStatementWidget::class.java) {
     override fun configureInsert(
         insert: TextWidget,
         output: (Statement) -> Unit

@@ -113,7 +113,7 @@ class VariableDeclarationWidget(
     }
 }
 
-class VariableDeclarationFeature : StatementFeature<ExpressionStmt, ExpressionStatementWidget>(ExpressionStmt::class.java, ExpressionStatementWidget::class.java) {
+object VariableDeclarationFeature : StatementFeature<ExpressionStmt, ExpressionStatementWidget>(ExpressionStmt::class.java, ExpressionStatementWidget::class.java) {
 
     override fun targets(stmt: Statement): Boolean = stmt is ExpressionStmt && stmt.expression is VariableDeclarationExpr
 

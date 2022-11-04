@@ -24,15 +24,15 @@ class CharacterExpressionWidget(
 
     init {
         val open = FixedToken(this, "'")
-        open.label.foreground = configuration.COMMENT_COLOR
+        open.label.foreground = configuration.commentColor
         text = TextWidget.create(this, node.value)
 
-        text.widget.foreground =  configuration.COMMENT_COLOR
+        text.widget.foreground =  configuration.commentColor
         close = TokenWidget(this, "'")
         close.addDeleteListener {
             editEvent(NameExpr(if(node.value[0].isLetter()) node.value else "expression"))
         }
-        close.widget.foreground =  configuration.COMMENT_COLOR
+        close.widget.foreground =  configuration.commentColor
 
         text.addKeyListenerInternal(object : KeyAdapter() {
             override fun keyPressed(e: KeyEvent) {

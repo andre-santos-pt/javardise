@@ -83,7 +83,7 @@ class ForEachWidget(parent: SequenceWidget, node: ForEachStmt, override val bloc
     }
 }
 
-class ForEachFeature : StatementFeature<ForEachStmt, ForEachWidget>(
+object ForEachFeature : StatementFeature<ForEachStmt, ForEachWidget>(
     ForEachStmt::class.java,
     ForEachWidget::class.java
 ) {

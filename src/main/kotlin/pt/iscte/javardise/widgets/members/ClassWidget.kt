@@ -43,11 +43,12 @@ fun matchModifier(keyword: String) =
 
 
 // TODO require compliant model
-class ClassWidget(parent: Composite, type: ClassOrInterfaceDeclaration) :
+class ClassWidget(parent: Composite, type: ClassOrInterfaceDeclaration, configuration: Configuration = DefaultConfigurationSingleton) :
     MemberWidget<ClassOrInterfaceDeclaration>(
         parent,
         type,
-        listOf(PUBLIC, FINAL, ABSTRACT)
+        listOf(PUBLIC, FINAL, ABSTRACT),
+        configuration = configuration
     ), SequenceContainer<ClassOrInterfaceDeclaration> {
     private val keyword: TokenWidget
     override val name: Id

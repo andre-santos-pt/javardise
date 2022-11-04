@@ -111,7 +111,7 @@ class CallExpressionWidget(
 }
 
 
-class CallFeature : StatementFeature<ExpressionStmt, ExpressionStatementWidget>(
+object CallFeature : StatementFeature<ExpressionStmt, ExpressionStatementWidget>(
     ExpressionStmt::class.java,
     ExpressionStatementWidget::class.java
 ) {

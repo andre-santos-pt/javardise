@@ -130,7 +130,7 @@ class ForWidget(
     }
 }
 
-class ForFeature : StatementFeature<ForStmt, ForWidget>(
+object ForFeature : StatementFeature<ForStmt, ForWidget>(
     ForStmt::class.java,
     ForWidget::class.java
 ) {

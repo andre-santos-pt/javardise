@@ -30,6 +30,8 @@ abstract class StatementWidget<T : Statement>(
         if (node.comment.isPresent) CommentWidget(this, node)
     }
 
+    override val control: Control
+        get() = this
 
 }
 

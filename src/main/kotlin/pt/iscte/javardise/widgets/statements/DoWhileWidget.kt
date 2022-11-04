@@ -74,7 +74,7 @@ class DoWhileWidget(
     }
 }
 
-class DoWhileFeature : StatementFeature<DoStmt, DoWhileWidget>(DoStmt::class.java, DoWhileWidget::class.java) {
+object DoWhileFeature : StatementFeature<DoStmt, DoWhileWidget>(DoStmt::class.java, DoWhileWidget::class.java) {
     override fun configureInsert(
         insert: TextWidget,
         output: (Statement) -> Unit

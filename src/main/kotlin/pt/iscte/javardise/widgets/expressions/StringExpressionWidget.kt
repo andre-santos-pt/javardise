@@ -29,12 +29,12 @@ class StringExpressionWidget(
 
     init {
         val open = FixedToken(this, "\"")
-        open.label.foreground = configuration.COMMENT_COLOR
+        open.label.foreground = configuration.commentColor
         open.addKeyListener(delListener)
         text = TextWidget.create(this, node.value) { _, _ -> true }
-        text.widget.foreground = configuration.COMMENT_COLOR
+        text.widget.foreground = configuration.commentColor
         close = TokenWidget(this, "\"")
-        close.widget.foreground = configuration.COMMENT_COLOR
+        close.widget.foreground = configuration.commentColor
         close.widget.addKeyListener(delListener)
 
         text.addFocusLostAction {

@@ -89,7 +89,7 @@ class ReturnWidget(
     }
 }
 
-class ReturnFeature : StatementFeature<ReturnStmt, ReturnWidget>(ReturnStmt::class.java, ReturnWidget::class.java) {
+object ReturnFeature : StatementFeature<ReturnStmt, ReturnWidget>(ReturnStmt::class.java, ReturnWidget::class.java) {
     override fun configureInsert(
         insert: TextWidget,
         output: (Statement) -> Unit

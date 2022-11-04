@@ -29,7 +29,7 @@ class SimpleExpressionWidget(
 
     init {
         val noparse =
-            node is NameExpr && (node as NameExpr).name.asString() == configuration.NOPARSE
+            node is NameExpr && (node as NameExpr).name.asString() == configuration.noParseToken
         val text = if (noparse)
             if (node.comment.isPresent) node.comment.get().content else ""
         else
@@ -40,7 +40,7 @@ class SimpleExpressionWidget(
                 .matches(Regex("[a-zA-Z\\d_().]")) || c == SWT.BS || c == SWT.SPACE
         }
         if (noparse)
-            expression.widget.background = configuration.ERROR_COLOR
+            expression.widget.background = configuration.errorColor
 
         expression.widget.data = node
 
@@ -153,8 +153,8 @@ class SimpleExpressionWidget(
                     editEvent(node)
                 }
             } else {
-                expression.widget.background = configuration.ERROR_COLOR
-                val noparse = NameExpr(configuration.NOPARSE)
+                expression.widget.background = configuration.errorColor
+                val noparse = NameExpr(configuration.noParseToken)
                 noparse.setComment(BlockComment(expression.text))
                 editEvent(noparse)
             }

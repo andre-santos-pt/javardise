@@ -6,6 +6,7 @@ import org.eclipse.swt.SWT
 import org.eclipse.swt.events.KeyAdapter
 import org.eclipse.swt.events.KeyEvent
 import org.eclipse.swt.widgets.Composite
+import org.eclipse.swt.widgets.Control
 import pt.iscte.javardise.NodeWidget
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.external.ROW_LAYOUT_H_SHRINK
@@ -30,6 +31,9 @@ abstract class ExpressionWidget<T : Expression>(parent: Composite)
         tail.removeKeyListeners()
         super.dispose()
     }
+
+    override val control: Control
+        get() = this
 }
 
 // TODO Expression features

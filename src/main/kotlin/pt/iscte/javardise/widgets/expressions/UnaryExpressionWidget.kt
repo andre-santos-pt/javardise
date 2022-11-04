@@ -98,7 +98,7 @@ class UnaryExpressionWidget(
         get() = expressionWidget.tail
 }
 
-class UnaryExpressionStatementFeature : StatementFeature<ExpressionStmt, ExpressionStatementWidget>(
+object UnaryExpressionStatementFeature : StatementFeature<ExpressionStmt, ExpressionStatementWidget>(
     ExpressionStmt::class.java,
     ExpressionStatementWidget::class.java
 ) {

@@ -10,6 +10,7 @@ import com.github.javaparser.ast.observer.AstObserverAdapter
 import com.github.javaparser.ast.stmt.ExpressionStmt
 import org.eclipse.swt.SWT
 import org.eclipse.swt.widgets.Composite
+import org.eclipse.swt.widgets.Control
 import org.eclipse.swt.widgets.Display
 import org.eclipse.swt.widgets.Text
 import pt.iscte.javardise.*
@@ -24,8 +25,9 @@ abstract class MemberWidget<T : NodeWithModifiers<*>>(
     parent: Composite,
     override val node: T,
     validModifiers: List<Modifier.Keyword> = emptyList(),
-    style: Int = SWT.NONE
-) : Composite(parent, style), NodeWidget<T> {
+    style: Int = SWT.NONE,
+    override val configuration: Configuration
+) : Composite(parent, style), NodeWidget<T>, ConfigurationRoot {
     val modifiers = mutableListOf<TokenWidget>()
 
     val column: Composite
@@ -39,9 +41,12 @@ abstract class MemberWidget<T : NodeWithModifiers<*>>(
         }.map { it.asString() }
     }
 
+    override val control: Control
+        get() = this
+
     init {
         layout = ROW_LAYOUT_H_SHRINK
-        font = configuration.CODE_FONT
+        font = configuration.font
         column = column {
             firstRow = row {
                 node.modifiers.forEach {

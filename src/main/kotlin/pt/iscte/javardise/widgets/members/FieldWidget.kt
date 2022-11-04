@@ -9,20 +9,18 @@ import com.github.javaparser.ast.expr.NameExpr
 import com.github.javaparser.ast.expr.SimpleName
 import com.github.javaparser.ast.observer.ObservableProperty
 import org.eclipse.swt.widgets.Composite
-import pt.iscte.javardise.Id
-import pt.iscte.javardise.SimpleNameWidget
-import pt.iscte.javardise.SimpleTypeWidget
+import org.eclipse.swt.widgets.Control
+import pt.iscte.javardise.*
 import pt.iscte.javardise.basewidgets.TokenWidget
 import pt.iscte.javardise.external.getOrNull
 import pt.iscte.javardise.external.isValidSimpleName
 import pt.iscte.javardise.external.isValidType
 import pt.iscte.javardise.external.observeProperty
-import pt.iscte.javardise.modifyCommand
 import pt.iscte.javardise.widgets.expressions.ExpressionWidget
 import pt.iscte.javardise.widgets.expressions.createExpressionWidget
 
-class FieldWidget(parent: Composite, val dec: FieldDeclaration) :
-    MemberWidget<FieldDeclaration>(parent, dec, listOf(PUBLIC, PRIVATE, PROTECTED, FINAL)) {
+class FieldWidget(parent: Composite, val dec: FieldDeclaration, configuration: Configuration = DefaultConfigurationSingleton) :
+    MemberWidget<FieldDeclaration>(parent, dec, listOf(PUBLIC, PRIVATE, PROTECTED, FINAL), configuration = configuration) {
 
     // multi var is transformed to list of singles on parse
     val FieldDeclaration.variable: VariableDeclarator get() = this.variables[0]
@@ -32,6 +30,7 @@ class FieldWidget(parent: Composite, val dec: FieldDeclaration) :
     var equals: TokenWidget? = null
     var initializer: ExpressionWidget<*>? = null
     val semiColon: TokenWidget
+
 
     init {
         type = SimpleTypeWidget(firstRow, dec.elementType)

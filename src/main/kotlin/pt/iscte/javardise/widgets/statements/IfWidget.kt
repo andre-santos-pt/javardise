@@ -12,6 +12,7 @@ import com.github.javaparser.ast.stmt.IfStmt
 import com.github.javaparser.ast.stmt.Statement
 import org.eclipse.swt.SWT
 import org.eclipse.swt.widgets.Composite
+import org.eclipse.swt.widgets.Control
 import pt.iscte.javardise.basewidgets.*
 import pt.iscte.javardise.external.*
 import pt.iscte.javardise.modifyCommand
@@ -156,10 +157,13 @@ class IfWidget(
         override fun setFocusOnCreation(firstFlag: Boolean) {
             focusOpenBracket()
         }
+
+        override val control: Control
+            get() = this
     }
 }
 
-class IfFeature : StatementFeature<IfStmt, IfWidget>(IfStmt::class.java, IfWidget::class.java) {
+object IfFeature : StatementFeature<IfStmt, IfWidget>(IfStmt::class.java, IfWidget::class.java) {
     override fun configureInsert(
         insert: TextWidget,
         output: (Statement) -> Unit

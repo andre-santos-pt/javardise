@@ -22,14 +22,10 @@ import pt.iscte.javardise.basewidgets.*
 import pt.iscte.javardise.external.*
 import pt.iscte.javardise.widgets.statements.addInsert
 
-class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: Int = SWT.NONE,
-//                   val customConfiguration: Conf? = null
-) :
-    MemberWidget<CallableDeclaration<*>>(parent, dec, style = style),
+class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: Int = SWT.NONE, configuration: Configuration = DefaultConfigurationSingleton) :
+    MemberWidget<CallableDeclaration<*>>(parent, dec, style = style, configuration = configuration),
     SequenceContainer<CallableDeclaration<*>> {
 
-    //override val configuration: Conf get() = customConfiguration ?: super<MemberWidget>.configuration
-//    constructor(configuration: Conf, parent: Composite, dec: CallableDeclaration<*>) : this(parent, dec)
 
     var typeId: Id? = null
     override val name: Id
@@ -265,6 +261,9 @@ class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: In
                 else
                     type.setFocus()
             }
+
+            override val control: Control
+                get() = this
         }
     }
 
