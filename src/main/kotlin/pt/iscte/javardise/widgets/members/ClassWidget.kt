@@ -48,7 +48,7 @@ class ClassWidget(parent: Composite, type: ClassOrInterfaceDeclaration) :
         parent,
         type,
         listOf(PUBLIC, FINAL, ABSTRACT)
-    ), SequenceContainer {
+    ), SequenceContainer<ClassOrInterfaceDeclaration> {
     private val keyword: TokenWidget
     override val name: Id
     override lateinit var body: SequenceWidget
@@ -96,7 +96,7 @@ class ClassWidget(parent: Composite, type: ClassOrInterfaceDeclaration) :
 
     init {
         layout = ROW_LAYOUT_H_SHRINK
-        keyword = Factory.newKeywordWidget(firstRow, "class",
+        keyword = newKeywordWidget(firstRow, "class",
             alternatives = { TypeTypes.values().map { it.name.lowercase() } }) {
             Commands.execute(object : Command {
                 override val target = node
@@ -137,7 +137,7 @@ class ClassWidget(parent: Composite, type: ClassOrInterfaceDeclaration) :
         name.addFocusLostAction(::isValidClassType) {
             node.modifyCommand(node.nameAsString, it, node::setName)
         }
-        body = SequenceWidget(column, Configuration.tabLength) { seq, _ ->
+        body = SequenceWidget(column, configuration.tabLength) { seq, _ ->
             createInsert(seq)
         }
         TokenWidget(firstRow, "{").addInsert(null, body, false)
@@ -219,7 +219,15 @@ class ClassWidget(parent: Composite, type: ClassOrInterfaceDeclaration) :
                 w
             }
             else -> {
-                UnsupportedWidget(body, dec)
+                val w = UnsupportedWidget(body, dec)
+                w.widget.addDeleteListener {
+                    this@ClassWidget.node.members.removeCommand(
+                        node as Node,
+                        dec
+                    )
+                }
+                w.widget.addInsert(w, body, true)
+                w
             }
         }.apply {
             if (this is MemberWidget<*>) {

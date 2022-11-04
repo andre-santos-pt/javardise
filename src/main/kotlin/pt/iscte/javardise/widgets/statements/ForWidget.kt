@@ -10,7 +10,6 @@ import com.github.javaparser.ast.stmt.Statement
 import com.github.javaparser.ast.type.PrimitiveType
 import org.eclipse.swt.SWT
 import org.eclipse.swt.widgets.Composite
-import pt.iscte.javardise.Factory
 import pt.iscte.javardise.basewidgets.*
 import pt.iscte.javardise.changeCommand
 import pt.iscte.javardise.external.*
@@ -25,7 +24,7 @@ class ForWidget(
     node: ForStmt,
     override val block: BlockStmt
 ) :
-    StatementWidget<ForStmt>(parent, node), SequenceContainer {
+    StatementWidget<ForStmt>(parent, node), SequenceContainer<ForStmt> {
 
     lateinit var keyword: TokenWidget
     var init: ExpressionWidget<*>? = null
@@ -42,7 +41,7 @@ class ForWidget(
     init {
         val col = column {
             firstRow = row {
-                keyword = Factory.newKeywordWidget(this, "for")
+                keyword = newKeywordWidget(this, "for")
                 keyword.addDelete(node, block)
                 FixedToken(this, "(")
 

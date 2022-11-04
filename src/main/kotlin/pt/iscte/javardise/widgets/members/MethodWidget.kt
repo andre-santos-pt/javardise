@@ -21,10 +21,15 @@ import pt.iscte.javardise.*
 import pt.iscte.javardise.basewidgets.*
 import pt.iscte.javardise.external.*
 import pt.iscte.javardise.widgets.statements.addInsert
-import pt.iscte.javardise.widgets.statements.createSequence
 
-class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: Int = SWT.NONE) :
-    MemberWidget<CallableDeclaration<*>>(parent, dec, style = style), SequenceContainer {
+class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: Int = SWT.NONE,
+//                   val customConfiguration: Conf? = null
+) :
+    MemberWidget<CallableDeclaration<*>>(parent, dec, style = style),
+    SequenceContainer<CallableDeclaration<*>> {
+
+    //override val configuration: Conf get() = customConfiguration ?: super<MemberWidget>.configuration
+//    constructor(configuration: Conf, parent: Composite, dec: CallableDeclaration<*>) : this(parent, dec)
 
     var typeId: Id? = null
     override val name: Id
@@ -187,7 +192,7 @@ class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: In
 
         private fun createInsert() {
             val newInsert = TextWidget.create(this, " ") { c, s ->
-                c.toString().matches(TYPE_CHARS)
+                c.toString().matches(TYPE_CHARS) || c == SWT.BS
             }
             newInsert.addKeyEvent(SWT.SPACE, precondition = { isValidType(it) }) {
                 parameters.addCommand(node, Parameter(StaticJavaParser.parseType(newInsert.text), "parameter"))

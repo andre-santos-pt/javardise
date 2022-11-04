@@ -10,6 +10,9 @@ public class TestExample {
         }
     }
 
+    class Inner {
+
+    }
     public static int fact(int n) {
         int x = 7;
         while(x == 0) {

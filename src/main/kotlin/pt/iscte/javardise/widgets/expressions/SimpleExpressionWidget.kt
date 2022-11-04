@@ -11,10 +11,8 @@ import org.eclipse.swt.events.KeyEvent
 import org.eclipse.swt.events.KeyListener
 import org.eclipse.swt.widgets.Composite
 import pt.iscte.javardise.Configuration
-import pt.iscte.javardise.ERROR_COLOR
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.external.*
-import pt.iscte.javardise.updateColor
 
 val TYPE = Regex("[a-zA-Z]\\w*")
 
@@ -43,7 +41,7 @@ class SimpleExpressionWidget(
                 .matches(Regex("[a-zA-Z\\d_().]")) || c == SWT.BS || c == SWT.SPACE
         }
         if (noparse)
-            expression.widget.background = ERROR_COLOR()
+            expression.widget.background = Configuration.ERROR_COLOR
 
         expression.widget.data = node
 
@@ -156,7 +154,7 @@ class SimpleExpressionWidget(
                     editEvent(node)
                 }
             } else {
-                expression.widget.background = ERROR_COLOR()
+                expression.widget.background = Configuration.ERROR_COLOR
                 val noparse = NameExpr(Configuration.NOPARSE)
                 noparse.setComment(BlockComment(expression.text))
                 editEvent(noparse)

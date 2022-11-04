@@ -53,7 +53,7 @@ class NewArrayExpressionWidget(
             TODO("init ${node.initializer.get()}")
         }
         else {
-            Factory.newKeywordWidget(this, "new")
+            newKeywordWidget(this, "new")
             val id = SimpleTypeWidget(this, node.elementType) {
                 it.asString()
             }

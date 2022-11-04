@@ -9,7 +9,6 @@ import com.github.javaparser.ast.stmt.ForEachStmt
 import com.github.javaparser.ast.stmt.Statement
 import com.github.javaparser.ast.type.PrimitiveType
 import org.eclipse.swt.widgets.Composite
-import pt.iscte.javardise.Factory
 import pt.iscte.javardise.basewidgets.*
 import pt.iscte.javardise.external.column
 import pt.iscte.javardise.external.observeNotNullProperty
@@ -19,7 +18,7 @@ import pt.iscte.javardise.widgets.expressions.ExpressionWidget
 import pt.iscte.javardise.widgets.expressions.createExpressionWidget
 
 class ForEachWidget(parent: SequenceWidget, node: ForEachStmt, override val block: BlockStmt) :
-    StatementWidget<ForEachStmt>(parent, node), SequenceContainer {
+    StatementWidget<ForEachStmt>(parent, node), SequenceContainer<ForEachStmt> {
 
     lateinit var keyword: TokenWidget
     lateinit var variable: ExpressionWidget<*>
@@ -33,7 +32,7 @@ class ForEachWidget(parent: SequenceWidget, node: ForEachStmt, override val bloc
     init {
         column {
             firstRow = row {
-                keyword = Factory.newKeywordWidget(this, "for")
+                keyword = newKeywordWidget(this, "for")
                 keyword.addDelete(node, block)
                 FixedToken(this, "(")
                 variable = this.createVarExp(this, node.variable)

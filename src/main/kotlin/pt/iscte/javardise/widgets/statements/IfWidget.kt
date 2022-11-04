@@ -12,7 +12,6 @@ import com.github.javaparser.ast.stmt.IfStmt
 import com.github.javaparser.ast.stmt.Statement
 import org.eclipse.swt.SWT
 import org.eclipse.swt.widgets.Composite
-import pt.iscte.javardise.Factory
 import pt.iscte.javardise.basewidgets.*
 import pt.iscte.javardise.external.*
 import pt.iscte.javardise.modifyCommand
@@ -25,7 +24,7 @@ class IfWidget(
     node: IfStmt,
     override val block: BlockStmt
 ) :
-    StatementWidget<IfStmt>(parent, node), SequenceContainer {
+    StatementWidget<IfStmt>(parent, node), SequenceContainer<IfStmt> {
 
     var column: Composite
     lateinit var firstRow: Composite
@@ -42,7 +41,7 @@ class IfWidget(
     init {
         column = column {
             firstRow = row {
-                keyword = Factory.newKeywordWidget(this, "if")
+                keyword = newKeywordWidget(this, "if")
                 keyword.addDelete(node, block)
                 //keyword.setCopySource(node)
                 openClause = FixedToken(this, "(")
@@ -117,7 +116,7 @@ class IfWidget(
         condition.setFocus()
     }
 
-    inner class ElseWidget(parent: Composite, elseStatement: Statement) : Composite(parent, SWT.NONE), SequenceContainer {
+    inner class ElseWidget(parent: Composite, elseStatement: Statement) : Composite(parent, SWT.NONE), SequenceContainer<IfStmt> {
         lateinit var openBracketElse: TokenWidget
         lateinit var elseBody: SequenceWidget
         lateinit var closeBracketElse: TokenWidget
@@ -128,7 +127,7 @@ class IfWidget(
             font = parent.font
             column {
                 row {
-                    keyword = Factory.newKeywordWidget(this, "else")
+                    keyword = newKeywordWidget(this, "else")
                     keyword.addKeyEvent(SWT.BS) {
                         node.modifyCommand(node.elseStmt.getOrNull, null, node::setElseStmt)
                     }
@@ -150,6 +149,13 @@ class IfWidget(
 
         override val closingBracket: TextWidget
             get() = closeBracketElse
+
+        override val node: IfStmt
+            get() = this@IfWidget.node
+
+        override fun setFocusOnCreation(firstFlag: Boolean) {
+            focusOpenBracket()
+        }
     }
 }
 

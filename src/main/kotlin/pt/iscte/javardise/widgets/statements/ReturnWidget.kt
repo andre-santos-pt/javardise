@@ -7,7 +7,6 @@ import com.github.javaparser.ast.stmt.BlockStmt
 import com.github.javaparser.ast.stmt.ReturnStmt
 import com.github.javaparser.ast.stmt.Statement
 import org.eclipse.swt.SWT
-import pt.iscte.javardise.Factory
 import pt.iscte.javardise.basewidgets.SequenceWidget
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
@@ -29,7 +28,7 @@ class ReturnWidget(
 
 
     init {
-        keyword = Factory.newKeywordWidget(this, "return")
+        keyword = newKeywordWidget(this, "return")
         keyword.addKeyEvent(
             SWT.SPACE,
             precondition = { !node.expression.isPresent }) {

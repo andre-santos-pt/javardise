@@ -25,7 +25,7 @@ abstract class MemberWidget<T : NodeWithModifiers<*>>(
     override val node: T,
     validModifiers: List<Modifier.Keyword> = emptyList(),
     style: Int = SWT.NONE
-) : Composite(parent, style), NodeWidget<NodeWithModifiers<*>> {
+) : Composite(parent, style), NodeWidget<T> {
     val modifiers = mutableListOf<TokenWidget>()
 
     val column: Composite
@@ -41,7 +41,7 @@ abstract class MemberWidget<T : NodeWithModifiers<*>>(
 
     init {
         layout = ROW_LAYOUT_H_SHRINK
-        font = Configuration.CODE_FONT
+        font = configuration.CODE_FONT
         column = column {
             firstRow = row {
                 node.modifiers.forEach {
@@ -101,7 +101,7 @@ abstract class MemberWidget<T : NodeWithModifiers<*>>(
         parent: Composite,
         modifier: Modifier
     ): TokenWidget {
-        val mod = Factory.newKeywordWidget(
+        val mod = newKeywordWidget(
             parent,
             modifier.keyword.asString(),
             filterModifiers

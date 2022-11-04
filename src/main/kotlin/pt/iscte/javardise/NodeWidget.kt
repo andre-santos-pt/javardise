@@ -8,18 +8,15 @@ import com.github.javaparser.ast.observer.ObservableProperty
 import org.eclipse.swt.widgets.Composite
 import org.eclipse.swt.widgets.Control
 import org.eclipse.swt.widgets.Text
-import pt.iscte.javardise.basewidgets.ID_CHARS
-import pt.iscte.javardise.basewidgets.Id
-import pt.iscte.javardise.basewidgets.TYPE_CHARS
-import pt.iscte.javardise.basewidgets.Validation
+import pt.iscte.javardise.basewidgets.*
 import pt.iscte.javardise.external.PropertyObserver
 import pt.iscte.javardise.external.isValidType
 import pt.iscte.javardise.external.traverse
 import javax.lang.model.SourceVersion
 
 interface NodeWidget<T> {
+    val configuration: Conf get() = Configuration
     val node: T
-
     fun setFocusOnCreation(firstFlag: Boolean = false)
 
     fun <T : Node> observeProperty(prop: ObservableProperty, event: (T?) -> Unit): AstObserver {
@@ -30,6 +27,25 @@ interface NodeWidget<T> {
         }
         (node as Node).register(obs)
         return obs
+    }
+
+    fun newKeywordWidget(
+        parent: Composite, keyword: String,
+        alternatives: () -> List<String> = { emptyList() },
+        editAtion: (String) -> Unit = {}
+    ): TokenWidget {
+        val w = TokenWidget(parent, keyword, alternatives, editAtion)
+        w.widget.foreground = configuration.KEYWORD_COLOR
+        return w
+    }
+
+    fun updateColor(textWidget: TextWidget) {
+        if (SourceVersion.isKeyword(textWidget.text))
+            textWidget.widget.foreground = configuration.KEYWORD_COLOR
+        else if (isNumeric(textWidget.text))
+            textWidget.widget.foreground = configuration.NUMBER_COLOR
+        else
+            textWidget.widget.foreground = configuration.FOREGROUND_COLOR
     }
 }
 

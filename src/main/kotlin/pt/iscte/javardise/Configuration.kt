@@ -1,15 +1,16 @@
 package pt.iscte.javardise
 
 import com.github.javaparser.ast.Node
+import com.github.javaparser.ast.stmt.Statement
 import org.eclipse.swt.SWT
+import org.eclipse.swt.graphics.Color
 import org.eclipse.swt.graphics.Font
-import org.eclipse.swt.layout.FillLayout
 import org.eclipse.swt.widgets.Composite
 import org.eclipse.swt.widgets.Control
 import org.eclipse.swt.widgets.Display
-import org.eclipse.swt.widgets.Label
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
+import pt.iscte.javardise.external.ROW_LAYOUT_H_SHRINK
 import pt.iscte.javardise.external.traverse
 import pt.iscte.javardise.widgets.expressions.AssignmentFeature
 import pt.iscte.javardise.widgets.expressions.CallFeature
@@ -18,29 +19,55 @@ import pt.iscte.javardise.widgets.expressions.VariableDeclarationFeature
 import pt.iscte.javardise.widgets.statements.*
 import javax.lang.model.SourceVersion
 
-val ERROR_COLOR = { Display.getDefault().getSystemColor(SWT.COLOR_RED) }
 
-val FOREGROUND_COLOR =
-    { Display.getDefault().getSystemColor(SWT.COLOR_WIDGET_FOREGROUND) }
+interface Conf {
+    val tabLength: Int
+    val fontSize: Int
+    val fontFace: String
+    val NOPARSE: String
+    val ERROR_COLOR: Color
+    val CODE_FONT: Font
+    val FOREGROUND_COLOR: Color
+    val BACKGROUND_COLOR: Color
+    val NUMBER_COLOR: Color
+    val COMMENT_COLOR: Color
+    val KEYWORD_COLOR: Color
+    val statementFeatures: List<StatementFeature<out Statement, out StatementWidget<out Statement>>>
+}
 
-val BACKGROUND_COLOR =
-    { Display.getDefault().getSystemColor(SWT.COLOR_WIDGET_BACKGROUND) }
+object Configuration : Conf {
+    override val tabLength = 4
+    override val NOPARSE = "\$NOPARSE"
 
-val COMMENT_COLOR = { Display.getDefault().getSystemColor(SWT.COLOR_GREEN) }
+    override val fontSize = 18
+    override val fontFace = "Menlo"
 
-val KEYWORD_COLOR = { Display.getDefault().getSystemColor(SWT.COLOR_MAGENTA) }
+    override val ERROR_COLOR by lazy {
+        Display.getDefault().getSystemColor(SWT.COLOR_RED)
+    }
 
-val NUMBER_COLOR by lazy { Display.getDefault().getSystemColor(SWT.COLOR_CYAN) }
+    override val FOREGROUND_COLOR by lazy {
+        Display.getDefault().getSystemColor(SWT.COLOR_WIDGET_FOREGROUND)
+    }
+
+    override val BACKGROUND_COLOR by lazy {
+        Display.getDefault().getSystemColor(SWT.COLOR_WIDGET_BACKGROUND)
+    }
+
+    override val NUMBER_COLOR by lazy {
+        Display.getDefault().getSystemColor(SWT.COLOR_CYAN)
+    }
+
+    override val COMMENT_COLOR by lazy {
+        Display.getDefault().getSystemColor(SWT.COLOR_GREEN)
+    }
+
+    override val KEYWORD_COLOR by lazy {
+        Display.getDefault().getSystemColor(SWT.COLOR_MAGENTA)
+    }
 
 
-object Configuration {
-    const val tabLength = 4
-    const val NOPARSE = "\$NOPARSE"
-
-    const val fontSize = 18
-    const val fontFace = "Menlo"
-
-    val CODE_FONT by lazy {
+    override val CODE_FONT by lazy {
         Font(
             Display.getDefault(),
             fontFace,
@@ -49,7 +76,7 @@ object Configuration {
         )
     }
 
-    val statementFeatures = listOf(
+    override val statementFeatures = listOf(
         EmptyStatementFeature(),
         ReturnFeature(),
         IfFeature(),
@@ -65,18 +92,18 @@ object Configuration {
 }
 
 fun Control.backgroundDefault() = this.traverse {
-    background = BACKGROUND_COLOR()
-    foreground = FOREGROUND_COLOR()
+    background = Configuration.BACKGROUND_COLOR
+    foreground = Configuration.FOREGROUND_COLOR
     true
 }
 
 fun updateColor(textWidget: TextWidget) {
     if (SourceVersion.isKeyword(textWidget.text))
-        textWidget.widget.foreground = KEYWORD_COLOR()
+        textWidget.widget.foreground = Configuration.KEYWORD_COLOR
     else if (isNumeric(textWidget.text))
-        textWidget.widget.foreground = NUMBER_COLOR
+        textWidget.widget.foreground = Configuration.NUMBER_COLOR
     else
-        textWidget.widget.foreground = FOREGROUND_COLOR()
+        textWidget.widget.foreground = Configuration.FOREGROUND_COLOR
 }
 
 fun isNumeric(toCheck: String): Boolean {
@@ -84,33 +111,24 @@ fun isNumeric(toCheck: String): Boolean {
     return toCheck.matches(regex)
 }
 
-class UnsupportedWidget<T: Node> (parent: Composite, override val node: T) : Composite(parent,
-    SWT.NONE
-), NodeWidget<T> {
+// TODO arrow down
+class UnsupportedWidget<T : Node>(parent: Composite, override val node: T) :
+    Composite(
+        parent,
+        SWT.NONE
+    ), NodeWidget<T> {
+    val widget: TokenWidget
+
     init {
-        layout = FillLayout()
-        val label = Label(this, SWT.NONE)
-        label.text = node.toString()
-        label.font = Configuration.CODE_FONT
-        label.foreground = Display.getDefault()
-            .getSystemColor(SWT.COLOR_DARK_GRAY)
-        label.toolTipText = "Unsupported"
-        label
+        layout = ROW_LAYOUT_H_SHRINK
+        widget = TokenWidget(this, node.toString())
+        widget.widget.font = configuration.CODE_FONT
+        widget.widget.foreground = configuration.ERROR_COLOR
+        widget.setToolTip("Unsupported")
+        widget
     }
 
     override fun setFocusOnCreation(firstFlag: Boolean) {
-       setFocus()
-    }
-}
-
-object Factory {
-    fun newKeywordWidget(
-        parent: Composite, keyword: String,
-        alternatives: () -> List<String> = { emptyList() },
-        editAtion: (String) -> Unit = {}
-    ): TokenWidget {
-        val w = TokenWidget(parent, keyword, alternatives, editAtion)
-        w.widget.foreground = KEYWORD_COLOR()
-        return w
+        setFocus()
     }
 }

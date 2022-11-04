@@ -29,6 +29,8 @@ abstract class StatementWidget<T : Statement>(
         font = parent.font
         if (node.comment.isPresent) CommentWidget(this, node)
     }
+
+
 }
 
 
@@ -54,14 +56,7 @@ abstract class StatementFeature<M: Statement, W: NodeWidget<*>>(val modelClass: 
 
 
 
-fun addWidget(stmt: Statement, block: BlockStmt, parent: SequenceWidget): NodeWidget<*> {
-    val statementFeature = Configuration.statementFeatures.find { it.targets(stmt) }
-    if(statementFeature != null)
-        return statementFeature.create(parent, stmt, block)
-    else
-        return UnsupportedWidget(parent, stmt)
-//        throw UnsupportedOperationException("NA $stmt ${stmt::class}")
-}
+
 
 
 
@@ -76,96 +71,12 @@ fun SequenceWidget.findIndexByModel(control: Control): Int {
     return -1
 }
 
-fun createInsert(seq: SequenceWidget, block: BlockStmt): TextWidget {
-    val insert = TextWidget.create(seq) { c, s ->
-        c.toString().matches(Regex("\\w|\\[|]|\\.|\\+|-|\\*|/|%"))
-                || c == SWT.SPACE && !s.endsWith(SWT.SPACE)
-                || c == SWT.BS
-    }
-
-//    val insert = EmptyStatement(seq, EmptyStmt(), block) { c, s ->
-//                c.toString().matches(Regex("\\w|\\[|]|\\.|\\+|-|\\*|/|%"))
-//                || c == SWT.SPACE && !s.endsWith(SWT.SPACE)
-//                || c == SWT.BS
-//    }
-
-    fun insert(stmt: Statement) {
-        val insertIndex = seq.findIndexByModel(insert.widget)
-        insert.delete()
-        block.statements.addCommand(block.parentNode.get(), stmt, insertIndex)
-    }
-
-    Configuration.statementFeatures.forEach {
-        it.configureInsert(insert, ::insert)
-    }
-
-    insert.addFocusLostAction {
-        insert.clear()
-    }
-
-//    insert.addKeyListenerInternal(object : KeyAdapter() {
-//        override fun keyPressed(e: KeyEvent) {
-//            if ((e.stateMask == SWT.MOD1) && (e.keyCode == 'v'.code)) {
-//                Clipboard.paste(block, seq.findIndexByModel(insert.widget))
-//            }
-//        }
-//    })
-    return insert
-}
 
 
-fun createSequence(parent: Composite, block: BlockStmt): SequenceWidget {
-    val seq = SequenceWidget(parent, Configuration.tabLength) { w, e ->
-        createInsert(w, block)
-    }
-    populateSequence(seq, block)
-    return seq
-}
 
-fun populateSequence(seq: SequenceWidget, block: BlockStmt) {
-    block.statements.forEach {
-        addWidget(it, block, seq)
-    }
-    block.statements.register(object : ListAddRemoveObserver<Statement>() {
-        override fun elementAdd(
-            list: NodeList<Statement>,
-            index: Int,
-            node: Statement
-        ) {
-            val prev = seq.findByModelIndex(index) as? Control
-            val w = addWidget(node, block, seq)
-            if (prev != null) (w as Composite).moveAbove(prev) // bug with comments?
-            seq.requestLayout()
-            w.setFocusOnCreation()
-        }
 
-        override fun elementRemove(
-            list: NodeList<Statement>,
-            index: Int,
-            node: Statement
-        ) {
-            val control = seq.find(node) as? Control
-            val index = seq.children.indexOf(control)
 
-            control?.dispose()
-            seq.requestLayout()
 
-            val childrenLen = seq.children.size
-            if (index < childrenLen) seq.children[index].setFocus()
-            else if (index - 1 in 0 until childrenLen) seq.children[index - 1].setFocus()
-            else seq.parent.setFocus()
-        }
-
-        override fun elementReplace(
-            list: NodeList<Statement>,
-            index: Int,
-            old: Statement,
-            new: Statement
-        ) {
-            TODO("Not yet implemented")
-        }
-    })
-}
 
 fun <T : Node> SequenceWidget.find(predicate: (T) -> Boolean): NodeWidget<T>? =
     children.find { predicate((it as NodeWidget<T>).node) } as NodeWidget<T>

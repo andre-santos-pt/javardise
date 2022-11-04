@@ -8,13 +8,11 @@ import com.github.javaparser.ast.stmt.DoStmt
 import com.github.javaparser.ast.stmt.Statement
 import org.eclipse.swt.SWT
 import org.eclipse.swt.widgets.Composite
-import pt.iscte.javardise.Factory
 import pt.iscte.javardise.basewidgets.*
 import pt.iscte.javardise.external.column
 import pt.iscte.javardise.external.observeProperty
 import pt.iscte.javardise.external.row
 import pt.iscte.javardise.modifyCommand
-import pt.iscte.javardise.removeCommand
 import pt.iscte.javardise.widgets.expressions.ExpressionWidget
 import pt.iscte.javardise.widgets.expressions.createExpressionWidget
 
@@ -23,7 +21,7 @@ class DoWhileWidget(
     node: DoStmt,
     override val block: BlockStmt
 ) :
-    StatementWidget<DoStmt>(parent, node), SequenceContainer {
+    StatementWidget<DoStmt>(parent, node), SequenceContainer<DoStmt> {
 
     lateinit var keyword: TokenWidget
     lateinit var condition: ExpressionWidget<*>
@@ -37,7 +35,7 @@ class DoWhileWidget(
     init {
         column {
             row {
-                keyword = Factory.newKeywordWidget(this, "do")
+                keyword = newKeywordWidget(this, "do")
                 keyword.addDelete(node, block)
                 openBracket = TokenWidget(this, "{")
             }
@@ -46,7 +44,7 @@ class DoWhileWidget(
             TokenWidget(this, "}")
 
             lastRow = row {
-                Factory.newKeywordWidget(this, "while")
+                newKeywordWidget(this, "while")
                 openClause = FixedToken(this, "(")
                 condition = createExpWidget(node.condition)
                 FixedToken(this, ")")

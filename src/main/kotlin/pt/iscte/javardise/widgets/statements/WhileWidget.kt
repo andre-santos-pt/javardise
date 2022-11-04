@@ -8,7 +8,6 @@ import com.github.javaparser.ast.stmt.Statement
 import com.github.javaparser.ast.stmt.WhileStmt
 import org.eclipse.swt.SWT
 import org.eclipse.swt.widgets.Composite
-import pt.iscte.javardise.Factory
 import pt.iscte.javardise.basewidgets.*
 import pt.iscte.javardise.external.block
 import pt.iscte.javardise.external.column
@@ -24,7 +23,7 @@ class WhileWidget(
     node: WhileStmt,
     override val block: BlockStmt
 ) :
-    StatementWidget<WhileStmt>(parent, node), SequenceContainer {
+    StatementWidget<WhileStmt>(parent, node), SequenceContainer<WhileStmt> {
 
     lateinit var keyword: TokenWidget
     lateinit var condition: ExpressionWidget<*>
@@ -37,7 +36,7 @@ class WhileWidget(
     init {
         val col = column {
             firstRow = row {
-                keyword = Factory.newKeywordWidget(this, "while")
+                keyword = newKeywordWidget(this, "while")
                 //keyword.setCopySource(node)
                 openClause = FixedToken(this, "(")
                 condition = createExpWidget(node.condition)

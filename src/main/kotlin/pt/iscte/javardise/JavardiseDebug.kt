@@ -148,7 +148,6 @@ class JavardiseWindow(var file: File) {
             override fun visit(n: DoubleLiteralExpr, arg: Void?) {
                 super.visit(n, arg)
                 addToken(n)
-                println("!! $n")
             }
 
             private fun addToken(n: Node) {
@@ -180,7 +179,7 @@ class JavardiseWindow(var file: File) {
                     val child = classWidget!!.findChild(t.node)
                     child?.let {
                         child.traverse {
-                            it.background = ERROR_COLOR()
+                            it.background = Configuration.ERROR_COLOR
                             true
                         }
                         child.toolTipText = e.getMessage(null)

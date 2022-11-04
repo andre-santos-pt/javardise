@@ -3,9 +3,7 @@ package pt.iscte.javardise.basewidgets
 import org.eclipse.swt.SWT
 import org.eclipse.swt.events.*
 import org.eclipse.swt.widgets.*
-import pt.iscte.javardise.BACKGROUND_COLOR
 import pt.iscte.javardise.Configuration
-import pt.iscte.javardise.ERROR_COLOR
 import pt.iscte.javardise.updateColor
 import pt.iscte.javardise.widgets.members.ClassWidget
 import pt.iscte.javardise.widgets.members.MemberWidget
@@ -106,9 +104,9 @@ interface TextWidget {
                 if (isValid(widget.text)) {
                     action(widget.text)
                     if(!widget.isDisposed)
-                        widget.background = BACKGROUND_COLOR()
+                        widget.background = Configuration.BACKGROUND_COLOR
                 } else
-                    widget.background = ERROR_COLOR()
+                    widget.background = Configuration.ERROR_COLOR
             }
         }
         widget.addFocusListener(listener)
@@ -285,17 +283,17 @@ interface TextWidget {
                                         sw.closingBracket.setFocus()
                                     else if (sw is IfWidget && text == sw.elseWidget?.closingBracket?.widget)
                                         sw.elseWidget?.focusLast()
-                                    else if (sw is SequenceContainer && text == sw.closingBracket.widget)
+                                    else if (sw is SequenceContainer<*> && text == sw.closingBracket.widget)
                                         sw.focusLast()
                                     else if (index > 0) {
                                         val prev = sw.parent.children[index - 1]
-                                        if (prev is SequenceContainer)
+                                        if (prev is SequenceContainer<*>)
                                             prev.closingBracket.setFocus()
                                         else
                                             prev.setFocus()
                                     } else {
                                         val levelUp =
-                                            sw.findAncestorOfType<SequenceContainer>()
+                                            sw.findAncestorOfType<SequenceContainer<*>>()
                                         levelUp?.setFocus()
                                     }
 
@@ -309,7 +307,7 @@ interface TextWidget {
                                             sw.elseWidget?.closingBracket?.setFocus()
                                         else
                                             sw.elseWidget!!.body.focusFirst()
-                                    } else if (sw is SequenceContainer && text != sw.closingBracket.widget) {
+                                    } else if (sw is SequenceContainer<*> && text != sw.closingBracket.widget) {
                                         if (sw.body?.isEmpty() == true)
                                             sw.closingBracket.setFocus()
                                         else
@@ -318,7 +316,7 @@ interface TextWidget {
                                         sw.parent.children[index + 1].setFocus()
                                     else {
                                         val levelDown =
-                                            sw.findAncestorOfType<SequenceContainer>()
+                                            sw.findAncestorOfType<SequenceContainer<*>>()
                                         levelDown?.closingBracket?.setFocus()
                                     }
 

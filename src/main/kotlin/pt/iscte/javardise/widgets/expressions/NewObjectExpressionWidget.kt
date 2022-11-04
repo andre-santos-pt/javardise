@@ -3,7 +3,6 @@ package pt.iscte.javardise.widgets.expressions
 import com.github.javaparser.ast.expr.Expression
 import com.github.javaparser.ast.expr.ObjectCreationExpr
 import org.eclipse.swt.widgets.Composite
-import pt.iscte.javardise.Factory
 import pt.iscte.javardise.SimpleTypeWidget
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.external.isValidClassType
@@ -24,7 +23,7 @@ class NewObjectExpressionWidget(
             TODO("new Obj scope")
         }
 
-        Factory.newKeywordWidget(this, "new")
+        newKeywordWidget(this, "new")
         id = SimpleTypeWidget(this, node.type) {
             it.asString()
         }

@@ -7,10 +7,10 @@ import org.eclipse.swt.SWT
 import org.eclipse.swt.events.KeyAdapter
 import org.eclipse.swt.events.KeyEvent
 import org.eclipse.swt.widgets.Composite
-import pt.iscte.javardise.COMMENT_COLOR
 import pt.iscte.javardise.Command
 import pt.iscte.javardise.CommandKind
 import pt.iscte.javardise.Commands
+import pt.iscte.javardise.Configuration
 import pt.iscte.javardise.basewidgets.FixedToken
 import pt.iscte.javardise.basewidgets.ID
 import pt.iscte.javardise.basewidgets.TextWidget
@@ -33,12 +33,12 @@ class StringExpressionWidget(
 
     init {
         val open = FixedToken(this, "\"")
-        open.label.foreground = COMMENT_COLOR()
+        open.label.foreground = Configuration.COMMENT_COLOR
         open.addKeyListener(delListener)
         text = TextWidget.create(this, node.value) { _, _ -> true }
-        text.widget.foreground = COMMENT_COLOR()
+        text.widget.foreground = Configuration.COMMENT_COLOR
         close = TokenWidget(this, "\"")
-        close.widget.foreground = COMMENT_COLOR()
+        close.widget.foreground = Configuration.COMMENT_COLOR
         close.widget.addKeyListener(delListener)
 
         text.addFocusLostAction {
