@@ -15,8 +15,6 @@ import org.eclipse.swt.widgets.Composite
 import org.eclipse.swt.widgets.Control
 import pt.iscte.javardise.basewidgets.*
 import pt.iscte.javardise.external.*
-import pt.iscte.javardise.modifyCommand
-import pt.iscte.javardise.removeCommand
 import pt.iscte.javardise.widgets.expressions.ExpressionWidget
 import pt.iscte.javardise.widgets.expressions.createExpressionWidget
 
@@ -58,7 +56,11 @@ class IfWidget(
             //setThenBracketsVisibility(node.thenBlock.statements.size, openThenBracket, closeThenBracket)
         }
         closingBracket = TokenWidget(column, "}")
-        closingBracket.addInsert(this@IfWidget, this@IfWidget.parent as SequenceWidget, true)
+        closingBracket.addInsert(
+            this@IfWidget,
+            this@IfWidget.parent as SequenceWidget,
+            true
+        )
 
 
         node.thenBlock.statements.register(object : AstObserverAdapter() {
@@ -68,7 +70,8 @@ class IfWidget(
                 index: Int,
                 nodeAddedOrRemoved: Node?
             ) {
-                val newSize = observedNode.size + if (type == AstObserver.ListChangeType.ADDITION) 1 else -1
+                val newSize =
+                    observedNode.size + if (type == AstObserver.ListChangeType.ADDITION) 1 else -1
                 //setThenBracketsVisibility(newSize, openThenBracket, closeThenBracket)
             }
         })
@@ -99,13 +102,17 @@ class IfWidget(
 
     private fun Composite.createExpWidget(condition: Expression) =
         createExpressionWidget(this, condition) {
-            if(it == null)
+            if (it == null)
                 block.statements.removeCommand(block.parentNode.get(), node)
             else
                 node.modifyCommand(node.condition, it, node::setCondition)
         }
 
-    private fun setThenBracketsVisibility(bodySize: Int, open: TokenWidget, close: TokenWidget) {
+    private fun setThenBracketsVisibility(
+        bodySize: Int,
+        open: TokenWidget,
+        close: TokenWidget
+    ) {
         val visible = bodySize == 0 || bodySize > 1
         open.widget.visible = visible
         close.widget.visible = visible
@@ -117,7 +124,8 @@ class IfWidget(
         condition.setFocus()
     }
 
-    inner class ElseWidget(parent: Composite, elseStatement: Statement) : Composite(parent, SWT.NONE), SequenceContainer<IfStmt> {
+    inner class ElseWidget(parent: Composite, elseStatement: Statement) :
+        Composite(parent, SWT.NONE), SequenceContainer<IfStmt> {
         lateinit var openBracketElse: TokenWidget
         lateinit var elseBody: SequenceWidget
         lateinit var closeBracketElse: TokenWidget
@@ -130,13 +138,21 @@ class IfWidget(
                 row {
                     keyword = newKeywordWidget(this, "else")
                     keyword.addKeyEvent(SWT.BS) {
-                        node.modifyCommand(node.elseStmt.getOrNull, null, node::setElseStmt)
+                        node.modifyCommand(
+                            node.elseStmt.getOrNull,
+                            null,
+                            node::setElseStmt
+                        )
                     }
                     openBracketElse = TokenWidget(this, "{")
                 }
                 elseBody = createSequence(this, elseStatement as BlockStmt)
                 closeBracketElse = TokenWidget(this, "}")
-                closeBracketElse.addInsert(this@IfWidget, this@IfWidget.parent as SequenceWidget, true)
+                closeBracketElse.addInsert(
+                    this@IfWidget,
+                    this@IfWidget.parent as SequenceWidget,
+                    true
+                )
             }
             openBracketElse.addInsert(null, elseBody, false)
         }
@@ -163,17 +179,22 @@ class IfWidget(
     }
 }
 
-object IfFeature : StatementFeature<IfStmt, IfWidget>(IfStmt::class.java, IfWidget::class.java) {
+object IfFeature : StatementFeature<IfStmt, IfWidget>(
+    IfStmt::class.java,
+    IfWidget::class.java
+) {
     override fun configureInsert(
         insert: TextWidget,
         output: (Statement) -> Unit
     ) {
         insert.addKeyEvent(SWT.SPACE, '(', precondition = { it == "if" }) {
-            output(IfStmt(
-                NameExpr("condition"),
-                BlockStmt(),
-                null
-            ))
+            output(
+                IfStmt(
+                    NameExpr("condition"),
+                    BlockStmt(),
+                    null
+                )
+            )
         }
         insert.addKeyEvent(SWT.SPACE, '{', precondition = { it == "else" }) {
             val seq = insert.widget.parent
@@ -182,11 +203,13 @@ object IfFeature : StatementFeature<IfStmt, IfWidget>(IfStmt::class.java, IfWidg
                 val prev = seq.children[seqIndex - 1]
                 if (prev is IfWidget && !prev.node.hasElseBranch()) {
                     insert.delete()
-                    prev.node.modifyCommand(
-                        null,
-                        BlockStmt(),
-                        prev.node::setElseStmt
-                    )
+                    with(prev) {
+                        node.modifyCommand(
+                            null,
+                            BlockStmt(),
+                            prev.node::setElseStmt
+                        )
+                    }
                 }
             }
         }

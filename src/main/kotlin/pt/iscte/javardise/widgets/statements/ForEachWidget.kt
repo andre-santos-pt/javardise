@@ -13,7 +13,6 @@ import pt.iscte.javardise.basewidgets.*
 import pt.iscte.javardise.external.column
 import pt.iscte.javardise.external.observeNotNullProperty
 import pt.iscte.javardise.external.row
-import pt.iscte.javardise.modifyCommand
 import pt.iscte.javardise.widgets.expressions.ExpressionWidget
 import pt.iscte.javardise.widgets.expressions.createExpressionWidget
 

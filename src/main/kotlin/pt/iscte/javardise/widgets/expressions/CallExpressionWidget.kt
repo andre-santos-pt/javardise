@@ -14,7 +14,6 @@ import pt.iscte.javardise.SimpleNameWidget
 import pt.iscte.javardise.basewidgets.FixedToken
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.external.*
-import pt.iscte.javardise.modifyCommand
 import pt.iscte.javardise.widgets.statements.ExpressionStatementWidget
 import pt.iscte.javardise.widgets.statements.StatementFeature
 
@@ -27,7 +26,7 @@ class CallExpressionWidget(
     private var scope: ExpressionWidget<*>? = null
     private var dot: FixedToken? = null
     private var methodName: Id
-    private val args: ArgumentListWidget<Expression>
+    private val args: ArgumentListWidget<Expression, MethodCallExpr>
 
     init {
         layout = ROW_LAYOUT_H_CALL
@@ -66,7 +65,7 @@ class CallExpressionWidget(
         if (node.scope.isPresent)
             createScope(node.scope.get())
 
-        args = ArgumentListWidget(this, "(", ")", node, node.arguments)
+        args = ArgumentListWidget(this, "(", ")", this, node.arguments)
 
         node.observeProperty<Expression>(ObservableProperty.SCOPE) {
             scope?.dispose()

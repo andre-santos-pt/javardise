@@ -34,6 +34,7 @@ interface Configuration {
 
 interface ConfigurationRoot {
     val configuration: Configuration
+    val commands: Commands
 }
 
 open class DefaultConfiguration : Configuration {

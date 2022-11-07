@@ -9,7 +9,6 @@ import org.eclipse.swt.widgets.Composite
 import org.eclipse.swt.widgets.Control
 import pt.iscte.javardise.NodeWidget
 import pt.iscte.javardise.UnsupportedWidget
-import pt.iscte.javardise.addCommand
 import pt.iscte.javardise.external.ListAddRemoveObserver
 import pt.iscte.javardise.widgets.statements.IfWidget
 import pt.iscte.javardise.widgets.statements.find

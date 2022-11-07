@@ -12,7 +12,6 @@ import org.eclipse.swt.widgets.Composite
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
 import pt.iscte.javardise.external.*
-import pt.iscte.javardise.modifyCommand
 import pt.iscte.javardise.widgets.statements.ExpressionStatementWidget
 import pt.iscte.javardise.widgets.statements.StatementFeature
 

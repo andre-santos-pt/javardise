@@ -11,10 +11,7 @@ import com.github.javaparser.ast.type.PrimitiveType
 import org.eclipse.swt.SWT
 import org.eclipse.swt.widgets.Composite
 import pt.iscte.javardise.basewidgets.*
-import pt.iscte.javardise.changeCommand
 import pt.iscte.javardise.external.*
-import pt.iscte.javardise.modifyCommand
-import pt.iscte.javardise.removeCommand
 import pt.iscte.javardise.widgets.expressions.ExpressionWidget
 import pt.iscte.javardise.widgets.expressions.createExpressionWidget
 

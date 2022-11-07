@@ -44,13 +44,18 @@ fun matchModifier(keyword: String) =
 
 
 // TODO require compliant model
-class ClassWidget(parent: Composite, type: ClassOrInterfaceDeclaration, configuration: Configuration = DefaultConfigurationSingleton) :
+class ClassWidget(
+    parent: Composite,
+    type: ClassOrInterfaceDeclaration,
+    configuration: Configuration = DefaultConfigurationSingleton,
+    override val commands: Commands = Commands()
+) :
     MemberWidget<ClassOrInterfaceDeclaration>(
         parent,
         type,
         listOf(PUBLIC, FINAL, ABSTRACT),
         configuration = configuration
-    ), SequenceContainer<ClassOrInterfaceDeclaration> {
+    ), SequenceContainer<ClassOrInterfaceDeclaration>, ConfigurationRoot {
     private val keyword: TokenWidget
     override val name: Id
     override lateinit var body: SequenceWidget
@@ -59,7 +64,7 @@ class ClassWidget(parent: Composite, type: ClassOrInterfaceDeclaration, configur
     private val modelFocusObservers =
         mutableListOf<(BodyDeclaration<*>?, Node?) -> Unit>()
 
-    private val widgetFocusObservers = mutableListOf<(Control)->Unit>()
+    private val widgetFocusObservers = mutableListOf<(Control) -> Unit>()
 
     private val focusListenerGlobal = { event: Event ->
         val control = event.widget as Control
@@ -82,14 +87,14 @@ class ClassWidget(parent: Composite, type: ClassOrInterfaceDeclaration, configur
             val p = Display.getDefault().map(control, scroll, control.location)
             p.x = 0
             p.y += 10
-            if(p.y < scroll.origin.y) {
+            if (p.y < scroll.origin.y) {
                 scroll.origin = p
-            }
-            else if(p.y > scroll.origin.y + scroll.bounds.height) {
+            } else if (p.y > scroll.origin.y + scroll.bounds.height) {
                 scroll.origin = p
             }
         }
     }
+
     enum class TypeTypes {
         CLASS, INTERFACE;
         //, ENUM;
@@ -120,7 +125,7 @@ class ClassWidget(parent: Composite, type: ClassOrInterfaceDeclaration, configur
         layout = ROW_LAYOUT_H_SHRINK
         keyword = newKeywordWidget(firstRow, "class",
             alternatives = { TypeTypes.values().map { it.name.lowercase() } }) {
-            Commands.execute(object : Command {
+            commands.execute(object : Command {
                 override val target = node
                 override val kind = CommandKind.MODIFY
                 override val element =
@@ -136,7 +141,7 @@ class ClassWidget(parent: Composite, type: ClassOrInterfaceDeclaration, configur
             })
         }
         keyword.addKeyEvent(SWT.SPACE) {
-            Commands.execute(object : Command {
+            commands.execute(object : Command {
                 override val target = node
                 override val kind = CommandKind.ADD
                 override val element = Modifier(PUBLIC)
@@ -238,7 +243,11 @@ class ClassWidget(parent: Composite, type: ClassOrInterfaceDeclaration, configur
                 w
             }
             is MethodDeclaration, is ConstructorDeclaration -> {
-                val w = MethodWidget(body, dec as CallableDeclaration<*>, configuration = configuration)
+                val w = MethodWidget(
+                    body,
+                    dec as CallableDeclaration<*>,
+                    configuration = configuration
+                )
                 w.closingBracket.addInsert(w, body, true)
                 w
             }

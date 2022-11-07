@@ -6,7 +6,6 @@ import org.eclipse.swt.widgets.Composite
 import pt.iscte.javardise.SimpleTypeWidget
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.external.isValidClassType
-import pt.iscte.javardise.modifyCommand
 
 // anonymous class body
 class NewObjectExpressionWidget(
@@ -16,7 +15,7 @@ class NewObjectExpressionWidget(
 ) : ExpressionWidget<ObjectCreationExpr>(parent) {
 
     val id: TextWidget
-    val args: ArgumentListWidget<Expression>
+    val args: ArgumentListWidget<Expression, ObjectCreationExpr>
 
     init {
         if (node.scope.isPresent) {
@@ -29,7 +28,7 @@ class NewObjectExpressionWidget(
             node.modifyCommand(node.typeAsString, it, node::setType)
         }
 
-        args = ArgumentListWidget(this, "(", ")", node, node.arguments)
+        args = ArgumentListWidget(this, "(", ")", this, node.arguments)
     }
 
     override fun setFocusOnCreation(firstFlag: Boolean) {

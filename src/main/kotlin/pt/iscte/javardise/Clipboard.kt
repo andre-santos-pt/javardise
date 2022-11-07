@@ -21,22 +21,22 @@ object Clipboard {
 //        cut = true
 //    }
 
-    fun paste(block: BlockStmt, index: Int) {
-        class AddStatementCommand(val stmt: Statement, val block: BlockStmt, val index: Int) : Command {
-            override val kind: CommandKind = CommandKind.ADD
-            override val target = block
-            override val element = stmt
-
-            override fun run() {
-                block.addStatement(index, stmt)
-            }
-
-            override fun undo() {
-                block.remove(stmt)
-            }
-        }
-        Commands.execute(AddStatementCommand(onCopy!!.first.clone() as Statement, block, index))
-    }
+//    fun paste(block: BlockStmt, index: Int) {
+//        class AddStatementCommand(val stmt: Statement, val block: BlockStmt, val index: Int) : Command {
+//            override val kind: CommandKind = CommandKind.ADD
+//            override val target = block
+//            override val element = stmt
+//
+//            override fun run() {
+//                block.addStatement(index, stmt)
+//            }
+//
+//            override fun undo() {
+//                block.remove(stmt)
+//            }
+//        }
+//        Commands.execute(AddStatementCommand(onCopy!!.first.clone() as Statement, block, index))
+//    }
 }
 
 fun TextWidget.setCopySource(node: Statement) {

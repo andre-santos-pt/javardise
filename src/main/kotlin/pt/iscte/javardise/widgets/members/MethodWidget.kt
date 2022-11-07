@@ -23,9 +23,21 @@ import pt.iscte.javardise.basewidgets.*
 import pt.iscte.javardise.external.*
 import pt.iscte.javardise.widgets.statements.addInsert
 
-class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: Int = SWT.NONE, configuration: Configuration = DefaultConfigurationSingleton) :
-    MemberWidget<CallableDeclaration<*>>(parent, dec, style = style, configuration = configuration),
-    SequenceContainer<CallableDeclaration<*>> {
+class MethodWidget(
+    parent: Composite,
+    val dec: CallableDeclaration<*>,
+    style: Int = SWT.NONE,
+    configuration: Configuration = DefaultConfigurationSingleton,
+    override val commands: Commands = Commands()
+) :
+    MemberWidget<CallableDeclaration<*>>(
+        parent,
+        dec,
+        style = style,
+        configuration = configuration
+    ),
+    SequenceContainer<CallableDeclaration<*>>,
+    ConfigurationRoot {
 
 
     var typeId: Id? = null
@@ -33,7 +45,7 @@ class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: In
     override var body: SequenceWidget? = null
 
     val bodyModel: BlockStmt? =
-        if (dec is MethodDeclaration) if(dec.body.isPresent) dec.body.get() else null
+        if (dec is MethodDeclaration) if (dec.body.isPresent) dec.body.get() else null
         else (dec as ConstructorDeclaration).body
 
     val paramsWidget: ParamListWidget
@@ -96,12 +108,11 @@ class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: In
         paramsWidget = ParamListWidget(firstRow, node.parameters)
         FixedToken(firstRow, ")")
 
-        if(bodyModel != null) {
+        if (bodyModel != null) {
             body = createSequence(column, bodyModel)
             TokenWidget(firstRow, "{").addInsert(null, body!!, true)
             closingBracket = TokenWidget(column, "}")
-        }
-        else
+        } else
             closingBracket = TokenWidget(firstRow, ";")
 
         Display.getDefault().addFilter(SWT.FocusIn, focusListener)
@@ -112,7 +123,10 @@ class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: In
         super.dispose()
     }
 
-    inner class ParamListWidget(parent: Composite, val parameters: NodeList<Parameter>) :
+    inner class ParamListWidget(
+        parent: Composite,
+        val parameters: NodeList<Parameter>
+    ) :
         Composite(parent, SWT.NONE) {
         var insert: TextWidget? = null
 
@@ -121,13 +135,17 @@ class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: In
             font = parent.font
             background = parent.background
             foreground = parent.foreground
-            if(parameters.isEmpty())
+            if (parameters.isEmpty())
                 createInsert()
 
             addParams()
 
             parameters.register(object : ListAddRemoveObserver<Parameter>() {
-                override fun elementAdd(list: NodeList<Parameter>, index: Int, node: Parameter) {
+                override fun elementAdd(
+                    list: NodeList<Parameter>,
+                    index: Int,
+                    node: Parameter
+                ) {
                     val p = ParamWidget(this@ParamListWidget, index, node)
                     if (index == 0 && list.isEmpty()) {
                         //ParamWidget(this@ParamListWidget, index, node)
@@ -135,7 +153,8 @@ class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: In
                         val c = FixedToken(this@ParamListWidget, ",")
                         c.moveAbove(p)
                     } else {
-                        val n = children.find { it is ParamWidget && it.node == list[index] }
+                        val n =
+                            children.find { it is ParamWidget && it.node == list[index] }
                         n?.let {
                             p.moveAbove(n)
                             val c = FixedToken(this@ParamListWidget, ",")
@@ -147,8 +166,13 @@ class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: In
                     p.requestLayout()
                 }
 
-                override fun elementRemove(list: NodeList<Parameter>, index: Int, node: Parameter) {
-                    val i = children.indexOfFirst { it is ParamWidget && it.node == node }
+                override fun elementRemove(
+                    list: NodeList<Parameter>,
+                    index: Int,
+                    node: Parameter
+                ) {
+                    val i =
+                        children.indexOfFirst { it is ParamWidget && it.node == node }
                     if (i != -1) {
                         children[i].dispose()
 
@@ -161,12 +185,11 @@ class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: In
                     if (parameters.size == 1) {
                         createInsert()
                         insert?.setFocus()
-                    }
-                    else if(index == 0) {
+                    } else if (index == 0) {
                         children[0].setFocus()
-                    }
-                    else {
-                        val prev = children.indexOfFirst { it is ParamWidget && it.node == list[index-1] }
+                    } else {
+                        val prev =
+                            children.indexOfFirst { it is ParamWidget && it.node == list[index - 1] }
                         (children[prev] as ParamWidget).setFocusOnCreation(false)
                     }
                     requestLayout()
@@ -195,10 +218,18 @@ class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: In
             val newInsert = TextWidget.create(this, " ") { c, s ->
                 c.toString().matches(TYPE_CHARS) || c == SWT.BS
             }
-            newInsert.addKeyEvent(SWT.SPACE, precondition = { isValidType(it) }) {
-                parameters.addCommand(node, Parameter(StaticJavaParser.parseType(newInsert.text), "parameter"))
+            newInsert.addKeyEvent(
+                SWT.SPACE,
+                precondition = { isValidType(it) }) {
+                parameters.addCommand(
+                    node,
+                    Parameter(
+                        StaticJavaParser.parseType(newInsert.text),
+                        "parameter"
+                    )
+                )
             }
-            if(bodyModel != null)
+            if (bodyModel != null)
                 newInsert.addKeyEvent(SWT.CR) {
                     this@MethodWidget.body!!.insertBeginning()
                 }
@@ -218,8 +249,12 @@ class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: In
             }
         }
 
-        inner class ParamWidget(parent: Composite, val index: Int, override val node: Parameter) :
-        Composite(parent, SWT.NONE), NodeWidget<Parameter> {
+        inner class ParamWidget(
+            parent: Composite,
+            val index: Int,
+            override val node: Parameter
+        ) :
+            Composite(parent, SWT.NONE), NodeWidget<Parameter> {
             val type: Id
             val name: Id
 
@@ -230,7 +265,10 @@ class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: In
                 foreground = parent.foreground
                 type = SimpleTypeWidget(this, node.type)
                 type.addKeyEvent(SWT.BS, precondition = { it.isEmpty() }) {
-                    parameters.removeCommand(this@MethodWidget.node, node) // TODO BUG Index -1 out of bounds for length 1
+                    parameters.removeCommand(
+                        this@MethodWidget.node,
+                        node
+                    ) // TODO BUG Index -1 out of bounds for length 1
                 }
                 type.addFocusLostAction(::isValidType) {
                     node.modifyCommand(node.typeAsString, it, node::setType)
@@ -238,17 +276,29 @@ class MethodWidget(parent: Composite, val dec: CallableDeclaration<*>, style: In
 
                 name = SimpleNameWidget(this, node)
                 name.addKeyEvent(',') {
-                    parameters.addCommand(this@MethodWidget.node, Parameter(StaticJavaParser.parseType("type"), SimpleName("parameter")))
+                    parameters.addCommand(
+                        this@MethodWidget.node,
+                        Parameter(
+                            StaticJavaParser.parseType("type"),
+                            SimpleName("parameter")
+                        )
+                    )
                 }
                 name.addKeyEvent(SWT.BS, precondition = { it.isEmpty() }) {
                     parameters.removeCommand(this@MethodWidget.node, node)
                 }
-                if(bodyModel != null)
-                    name.addKeyEvent(SWT.CR, precondition= {this@ParamListWidget.children.last() === this}) {
+                if (bodyModel != null)
+                    name.addKeyEvent(
+                        SWT.CR,
+                        precondition = { this@ParamListWidget.children.last() === this }) {
                         this@MethodWidget.body!!.insertBeginning()
                     }
                 name.addFocusLostAction(::isValidSimpleName) {
-                    node.modifyCommand(node.name, SimpleName(name.text), node::setName)
+                    node.modifyCommand(
+                        node.name,
+                        SimpleName(name.text),
+                        node::setName
+                    )
                 }
 
                 node.observeProperty<Type>(ObservableProperty.TYPE) {

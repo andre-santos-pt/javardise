@@ -8,20 +8,17 @@ import com.github.javaparser.ast.expr.NameExpr
 import com.github.javaparser.ast.nodeTypes.NodeWithArguments
 import org.eclipse.swt.SWT
 import org.eclipse.swt.widgets.Composite
-import pt.iscte.javardise.Command
-import pt.iscte.javardise.CommandKind
-import pt.iscte.javardise.Commands
-import pt.iscte.javardise.TYPE_CHARS
+import pt.iscte.javardise.*
 import pt.iscte.javardise.basewidgets.FixedToken
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
 import pt.iscte.javardise.external.*
 
-class ArgumentListWidget<T : Expression>(
+class ArgumentListWidget<T : Expression, N : Node>(
     parent: Composite,
     open: String,
     close: String,
-    val owner: Node,
+    val owner: NodeWidget<N>,
     val expressionList: NodeList<T>
 ) :
     Composite(parent, SWT.NONE) {
@@ -98,8 +95,8 @@ class ArgumentListWidget<T : Expression>(
             ExpressionWidget<*> {
         val arg = createExpressionWidget(this, exp) {
             if (it == null)
-                Commands.execute(object : Command {
-                    override val target = owner
+                owner.commands.execute(object : Command {
+                    override val target = owner.node
                     override val kind = CommandKind.REMOVE
                     override val element = exp
 
@@ -114,8 +111,8 @@ class ArgumentListWidget<T : Expression>(
                     }
                 })
             else {
-                Commands.execute(object : Command {
-                    override val target = owner
+                owner.commands.execute(object : Command {
+                    override val target = owner.node
                     override val kind = CommandKind.MODIFY
                     override val element = exp
 
@@ -133,8 +130,8 @@ class ArgumentListWidget<T : Expression>(
         }
 
         arg.tail.addKeyEvent(',') {
-            Commands.execute(object : Command {
-                override val target = owner
+            owner.commands.execute(object : Command {
+                override val target = owner.node
                 override val kind = CommandKind.ADD
                 override val element get() = NameExpr("expression")
 
@@ -179,8 +176,8 @@ class ArgumentListWidget<T : Expression>(
             expression: Expression,
             after: Expression? = null
         ) {
-            Commands.execute(object : Command {
-                override val target = owner
+            owner.commands.execute(object : Command {
+                override val target = owner.node
                 override val kind = CommandKind.ADD
                 override val element = expression
 

@@ -35,6 +35,25 @@ abstract class StatementWidget<T : Statement>(
     override val control: Control
         get() = this
 
+    fun TokenWidget.addDelete(node: Statement, block: BlockStmt) =
+        addKeyEvent(SWT.BS, action = {
+            commands.execute(object : Command {
+                val index = block.statements.indexOf(node)
+                override val target: Node = block
+                override val kind = CommandKind.REMOVE
+                override val element: Node = node
+
+                override fun run() {
+                    block.statements.remove(node)
+                }
+
+                override fun undo() {
+                    // BUG statements list, after parent removal, is not the same (EXC: Widget is disposed)
+                    // possible solution: locate by indexing
+                    block.statements.add(index, node.clone())
+                }
+            })
+        })
 }
 
 
@@ -96,28 +115,7 @@ fun SequenceWidget.findByModelIndex(index: Int): NodeWidget<*>? {
 }
 
 
-fun TokenWidget.addDelete(node: Statement, block: BlockStmt) =
-    addKeyEvent(SWT.BS, action = createDeleteEvent(node, block))
 
-fun createDeleteEvent(node: Statement, block: BlockStmt) =
-    { keyEvent: KeyEvent ->
-        Commands.execute(object : Command {
-            val index = block.statements.indexOf(node)
-            override val target: Node = block
-            override val kind = CommandKind.REMOVE
-            override val element: Node = node
-
-            override fun run() {
-                block.statements.remove(node)
-            }
-
-            override fun undo() {
-                // BUG statements list, after parent removal, is not the same (EXC: Widget is disposed)
-                // possible solution: locate by indexing
-                block.statements.add(index, node.clone())
-            }
-        })
-    }
 
 
 internal fun TokenWidget.addInsert(

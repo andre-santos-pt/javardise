@@ -3,25 +3,24 @@ package pt.iscte.javardise
 import com.github.javaparser.ParseProblemException
 import com.github.javaparser.StaticJavaParser
 import com.github.javaparser.ast.Node
+import com.github.javaparser.ast.NodeList
 import com.github.javaparser.ast.expr.SimpleName
 import com.github.javaparser.ast.nodeTypes.NodeWithSimpleName
 import com.github.javaparser.ast.observer.AstObserver
 import com.github.javaparser.ast.observer.ObservableProperty
+import com.github.javaparser.ast.stmt.BlockStmt
+import com.github.javaparser.ast.stmt.Statement
 import com.github.javaparser.ast.type.Type
 import org.eclipse.swt.SWT
-import org.eclipse.swt.events.FocusAdapter
-import org.eclipse.swt.events.FocusEvent
-import org.eclipse.swt.events.FocusListener
-import org.eclipse.swt.events.KeyListener
+import org.eclipse.swt.events.*
 import org.eclipse.swt.widgets.Composite
 import org.eclipse.swt.widgets.Control
 import org.eclipse.swt.widgets.Text
-import pt.iscte.javardise.basewidgets.*
-import pt.iscte.javardise.external.PropertyObserver
-import pt.iscte.javardise.external.isNumeric
-import pt.iscte.javardise.external.isValidType
-import pt.iscte.javardise.external.traverse
+import pt.iscte.javardise.basewidgets.TextWidget
+import pt.iscte.javardise.basewidgets.TokenWidget
+import pt.iscte.javardise.external.*
 import javax.lang.model.SourceVersion
+import kotlin.reflect.KFunction1
 
 val DefaultConfigurationSingleton = DefaultConfiguration()
 interface NodeWidget<T> {
@@ -29,6 +28,11 @@ interface NodeWidget<T> {
         val conf by lazy { findConf(control) }
         return conf
     }
+    val commands: Commands get() {
+        val comm by lazy { findComm(control) }
+        return comm
+    }
+
     val node: T
     val control: Control
     fun setFocusOnCreation(firstFlag: Boolean = false)
@@ -40,6 +44,14 @@ interface NodeWidget<T> {
             findConf(n.parent)
         else
             DefaultConfigurationSingleton
+
+    fun findComm(n: Control): Commands =
+        if(n is ConfigurationRoot)
+            n.commands
+        else if(n.parent != null)
+            findComm(n.parent)
+        else
+            TODO("null object commands")
 
     fun <T : Node> observeProperty(prop: ObservableProperty, event: (T?) -> Unit): AstObserver {
         val obs = object : PropertyObserver<T>(prop) {
@@ -94,6 +106,78 @@ interface NodeWidget<T> {
             updateColor(text)
         }
     }
+
+    fun <E: Any> Node.modifyCommand(old: E?, new: E?, setOperation: KFunction1<E?, Node>) {
+        if (old != new)
+            commands.execute(object : Command {
+                override val target = this@modifyCommand
+                override val kind: CommandKind = CommandKind.MODIFY
+                override val element: E? = old
+
+                override fun run() {
+                    setOperation(new)
+                }
+
+                override fun undo() {
+                    if(old is Node)
+                        setOperation(old.clone() as E)
+                    else
+                        setOperation(old)
+                }
+            })
+    }
+
+    fun <N: Node> NodeList<in N>.addCommand(owner: Node, e: N, index: Int = size) {
+        commands.execute(object : Command {
+            override val target = owner
+            override val kind: CommandKind = CommandKind.ADD
+            override val element = e
+
+            override fun run() {
+                add(index, e)
+            }
+
+            override fun undo() {
+                removeAt(index)
+            }
+        })
+    }
+
+    fun <N: Node> NodeList<in N>.changeCommand(owner: Node, e: N, index: Int = size) {
+        commands.execute(object : Command {
+            override val target = owner
+            override val kind: CommandKind = CommandKind.MODIFY
+            override val element: Node = e
+
+            override fun run() {
+                set(index, e)
+            }
+
+            override fun undo() {
+                set(index, element.clone() as N)
+            }
+        })
+    }
+
+    fun <N: Node> NodeList<in N>.removeCommand(owner: Node, e: N) {
+        commands.execute(object : Command {
+            override val target = owner
+            override val kind: CommandKind = CommandKind.REMOVE
+            override val element = e
+
+            var i: Int = -1
+            override fun run() {
+                i = indexOfIdentity(element)
+                removeAt(i)
+            }
+
+            override fun undo() {
+                add(i, element.clone() as N)
+            }
+        })
+    }
+
+
 }
 
 inline fun <reified T : NodeWidget<*>> Control.findAncestor(): T? {

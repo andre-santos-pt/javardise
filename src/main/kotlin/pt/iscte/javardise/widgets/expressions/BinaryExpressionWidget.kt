@@ -9,7 +9,6 @@ import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
 import pt.iscte.javardise.external.binaryOperators
 import pt.iscte.javardise.external.observeProperty
-import pt.iscte.javardise.modifyCommand
 
 class BinaryExpressionWidget(
     parent: Composite,

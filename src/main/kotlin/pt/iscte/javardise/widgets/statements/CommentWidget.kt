@@ -11,7 +11,6 @@ import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
 import pt.iscte.javardise.external.getOrNull
 import pt.iscte.javardise.external.row
-import pt.iscte.javardise.modifyCommand
 
 class CommentWidget(parent: Composite, override val node: Statement) : Composite(parent, SWT.NONE), NodeWidget<Statement> {
     init {

@@ -11,7 +11,6 @@ import pt.iscte.javardise.basewidgets.TokenWidget
 import pt.iscte.javardise.external.assignOperators
 import pt.iscte.javardise.external.observeProperty
 import pt.iscte.javardise.external.tryParse
-import pt.iscte.javardise.modifyCommand
 import pt.iscte.javardise.widgets.statements.ExpressionStatementWidget
 import pt.iscte.javardise.widgets.statements.StatementFeature
 

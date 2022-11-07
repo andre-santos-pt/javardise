@@ -37,7 +37,7 @@ class CharacterExpressionWidget(
         text.addKeyListenerInternal(object : KeyAdapter() {
             override fun keyPressed(e: KeyEvent) {
                 if(e.character.isLetter() || e.character.isDigit() || e.character == SWT.SPACE) {
-                    Commands.execute(object : Command {
+                    commands.execute(object : Command {
                         override val target = node
                         override val kind = CommandKind.MODIFY
                         override val element = node.value

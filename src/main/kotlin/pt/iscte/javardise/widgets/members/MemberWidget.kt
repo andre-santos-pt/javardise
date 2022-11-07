@@ -27,7 +27,7 @@ abstract class MemberWidget<T : NodeWithModifiers<*>>(
     validModifiers: List<Modifier.Keyword> = emptyList(),
     style: Int = SWT.NONE,
     final override val configuration: Configuration
-) : Composite(parent, style), NodeWidget<T>, ConfigurationRoot {
+) : Composite(parent, style), NodeWidget<T> {
     val modifiers = mutableListOf<TokenWidget>()
 
     val column: Composite
@@ -113,7 +113,7 @@ abstract class MemberWidget<T : NodeWithModifiers<*>>(
             modifier.keyword.asString(),
             filterModifiers
         ) { token ->
-            Commands.execute(object : Command {
+            commands.execute(object : Command {
                 override val target: Node = node as Node
                 override val kind: CommandKind = CommandKind.MODIFY
                 override val element =
@@ -130,7 +130,7 @@ abstract class MemberWidget<T : NodeWithModifiers<*>>(
             })
         }
         mod.addKeyEvent(SWT.BS) {
-            Commands.execute(object : Command {
+            commands.execute(object : Command {
                 val index = parent.children.indexOf(mod.widget)
 
                 override val target = node as BodyDeclaration<*>
@@ -157,7 +157,7 @@ abstract class MemberWidget<T : NodeWithModifiers<*>>(
     private fun TokenWidget.addDeleteListener(modifier: Modifier) {
         val modifierString = modifier.keyword.asString()
         addDeleteEmptyListener {
-            Commands.execute(object : Command {
+            commands.execute(object : Command {
                 override val target = node as BodyDeclaration<*>
                 override val kind = CommandKind.REMOVE
                 override val element = modifier
@@ -178,7 +178,7 @@ abstract class MemberWidget<T : NodeWithModifiers<*>>(
 
     internal fun TextWidget.addInsertModifier(atModifier: Modifier? = null) {
         addKeyEvent(SWT.SPACE, precondition = { this.isAtBeginning }) {
-            Commands.execute(object : Command {
+            commands.execute(object : Command {
                 override val target = node as BodyDeclaration<*>
                 override val kind = CommandKind.ADD
                 override val element = Modifier(Modifier.Keyword.PUBLIC)

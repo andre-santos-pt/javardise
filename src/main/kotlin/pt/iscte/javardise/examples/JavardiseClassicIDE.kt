@@ -38,6 +38,12 @@ class JavardiseClassicIDE(val folder: File) {
 
     val openTabs = mutableListOf<Composite>()
     val focusMap = WeakHashMap<Composite, Control>()
+    val stacklayout = StackLayout()
+
+    val classOnFocus: ClassWidget? get() = if(stacklayout.topControl == null)
+        null
+    else
+        (stacklayout.topControl.data as TabData).classWidget
 
     init {
         require(folder.exists() && folder.isDirectory)
@@ -48,7 +54,7 @@ class JavardiseClassicIDE(val folder: File) {
 
         val fileList = List(form, SWT.BORDER or SWT.MULTI or SWT.V_SCROLL)
         val fileArea = Composite(form, SWT.BORDER)
-        val stacklayout = StackLayout()
+
         fileArea.layout = stacklayout
 
         fileList.addSelectionListener(object: SelectionAdapter() {
@@ -56,7 +62,7 @@ class JavardiseClassicIDE(val folder: File) {
             override fun widgetSelected(e: SelectionEvent) {
                 if(fileList.selection.isNotEmpty() && current != fileList.selectionIndex)  {
                     current = fileList.selectionIndex
-                    val find = openTabs.find { it.data == fileList.selection.first() }
+                    val find = openTabs.find { (it.data as TabData).fileName == fileList.selection.first() }
                     if(find != null) {
                         stacklayout.topControl = find
                         fileArea.layout()
@@ -82,7 +88,7 @@ class JavardiseClassicIDE(val folder: File) {
         display.addFilter(SWT.KeyDown) {
             if (it.stateMask == SWT.MOD1 && it.keyCode == 'z'.code) {
                 println("undo")
-                Commands.undo()
+                classOnFocus?.commands?.undo()
             }
         }
     }
@@ -114,9 +120,11 @@ class JavardiseClassicIDE(val folder: File) {
         }
         //w.setAutoScroll()
         //w.layoutData = GridData(GridData.FILL_BOTH)
-        tab.data = fileName
+        tab.data = TabData(fileName, w)
         return tab
     }
+
+    data class TabData(val fileName: String, val classWidget: ClassWidget)
 
     fun notFoundLabel(p: Composite) = Composite(p, SWT.BORDER).apply {
         layout = FillLayout()
@@ -149,7 +157,6 @@ class JavardiseClassicIDE(val folder: File) {
         model.observeProperty<SimpleName>(ObservableProperty.NAME) {
             shell.text = it?.toString() ?: "No public class found"
         }
-        Commands.reset()
         shell.requestLayout()
         return model
     }

@@ -8,7 +8,6 @@ import org.eclipse.swt.widgets.Composite
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
 import pt.iscte.javardise.external.observeNotNullProperty
-import pt.iscte.javardise.modifyCommand
 
 class ArrayAccessExpressionWidget(
     parent: Composite,

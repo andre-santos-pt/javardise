@@ -15,7 +15,6 @@ import pt.iscte.javardise.SimpleTypeWidget
 import pt.iscte.javardise.basewidgets.FixedToken
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.external.*
-import pt.iscte.javardise.modifyCommand
 import pt.iscte.javardise.widgets.statements.ExpressionStatementWidget
 import pt.iscte.javardise.widgets.statements.StatementFeature
 import kotlin.reflect.KFunction1
