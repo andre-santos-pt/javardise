@@ -113,7 +113,7 @@ abstract class MemberWidget<T : NodeWithModifiers<*>>(
             modifier.keyword.asString(),
             filterModifiers
         ) { token ->
-            commands.execute(object : Command {
+            commandStack.execute(object : Command {
                 override val target: Node = node as Node
                 override val kind: CommandKind = CommandKind.MODIFY
                 override val element =
@@ -130,7 +130,7 @@ abstract class MemberWidget<T : NodeWithModifiers<*>>(
             })
         }
         mod.addKeyEvent(SWT.BS) {
-            commands.execute(object : Command {
+            commandStack.execute(object : Command {
                 val index = parent.children.indexOf(mod.widget)
 
                 override val target = node as BodyDeclaration<*>
@@ -157,7 +157,7 @@ abstract class MemberWidget<T : NodeWithModifiers<*>>(
     private fun TokenWidget.addDeleteListener(modifier: Modifier) {
         val modifierString = modifier.keyword.asString()
         addDeleteEmptyListener {
-            commands.execute(object : Command {
+            commandStack.execute(object : Command {
                 override val target = node as BodyDeclaration<*>
                 override val kind = CommandKind.REMOVE
                 override val element = modifier
@@ -178,7 +178,7 @@ abstract class MemberWidget<T : NodeWithModifiers<*>>(
 
     internal fun TextWidget.addInsertModifier(atModifier: Modifier? = null) {
         addKeyEvent(SWT.SPACE, precondition = { this.isAtBeginning }) {
-            commands.execute(object : Command {
+            commandStack.execute(object : Command {
                 override val target = node as BodyDeclaration<*>
                 override val kind = CommandKind.ADD
                 override val element = Modifier(Modifier.Keyword.PUBLIC)

@@ -9,7 +9,6 @@ import org.eclipse.swt.events.KeyEvent
 import org.eclipse.swt.widgets.Composite
 import pt.iscte.javardise.Command
 import pt.iscte.javardise.CommandKind
-import pt.iscte.javardise.Commands
 import pt.iscte.javardise.basewidgets.FixedToken
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
@@ -37,7 +36,7 @@ class CharacterExpressionWidget(
         text.addKeyListenerInternal(object : KeyAdapter() {
             override fun keyPressed(e: KeyEvent) {
                 if(e.character.isLetter() || e.character.isDigit() || e.character == SWT.SPACE) {
-                    commands.execute(object : Command {
+                    commandStack.execute(object : Command {
                         override val target = node
                         override val kind = CommandKind.MODIFY
                         override val element = node.value

@@ -73,7 +73,7 @@ class JavardiseWindow(var file: File) {
         // BUG lost focus
         display.addFilter(SWT.KeyDown) {
             if (it.stateMask == SWT.MOD1 && it.keyCode == 'z'.code) {
-                (classWidget as ClassWidget).commands.undo()
+                (classWidget as ClassWidget).commandStack.undo()
             }
         }
     }
@@ -90,10 +90,10 @@ class JavardiseWindow(var file: File) {
         stackComp = Composite(parent, SWT.NONE)
         stackComp.layout = RowLayout(SWT.VERTICAL)
 
-        (classWidget as ClassWidget).commands.addObserver {
+        (classWidget as ClassWidget).commandStack.addObserver { _, _ ->
             srcText.text = model.toString()
             stackComp.children.forEach { it.dispose() }
-            (classWidget as ClassWidget).commands.stackElements.forEach {
+            (classWidget as ClassWidget).commandStack.stackElements.forEach {
                 Label(stackComp, SWT.BORDER).text = it.asString()
             }
             stackComp.requestLayout()
@@ -112,7 +112,7 @@ class JavardiseWindow(var file: File) {
         }
 
         composite.button("undo") {
-            (classWidget as ClassWidget).commands.undo()
+            (classWidget as ClassWidget).commandStack.undo()
         }
 
 
@@ -233,7 +233,7 @@ class JavardiseWindow(var file: File) {
         model!!.observeProperty<SimpleName>(ObservableProperty.NAME) {
             shell.text = it?.toString() ?: "No public class found"
         }
-        (classWidget as ClassWidget).commands.reset()
+        (classWidget as ClassWidget).commandStack.reset()
         val parent = stackComp.parent
         stackComp.dispose()
         createStackView(parent)

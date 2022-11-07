@@ -48,14 +48,16 @@ class ClassWidget(
     parent: Composite,
     type: ClassOrInterfaceDeclaration,
     configuration: Configuration = DefaultConfigurationSingleton,
-    override val commands: Commands = Commands()
+    override val commandStack: CommandStack = CommandStack.create()
 ) :
     MemberWidget<ClassOrInterfaceDeclaration>(
         parent,
         type,
         listOf(PUBLIC, FINAL, ABSTRACT),
         configuration = configuration
-    ), SequenceContainer<ClassOrInterfaceDeclaration>, ConfigurationRoot {
+    ), SequenceContainer<ClassOrInterfaceDeclaration>,
+    ConfigurationRoot {
+
     private val keyword: TokenWidget
     override val name: Id
     override lateinit var body: SequenceWidget
@@ -125,7 +127,7 @@ class ClassWidget(
         layout = ROW_LAYOUT_H_SHRINK
         keyword = newKeywordWidget(firstRow, "class",
             alternatives = { TypeTypes.values().map { it.name.lowercase() } }) {
-            commands.execute(object : Command {
+            commandStack.execute(object : Command {
                 override val target = node
                 override val kind = CommandKind.MODIFY
                 override val element =
@@ -141,7 +143,7 @@ class ClassWidget(
             })
         }
         keyword.addKeyEvent(SWT.SPACE) {
-            commands.execute(object : Command {
+            commandStack.execute(object : Command {
                 override val target = node
                 override val kind = CommandKind.ADD
                 override val element = Modifier(PUBLIC)
@@ -246,7 +248,8 @@ class ClassWidget(
                 val w = MethodWidget(
                     body,
                     dec as CallableDeclaration<*>,
-                    configuration = configuration
+                    configuration = configuration,
+                    commandStack = commandStack
                 )
                 w.closingBracket.addInsert(w, body, true)
                 w

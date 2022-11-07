@@ -122,12 +122,11 @@ object CallFeature : StatementFeature<ExpressionStmt, ExpressionStatementWidget>
         insert: TextWidget,
         output: (Statement) -> Unit
     ) {
+
         insert.addKeyEvent('(',
             precondition = {
                 insert.isAtEnd &&
-                        (tryParse<NameExpr>(it) || tryParse<FieldAccessExpr>(it) || tryParse<ArrayAccessExpr>(
-                            it
-                        ))
+                        (tryParse<NameExpr>(it) || tryParse<FieldAccessExpr>(it) || tryParse<ArrayAccessExpr>(it))
             }) {
             var e: Expression = StaticJavaParser.parseExpression(insert.text)
 

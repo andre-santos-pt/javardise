@@ -14,36 +14,32 @@ import com.github.javaparser.ast.stmt.WhileStmt
 import com.github.javaparser.ast.type.VoidType
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
-import pt.iscte.javardise.Commands
-import pt.iscte.javardise.addCommand
-import pt.iscte.javardise.modifyCommand
-import pt.iscte.javardise.removeCommand
+import pt.iscte.javardise.CommandStack
 
 class CommandTests : SWTTest(
     ClassOrInterfaceDeclaration(NodeList(), false, "Test")
 ) {
 
+    val commandStack = CommandStack.create()
+
     @Test
     fun testSteps() {
         val actions: List<(Node) -> Node> = listOf(
             {
-                classModel.modifyCommand(
+                commandStack.modifyCommand(
+                    classModel,
                     classModel.name,
                     SimpleName("AutoTest"),
-                    classModel::setName
-                ); classModel
+                    classModel::setName); classModel
             },
             {
                 val m = MethodDeclaration(NodeList(), VoidType(), "method")
-                classModel.members.addCommand(classModel, m); m
+                commandStack.addCommand(classModel.members, classModel, m); m
             },
             {
                 val block = BlockStmt()
                 val w = WhileStmt(NameExpr("expression"), block)
-                (it as MethodDeclaration).body.get().statements.addCommand(
-                    it,
-                    w
-                ); block
+                commandStack.addCommand((it as MethodDeclaration).body.get().statements, it, w); block
             },
             {
                 val ass = AssignExpr(
@@ -51,14 +47,14 @@ class CommandTests : SWTTest(
                     IntegerLiteralExpr("1"),
                     AssignExpr.Operator.ASSIGN
                 )
-                (it as BlockStmt).statements.addCommand(
+                commandStack.addCommand((it as BlockStmt).statements,
                     it.parentNode.get(),
                     ExpressionStmt(ass)
                 )
                 it
             },
             {
-                (it as BlockStmt).statements.removeCommand(
+                commandStack.removeCommand((it as BlockStmt).statements,
                     it.parentNode.get(),
                     it.statements[0]
                 )
@@ -119,19 +115,19 @@ class CommandTests : SWTTest(
         actions.forEachIndexed { i, a ->
             step {
                 prev = a(prev)
-                assertEquals(i + 1, Commands.stackSize)
+                assertEquals(i + 1, commandStack.stackSize)
             }
         }
 
         actions.forEachIndexed { i, _ ->
             step {
-                Commands.undo()
-                assertEquals(actions.size - (i + 1), Commands.stackSize)
+                commandStack.undo()
+                assertEquals(actions.size - (i + 1), commandStack.stackSize)
             }
         }
 
         step {
-            assertEquals(0, Commands.stackSize)
+            assertEquals(0, commandStack.stackSize)
         }
         terminate()
     }

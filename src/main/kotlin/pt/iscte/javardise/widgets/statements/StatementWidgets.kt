@@ -4,12 +4,10 @@ import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.stmt.BlockStmt
 import com.github.javaparser.ast.stmt.Statement
 import org.eclipse.swt.SWT
-import org.eclipse.swt.events.KeyEvent
 import org.eclipse.swt.widgets.Composite
 import org.eclipse.swt.widgets.Control
 import pt.iscte.javardise.Command
 import pt.iscte.javardise.CommandKind
-import pt.iscte.javardise.Commands
 import pt.iscte.javardise.NodeWidget
 import pt.iscte.javardise.basewidgets.SequenceWidget
 import pt.iscte.javardise.basewidgets.TextWidget
@@ -37,7 +35,7 @@ abstract class StatementWidget<T : Statement>(
 
     fun TokenWidget.addDelete(node: Statement, block: BlockStmt) =
         addKeyEvent(SWT.BS, action = {
-            commands.execute(object : Command {
+            commandStack.execute(object : Command {
                 val index = block.statements.indexOf(node)
                 override val target: Node = block
                 override val kind = CommandKind.REMOVE

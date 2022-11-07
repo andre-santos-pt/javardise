@@ -15,7 +15,6 @@ import org.eclipse.swt.layout.FillLayout
 import org.eclipse.swt.layout.GridLayout
 import org.eclipse.swt.widgets.*
 import org.eclipse.swt.widgets.List
-import pt.iscte.javardise.Commands
 import pt.iscte.javardise.external.*
 import pt.iscte.javardise.widgets.members.ClassWidget
 import java.io.File
@@ -27,11 +26,11 @@ import javax.lang.model.SourceVersion
 // TODO folder or dialog
 fun main(args: Array<String>) {
     val file = if (args.isEmpty()) File(System.getProperty("user.dir")) else File(args[0])
-    val window = JavardiseClassicIDE(file)
+    val window = JavardiseClassicEditor(file)
     window.open()
 }
 
-class JavardiseClassicIDE(val folder: File) {
+class JavardiseClassicEditor(val folder: File) {
 
     private val display = Display()
     private val shell = Shell(display)
@@ -88,7 +87,8 @@ class JavardiseClassicIDE(val folder: File) {
         display.addFilter(SWT.KeyDown) {
             if (it.stateMask == SWT.MOD1 && it.keyCode == 'z'.code) {
                 println("undo")
-                classOnFocus?.commands?.undo()
+                val cmd = classOnFocus?.commandStack
+                    cmd?.undo()
             }
         }
     }
@@ -115,8 +115,9 @@ class JavardiseClassicIDE(val folder: File) {
         val w = tab.scrollable {
             ClassWidget(it, model)
         }
+        // TODO not working
         w.addFocusObserver { control ->
-           focusMap[tab] = control
+            focusMap[tab] = control
         }
         //w.setAutoScroll()
         //w.layoutData = GridData(GridData.FILL_BOTH)

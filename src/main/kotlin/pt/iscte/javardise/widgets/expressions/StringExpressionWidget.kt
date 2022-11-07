@@ -38,7 +38,7 @@ class StringExpressionWidget(
         close.widget.addKeyListener(delListener)
 
         text.addFocusLostAction {
-            commands.execute(object : Command {
+            commandStack.execute(object : Command {
                 override val target = node
                 override val kind = CommandKind.MODIFY
                 override val element = node.value

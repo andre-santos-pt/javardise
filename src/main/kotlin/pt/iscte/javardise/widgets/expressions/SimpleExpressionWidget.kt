@@ -94,7 +94,7 @@ class SimpleExpressionWidget(
         expression.addKeyEvent('\'', precondition = { it.isEmpty() }) {
             editEvent(CharLiteralExpr('a'))
         }
-        expression.addKeyEvent('(', precondition = { isValidSimpleName(it) }) {
+        expression.addKeyEvent('(', precondition = { expression.isAtEnd && isValidSimpleName(it) }) {
             editEvent(MethodCallExpr(expression.text))
         }
 

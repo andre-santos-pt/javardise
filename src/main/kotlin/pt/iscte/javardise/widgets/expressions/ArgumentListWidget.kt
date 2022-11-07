@@ -93,9 +93,9 @@ class ArgumentListWidget<T : Expression, N : Node>(
 
     private fun createArgument(exp: T, index: Int, replace: Boolean):
             ExpressionWidget<*> {
-        val arg = createExpressionWidget(this, exp) {
+        val arg = createExpressionWidget(this, exp) { // TODO bug  Argument not valid
             if (it == null)
-                owner.commands.execute(object : Command {
+                owner.commandStack.execute(object : Command {
                     override val target = owner.node
                     override val kind = CommandKind.REMOVE
                     override val element = exp
@@ -111,7 +111,7 @@ class ArgumentListWidget<T : Expression, N : Node>(
                     }
                 })
             else {
-                owner.commands.execute(object : Command {
+                owner.commandStack.execute(object : Command {
                     override val target = owner.node
                     override val kind = CommandKind.MODIFY
                     override val element = exp
@@ -130,7 +130,7 @@ class ArgumentListWidget<T : Expression, N : Node>(
         }
 
         arg.tail.addKeyEvent(',') {
-            owner.commands.execute(object : Command {
+            owner.commandStack.execute(object : Command {
                 override val target = owner.node
                 override val kind = CommandKind.ADD
                 override val element get() = NameExpr("expression")
@@ -176,7 +176,7 @@ class ArgumentListWidget<T : Expression, N : Node>(
             expression: Expression,
             after: Expression? = null
         ) {
-            owner.commands.execute(object : Command {
+            owner.commandStack.execute(object : Command {
                 override val target = owner.node
                 override val kind = CommandKind.ADD
                 override val element = expression
