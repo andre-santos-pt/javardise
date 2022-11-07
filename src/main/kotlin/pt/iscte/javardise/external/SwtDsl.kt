@@ -47,7 +47,7 @@ fun Composite.check(
 }
 
 fun Composite.text(
-    text: String,
+    text: String = "",
     style: Int = SWT.BORDER,
     init: Text.() -> Unit = {}
 ): Text {
@@ -227,6 +227,31 @@ fun message(init: Shell.() -> Unit) {
     s.open()
 }
 
+fun prompt(message: String, action: (String) -> Unit) {
+    val s = shell(SWT.DIALOG_TRIM or SWT.APPLICATION_MODAL) {
+        layout = RowLayout(SWT.VERTICAL)
+        label(message)
+        val t = text {
+
+        }
+        t.addKeyListener(object : KeyAdapter() {
+            override fun keyPressed(e: KeyEvent) {
+                if(e.character == SWT.CR) {
+                    action(t.text)
+                    this@shell.close()
+                }
+            }
+        })
+        button("OK") {
+            action(t.text)
+            this@shell.close()
+        }
+    }
+    s.center()
+    s.pack()
+    s.open()
+}
+
 fun shell(style: Int = SWT.NONE, content: Shell.() -> Unit): Shell {
     val s = Shell(Display.getDefault())
     s.layout = FillLayout()
@@ -257,6 +282,7 @@ fun Shell.launch() {
 fun font(face: String, size: Int, style: Int = SWT.NONE) =
     Font(Display.getDefault(), FontData(face, size, style))
 
+// only works when parent has FillLayout
 fun <T : Composite> Composite.scrollable(create: (Composite) -> T): T {
     val scroll = ScrolledComposite(this, SWT.H_SCROLL or SWT.V_SCROLL)
     scroll.layout = GridLayout()
@@ -325,7 +351,8 @@ fun Control.traverse(visit: (Control) -> Boolean) {
         this.children.forEach { it.traverse(visit) }
 }
 
-val Text.isNumeric: Boolean get() {
-    val regex = "-?\\d+(\\.\\d+)?".toRegex()
-    return text.matches(regex)
-}
+val Text.isNumeric: Boolean
+    get() {
+        val regex = "-?\\d+(\\.\\d+)?".toRegex()
+        return text.matches(regex)
+    }

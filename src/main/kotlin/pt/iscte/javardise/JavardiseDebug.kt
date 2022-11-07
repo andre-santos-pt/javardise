@@ -169,7 +169,7 @@ class JavardiseWindow(var file: File) {
             val nodeMap = mutableListOf<Token>()
             val printer = DefaultPrettyPrinter({ TestVis2(nodeMap, it) }, DefaultPrinterConfiguration())
             val src = printer.print(model)
-            val errors = compile(listOf(CompilationItem(model!!.nameAsString, src)))
+            val errors = compile(listOf(model!!))
 
             for (e in errors) {
                 println("ERROR line ${e.lineNumber} ${e.columnNumber} ${e.getMessage(null)}")

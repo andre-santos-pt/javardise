@@ -2,3 +2,5 @@
 /.gradle/
 /build/
 /libs/
+/testWorkspace/
+/src/main/java/

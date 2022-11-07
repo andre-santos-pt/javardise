@@ -15,6 +15,8 @@ import com.github.javaparser.printer.configuration.PrinterConfiguration
 import pt.iscte.javardise.findChild
 import pt.iscte.javardise.widgets.members.ClassWidget
 import java.io.File
+import java.io.FileFilter
+import java.io.FilenameFilter
 import java.io.PrintWriter
 import java.io.StringWriter
 import java.net.URI
@@ -24,7 +26,13 @@ import javax.tools.JavaCompiler.CompilationTask
 
 data class CompilationItem(val name: String, val src: String)
 
-fun compile(items: List<CompilationItem>): List<Diagnostic<*>> {
+fun compile(folder: File) {
+    require(folder.exists() && folder.isDirectory)
+    folder.listFiles(FileFilter { it.name.endsWith(".java") })?.forEach {
+    }
+}
+
+fun compile(items: List<ClassOrInterfaceDeclaration>): List<Diagnostic<*>> {
     val compiler: JavaCompiler = ToolProvider.getSystemJavaCompiler()
     val diagnostics = DiagnosticCollector<JavaFileObject>()
     val compilationUnits: MutableList<JavaFileObject> = mutableListOf()
@@ -32,11 +40,9 @@ fun compile(items: List<CompilationItem>): List<Diagnostic<*>> {
     for (i in items) {
         val writer = StringWriter()
         val out = PrintWriter(writer)
-        out.println(i.src)
+        out.println(i.toString())
         out.close()
-        val file: JavaFileObject =
-            JavaSourceFromString(i.name, writer.toString())
-        compilationUnits.add(file)
+        compilationUnits.add(JavaSource(i))
     }
     val task: CompilationTask =
         compiler.getTask(null, null, diagnostics, null, null, compilationUnits)
@@ -46,10 +52,10 @@ fun compile(items: List<CompilationItem>): List<Diagnostic<*>> {
 }
 
 
-internal class JavaSourceFromString(name: String, val code: String) :
+internal class JavaSourceFromString(val filename: String, val code: String) :
     SimpleJavaFileObject(
         URI.create(
-            "string:///" + name.replace(
+            "string:///" + filename.replace(
                 '.',
                 '/'
             ) + JavaFileObject.Kind.SOURCE.extension
@@ -58,6 +64,21 @@ internal class JavaSourceFromString(name: String, val code: String) :
     ) {
     override fun getCharContent(ignoreEncodingErrors: Boolean): CharSequence {
         return code
+    }
+}
+
+internal class JavaSource(val model: ClassOrInterfaceDeclaration) :
+    SimpleJavaFileObject(
+        URI.create(
+            "string:///" + model.nameAsString.replace(
+                '.',
+                '/'
+            ) + JavaFileObject.Kind.SOURCE.extension
+        ),
+        JavaFileObject.Kind.SOURCE
+    ) {
+    override fun getCharContent(ignoreEncodingErrors: Boolean): CharSequence {
+        return model.toString()
     }
 }
 
@@ -126,9 +147,8 @@ class TokenVisitor(val list: MutableList<Token>, conf: PrinterConfiguration) :
     }
 }
 
-fun checkErrors(models: List<Pair<ClassOrInterfaceDeclaration, ClassWidget>>) {
-    val nodeMap =
-        mutableMapOf<ClassOrInterfaceDeclaration, MutableList<Token>>()
+fun checkCompileErrors(models: List<Pair<ClassOrInterfaceDeclaration, ClassWidget>>) {
+    val nodeMap = mutableMapOf<ClassOrInterfaceDeclaration, MutableList<Token>>()
     for (i in models) {
         val model = i.first
         val widget = i.second
@@ -139,36 +159,32 @@ fun checkErrors(models: List<Pair<ClassOrInterfaceDeclaration, ClassWidget>>) {
             DefaultPrinterConfiguration()
         )
         val src = printer.print(model)
+        nodeMap[model] = tokenList
     }
-    val errors = compile(models.map {
-        CompilationItem(
-            it.first.nameAsString,
-            it.toString()
-        )
-    })
+    val errors = compile(models.map { it.first })
     for (e in errors) {
 
-        println(
-            "ERROR line ${e.lineNumber} ${e.columnNumber} ${
+        println("${(e.source as JavaSource).name} ERROR line ${e.lineNumber} ${e.columnNumber} ${e.kind} ${e.code} ${
                 e.getMessage(
                     null
                 )
             }"
         )
 //        // zero-based in java compiler
-//        val t =
-//            tokenList.find { it.line == e.lineNumber && it.col == e.columnNumber }
-//        t?.let {
-//            val child = widget.findChild(t.node)
-//            child?.let {
-//                child.traverse {
-//                    it.background = widget.configuration.errorColor
-//                    true
-//                }
-//                child.toolTipText = e.getMessage(null)
-//                child.requestLayout()
-//            }
-//        }
+        val m = (e.source as JavaSource).model
+        val t = nodeMap[m]?.find { it.line == e.lineNumber && it.col == e.columnNumber }
+        val widget = models.find { it.first == m}?.second
+        t?.let {
+            val child = widget?.findChild(t.node)
+            child?.let {
+                child.traverse {
+                    it.background = widget.configuration.errorColor
+                    true
+                }
+                child.toolTipText = e.getMessage(null)
+                child.requestLayout()
+            }
+        }
         // TODO show not handled
     }
 

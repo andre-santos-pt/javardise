@@ -1,17 +1,18 @@
 package pt.iscte.javardise.examples
 
+import com.github.javaparser.ParseProblemException
 import com.github.javaparser.ast.CompilationUnit
 import com.github.javaparser.ast.NodeList
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration
 import com.github.javaparser.ast.expr.SimpleName
 import com.github.javaparser.ast.observer.ObservableProperty
 import org.eclipse.swt.SWT
-import org.eclipse.swt.custom.SashForm
 import org.eclipse.swt.custom.StackLayout
 import org.eclipse.swt.events.SelectionAdapter
 import org.eclipse.swt.events.SelectionEvent
 import org.eclipse.swt.graphics.Point
 import org.eclipse.swt.layout.FillLayout
+import org.eclipse.swt.layout.GridData
 import org.eclipse.swt.layout.GridLayout
 import org.eclipse.swt.widgets.*
 import org.eclipse.swt.widgets.List
@@ -19,13 +20,15 @@ import pt.iscte.javardise.external.*
 import pt.iscte.javardise.widgets.members.ClassWidget
 import java.io.File
 import java.io.FileFilter
+import java.io.PrintWriter
 import java.util.WeakHashMap
 import javax.lang.model.SourceVersion
 
 
 // TODO folder or dialog
 fun main(args: Array<String>) {
-    val file = if (args.isEmpty()) File(System.getProperty("user.dir")) else File(args[0])
+    val file =
+        if (args.isEmpty()) File(System.getProperty("user.dir")) else File(args[0])
     val window = JavardiseClassicEditor(file)
     window.open()
 }
@@ -39,40 +42,48 @@ class JavardiseClassicEditor(val folder: File) {
     val focusMap = WeakHashMap<Composite, Control>()
     val stacklayout = StackLayout()
 
-    val classOnFocus: ClassWidget? get() = if(stacklayout.topControl == null)
-        null
-    else
-        (stacklayout.topControl.data as TabData).classWidget
+    val classOnFocus: ClassWidget?
+        get() = if (stacklayout.topControl == null)
+            null
+        else
+            (stacklayout.topControl.data as TabData).classWidget
 
     init {
         require(folder.exists() && folder.isDirectory)
 
-        shell.layout = FillLayout()
+        shell.layout = GridLayout(2, false)
         shell.text = folder.absolutePath
-        val form = SashForm(shell, SWT.HORIZONTAL)
 
-        val fileList = List(form, SWT.BORDER or SWT.MULTI or SWT.V_SCROLL)
-        val fileArea = Composite(form, SWT.BORDER)
+        val fileList = List(shell, SWT.BORDER or SWT.MULTI or SWT.V_SCROLL)
+        val gdata = GridData(GridData.VERTICAL_ALIGN_FILL)
+        gdata.minimumWidth = 150
+        fileList.layoutData = gdata
+        val editorArea = Composite(shell, SWT.NONE)
+        editorArea.layoutData = GridData(GridData.FILL_BOTH)
+        editorArea.layout = stacklayout
 
-        fileArea.layout = stacklayout
-
-        fileList.addSelectionListener(object: SelectionAdapter() {
+        fileList.addSelectionListener(object : SelectionAdapter() {
             var current = -1
             override fun widgetSelected(e: SelectionEvent) {
-                if(fileList.selection.isNotEmpty() && current != fileList.selectionIndex)  {
+                if (fileList.selection.isNotEmpty() && current != fileList.selectionIndex) {
                     current = fileList.selectionIndex
-                    val find = openTabs.find { (it.data as TabData).fileName == fileList.selection.first() }
-                    if(find != null) {
+                    val find =
+                        openTabs.find { (it.data as TabData).file.name == fileList.selection.first() }
+                    if (find != null) {
                         stacklayout.topControl = find
-                        fileArea.layout()
-                        if(focusMap.containsKey(find))
+                        editorArea.layout()
+                        if (focusMap.containsKey(find))
                             focusMap[find]?.setFocus()
-                    }
-                    else {
-                        val tab = createTab(fileList, fileArea)
+                    } else {
+                        val tab = createTab(
+                            File(
+                                folder.absoluteFile,
+                                fileList.selection.first()
+                            ), fileList, editorArea
+                        )
                         openTabs.add(tab)
                         stacklayout.topControl = tab
-                        fileArea.layout()
+                        editorArea.layout()
                     }
                 }
             }
@@ -83,49 +94,96 @@ class JavardiseClassicEditor(val folder: File) {
         }
 
 
+        val menu = Menu(fileList)
+        val newFile = MenuItem(menu, SWT.PUSH)
+        newFile.text = "New file"
+        newFile.addSelectionListener(object : SelectionAdapter() {
+            override fun widgetSelected(e: SelectionEvent?) {
+                prompt("File name") {
+                    val f = File(folder, it + ".java")
+                    f.createNewFile()
+                    fileList.add(f.name)
+                    fileList.requestLayout()
+                    fileList.select(fileList.itemCount)
+                }
+//                val newTab = createTab(f, fileList, editorArea)
+//                stacklayout.topControl = newTab
+//                editorArea.layout()
+
+            }
+        })
+        fileList.menu = menu
+
         // BUG lost focus
         display.addFilter(SWT.KeyDown) {
             if (it.stateMask == SWT.MOD1 && it.keyCode == 'z'.code) {
                 println("undo")
                 val cmd = classOnFocus?.commandStack
-                    cmd?.undo()
+                cmd?.undo()
             }
         }
     }
 
     private fun createTab(
+        file: File,
         list: List,
         comp: Composite
     ): Composite {
-        val fileName = list.selection.first()
-        val tab = Composite(comp, SWT.CLOSE)
-        val file = File(folder.absoluteFile, fileName)
+        val tab = Composite(comp, SWT.BORDER)
+        val layout = FillLayout()
+        layout.marginHeight = 10
+        layout.marginWidth = 10
+        tab.layout = layout
+
         val typeName = file.name.dropLast(".java".length)
         val model = if (file.exists()) {
-            val cu = loadCompilationUnit(file)
-            cu.findMainClass() ?: ClassOrInterfaceDeclaration(
-                NodeList(), false, typeName
-            )
+            try {
+                val cu = loadCompilationUnit(file)
+                cu.findMainClass() ?: ClassOrInterfaceDeclaration(
+                    NodeList(), false, typeName
+                )
+            } catch (e: ParseProblemException) {
+                System.err.println("Could not load: $file")
+                null
+            }
         } else {
-            val cu = CompilationUnit()
-            cu.addClass(typeName)
+            ClassOrInterfaceDeclaration(NodeList(), false, typeName)
         }
-        tab.layout = GridLayout()
 
-        val w = tab.scrollable {
-            ClassWidget(it, model)
+        if(model == null) {
+            // tab.scrollable {
+            tab.data = TabData(file, null)
+            tab.fill {
+                val src = file.readLines().joinToString(separator = "\n")
+                label(src).foreground = Display.getDefault().getSystemColor(SWT.COLOR_RED)
+            }
+            //}
         }
-        // TODO not working
-        w.addFocusObserver { control ->
-            focusMap[tab] = control
+        else {
+            val w = tab.scrollable {
+                ClassWidget(it, model)
+            }
+            // TODO not working
+            w.addFocusObserver { control ->
+                focusMap[tab] = control
+            }
+            w.setAutoScroll()
+
+            w.commandStack.addObserver { _, _ ->
+                val writer = PrintWriter(file)
+                writer.println(model.toString())
+                writer.close()
+
+                checkCompileErrors(listOf(
+                    Pair(model, w)
+                ))
+            }
+            tab.data = TabData(file, w)
         }
-        //w.setAutoScroll()
-        //w.layoutData = GridData(GridData.FILL_BOTH)
-        tab.data = TabData(fileName, w)
         return tab
     }
 
-    data class TabData(val fileName: String, val classWidget: ClassWidget)
+    data class TabData(val file: File, val classWidget: ClassWidget?)
 
     fun notFoundLabel(p: Composite) = Composite(p, SWT.BORDER).apply {
         layout = FillLayout()
