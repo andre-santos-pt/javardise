@@ -12,6 +12,7 @@ import org.eclipse.swt.layout.GridData
 import org.eclipse.swt.layout.GridLayout
 import org.eclipse.swt.layout.RowLayout
 import org.eclipse.swt.widgets.*
+import pt.iscte.javardise.Configuration
 import pt.iscte.javardise.basewidgets.TextWidget
 import java.io.File
 import java.util.*
@@ -285,7 +286,11 @@ fun font(face: String, size: Int, style: Int = SWT.NONE) =
 // only works when parent has FillLayout
 fun <T : Composite> Composite.scrollable(create: (Composite) -> T): T {
     val scroll = ScrolledComposite(this, SWT.H_SCROLL or SWT.V_SCROLL)
-    scroll.layout = GridLayout()
+    val layout = GridLayout()
+    layout.marginTop = 10
+    layout.marginLeft = 10
+    scroll.layout = layout
+
     scroll.setMinSize(100, 100)
     scroll.expandHorizontal = true
     scroll.expandVertical = true
@@ -345,6 +350,8 @@ val ROW_LAYOUT_V_SPACED = create(SWT.VERTICAL, 20)
 val ROW_LAYOUT_V_SHRINK = create(SWT.VERTICAL, spacing = 1, top = 0)
 
 
+
+
 fun Control.traverse(visit: (Control) -> Boolean) {
     val enter = visit(this)
     if (this is Composite && enter)
@@ -353,6 +360,6 @@ fun Control.traverse(visit: (Control) -> Boolean) {
 
 val Text.isNumeric: Boolean
     get() {
-        val regex = "-?\\d+(\\.\\d+)?".toRegex()
+        val regex = "-?\\d*(\\.\\d+)?".toRegex()
         return text.matches(regex)
     }

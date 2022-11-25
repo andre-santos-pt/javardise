@@ -12,6 +12,9 @@ import com.github.javaparser.printer.DefaultPrettyPrinter
 import com.github.javaparser.printer.DefaultPrettyPrinterVisitor
 import com.github.javaparser.printer.configuration.DefaultPrinterConfiguration
 import com.github.javaparser.printer.configuration.PrinterConfiguration
+import pt.iscte.javardise.basewidgets.ICodeDecoration
+import pt.iscte.javardise.basewidgets.addMark
+import pt.iscte.javardise.basewidgets.addNote
 import pt.iscte.javardise.findChild
 import pt.iscte.javardise.widgets.members.ClassWidget
 import java.io.File
@@ -147,19 +150,32 @@ class TokenVisitor(val list: MutableList<Token>, conf: PrinterConfiguration) :
     }
 }
 
-fun checkCompileErrors(models: List<Pair<ClassOrInterfaceDeclaration, ClassWidget>>) {
+fun <K, V> MutableMap<K, MutableList<V>>.putPair(key: K, value: V) {
+    if(containsKey(key))
+        get(key)?.add(value)
+    else
+        put(key, mutableListOf(value))
+}
+
+
+fun buildNodeSourceMap(model: ClassOrInterfaceDeclaration) : MutableList<Token> {
+    val tokenList = mutableListOf<Token>()
+    val printer = DefaultPrettyPrinter(
+        { TokenVisitor(tokenList, it) },
+        DefaultPrinterConfiguration()
+    )
+    printer.print(model)
+    return tokenList
+}
+
+//data class CompileError(val type: ClassOrInterfaceDeclaration, val errors: List<ICodeDecoration<*>>)
+typealias CompileErrors = MutableMap<ClassOrInterfaceDeclaration, MutableList<ICodeDecoration<*>>>
+fun checkCompileErrors(models: List<Pair<ClassOrInterfaceDeclaration, ClassWidget?>>) : CompileErrors {
+    val errorDecs = mutableMapOf<ClassOrInterfaceDeclaration, MutableList<ICodeDecoration<*>>>()
     val nodeMap = mutableMapOf<ClassOrInterfaceDeclaration, MutableList<Token>>()
     for (i in models) {
         val model = i.first
-        val widget = i.second
-
-        val tokenList = mutableListOf<Token>()
-        val printer = DefaultPrettyPrinter(
-            { TokenVisitor(tokenList, it) },
-            DefaultPrinterConfiguration()
-        )
-        val src = printer.print(model)
-        nodeMap[model] = tokenList
+        nodeMap[model] = buildNodeSourceMap(model)
     }
     val errors = compile(models.map { it.first })
     for (e in errors) {
@@ -170,23 +186,21 @@ fun checkCompileErrors(models: List<Pair<ClassOrInterfaceDeclaration, ClassWidge
                 )
             }"
         )
-//        // zero-based in java compiler
+        // zero-based in java compiler
         val m = (e.source as JavaSource).model
         val t = nodeMap[m]?.find { it.line == e.lineNumber && it.col == e.columnNumber }
         val widget = models.find { it.first == m}?.second
         t?.let {
             val child = widget?.findChild(t.node)
             child?.let {
-                child.traverse {
-                    it.background = widget.configuration.errorColor
-                    true
-                }
-                child.toolTipText = e.getMessage(null)
-                child.requestLayout()
+                errorDecs.putPair(m, child.addMark(widget.configuration.errorColor))
+                //child.addNote(e.getMessage(null), ICodeDecoration.Location.TOP).show()
             }
+            // TODO errors not mapped
         }
-        // TODO show not handled
+
     }
+    return errorDecs
 
 }
 

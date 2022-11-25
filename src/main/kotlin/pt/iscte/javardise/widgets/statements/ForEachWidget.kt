@@ -16,23 +16,27 @@ import pt.iscte.javardise.external.row
 import pt.iscte.javardise.widgets.expressions.ExpressionWidget
 import pt.iscte.javardise.widgets.expressions.createExpressionWidget
 
-class ForEachWidget(parent: SequenceWidget, node: ForEachStmt, override val block: BlockStmt) :
+class ForEachWidget(parent: SequenceWidget, node: ForEachStmt,
+                    override val parentBlock: BlockStmt) :
     StatementWidget<ForEachStmt>(parent, node), SequenceContainer<ForEachStmt> {
 
     lateinit var keyword: TokenWidget
     lateinit var variable: ExpressionWidget<*>
     lateinit var iterable: ExpressionWidget<*>
-    override lateinit var body: SequenceWidget
+    override lateinit var bodyWidget: SequenceWidget
     lateinit var openBracket: TokenWidget
     override lateinit var closingBracket: TokenWidget
     lateinit var colon: FixedToken
     lateinit var firstRow: Composite
 
+    override val body: BlockStmt = node.body.asBlockStmt()
+
     init {
         column {
             firstRow = row {
                 keyword = newKeywordWidget(this, "for")
-                keyword.addDelete(node, block)
+                keyword.addDelete(node, parentBlock)
+                keyword.addShallowDelete()
                 FixedToken(this, "(")
                 variable = this.createVarExp(this, node.variable)
                 colon = FixedToken(this, ":")
@@ -40,11 +44,11 @@ class ForEachWidget(parent: SequenceWidget, node: ForEachStmt, override val bloc
                 FixedToken(this, ")")
                 openBracket = TokenWidget(this, "{")
             }
-            body = createSequence(this, node.body.asBlockStmt())
+            bodyWidget = createSequence(this, node.body.asBlockStmt())
             closingBracket = TokenWidget(this, "}")
             closingBracket.addInsert(this@ForEachWidget, parent, true)
         }
-        openBracket.addInsert(null, body, true)
+        openBracket.addInsert(null, bodyWidget, true)
 
         node.observeNotNullProperty<VariableDeclarationExpr>(ObservableProperty.VARIABLE) {
             variable.dispose()

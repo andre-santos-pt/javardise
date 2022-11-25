@@ -3,6 +3,8 @@ package pt.iscte.javardise.basewidgets
 import org.eclipse.swt.SWT
 import org.eclipse.swt.events.ControlAdapter
 import org.eclipse.swt.events.ControlEvent
+import org.eclipse.swt.events.PaintEvent
+import org.eclipse.swt.events.PaintListener
 import org.eclipse.swt.graphics.Color
 import org.eclipse.swt.graphics.Point
 import org.eclipse.swt.layout.FillLayout
@@ -33,6 +35,11 @@ internal class Decoration<T : Control>(
                 if (!shell.isDisposed) setLocation(target, loc, contr)
             }
             override fun controlResized(e: ControlEvent) {
+                if (!shell.isDisposed) setLocation(target, loc, contr)
+            }
+        })
+        target.addPaintListener(object : PaintListener {
+            override fun paintControl(p0: PaintEvent?) {
                 if (!shell.isDisposed) setLocation(target, loc, contr)
             }
         })

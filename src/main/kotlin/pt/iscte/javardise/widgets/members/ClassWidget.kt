@@ -11,8 +11,10 @@ import com.github.javaparser.ast.expr.SimpleName
 import com.github.javaparser.ast.observer.AstObserver
 import com.github.javaparser.ast.observer.AstObserverAdapter
 import com.github.javaparser.ast.observer.ObservableProperty
+import com.github.javaparser.ast.stmt.BlockStmt
 import org.eclipse.swt.SWT
 import org.eclipse.swt.custom.ScrolledComposite
+import org.eclipse.swt.layout.RowLayout
 import org.eclipse.swt.widgets.Composite
 import org.eclipse.swt.widgets.Control
 import org.eclipse.swt.widgets.Display
@@ -44,11 +46,12 @@ fun matchModifier(keyword: String) =
 
 
 // TODO require compliant model
-class ClassWidget(
+open class ClassWidget(
     parent: Composite,
     type: ClassOrInterfaceDeclaration,
     configuration: Configuration = DefaultConfigurationSingleton,
-    override val commandStack: CommandStack = CommandStack.create()
+    override val commandStack: CommandStack = CommandStack.create(),
+    val staticClass: Boolean = false
 ) :
     MemberWidget<ClassOrInterfaceDeclaration>(
         parent,
@@ -60,8 +63,10 @@ class ClassWidget(
 
     private val keyword: TokenWidget
     override val name: Id
-    override lateinit var body: SequenceWidget
+    override lateinit var bodyWidget: SequenceWidget
     override val closingBracket: TokenWidget
+
+    override val body: BlockStmt? = null
 
     private val modelFocusObservers =
         mutableListOf<(BodyDeclaration<*>?, Node?) -> Unit>()
@@ -125,6 +130,10 @@ class ClassWidget(
 
     init {
         layout = ROW_LAYOUT_H_SHRINK
+        val layout = RowLayout()
+        layout.marginTop = 10
+        layout.marginLeft = 10
+        this.layout = layout
         keyword = newKeywordWidget(firstRow, "class",
             alternatives = { TypeTypes.values().map { it.name.lowercase() } }) {
             commandStack.execute(object : Command {
@@ -164,16 +173,25 @@ class ClassWidget(
         name.addFocusLostAction(::isValidClassType) {
             node.modifyCommand(node.nameAsString, it, node::setName)
         }
-        body = SequenceWidget(column, configuration.tabLength, 10) { seq, _ ->
+        bodyWidget = SequenceWidget(
+            column,
+            if (staticClass) 0 else configuration.tabLength,
+            10
+        ) { seq, _ ->
             createInsert(seq)
         }
-        TokenWidget(firstRow, "{").addInsert(null, body, false)
+        TokenWidget(firstRow, "{").addInsert(null, bodyWidget, false)
 
         node.members.forEach {
             createMember(it)
         }
 
         closingBracket = TokenWidget(column, "}")
+
+        if (staticClass) {
+            firstRow.dispose()
+            closingBracket.dispose()
+        }
 
         registerObservers()
         Display.getDefault().addFilter(SWT.FocusIn, focusListenerGlobal)
@@ -221,7 +239,7 @@ class ClassWidget(
                         val w =
                             createMember(nodeAddedOrRemoved as BodyDeclaration<*>)
                         if (!tail)
-                            w.moveAbove(body.findByModelIndex(index) as Control)
+                            w.moveAbove(bodyWidget.findByModelIndex(index) as Control)
 
                         if (w is MethodWidget)
                             w.focusParameters()
@@ -229,10 +247,10 @@ class ClassWidget(
                             (w as FieldWidget).focusExpressionOrSemiColon()
 
                     } else {
-                        (body.find(nodeAddedOrRemoved) as? Control)?.dispose()
-                        body.focusAt(index)
+                        (bodyWidget.find(nodeAddedOrRemoved) as? Control)?.dispose()
+                        bodyWidget.focusAt(index)
                     }
-                    body.requestLayout()
+                    bodyWidget.requestLayout()
                 }
             })
     }
@@ -240,29 +258,29 @@ class ClassWidget(
     fun createMember(dec: BodyDeclaration<*>): Composite =
         when (dec) {
             is FieldDeclaration -> {
-                val w = FieldWidget(body, dec, configuration = configuration)
-                w.semiColon.addInsert(w, body, true)
+                val w = FieldWidget(bodyWidget, dec, configuration = configuration)
+                w.semiColon.addInsert(w, bodyWidget, true)
                 w
             }
             is MethodDeclaration, is ConstructorDeclaration -> {
                 val w = MethodWidget(
-                    body,
+                    bodyWidget,
                     dec as CallableDeclaration<*>,
                     configuration = configuration,
                     commandStack = commandStack
                 )
-                w.closingBracket.addInsert(w, body, true)
+                w.closingBracket.addInsert(w, bodyWidget, true)
                 w
             }
             else -> {
-                val w = UnsupportedWidget(body, dec)
+                val w = UnsupportedWidget(bodyWidget, dec)
                 w.widget.addDeleteListener {
                     this@ClassWidget.node.members.removeCommand(
                         node as Node,
                         dec
                     )
                 }
-                w.widget.addInsert(w, body, true)
+                w.widget.addInsert(w, bodyWidget, true)
                 w
             }
         }.apply {
@@ -275,6 +293,7 @@ class ClassWidget(
                 }
             }
         }
+
 
 
     override fun dispose() {
@@ -301,33 +320,35 @@ class ClassWidget(
             return modifiers
         }
 
-        insert.addKeyEvent(
-            ';', '=',
-            SWT.CR,
-            precondition = { it.matches(MEMBER_REGEX) }) {
-            val split = insert.text.split(Regex("\\s+"))
-            val newField = FieldDeclaration(
-                modifiers(2),
-                StaticJavaParser.parseType(split[split.lastIndex - 1]), // TODO possible bug
-                split.last()
-            )
-            if (it.character == '=')
-                newField.variables[0].setInitializer(NameExpr("expression"))
+        if (!staticClass)
+            insert.addKeyEvent(
+                ';', '=',
+                SWT.CR,
+                precondition = { it.matches(MEMBER_REGEX) }) {
+                val split = insert.text.split(Regex("\\s+"))
+                val newField = FieldDeclaration(
+                    modifiers(2),
+                    StaticJavaParser.parseType(split[split.lastIndex - 1]), // TODO possible bug
+                    split.last()
+                )
+                if (it.character == '=')
+                    newField.variables[0].setInitializer(NameExpr("expression"))
 
-            val insertIndex = seq.findIndexByModel(insert.widget)
-            node.members.addCommand(node, newField, insertIndex)
-            insert.delete()
-        }
+                val insertIndex = seq.findIndexByModel(insert.widget)
+                node.members.addCommand(node, newField, insertIndex)
+                insert.delete()
+            }
 
-        insert.addKeyEvent(
-            '(',
-            precondition = { it.matches(CONSTRUCTOR_REGEX()) }) {
-            val newConst =
-                ConstructorDeclaration(modifiers(1), node.nameAsString)
-            val insertIndex = seq.findIndexByModel(insert.widget)
-            node.members.addCommand(node, newConst, insertIndex)
-            insert.delete()
-        }
+        if (!staticClass)
+            insert.addKeyEvent(
+                '(',
+                precondition = { it.matches(CONSTRUCTOR_REGEX()) }) {
+                val newConst =
+                    ConstructorDeclaration(modifiers(1), node.nameAsString)
+                val insertIndex = seq.findIndexByModel(insert.widget)
+                node.members.addCommand(node, newConst, insertIndex)
+                insert.delete()
+            }
 
 
         insert.addKeyEvent('(', precondition = { it.matches(MEMBER_REGEX) }) {
@@ -341,6 +362,8 @@ class ClassWidget(
             if (node.isInterface)
                 newMethod.setBody(null)
 
+            customizeNewMethodDeclaration(newMethod)
+
             val insertIndex = seq.findIndexByModel(insert.widget)
             node.members.addCommand(node, newMethod, insertIndex)
             insert.delete()
@@ -349,6 +372,10 @@ class ClassWidget(
             insert.clear()
         }
         return insert
+    }
+
+    open fun customizeNewMethodDeclaration(dec: MethodDeclaration) {
+
     }
 
     override fun setFocusOnCreation(firstFlag: Boolean) {

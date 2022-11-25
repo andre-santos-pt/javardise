@@ -19,7 +19,7 @@ import pt.iscte.javardise.widgets.expressions.createExpressionWidget
 class ForWidget(
     parent: SequenceWidget,
     node: ForStmt,
-    override val block: BlockStmt
+    override val parentBlock: BlockStmt
 ) :
     StatementWidget<ForStmt>(parent, node), SequenceContainer<ForStmt> {
 
@@ -31,15 +31,16 @@ class ForWidget(
     lateinit var firstRow: Composite
     var prog: ExpressionWidget<*>? = null
     lateinit var openBracket: TokenWidget
-    override lateinit var body: SequenceWidget
+    override lateinit var bodyWidget: SequenceWidget
     override val closingBracket: TextWidget
-
+    override val body: BlockStmt = node.body.asBlockStmt()
 
     init {
         val col = column {
             firstRow = row {
                 keyword = newKeywordWidget(this, "for")
-                keyword.addDelete(node, block)
+                keyword.addDelete(node, parentBlock)
+                keyword.addShallowDelete()
                 FixedToken(this, "(")
 
                 init = if (node.initialization.isEmpty()) null
@@ -55,8 +56,8 @@ class ForWidget(
                 FixedToken(this, ")")
                 openBracket = TokenWidget(this, "{")
             }
-            body = createSequence(this, node.body.asBlockStmt())
-            openBracket.addInsert(null, body, true)
+            bodyWidget = createSequence(this, node.body.asBlockStmt())
+            openBracket.addInsert(null, bodyWidget, true)
         }
         closingBracket = TokenWidget(col, "}")
         closingBracket.addInsert(this, parent, true)
@@ -103,7 +104,7 @@ class ForWidget(
     private fun Composite.createInitExp(exp: Expression) =
         createExpressionWidget(this, exp) {
             if (it == null)
-                block.statements.removeCommand(block.parentNode.get(), node)
+                parentBlock.statements.removeCommand(parentBlock.parentNode.get(), node)
             else
                 node.initialization.changeCommand(node, it, 0)
         }

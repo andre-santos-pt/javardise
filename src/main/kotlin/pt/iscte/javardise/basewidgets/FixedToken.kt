@@ -5,6 +5,7 @@ import org.eclipse.swt.events.KeyListener
 import org.eclipse.swt.widgets.Composite
 import org.eclipse.swt.widgets.Control
 import org.eclipse.swt.widgets.Label
+import pt.iscte.javardise.DefaultConfiguration
 
 class FixedToken(parent: Composite, token: String) {
 

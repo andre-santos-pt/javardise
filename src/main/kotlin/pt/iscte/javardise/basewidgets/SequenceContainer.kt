@@ -2,13 +2,15 @@ package pt.iscte.javardise.basewidgets
 
 import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.NodeList
+import com.github.javaparser.ast.nodeTypes.NodeWithBody
 import com.github.javaparser.ast.stmt.BlockStmt
 import com.github.javaparser.ast.stmt.Statement
 import org.eclipse.swt.SWT
+import org.eclipse.swt.events.KeyAdapter
+import org.eclipse.swt.events.KeyEvent
 import org.eclipse.swt.widgets.Composite
 import org.eclipse.swt.widgets.Control
-import pt.iscte.javardise.NodeWidget
-import pt.iscte.javardise.UnsupportedWidget
+import pt.iscte.javardise.*
 import pt.iscte.javardise.external.ListAddRemoveObserver
 import pt.iscte.javardise.widgets.statements.IfWidget
 import pt.iscte.javardise.widgets.statements.find
@@ -17,16 +19,18 @@ import pt.iscte.javardise.widgets.statements.findIndexByModel
 
 
 interface SequenceContainer<T : Node> : NodeWidget<T>{
-    val body: SequenceWidget?
+
+    val body: BlockStmt?
+    val bodyWidget: SequenceWidget?
     fun setFocus(): Boolean
 
     fun focusFirst() {
-        body?.setFocus()
+        bodyWidget?.setFocus()
     }
 
     fun focusLast() {
-        if(body?.children?.isNotEmpty() == true) {
-            val last = body!!.children.last()
+        if(bodyWidget?.children?.isNotEmpty() == true) {
+            val last = bodyWidget!!.children.last()
             if(last is SequenceContainer<*>)
                 if(last is IfWidget && last.elseWidget != null)
                     last.elseWidget?.closingBracket?.setFocus()
@@ -40,6 +44,104 @@ interface SequenceContainer<T : Node> : NodeWidget<T>{
     }
 
     val closingBracket: TextWidget
+
+
+    fun addMoveBracket(precondition: () -> Boolean = {true}) {
+        require(node is Statement)
+
+        closingBracket.addKeyListenerInternal(object : KeyAdapter() {
+            override fun keyPressed(e: KeyEvent) {
+                if (e.isCombinedKey(SWT.ARROW_DOWN) && precondition()) {
+                    require(body != null)
+                    val parentBlock = node.parentNode.get() as BlockStmt
+                    val i = parentBlock.statements.indexOf(node as Statement)
+                    if (i + 1 < parentBlock.statements.size) {
+                        commandStack.execute(object : Command {
+                            override val target: Node
+                                get() = node
+                            override val kind: CommandKind
+                                get() = CommandKind.MOVE
+                            override val element: Statement
+                                get() = parentBlock.statements[i + 1]
+
+                            override fun run() {
+                                body!!.asBlockStmt().statements.add(element.clone())
+                                element.remove()
+                            }
+
+                            override fun undo() {
+                                TODO("undo")
+                            }
+
+                        })
+                        closingBracket.setFocus()
+                    }
+
+                } else if (e.isCombinedKey(SWT.ARROW_UP) && precondition()) {
+                    require(body != null)
+                    val parentBlock = node.parentNode.get() as BlockStmt
+                    if (!body!!.asBlockStmt().isEmpty) {
+                        commandStack.execute(object : Command {
+                            override val target: Node
+                                get() = node
+                            override val kind: CommandKind
+                                get() = CommandKind.MOVE
+                            override val element: Statement
+                                get() = body!!.statements.last()
+
+                            override fun run() {
+                                parentBlock.statements.addAfter(
+                                    element.clone(),
+                                    node as Statement
+                                )
+                                element.remove()
+                            }
+
+                            override fun undo() {
+                                TODO("undo")
+                            }
+
+                        })
+                        closingBracket.setFocus()
+                    }
+                }
+            }
+        })
+    }
+
+    fun TokenWidget.addShallowDelete() {
+        require(node is Statement)
+        addKeyListenerInternal(object : KeyAdapter() {
+            override fun keyPressed(e: KeyEvent) {
+                if (e.character == SWT.DEL) {
+                    require(body != null)
+                    val parentBlock = node.parentNode.get() as BlockStmt
+                    commandStack.execute(object : Command {
+                        override val target: Node
+                            get() = parentBlock
+                        override val kind: CommandKind
+                            get() = CommandKind.REMOVE
+                        override val element: Statement
+                            get() = node as Statement
+
+                        override fun run() {
+                            body!!.statements.forEach {
+                                parentBlock.statements.addAfter(it.clone(), element)
+                            }
+                            element.remove()
+                        }
+
+                        override fun undo() {
+                            TODO("undo")
+                        }
+
+                    })
+                }
+            }
+        })
+    }
+
+
 
     fun addWidget(
         stmt: Statement,

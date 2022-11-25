@@ -6,7 +6,7 @@ import pt.iscte.javardise.external.indexOfIdentity
 import kotlin.reflect.KFunction1
 
 enum class CommandKind {
-    ADD, REMOVE, MODIFY
+    ADD, REMOVE, MODIFY, MOVE
 }
 
 interface Command {
@@ -34,6 +34,7 @@ interface CommandStack {
         fun create(): CommandStack = CommandStackImpl()
     }
 
+    // TODO NUllStack not well designed
    object NullStack : CommandStack {
        override val stackSize: Int = 0
        override val stackElements: List<Command> = emptyList()

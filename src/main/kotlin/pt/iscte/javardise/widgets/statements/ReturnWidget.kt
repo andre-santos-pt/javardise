@@ -18,7 +18,7 @@ import pt.iscte.javardise.widgets.expressions.createExpressionWidget
 class ReturnWidget(
     parent: SequenceWidget,
     node: ReturnStmt,
-    override val block: BlockStmt
+    override val parentBlock: BlockStmt
 ) :
     StatementWidget<ReturnStmt>(parent, node) {
     val keyword: TokenWidget
@@ -37,7 +37,7 @@ class ReturnWidget(
                 node::setExpression
             )
         }
-        keyword.addDelete(node, block)
+        keyword.addDelete(node, parentBlock)
        // keyword.setCopySource()
         // keyword.setMoveSource()
 

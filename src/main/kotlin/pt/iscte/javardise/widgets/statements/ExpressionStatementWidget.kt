@@ -14,7 +14,7 @@ import pt.iscte.javardise.widgets.expressions.createExpressionWidget
 class ExpressionStatementWidget(
     parent: SequenceWidget,
     node: ExpressionStmt,
-    override val block: BlockStmt
+    override val parentBlock: BlockStmt
 ) :
     StatementWidget<ExpressionStmt>(parent, node) {
     var expression: ExpressionWidget<*>
@@ -26,12 +26,12 @@ class ExpressionStatementWidget(
         semiColon = TokenWidget(this, ";")
         semiColon.addInsert(this, parent, true)
         semiColon.addDeleteListener {
-            block.statements.removeCommand(block, node)
+            parentBlock.statements.removeCommand(parentBlock, node)
         }
 
         node.observeProperty<Expression>(ObservableProperty.EXPRESSION) {
             if (it == null)
-                block.statements.removeCommand(block, node)
+                parentBlock.statements.removeCommand(parentBlock, node)
             else {
                 expression.dispose()
                 expression = createExpression(it)
@@ -45,7 +45,7 @@ class ExpressionStatementWidget(
     private fun createExpression(e: Expression): ExpressionWidget<*> =
         createExpressionWidget(this, e) {
             if (it == null)
-                block.statements.removeCommand(block, node)
+                parentBlock.statements.removeCommand(parentBlock, node)
             else
                 node.modifyCommand(node.expression, it, node::setExpression)
         }

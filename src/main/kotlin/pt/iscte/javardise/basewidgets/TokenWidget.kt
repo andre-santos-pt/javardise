@@ -6,6 +6,7 @@ import org.eclipse.swt.widgets.Composite
 import org.eclipse.swt.widgets.Menu
 import org.eclipse.swt.widgets.MenuItem
 import org.eclipse.swt.widgets.Text
+import pt.iscte.javardise.DefaultConfiguration
 
 class TokenWidget(
     parent: Composite,
@@ -28,6 +29,9 @@ class TokenWidget(
         widget.font = parent.font
         widget.background = parent.background
         widget.foreground = parent.foreground
+        if(token == ";" || token == ",")
+            widget.foreground = DefaultConfiguration().foregroundColorLight
+
         widget.editable = false
         widget.addKeyListener(object : KeyAdapter() {
             override fun keyPressed(e: KeyEvent) {

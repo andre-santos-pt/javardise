@@ -207,6 +207,8 @@ fun <T> Observable.observeNotNullProperty(prop: ObservableProperty, event: (T) -
 
 
 
+fun <T : Node> NodeList<T>.last(): T = elementAt(size-1)
+
 fun <T : Node> NodeList<T>.indexOfIdentity(e: T): Int {
     for (i in 0..lastIndex)
         if (get(i) === e)

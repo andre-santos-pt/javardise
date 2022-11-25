@@ -8,6 +8,7 @@ import com.github.javaparser.ast.stmt.Statement
 import com.github.javaparser.ast.stmt.WhileStmt
 import org.eclipse.swt.SWT
 import org.eclipse.swt.widgets.Composite
+import pt.iscte.javardise.Configuration
 import pt.iscte.javardise.basewidgets.*
 import pt.iscte.javardise.external.block
 import pt.iscte.javardise.external.column
@@ -19,50 +20,57 @@ import pt.iscte.javardise.widgets.expressions.createExpressionWidget
 class WhileWidget(
     parent: SequenceWidget,
     node: WhileStmt,
-    override val block: BlockStmt
+    override val parentBlock: BlockStmt
 ) :
     StatementWidget<WhileStmt>(parent, node), SequenceContainer<WhileStmt> {
 
     lateinit var keyword: TokenWidget
     lateinit var condition: ExpressionWidget<*>
     lateinit var firstRow: Composite
-    override lateinit var body: SequenceWidget
+    override lateinit var bodyWidget: SequenceWidget
     lateinit var openClause: FixedToken
 
     lateinit var openBracket: TokenWidget
     override lateinit var closingBracket: TokenWidget
+
+    override val body: BlockStmt = node.block.asBlockStmt()
+
     init {
         val col = column {
             firstRow = row {
                 keyword = newKeywordWidget(this, "while")
+                keyword.addDelete(node, parentBlock)
+                keyword.addShallowDelete()
                 //keyword.setCopySource(node)
                 openClause = FixedToken(this, "(")
                 condition = createExpWidget(node.condition)
                 FixedToken(this, ")")
                 openBracket = TokenWidget(this, "{")
             }
-            body = createSequence(this, node.block)
-            openBracket.addInsert(null, body, false)
+            bodyWidget = createSequence(this, node.block)
+            openBracket.addInsert(null, bodyWidget, false)
 
         }
         closingBracket = TokenWidget(col, "}")
-            closingBracket.addInsert(this, parent, true)
+        closingBracket.addInsert(this, parent, true)
+       addMoveBracket()
 
-        keyword.addDelete(node, block)
+
 
         node.observeProperty<Expression>(ObservableProperty.CONDITION) {
             condition.dispose()
-            condition = firstRow.createExpWidget(it ?: NameExpr("condition"))
+            condition = firstRow.createExpWidget(it ?: NameExpr(Configuration.fillInToken))
             condition.moveBelow(openClause.label)
             condition.requestLayout()
             condition.setFocusOnCreation()
         }
     }
 
+
     private fun Composite.createExpWidget(condition: Expression) =
         createExpressionWidget(this, condition) {
-            if(it == null)
-                block.statements.removeCommand(block.parentNode.get(), node)
+            if (it == null)
+                parentBlock.statements.removeCommand(parentBlock.parentNode.get(), node)
             else
                 node.modifyCommand(node.condition, it, node::setCondition)
         }
@@ -74,13 +82,16 @@ class WhileWidget(
     }
 }
 
-object WhileFeature : StatementFeature<WhileStmt, WhileWidget>(WhileStmt::class.java, WhileWidget::class.java) {
+object WhileFeature : StatementFeature<WhileStmt, WhileWidget>(
+    WhileStmt::class.java,
+    WhileWidget::class.java
+) {
     override fun configureInsert(
         insert: TextWidget,
         output: (Statement) -> Unit
     ) {
-        insert.addKeyEvent(SWT.SPACE, '(', precondition = { it == "while"}) {
-            output( WhileStmt(NameExpr("condition"), BlockStmt()))
+        insert.addKeyEvent(SWT.SPACE, '(', precondition = { it == "while" }) {
+            output(WhileStmt(NameExpr(Configuration.fillInToken), BlockStmt()))
         }
     }
 }

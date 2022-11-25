@@ -27,7 +27,8 @@ class MethodWidget(
     val dec: CallableDeclaration<*>,
     style: Int = SWT.NONE,
     configuration: Configuration = DefaultConfigurationSingleton,
-    override val commandStack: CommandStack = CommandStack.create()
+    override val commandStack: CommandStack = CommandStack.create(),
+    freezeSignature: Boolean = false
 ) :
     MemberWidget<CallableDeclaration<*>>(
         parent,
@@ -41,9 +42,10 @@ class MethodWidget(
 
     var typeId: Id? = null
     override val name: Id
-    override var body: SequenceWidget? = null
 
-    val bodyModel: BlockStmt? =
+    override var bodyWidget: SequenceWidget? = null
+
+    override val body: BlockStmt? =
         if (dec is MethodDeclaration) if (dec.body.isPresent) dec.body.get() else null
         else (dec as ConstructorDeclaration).body
 
@@ -107,12 +109,15 @@ class MethodWidget(
         paramsWidget = ParamListWidget(firstRow, node.parameters)
         FixedToken(firstRow, ")")
 
-        if (bodyModel != null) {
-            body = createSequence(column, bodyModel)
-            TokenWidget(firstRow, "{").addInsert(null, body!!, true)
+        if (body != null) {
+            bodyWidget = createSequence(column, body)
+            TokenWidget(firstRow, "{").addInsert(null, bodyWidget!!, true)
             closingBracket = TokenWidget(column, "}")
         } else
             closingBracket = TokenWidget(firstRow, ";")
+
+        if(freezeSignature)
+            firstRow.enabled = false
 
         Display.getDefault().addFilter(SWT.FocusIn, focusListener)
     }
@@ -224,13 +229,13 @@ class MethodWidget(
                     node,
                     Parameter(
                         StaticJavaParser.parseType(newInsert.text),
-                        "parameter"
+                        SimpleName("parameter")
                     )
                 )
             }
-            if (bodyModel != null)
+            if (body != null)
                 newInsert.addKeyEvent(SWT.CR) {
-                    this@MethodWidget.body!!.insertBeginning()
+                    this@MethodWidget.bodyWidget!!.insertBeginning()
                 }
             newInsert.addFocusLostAction {
                 newInsert.clear(" ")
@@ -286,11 +291,11 @@ class MethodWidget(
                 name.addKeyEvent(SWT.BS, precondition = { it.isEmpty() }) {
                     parameters.removeCommand(this@MethodWidget.node, node)
                 }
-                if (bodyModel != null)
+                if (body != null)
                     name.addKeyEvent(
                         SWT.CR,
                         precondition = { this@ParamListWidget.children.last() === this }) {
-                        this@MethodWidget.body!!.insertBeginning()
+                        this@MethodWidget.bodyWidget!!.insertBeginning()
                     }
                 name.addFocusLostAction(::isValidSimpleName) {
                     node.modifyCommand(

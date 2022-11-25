@@ -3,6 +3,7 @@ package pt.iscte.javardise.basewidgets
 import org.eclipse.swt.SWT
 import org.eclipse.swt.events.*
 import org.eclipse.swt.widgets.*
+import pt.iscte.javardise.Configuration
 import pt.iscte.javardise.widgets.members.ClassWidget
 import pt.iscte.javardise.widgets.members.MemberWidget
 import pt.iscte.javardise.widgets.statements.IfWidget
@@ -242,7 +243,7 @@ interface TextWidget {
         private val LISTENER_ARROW_KEYS: KeyListener = object : KeyAdapter() {
             override fun keyPressed(e: KeyEvent) {
                 val text = Display.getDefault().focusControl
-                if (text is Text) {
+                if (text is Text && e.stateMask != Configuration.maskKey) {
                     if (e.keyCode == SWT.ARROW_RIGHT && (!text.editable || text.isAtEnd)) {
                         if (text.text == "}" && text.parent.parent is ClassWidget)
                             text.parent.parent.setFocus()
@@ -302,15 +303,15 @@ interface TextWidget {
                                     else if (text.text == "{" || text.text == "}")
                                         text.traverse(SWT.TRAVERSE_TAB_NEXT)
                                     else if (sw is IfWidget && text == sw.elseWidget?.keyword?.widget) {
-                                        if (sw.elseWidget?.body?.isEmpty() == true)
+                                        if (sw.elseWidget?.bodyWidget?.isEmpty() == true)
                                             sw.elseWidget?.closingBracket?.setFocus()
                                         else
-                                            sw.elseWidget!!.body.focusFirst()
+                                            sw.elseWidget!!.bodyWidget.focusFirst()
                                     } else if (sw is SequenceContainer<*> && text != sw.closingBracket.widget) {
-                                        if (sw.body?.isEmpty() == true)
+                                        if (sw.bodyWidget?.isEmpty() == true)
                                             sw.closingBracket.setFocus()
                                         else
-                                            sw.body?.setFocus()
+                                            sw.bodyWidget?.setFocus()
                                     } else if (index + 1 < sw.parent.children.size)
                                         sw.parent.children[index + 1].setFocus()
                                     else {

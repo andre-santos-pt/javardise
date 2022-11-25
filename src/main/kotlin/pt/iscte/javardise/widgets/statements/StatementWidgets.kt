@@ -20,7 +20,7 @@ abstract class StatementWidget<T : Statement>(
 ) :
     Composite(parent, SWT.NONE), NodeWidget<T> {
 
-    abstract val block: BlockStmt
+    abstract val parentBlock: BlockStmt
 
     init {
         layout = ROW_LAYOUT_H_SHRINK

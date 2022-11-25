@@ -1,13 +1,17 @@
 package pt.iscte.javardise.examples
 
 import com.github.javaparser.ParseProblemException
+import com.github.javaparser.StaticJavaParser
 import com.github.javaparser.ast.CompilationUnit
 import com.github.javaparser.ast.NodeList
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration
 import com.github.javaparser.ast.expr.SimpleName
 import com.github.javaparser.ast.observer.ObservableProperty
 import org.eclipse.swt.SWT
+import org.eclipse.swt.custom.ScrolledComposite
 import org.eclipse.swt.custom.StackLayout
+import org.eclipse.swt.events.ControlEvent
+import org.eclipse.swt.events.ControlListener
 import org.eclipse.swt.events.SelectionAdapter
 import org.eclipse.swt.events.SelectionEvent
 import org.eclipse.swt.graphics.Point
@@ -16,26 +20,40 @@ import org.eclipse.swt.layout.GridData
 import org.eclipse.swt.layout.GridLayout
 import org.eclipse.swt.widgets.*
 import org.eclipse.swt.widgets.List
+import pt.iscte.javardise.basewidgets.ICodeDecoration
 import pt.iscte.javardise.external.*
 import pt.iscte.javardise.widgets.members.ClassWidget
 import java.io.File
 import java.io.FileFilter
+import java.io.FileNotFoundException
 import java.io.PrintWriter
 import java.util.WeakHashMap
 import javax.lang.model.SourceVersion
 
 
-// TODO folder or dialog
 fun main(args: Array<String>) {
-    val file =
-        if (args.isEmpty()) File(System.getProperty("user.dir")) else File(args[0])
-    val window = JavardiseClassicEditor(file)
+    val display = Display()
+    val root = if (args.isEmpty()) {
+        val fileDialog = DirectoryDialog(Shell(display))
+        File(fileDialog.open() ?: "")
+    } else {
+        val folder = File(args[0])
+        if (!folder.exists())
+            try {
+                folder.mkdir()
+            } catch (e: FileNotFoundException) {
+                System.err.println("could not create folder: ${folder.absoluteFile}")
+                return;
+            }
+        folder
+    }
+
+    val window = JavardiseClassicEditor(display, root)
     window.open()
 }
 
-class JavardiseClassicEditor(val folder: File) {
+class JavardiseClassicEditor(val display: Display, val folder: File) {
 
-    private val display = Display()
     private val shell = Shell(display)
 
     val openTabs = mutableListOf<Composite>()
@@ -47,6 +65,8 @@ class JavardiseClassicEditor(val folder: File) {
             null
         else
             (stacklayout.topControl.data as TabData).classWidget
+
+    val compileErrors: CompileErrors = mutableMapOf()
 
     init {
         require(folder.exists() && folder.isDirectory)
@@ -124,6 +144,32 @@ class JavardiseClassicEditor(val folder: File) {
         }
     }
 
+    private fun compile() {
+        compileErrors.forEach {
+            it.value.forEach { it.delete() }
+        }
+        compileErrors.clear()
+        val errors = checkCompileErrors(
+            folder.listFiles(FileFilter { it.name.endsWith(".java") })
+                .map {
+                    Triple(
+                        it.absolutePath,
+                        StaticJavaParser.parse(it).findMainClass(),
+                        null
+                    )
+                }
+
+                .filter { it.second != null }
+                .map {
+                    Pair(
+                        it.second!!,
+                        openTabs.find { w -> (w.data as TabData).file.name == it.first } as? ClassWidget)
+                }
+                .map { println(it); it}
+        )
+        compileErrors.putAll(errors)
+    }
+
     private fun createTab(
         file: File,
         list: List,
@@ -131,8 +177,6 @@ class JavardiseClassicEditor(val folder: File) {
     ): Composite {
         val tab = Composite(comp, SWT.BORDER)
         val layout = FillLayout()
-        layout.marginHeight = 10
-        layout.marginWidth = 10
         tab.layout = layout
 
         val typeName = file.name.dropLast(".java".length)
@@ -150,16 +194,14 @@ class JavardiseClassicEditor(val folder: File) {
             ClassOrInterfaceDeclaration(NodeList(), false, typeName)
         }
 
-        if(model == null) {
-            // tab.scrollable {
+        if (model == null) {
             tab.data = TabData(file, null)
             tab.fill {
                 val src = file.readLines().joinToString(separator = "\n")
-                label(src).foreground = Display.getDefault().getSystemColor(SWT.COLOR_RED)
+                label(src).foreground =
+                    Display.getDefault().getSystemColor(SWT.COLOR_RED)
             }
-            //}
-        }
-        else {
+        } else {
             val w = tab.scrollable {
                 ClassWidget(it, model)
             }
@@ -169,14 +211,30 @@ class JavardiseClassicEditor(val folder: File) {
             }
             w.setAutoScroll()
 
+            compile()
+            compileErrors[model]?.forEach {
+                it.show()
+            }
+
+            val scroll = w.parent as ScrolledComposite
+            scroll.verticalBar.addListener(SWT.Selection, object : Listener {
+                override fun handleEvent(p0: Event?) {
+                    compileErrors[model]?.forEach {
+                        it.show()
+                    }
+                }
+            })
+
             w.commandStack.addObserver { _, _ ->
                 val writer = PrintWriter(file)
                 writer.println(model.toString())
                 writer.close()
 
-                checkCompileErrors(listOf(
-                    Pair(model, w)
-                ))
+                compile()
+                compileErrors[model]?.forEach {
+                    it.show()
+                }
+
             }
             tab.data = TabData(file, w)
         }

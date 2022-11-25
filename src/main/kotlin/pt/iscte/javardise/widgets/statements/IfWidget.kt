@@ -13,6 +13,7 @@ import com.github.javaparser.ast.stmt.Statement
 import org.eclipse.swt.SWT
 import org.eclipse.swt.widgets.Composite
 import org.eclipse.swt.widgets.Control
+import pt.iscte.javardise.Configuration
 import pt.iscte.javardise.basewidgets.*
 import pt.iscte.javardise.external.*
 import pt.iscte.javardise.widgets.expressions.ExpressionWidget
@@ -21,7 +22,7 @@ import pt.iscte.javardise.widgets.expressions.createExpressionWidget
 class IfWidget(
     parent: SequenceWidget,
     node: IfStmt,
-    override val block: BlockStmt
+    override val parentBlock: BlockStmt
 ) :
     StatementWidget<IfStmt>(parent, node), SequenceContainer<IfStmt> {
 
@@ -29,7 +30,8 @@ class IfWidget(
     lateinit var firstRow: Composite
     lateinit var keyword: TokenWidget
     lateinit var condition: ExpressionWidget<*>
-    override lateinit var body: SequenceWidget
+    override lateinit var bodyWidget: SequenceWidget
+    override val body: BlockStmt = node.thenStmt.asBlockStmt()
 
     var elseWidget: ElseWidget? = null
 
@@ -41,17 +43,18 @@ class IfWidget(
         column = column {
             firstRow = row {
                 keyword = newKeywordWidget(this, "if")
-                keyword.addDelete(node, block)
+                keyword.addDelete(node, parentBlock)
+                keyword.addShallowDelete()
                 //keyword.setCopySource(node)
                 openClause = FixedToken(this, "(")
                 condition = this.createExpWidget(node.condition)
                 FixedToken(this, ")")
             }
 
-            body = createSequence(this, node.thenBlock)
+            bodyWidget = createSequence(this, node.thenBlock)
 
             openThenBracket = TokenWidget(firstRow, "{")
-            openThenBracket.addInsert(null, body, false)
+            openThenBracket.addInsert(null, bodyWidget, false)
 
             //setThenBracketsVisibility(node.thenBlock.statements.size, openThenBracket, closeThenBracket)
         }
@@ -61,6 +64,9 @@ class IfWidget(
             this@IfWidget.parent as SequenceWidget,
             true
         )
+        addMoveBracket() {
+            !node.hasElseBranch()
+        }
 
 
         node.thenBlock.statements.register(object : AstObserverAdapter() {
@@ -103,7 +109,7 @@ class IfWidget(
     private fun Composite.createExpWidget(condition: Expression) =
         createExpressionWidget(this, condition) {
             if (it == null)
-                block.statements.removeCommand(block.parentNode.get(), node)
+                parentBlock.statements.removeCommand(parentBlock.parentNode.get(), node)
             else
                 node.modifyCommand(node.condition, it, node::setCondition)
         }
@@ -131,6 +137,8 @@ class IfWidget(
         lateinit var closeBracketElse: TokenWidget
         lateinit var keyword: TokenWidget
 
+        override val body: BlockStmt get() = node.elseStmt.get().asBlockStmt()
+
         init {
             layout = ROW_LAYOUT_H_SHRINK
             font = parent.font
@@ -144,6 +152,7 @@ class IfWidget(
                             node::setElseStmt
                         )
                     }
+                    keyword.addShallowDelete()
                     openBracketElse = TokenWidget(this, "{")
                 }
                 elseBody = createSequence(this, elseStatement as BlockStmt)
@@ -153,6 +162,7 @@ class IfWidget(
                     this@IfWidget.parent as SequenceWidget,
                     true
                 )
+                addMoveBracket() // TODO special case shallow delete ELSE
             }
             openBracketElse.addInsert(null, elseBody, false)
         }
@@ -161,7 +171,7 @@ class IfWidget(
             openBracketElse.setFocus()
         }
 
-        override val body: SequenceWidget
+        override val bodyWidget: SequenceWidget
             get() = elseBody
 
         override val closingBracket: TextWidget
@@ -190,7 +200,7 @@ object IfFeature : StatementFeature<IfStmt, IfWidget>(
         insert.addKeyEvent(SWT.SPACE, '(', precondition = { it == "if" }) {
             output(
                 IfStmt(
-                    NameExpr("condition"),
+                    NameExpr(Configuration.fillInToken),
                     BlockStmt(),
                     null
                 )

@@ -13,7 +13,7 @@ import pt.iscte.javardise.basewidgets.TokenWidget
 class EmptyStatementWidget(
     parent: SequenceWidget,
     node: EmptyStmt,
-    override val block: BlockStmt
+    override val parentBlock: BlockStmt
 ) :
     StatementWidget<EmptyStmt>(parent, node), TextWidget   {
 
@@ -22,7 +22,7 @@ class EmptyStatementWidget(
     init {
         semiColon = TokenWidget(parent, ";")
         //semiColon.addInsert(semiColon.widget, parent, true)
-        semiColon.addDelete(node, block)
+        semiColon.addDelete(node, parentBlock)
     }
 
     override fun setFocusOnCreation(firstFlag: Boolean) {

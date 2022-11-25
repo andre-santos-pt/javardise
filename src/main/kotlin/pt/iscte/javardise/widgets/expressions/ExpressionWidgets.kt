@@ -1,5 +1,6 @@
 package pt.iscte.javardise.widgets.expressions
 
+import com.github.javaparser.StaticJavaParser
 import com.github.javaparser.ast.expr.*
 import com.github.javaparser.ast.stmt.Statement
 import org.eclipse.swt.SWT
@@ -13,6 +14,7 @@ import pt.iscte.javardise.NodeWidget
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.external.ROW_LAYOUT_H_SHRINK
 import pt.iscte.javardise.external.binaryOperators
+import pt.iscte.javardise.external.tryParse
 import pt.iscte.javardise.external.unaryOperators
 
 abstract class ExpressionWidget<T : Expression>(parent: Composite)
@@ -108,7 +110,7 @@ fun <E: Expression> createExpressionWidget(
                                     editEvent(
                                         BinaryExpr(
                                             expression.clone(),
-                                            NameExpr("expression"),
+                                            NameExpr("exp"),
                                             it
                                         )
                                     )

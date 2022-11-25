@@ -18,10 +18,11 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.9.0")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.9.0")
     implementation("org.junit.platform:junit-platform-suite:1.9.1")
-    //implementation("junit:junit:5")
-    //testImplementation(kotlin("test-junit5"))
-    implementation("com.github.javaparser:javaparser-symbol-solver-core:3.24.4")
+
     implementation (files("libs/swt.jar"))
+
+    //implementation (files("libs/javaparser-core-3.24.7.jar"))
+    implementation("com.github.javaparser:javaparser-symbol-solver-core:3.24.8")
 }
 
 //configurations.all {
@@ -46,8 +47,14 @@ dependencies {
 //}
 
 application {
-    mainClass.set("pt.iscte.javardise.JavardiseKt")
+    mainClass.set("pt.iscte.javardise.examples.JavardiseClassicEditorKt")
     applicationDefaultJvmArgs = listOf("-XstartOnFirstThread")
+}
+
+
+tasks.compileJava {
+    // use the project's version or define one directly
+    //options.javaModuleVersion.set(provider { project.version as String })
 }
 
 tasks {
@@ -55,21 +62,38 @@ tasks {
         dependsOn.addAll(listOf("compileJava", "compileKotlin", "processResources")) // We need this for Gradle optimization to work
         archiveClassifier.set("standalone") // Naming the jar
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-        manifest { attributes(mapOf("Main-Class" to application.mainClass)) } // Provided we set it up in the application plugin configuration
+       // manifest { attributes(mapOf("Main-Class" to application.mainClass)) } // Provided we set it up in the application plugin configuration
         val sourcesMain = sourceSets.main.get()
         val contents = configurations.runtimeClasspath.get()
+            //.filter {it.isDirectory && it.name == "java"}
             .map { if (it.isDirectory) it else zipTree(it) } +
                 sourcesMain.output
         from(contents)
     }
+    val kotlinJar = register<Jar>("kotlinJar") {
+        dependsOn.addAll(listOf("compileJava", "compileKotlin", "processResources")) // We need this for Gradle optimization to work
+        archiveClassifier.set("kotlin") // Naming the jar
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
+      //  manifest { attributes(mapOf("Main-Class" to application.mainClass)) } // Provided we set it up in the application plugin configuration
+        val sourcesMain = sourceSets.main.get()
+        val contents = configurations.runtimeClasspath.get()
+            .filter {it.name != "swt.jar"}
+            .map { if (it.isDirectory) it else zipTree(it) } +
+                sourcesMain.output
+        from(contents)
+        //exclude("**/*swt*.jar")
+    }
     build {
         dependsOn(fatJar) // Trigger fat jar creation during build
+        dependsOn(kotlinJar)
     }
 }
 
 tasks.withType<Jar> {
     manifest {
         attributes["Main-Class"] = application.mainClass
+        //attributes["Automatic-Module-Name"] = "pt.iscte.javardise"
     }
 }
 

@@ -18,28 +18,31 @@ import pt.iscte.javardise.widgets.expressions.createExpressionWidget
 class DoWhileWidget(
     parent: SequenceWidget,
     node: DoStmt,
-    override val block: BlockStmt
+    override val parentBlock: BlockStmt
 ) :
     StatementWidget<DoStmt>(parent, node), SequenceContainer<DoStmt> {
 
     lateinit var keyword: TokenWidget
     lateinit var condition: ExpressionWidget<*>
     lateinit var lastRow: Composite
-    override lateinit var body: SequenceWidget
+    override lateinit var bodyWidget: SequenceWidget
     lateinit var openClause: FixedToken
 
     lateinit var openBracket: TokenWidget
     override lateinit var closingBracket: TokenWidget
 
+    override val body: BlockStmt = node.body.asBlockStmt()
+
     init {
         column {
             row {
                 keyword = newKeywordWidget(this, "do")
-                keyword.addDelete(node, block)
+                keyword.addDelete(node, parentBlock)
+                keyword.addShallowDelete()
                 openBracket = TokenWidget(this, "{")
             }
-            body = createSequence(this, node.body.asBlockStmt())
-            openBracket.addInsert(null, body, false)
+            bodyWidget = createSequence(this, node.body.asBlockStmt())
+            openBracket.addInsert(null, bodyWidget, false)
             TokenWidget(this, "}")
 
             lastRow = row {

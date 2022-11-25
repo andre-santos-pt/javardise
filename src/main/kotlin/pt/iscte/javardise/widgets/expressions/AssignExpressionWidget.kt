@@ -109,7 +109,7 @@ object AssignmentFeature : StatementFeature<ExpressionStmt, ExpressionStatementW
             val stmt = ExpressionStmt(
                 AssignExpr(
                     StaticJavaParser.parseExpression(target),
-                    NameExpr("expression"),
+                    NameExpr("exp"),
                     operator
                 )
             )

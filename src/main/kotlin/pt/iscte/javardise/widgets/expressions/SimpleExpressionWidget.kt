@@ -10,6 +10,7 @@ import org.eclipse.swt.events.KeyAdapter
 import org.eclipse.swt.events.KeyEvent
 import org.eclipse.swt.events.KeyListener
 import org.eclipse.swt.widgets.Composite
+import pt.iscte.javardise.Configuration
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.external.*
 
@@ -29,18 +30,27 @@ class SimpleExpressionWidget(
 
     init {
         val noparse =
-            node is NameExpr && (node as NameExpr).name.asString() == configuration.noParseToken
-        val text = if (noparse)
+            node is NameExpr && (node as NameExpr).name.asString() == Configuration.noParseToken
+
+        val fillin =
+            node is NameExpr && (node as NameExpr).name.asString() == Configuration.fillInToken
+
+        val text = if (noparse) {
             if (node.comment.isPresent) node.comment.get().content else ""
+        }
+        else if(fillin)
+            ""
         else
             node.toString()
 
         expression = TextWidget.create(this, text) { c, s ->
             c.toString()
-                .matches(Regex("[a-zA-Z\\d_().-]")) || c == SWT.BS || c == SWT.SPACE
+                .matches(Regex("[a-zA-Z\\d_()]")) || c == SWT.BS || c == SWT.SPACE && !s.endsWith( " ")
         }
         if (noparse)
             expression.widget.background = configuration.errorColor
+        else if(fillin)
+            expression.widget.background = configuration.fillInColor
 
         expression.widget.data = node
 
@@ -48,11 +58,11 @@ class SimpleExpressionWidget(
 
         keyListener = object : KeyAdapter() {
             override fun keyPressed(e: KeyEvent) {
-                if(isDisposed)
+                if (isDisposed)
                     return
 
-                if (expression.isAtBeginning) { // TODO BUG widget is disposed
-                    if(e.character == SWT.BS)
+                if (expression.isAtBeginning) {
+                    if (e.character == SWT.BS)
                         editEvent(null)
                     else {
                         val unop = unaryOperators.filter { it.isPrefix }
@@ -77,10 +87,31 @@ class SimpleExpressionWidget(
                             BinaryExpr(
                                 StaticJavaParser.parseExpression(
                                     expression.text
-                                ), NameExpr("expression"), biop
+                                ), NameExpr(Configuration.noParseToken), biop
                             )
                         expression.removeFocusOutListeners()
                         editEvent(node)
+                    }
+                } else {
+                    val op = binaryOperators.find {
+                        it.asString().startsWith(e.character)
+                    }
+                    op?.let {
+                        val left = tail.text.slice(0 until tail.caretPosition)
+                        val right =
+                            tail.text.slice(tail.caretPosition until tail.text.length)
+                        if (tryParse<Expression>(left) && tryParse<Expression>(
+                                right
+                            )
+                        ) {
+                            editEvent(
+                                BinaryExpr(
+                                    StaticJavaParser.parseExpression(left),
+                                    StaticJavaParser.parseExpression(right),
+                                    it
+                                )
+                            )
+                        }
                     }
                 }
             }
@@ -94,38 +125,51 @@ class SimpleExpressionWidget(
         expression.addKeyEvent('\'', precondition = { it.isEmpty() }) {
             editEvent(CharLiteralExpr('a'))
         }
-        expression.addKeyEvent('(', precondition = { expression.isAtEnd && isValidSimpleName(it) }) {
+        expression.addKeyEvent(
+            '(',
+            precondition = { expression.isAtEnd && isValidSimpleName(it) }) {
             editEvent(MethodCallExpr(expression.text))
         }
 
         expression.addKeyEvent('[', precondition = {
-            it.matches(Regex("new\\s+${TYPE.pattern}"))}) {
+            it.matches(Regex("new\\s+${TYPE.pattern}"))
+        }) {
             val arrayCreationExpr = ArrayCreationExpr(
                 StaticJavaParser.parseType(expression.text.split(Regex("\\s+"))[1]),
-                NodeList.nodeList(ArrayCreationLevel(NameExpr("expression"))),
+                NodeList.nodeList(ArrayCreationLevel(NameExpr(Configuration.fillInToken))),
                 null
             )
             editEvent(arrayCreationExpr)
         }
 
         expression.addKeyEvent('[', precondition = { tryParse<NameExpr>(it) }) {
-            val arrayAccess = ArrayAccessExpr(StaticJavaParser.parseExpression(expression.text), NameExpr("index"))
+            val arrayAccess = ArrayAccessExpr(
+                StaticJavaParser.parseExpression(expression.text),
+                NameExpr("index")
+            )
             editEvent(arrayAccess)
         }
 
         expression.addKeyEvent('(', precondition = {
-            it.matches(Regex("new\\s+${TYPE.pattern}")) && isValidClassType(expression.text.split(Regex("\\s+"))[1])
+            it.matches(Regex("new\\s+${TYPE.pattern}")) && isValidClassType(
+                expression.text.split(Regex("\\s+"))[1]
+            )
 
         }) {
-            val objectCreationExpr = ObjectCreationExpr(null,
-                StaticJavaParser.parseClassOrInterfaceType(expression.text.split(Regex("\\s+"))[1]),
+            val objectCreationExpr = ObjectCreationExpr(
+                null,
+                StaticJavaParser.parseClassOrInterfaceType(
+                    expression.text.split(
+                        Regex("\\s+")
+                    )[1]
+                ),
                 NodeList.nodeList()
             )
             editEvent(objectCreationExpr)
         }
 
-        expression.addKeyEvent('(', precondition = {it.isBlank()}) {
-            editEvent(EnclosedExpr(NameExpr("expression")))
+        expression.addKeyEvent('(', precondition = { it.isBlank() }) {
+            editEvent(EnclosedExpr(NameExpr(Configuration.fillInToken)))
         }
 
         expression.addKeyEvent(
@@ -152,9 +196,15 @@ class SimpleExpressionWidget(
                     expression.widget.data = newExp
                     editEvent(node)
                 }
-            } else {
+            }
+            else if(expression.text.isEmpty()) {
+                expression.widget.background = configuration.fillInColor
+                val fillin = NameExpr(Configuration.fillInToken)
+                editEvent(fillin)
+            }
+            else {
                 expression.widget.background = configuration.errorColor
-                val noparse = NameExpr(configuration.noParseToken)
+                val noparse = NameExpr(Configuration.noParseToken)
                 noparse.setComment(BlockComment(expression.text))
                 editEvent(noparse)
             }

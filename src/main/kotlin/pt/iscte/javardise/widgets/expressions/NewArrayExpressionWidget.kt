@@ -50,7 +50,7 @@ class NewArrayExpressionWidget(
     }
     init {
         if(node.initializer.isPresent) {
-            TODO("init ${node.initializer.get()}")
+            TODO("array init ${node.initializer.get()}")
         }
         else {
             newKeywordWidget(this, "new")
