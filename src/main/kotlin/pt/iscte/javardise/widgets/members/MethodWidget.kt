@@ -20,6 +20,7 @@ import org.eclipse.swt.widgets.Event
 import pt.iscte.javardise.*
 import pt.iscte.javardise.basewidgets.*
 import pt.iscte.javardise.external.*
+import pt.iscte.javardise.widgets.statements.SequenceContainer
 import pt.iscte.javardise.widgets.statements.addInsert
 
 class MethodWidget(

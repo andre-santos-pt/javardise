@@ -211,10 +211,10 @@ class JavardiseClassicEditor(val display: Display, val folder: File) {
             }
             w.setAutoScroll()
 
-            compile()
-            compileErrors[model]?.forEach {
-                it.show()
-            }
+//            compile()
+//            compileErrors[model]?.forEach {
+//                it.show()
+//            }
 
             val scroll = w.parent as ScrolledComposite
             scroll.verticalBar.addListener(SWT.Selection, object : Listener {

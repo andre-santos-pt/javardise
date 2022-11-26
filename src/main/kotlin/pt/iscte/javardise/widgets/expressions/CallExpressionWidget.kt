@@ -1,17 +1,19 @@
 package pt.iscte.javardise.widgets.expressions
 
 import com.github.javaparser.StaticJavaParser
+import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.NodeList
 import com.github.javaparser.ast.expr.*
 import com.github.javaparser.ast.observer.ObservableProperty
+import com.github.javaparser.ast.stmt.BlockStmt
 import com.github.javaparser.ast.stmt.ExpressionStmt
 import com.github.javaparser.ast.stmt.Statement
 import javassist.compiler.ast.CallExpr
 import org.eclipse.swt.SWT
 import org.eclipse.swt.widgets.Composite
-import pt.iscte.javardise.Id
-import pt.iscte.javardise.SimpleNameWidget
+import pt.iscte.javardise.*
 import pt.iscte.javardise.basewidgets.FixedToken
+import pt.iscte.javardise.basewidgets.SequenceWidget
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.external.*
 import pt.iscte.javardise.widgets.statements.ExpressionStatementWidget
@@ -101,6 +103,9 @@ class CallExpressionWidget(
     override val tail: TextWidget
         get() = args.closeBracket
 
+    override val head: TextWidget
+        get() = scope?.head ?: methodName
+
     override fun setFocus(): Boolean {
         return scope?.setFocus() ?: methodName.setFocus()
     }
@@ -111,13 +116,13 @@ class CallExpressionWidget(
 }
 
 
-object CallFeature : StatementFeature<ExpressionStmt, ExpressionStatementWidget>(
+object CallFeature : StatementFeature<ExpressionStmt, CallStatementWidget>(
     ExpressionStmt::class.java,
-    ExpressionStatementWidget::class.java
+    CallStatementWidget::class.java
 ) {
 
     override fun targets(stmt: Statement): Boolean =
-        stmt is ExpressionStmt && stmt.expression is CallExpr
+        stmt is ExpressionStmt && stmt.expression is MethodCallExpr
 
     override fun configureInsert(
         insert: TextWidget,
@@ -150,3 +155,36 @@ object CallFeature : StatementFeature<ExpressionStmt, ExpressionStatementWidget>
         }
     }
 }
+
+class CallStatementWidget(
+    parent: SequenceWidget,
+    node: ExpressionStmt,
+    parentBlock: BlockStmt ):
+    ExpressionStatementWidget(parent, node, parentBlock) {
+
+        init {
+            expression.head.addKeyEvent('=', precondition = {expression.head.isAtBeginning}) {
+
+                commandStack.execute(object : Command {
+                    override val target: Node
+                        get() = parentBlock
+                    override val kind: CommandKind = CommandKind.MODIFY
+                    override val element: Statement = node
+
+                    var newNode: Node? = null
+
+                    override fun run() {
+                        newNode = ExpressionStmt(AssignExpr(
+                            NameExpr(Configuration.fillInToken),
+                            node.expression.clone(), AssignExpr.Operator.ASSIGN))
+                        parentBlock.replace(node, newNode)
+                    }
+
+                    override fun undo() {
+                        parentBlock.replace(newNode, element.clone())
+                    }
+
+                })
+            }
+        }
+    }

@@ -11,7 +11,7 @@ import pt.iscte.javardise.external.observeProperty
 import pt.iscte.javardise.widgets.expressions.ExpressionWidget
 import pt.iscte.javardise.widgets.expressions.createExpressionWidget
 
-class ExpressionStatementWidget(
+open class ExpressionStatementWidget(
     parent: SequenceWidget,
     node: ExpressionStmt,
     override val parentBlock: BlockStmt
@@ -57,7 +57,7 @@ class ExpressionStatementWidget(
         if(node.expression.isUnaryExpr)
             semiColon.setFocus()
         else
-            expression.setFocusOnCreation()
+            expression.setFocusOnCreation(firstFlag)
     }
 }
 

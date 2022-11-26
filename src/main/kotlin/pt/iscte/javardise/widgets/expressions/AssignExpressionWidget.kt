@@ -5,6 +5,7 @@ import com.github.javaparser.ast.expr.*
 import com.github.javaparser.ast.observer.ObservableProperty
 import com.github.javaparser.ast.stmt.ExpressionStmt
 import com.github.javaparser.ast.stmt.Statement
+import javassist.compiler.ast.CallExpr
 import org.eclipse.swt.widgets.Composite
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
@@ -76,7 +77,10 @@ class AssignExpressionWidget(
         }
 
     override fun setFocusOnCreation(firstFlag: Boolean) {
-        value.setFocus()
+        if(firstFlag)
+            target.setFocus()
+        else
+            value.setFocus()
     }
 
     override val tail: TextWidget
@@ -85,6 +89,8 @@ class AssignExpressionWidget(
 
 
 object AssignmentFeature : StatementFeature<ExpressionStmt, ExpressionStatementWidget>(ExpressionStmt::class.java, ExpressionStatementWidget::class.java) {
+    override fun targets(stmt: Statement): Boolean =
+        stmt is ExpressionStmt && stmt.expression is AssignExpr
     override fun configureInsert(
         insert: TextWidget,
         output: (Statement) -> Unit

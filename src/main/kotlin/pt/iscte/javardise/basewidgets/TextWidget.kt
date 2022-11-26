@@ -7,6 +7,7 @@ import pt.iscte.javardise.Configuration
 import pt.iscte.javardise.widgets.members.ClassWidget
 import pt.iscte.javardise.widgets.members.MemberWidget
 import pt.iscte.javardise.widgets.statements.IfWidget
+import pt.iscte.javardise.widgets.statements.SequenceContainer
 import pt.iscte.javardise.widgets.statements.StatementWidget
 
 // TODO remove deps from javardise

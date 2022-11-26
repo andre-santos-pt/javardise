@@ -34,6 +34,9 @@ abstract class ExpressionWidget<T : Expression>(parent: Composite)
 
     abstract val editEvent: (T?) -> Unit
     abstract val tail: TextWidget
+
+    open val head: TextWidget get() = tail
+
     override fun toString(): String {
         return this::class.simpleName + ": $node"
     }

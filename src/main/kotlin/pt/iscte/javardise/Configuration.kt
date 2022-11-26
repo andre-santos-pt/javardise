@@ -119,6 +119,7 @@ open class DefaultConfiguration : Configuration {
         ForFeature,
         ForEachFeature,
         VariableDeclarationFeature,
+
         AssignmentFeature,
         CallFeature,
         UnaryExpressionStatementFeature
@@ -138,7 +139,8 @@ class UnsupportedWidget<T : Node>(parent: Composite, override val node: T) :
         layout = ROW_LAYOUT_H_SHRINK
         widget = TokenWidget(this, node.toString())
         widget.widget.font = configuration.font
-        widget.widget.foreground = configuration.foregroundColorLight
+        widget.widget.foreground = parent.foreground
+        widget.widget.background = configuration.fillInColor
         widget.setToolTip("Unsupported")
         widget
     }

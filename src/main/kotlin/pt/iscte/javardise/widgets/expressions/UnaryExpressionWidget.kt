@@ -8,6 +8,7 @@ import com.github.javaparser.ast.observer.AstObserver
 import com.github.javaparser.ast.observer.ObservableProperty
 import com.github.javaparser.ast.stmt.ExpressionStmt
 import com.github.javaparser.ast.stmt.Statement
+import javassist.compiler.ast.CallExpr
 import org.eclipse.swt.SWT
 import org.eclipse.swt.widgets.Composite
 import pt.iscte.javardise.Configuration
@@ -101,12 +102,18 @@ class UnaryExpressionWidget(
 
     override val tail: TextWidget
         get() = expressionWidget.tail
+
+    override val head: TextWidget
+        get() = operator
 }
 
 object UnaryExpressionStatementFeature : StatementFeature<ExpressionStmt, ExpressionStatementWidget>(
     ExpressionStmt::class.java,
     ExpressionStatementWidget::class.java
 ) {
+    override fun targets(stmt: Statement): Boolean =
+        stmt is ExpressionStmt && stmt.expression is UnaryExpr
+
     override fun configureInsert(
         insert: TextWidget,
         output: (Statement) -> Unit

@@ -25,10 +25,8 @@ import pt.iscte.javardise.external.ROW_LAYOUT_H_SHRINK
 import pt.iscte.javardise.external.isChildOf
 import pt.iscte.javardise.external.isValidClassType
 import pt.iscte.javardise.external.observeProperty
+import pt.iscte.javardise.widgets.statements.*
 import pt.iscte.javardise.widgets.statements.addInsert
-import pt.iscte.javardise.widgets.statements.find
-import pt.iscte.javardise.widgets.statements.findByModelIndex
-import pt.iscte.javardise.widgets.statements.findIndexByModel
 
 
 val MODIFIERS = "(${

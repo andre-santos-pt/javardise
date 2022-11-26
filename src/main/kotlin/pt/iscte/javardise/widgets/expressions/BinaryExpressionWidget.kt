@@ -156,4 +156,7 @@ class BinaryExpressionWidget(
 
     override val tail: TextWidget
         get() = right.tail
+
+    override val head: TextWidget
+        get() = left.head
 }

@@ -1,8 +1,7 @@
-package pt.iscte.javardise.basewidgets
+package pt.iscte.javardise.widgets.statements
 
 import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.NodeList
-import com.github.javaparser.ast.nodeTypes.NodeWithBody
 import com.github.javaparser.ast.stmt.BlockStmt
 import com.github.javaparser.ast.stmt.Statement
 import org.eclipse.swt.SWT
@@ -11,11 +10,10 @@ import org.eclipse.swt.events.KeyEvent
 import org.eclipse.swt.widgets.Composite
 import org.eclipse.swt.widgets.Control
 import pt.iscte.javardise.*
+import pt.iscte.javardise.basewidgets.SequenceWidget
+import pt.iscte.javardise.basewidgets.TextWidget
+import pt.iscte.javardise.basewidgets.TokenWidget
 import pt.iscte.javardise.external.ListAddRemoveObserver
-import pt.iscte.javardise.widgets.statements.IfWidget
-import pt.iscte.javardise.widgets.statements.find
-import pt.iscte.javardise.widgets.statements.findByModelIndex
-import pt.iscte.javardise.widgets.statements.findIndexByModel
 
 
 interface SequenceContainer<T : Node> : NodeWidget<T>{
@@ -154,7 +152,6 @@ interface SequenceContainer<T : Node> : NodeWidget<T>{
             return statementFeature.create(parent, stmt, block)
         else
             return UnsupportedWidget(parent, stmt)
-//        throw UnsupportedOperationException("NA $stmt ${stmt::class}")
     }
 
     fun createSequence(parent: Composite, block: BlockStmt): SequenceWidget {
@@ -178,7 +175,7 @@ interface SequenceContainer<T : Node> : NodeWidget<T>{
                 val prev = seq.findByModelIndex(index) as? Control
                 val w = addWidget(node, block, seq)
                 if (prev != null) (w as Composite).moveAbove(prev) // bug with comments?
-                seq.requestLayout()
+                w.control.requestLayout()
                 w.setFocusOnCreation()
             }
 
@@ -205,7 +202,14 @@ interface SequenceContainer<T : Node> : NodeWidget<T>{
                 old: Statement,
                 new: Statement
             ) {
-                TODO("Not yet implemented")
+                val existing = seq.findByModelIndex(index) as? Control
+                val w = addWidget(new, block, seq)
+                if (existing != null) {
+                    (w as Composite).moveAbove(existing)
+                    existing.dispose()
+                }
+                w.control.requestLayout()
+                w.setFocusOnCreation(true)
             }
         })
     }
