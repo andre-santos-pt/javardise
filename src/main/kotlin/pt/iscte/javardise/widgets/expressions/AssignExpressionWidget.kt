@@ -1,12 +1,14 @@
 package pt.iscte.javardise.widgets.expressions
 
 import com.github.javaparser.StaticJavaParser
+import com.github.javaparser.ast.body.VariableDeclarator
 import com.github.javaparser.ast.expr.*
 import com.github.javaparser.ast.observer.ObservableProperty
 import com.github.javaparser.ast.stmt.ExpressionStmt
 import com.github.javaparser.ast.stmt.Statement
 import javassist.compiler.ast.CallExpr
 import org.eclipse.swt.widgets.Composite
+import pt.iscte.javardise.Configuration
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
 import pt.iscte.javardise.external.assignOperators
@@ -60,13 +62,23 @@ class AssignExpressionWidget(
         }
     }
 
-    private fun Composite.createTargetWidget(target: Expression) =
-        createExpressionWidget(this, target) {
-            if(it == null)
+    private fun Composite.createTargetWidget(target: Expression) : ExpressionWidget<*> {
+        val w = createExpressionWidget(this, target) {
+            if (it == null)
                 editEvent(null)
             else
                 node.modifyCommand(node.target, it, node::setTarget)
         }
+        w.head.addKeyEvent(' ', precondition = { node.target is NameExpr}) {
+            editEvent(VariableDeclarationExpr(
+                VariableDeclarator(
+                    StaticJavaParser.parseType("type"), //Configuration.fillInToken
+                    node.target.toString(),
+                    node.value.clone())
+            ))
+        }
+        return w;
+    }
 
     private fun Composite.createValueWidget(expression: Expression) =
         createExpressionWidget(this, expression) {
