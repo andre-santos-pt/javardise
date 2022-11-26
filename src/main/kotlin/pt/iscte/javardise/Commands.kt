@@ -25,7 +25,7 @@ interface CommandStack {
     fun undo()
     fun addObserver(o: (Command, Boolean) -> Unit)
     fun reset()
-    fun <E: Any?> modifyCommand(target: Node, old: E, new: E, setOperation: KFunction1<E, Node>)
+    fun <E: Any?> modifyCommand(target: Node, old: E, new: E, setOperation: KFunction1<E, Node>) : Boolean
     fun <N: Node> addCommand(list: NodeList<in N>, owner: Node, e: N, index: Int = list.size)
     fun <N: Node> removeCommand(list: NodeList<in N>, owner: Node, e: N)
     fun <N: Node> changeCommand(list: NodeList<in N>, owner: Node, e: N, index: Int)
@@ -52,7 +52,8 @@ interface CommandStack {
            old: E,
            new: E,
            setOperation: KFunction1<E, Node>
-       ) {
+       ): Boolean {
+           return false;
        }
 
        override fun <N : Node> addCommand(
@@ -115,8 +116,8 @@ private class CommandStackImpl : CommandStack {
         observers.clear()
     }
 
-    override fun <E: Any?> modifyCommand(target:Node, old: E, new: E, setOperation: KFunction1<E, Node>) {
-        if (old != new)
+    override fun <E: Any?> modifyCommand(target:Node, old: E, new: E, setOperation: KFunction1<E, Node>): Boolean {
+        return if (old != new) {
             execute(object : Command {
                 override val target = target
                 override val kind: CommandKind = CommandKind.MODIFY
@@ -127,12 +128,16 @@ private class CommandStackImpl : CommandStack {
                 }
 
                 override fun undo() {
-                    if(old is Node)
+                    if (old is Node)
                         setOperation(old.clone() as E)
                     else
                         setOperation(old)
                 }
             })
+            true
+        }
+        else
+            false
     }
 
     override fun <N: Node> addCommand(list: NodeList<in N>, owner: Node, e: N, index: Int) {

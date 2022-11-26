@@ -230,10 +230,10 @@ class JavardiseClassicEditor(val display: Display, val folder: File) {
                 writer.println(model.toString())
                 writer.close()
 
-                compile()
-                compileErrors[model]?.forEach {
-                    it.show()
-                }
+//                compile()
+//                compileErrors[model]?.forEach {
+//                    it.show()
+//                }
 
             }
             tab.data = TabData(file, w)

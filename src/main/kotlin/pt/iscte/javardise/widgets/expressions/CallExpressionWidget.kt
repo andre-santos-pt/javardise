@@ -17,6 +17,7 @@ import pt.iscte.javardise.external.*
 import pt.iscte.javardise.widgets.statements.ExpressionStatementWidget
 import pt.iscte.javardise.widgets.statements.StatementFeature
 
+// TODO transform in assignment
 class CallExpressionWidget(
     parent: Composite,
     override val node: MethodCallExpr,
@@ -42,7 +43,7 @@ class CallExpressionWidget(
             SWT.BS,
             precondition = { methodName.isAtBeginning }) {
             node.modifyCommand(
-                node.scope.get(),
+                node.scope.getOrNull,
                 null,
                 node::setScope
             )

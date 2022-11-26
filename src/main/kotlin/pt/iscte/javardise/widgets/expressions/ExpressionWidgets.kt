@@ -19,13 +19,18 @@ import pt.iscte.javardise.external.unaryOperators
 
 abstract class ExpressionWidget<T : Expression>(parent: Composite)
     : Composite(parent, SWT.NONE), NodeWidget<T> {
-
+   // TODO Bug Argument not valid var = exp + f(3,)
     init {
         layout = ROW_LAYOUT_H_SHRINK
         font = configuration.font
         background = configuration.backgroundColor
         foreground = configuration.foregroundColor
     }
+
+    val tailObservers = mutableListOf<(TextWidget)->Unit>()
+
+    fun tailChanged() =
+        tailObservers.forEach { it(tail) }
 
     abstract val editEvent: (T?) -> Unit
     abstract val tail: TextWidget
@@ -102,7 +107,7 @@ fun <E: Expression> createExpressionWidget(
                                 op?.let {
                                     editEvent(UnaryExpr(expression.clone(), it))
                                 }
-                            } else if (isAtEnd) {
+                            } else if (isAtEnd || !isModifiable) {
                                 val op = binaryOperators.find {
                                     it.asString().startsWith(e.character)
                                 }

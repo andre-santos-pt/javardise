@@ -37,19 +37,20 @@ class SimpleExpressionWidget(
 
         val text = if (noparse) {
             if (node.comment.isPresent) node.comment.get().content else ""
-        }
-        else if(fillin)
+        } else if (fillin)
             ""
         else
             node.toString()
 
         expression = TextWidget.create(this, text) { c, s ->
             c.toString()
-                .matches(Regex("[a-zA-Z\\d_()]")) || c == SWT.BS || c == SWT.SPACE && !s.endsWith( " ")
+                .matches(Regex("[a-zA-Z\\d_()]")) || c == SWT.BS || c == SWT.SPACE && !s.endsWith(
+                " "
+            )
         }
         if (noparse)
             expression.widget.background = configuration.errorColor
-        else if(fillin)
+        else if (fillin)
             expression.widget.background = configuration.fillInColor
 
         expression.widget.data = node
@@ -67,11 +68,18 @@ class SimpleExpressionWidget(
                     else {
                         val unop = unaryOperators.filter { it.isPrefix }
                             .find { it.asString().startsWith(e.character) }
-                        if (unop != null && tryParse<Expression>(expression.text)) {
-                            node = UnaryExpr(
-                                StaticJavaParser.parseExpression(expression.text),
-                                unop
-                            )
+                        if (unop != null) {
+                            if(tryParse<Expression>(expression.text)) {
+                                node = UnaryExpr(
+                                    StaticJavaParser.parseExpression(expression.text),
+                                    unop
+                                )
+                            }
+                            else
+                                node = UnaryExpr(
+                                    NameExpr(Configuration.fillInToken),
+                                    unop
+                                )
                             expression.removeFocusOutListeners()
                             editEvent(node)
                         }
@@ -87,7 +95,7 @@ class SimpleExpressionWidget(
                             BinaryExpr(
                                 StaticJavaParser.parseExpression(
                                     expression.text
-                                ), NameExpr(Configuration.noParseToken), biop
+                                ), NameExpr(Configuration.fillInToken), biop
                             )
                         expression.removeFocusOutListeners()
                         editEvent(node)
@@ -190,23 +198,23 @@ class SimpleExpressionWidget(
             if (tryParse<Expression>(expression.text)) {
                 val newExp =
                     StaticJavaParser.parseExpression<Expression>(expression.text)
-                if (!newExp.equals(node)) {
+                if (newExp != node) {
                     node.setComment(null)
                     node = newExp
                     expression.widget.data = newExp
                     editEvent(node)
                 }
-            }
-            else if(expression.text.isEmpty()) {
+            } else if (expression.text.isEmpty()) {
                 expression.widget.background = configuration.fillInColor
                 val fillin = NameExpr(Configuration.fillInToken)
-                editEvent(fillin)
-            }
-            else {
+                if (node != fillin)
+                    editEvent(fillin)
+            } else {
                 expression.widget.background = configuration.errorColor
                 val noparse = NameExpr(Configuration.noParseToken)
                 noparse.setComment(BlockComment(expression.text))
-                editEvent(noparse)
+                if (node != noparse)
+                    editEvent(noparse)
             }
         }
     }

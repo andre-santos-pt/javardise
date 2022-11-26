@@ -111,7 +111,7 @@ interface NodeWidget<T> {
         }
     }
 
-    fun <E: Any?> Node.modifyCommand(old: E, new: E, setOperation: KFunction1<E, Node>) =
+    fun <E: Any?> Node.modifyCommand(old: E, new: E, setOperation: KFunction1<E, Node>): Boolean =
         commandStack.modifyCommand(this, old, new, setOperation)
 
     fun <N: Node> NodeList<in N>.addCommand(owner: Node, e: N, index: Int = size) =

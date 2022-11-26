@@ -57,7 +57,7 @@ class ArgumentListWidget<T : Expression, N : Node>(
                 index: Int,
                 node: T
             ) {
-                createArgument(node, index, false).setFocus()
+                createArgument(node, index, false).setFocusOnCreation()
             }
 
             override fun elementReplace(
@@ -66,7 +66,7 @@ class ArgumentListWidget<T : Expression, N : Node>(
                 old: T,
                 new: T
             ) {
-                createArgument(new, index, true)
+                createArgument(new, index, true).setFocusOnCreation()
             }
 
             override fun elementRemove(
@@ -93,7 +93,7 @@ class ArgumentListWidget<T : Expression, N : Node>(
 
     private fun createArgument(exp: T, index: Int, replace: Boolean):
             ExpressionWidget<*> {
-        val arg = createExpressionWidget(this, exp) { // TODO bug  Argument not valid
+        val arg = createExpressionWidget(this, exp) {
             if (it == null)
                 owner.commandStack.execute(object : Command {
                     override val target = owner.node
@@ -126,26 +126,13 @@ class ArgumentListWidget<T : Expression, N : Node>(
                         expressionList[i] = element
                     }
                 })
+
             }
         }
-
-        arg.tail.addKeyEvent(',') {
-            owner.commandStack.execute(object : Command {
-                override val target = owner.node
-                override val kind = CommandKind.ADD
-                override val element get() = NameExpr("expression")
-
-                var i: Int = -1
-                override fun run() {
-                    i = expressionList.indexOfIdentity(arg.node as T)
-                    expressionList.add(i + 1, element as T)
-                }
-
-                override fun undo() {
-                    expressionList.removeAt(i)
-                }
-            })
+        arg.tailObservers.add {
+            addTailListener(arg)
         }
+        addTailListener(arg)
 
         if (argumentWidgets.isEmpty()) {
             arg.moveBelow(openBracket.label)
@@ -169,6 +156,26 @@ class ArgumentListWidget<T : Expression, N : Node>(
         }
         arg.requestLayout()
         return arg
+    }
+
+    private fun addTailListener(arg: ExpressionWidget<*>) {
+        arg.tail.addKeyEvent(',') {
+            owner.commandStack.execute(object : Command {
+                override val target = owner.node
+                override val kind = CommandKind.ADD
+                override val element = NameExpr(Configuration.fillInToken)
+
+                var i: Int = -1
+                override fun run() {
+                    i = expressionList.indexOfIdentity(arg.node as T)
+                    expressionList.add(i + 1, element as T)
+                }
+
+                override fun undo() {
+                    expressionList.removeAt(i)
+                }
+            })
+        }
     }
 
     private fun createInsert(parent: Composite) {
@@ -214,7 +221,7 @@ class ArgumentListWidget<T : Expression, N : Node>(
                 StaticJavaParser.parseExpression<Expression>(insert.text)
             insert.delete()
             doAddArgummentCommand(insertExp)
-            doAddArgummentCommand(NameExpr("expression"), insertExp)
+            doAddArgummentCommand(NameExpr(Configuration.fillInToken), insertExp)
         }
         val listener = insert.addFocusLostAction {
             insert.text = " "

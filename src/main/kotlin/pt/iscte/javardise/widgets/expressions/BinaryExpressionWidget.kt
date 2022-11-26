@@ -51,6 +51,7 @@ class BinaryExpressionWidget(
             node.observeProperty<Expression>(ObservableProperty.RIGHT) {
                 right.dispose()
                 drawRight(this, it!!)
+                tailChanged()
             }
         operatorObserver =
             node.observeProperty<BinaryExpr.Operator>(ObservableProperty.OPERATOR) {
@@ -71,11 +72,10 @@ class BinaryExpressionWidget(
         expression: Expression
     ): ExpressionWidget<*> {
         left = createExpressionWidget(parent, expression) {
-            if (it != null) {
+            if (it != null)
                 node.modifyCommand(node.left, it, node::setLeft)
-                left.dispose()
-                drawLeft(parent, it)
-            }
+            else
+                editEvent(node.right)
         }
         left.moveAbove(operator.widget)
         left.requestLayout()
@@ -111,11 +111,8 @@ class BinaryExpressionWidget(
         expression: Expression
     ): ExpressionWidget<*> {
         right = createExpressionWidget(parent, expression) {
-            if(it != null) {
+            if(it != null)
                 node.modifyCommand(node.right, it, node::setRight)
-                right.dispose()
-                drawRight(parent, it)
-            }
             else
                 editEvent(node.left)
         }
