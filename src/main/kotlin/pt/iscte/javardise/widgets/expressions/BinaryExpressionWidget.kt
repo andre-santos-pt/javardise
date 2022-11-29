@@ -130,12 +130,14 @@ class BinaryExpressionWidget(
                         override val element: Expression
                             get() = node.right
 
+                        val prevleft = node.left
+
                         override fun run() {
-                            editEvent(BinaryExpr(node.right.clone(),node.left.clone(),node.operator))
+                            editEvent(BinaryExpr(element.clone(), prevleft.clone(), node.operator))
                         }
 
                         override fun undo() {
-                            TODO("Not yet implemented")
+                            editEvent(BinaryExpr(prevleft.clone(), element.clone(),node.operator))
                         }
 
                     })

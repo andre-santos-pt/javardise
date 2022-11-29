@@ -8,7 +8,6 @@ import com.github.javaparser.ast.observer.AstObserver
 import com.github.javaparser.ast.observer.ObservableProperty
 import com.github.javaparser.ast.stmt.ExpressionStmt
 import com.github.javaparser.ast.stmt.Statement
-import javassist.compiler.ast.CallExpr
 import org.eclipse.swt.SWT
 import org.eclipse.swt.widgets.Composite
 import pt.iscte.javardise.Configuration

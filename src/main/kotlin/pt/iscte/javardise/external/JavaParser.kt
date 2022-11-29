@@ -143,6 +143,22 @@ fun <T : Node> NodeList<T>.observeList(observer: ListObserver<T>) {
     })
 }
 
+fun <T : Node> NodeList<T>.swap(i: Int, j: Int) {
+    require(i in 0..lastIndex)
+    require(j in 0..lastIndex)
+    val tmp = get(i)
+    set(i, get(j))
+    set(j, tmp)
+}
+
+fun <T : Node> NodeList<T>.swap(a: T, b: T) {
+    require(contains(a) && contains(b))
+    val aIndex = indexOfIdentity(a)
+    val tmp = elementAt(aIndex)
+    set(aIndex, b)
+    set(indexOfIdentity(b), tmp)
+}
+
 abstract class ListAddRemoveObserver<T : Node> : AstObserverAdapter() {
     override fun listChange(
         observedNode: NodeList<*>,
@@ -261,3 +277,6 @@ val unaryOperatorsStatement : List<UnaryExpr.Operator> = listOf (
 )
 
 val assignOperators : List<AssignExpr.Operator> = AssignExpr.Operator.values().toList()
+
+val Expression.isIncrementorOrDecrementor get() =
+    this is UnaryExpr && unaryOperatorsStatement.contains(this.operator)

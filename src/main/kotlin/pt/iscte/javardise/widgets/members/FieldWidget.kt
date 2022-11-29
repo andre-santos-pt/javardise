@@ -9,7 +9,6 @@ import com.github.javaparser.ast.expr.NameExpr
 import com.github.javaparser.ast.expr.SimpleName
 import com.github.javaparser.ast.observer.ObservableProperty
 import org.eclipse.swt.widgets.Composite
-import org.eclipse.swt.widgets.Control
 import pt.iscte.javardise.*
 import pt.iscte.javardise.basewidgets.TokenWidget
 import pt.iscte.javardise.external.getOrNull

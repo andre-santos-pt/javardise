@@ -150,8 +150,13 @@ interface SequenceContainer<T : Node> : NodeWidget<T>{
             configuration.statementFeatures.find { it.targets(stmt) }
         if (statementFeature != null)
             return statementFeature.create(parent, stmt, block)
-        else
-            return UnsupportedWidget(parent, stmt)
+        else {
+            val w = UnsupportedWidget(parent, stmt)
+            w.widget.addDeleteListener {
+                block.statements.removeCommand(block, stmt)
+            }
+            return w
+        }
     }
 
     fun createSequence(parent: Composite, block: BlockStmt): SequenceWidget {

@@ -44,7 +44,7 @@ class SimpleExpressionWidget(
 
         expression = TextWidget.create(this, text) { c, s ->
             c.toString()
-                .matches(Regex("[a-zA-Z\\d_()]")) ||
+                .matches(Regex("[a-zA-Z\\d_().]")) ||
                     c == SWT.BS ||
                     c == SWT.SPACE && !s.endsWith(" ")
         }
@@ -153,7 +153,7 @@ class SimpleExpressionWidget(
         expression.addKeyEvent('[', precondition = { tryParse<NameExpr>(it) }) {
             val arrayAccess = ArrayAccessExpr(
                 StaticJavaParser.parseExpression(expression.text),
-                NameExpr("index")
+                NameExpr(Configuration.fillInToken)
             )
             editEvent(arrayAccess)
         }

@@ -7,6 +7,8 @@ import com.github.javaparser.ast.expr.Expression
 import com.github.javaparser.ast.expr.NameExpr
 import com.github.javaparser.ast.nodeTypes.NodeWithArguments
 import org.eclipse.swt.SWT
+import org.eclipse.swt.events.KeyAdapter
+import org.eclipse.swt.events.KeyEvent
 import org.eclipse.swt.widgets.Composite
 import pt.iscte.javardise.*
 import pt.iscte.javardise.basewidgets.FixedToken
@@ -27,7 +29,7 @@ class ArgumentListWidget<T : Expression, N : Node>(
     val closeBracket: TokenWidget
 
     private data class ArgWidget(
-        val comma: FixedToken?,
+        var comma: FixedToken?,
         var arg: ExpressionWidget<*>
     ) {
         fun dispose() {
@@ -75,10 +77,14 @@ class ArgumentListWidget<T : Expression, N : Node>(
                 node: T
             ) {
                 argumentWidgets[index].dispose()
+                if(index == 0 && argumentWidgets.size > 1) {
+                    argumentWidgets[1].comma?.dispose()
+                    argumentWidgets[1].comma = null
+                }
                 argumentWidgets.removeAt(index)
                 requestLayout()
                 if (index != argumentWidgets.size)
-                    argumentWidgets[index].arg.setFocus()
+                    argumentWidgets[index].arg.setFocus() // Cannot invoke "org.eclipse.swt.internal.cocoa.NSTextField.selectText(org.eclipse.swt.internal.cocoa.id)" because "this.view" is null
                 else if (index != 0)
                     argumentWidgets[index - 1].arg.setFocus()
                 else {
@@ -88,7 +94,6 @@ class ArgumentListWidget<T : Expression, N : Node>(
             }
         })
     }
-
 
 
     private fun createArgument(exp: T, index: Int, replace: Boolean):
@@ -102,7 +107,7 @@ class ArgumentListWidget<T : Expression, N : Node>(
 
                     var i: Int = -1
                     override fun run() {
-                        i = expressionList.indexOfIdentity(exp)
+                       i = expressionList.indexOfIdentity(exp)
                         expressionList.removeAt(i)
                     }
 
@@ -118,7 +123,7 @@ class ArgumentListWidget<T : Expression, N : Node>(
 
                     var i: Int = -1
                     override fun run() {
-                        i = expressionList.indexOfIdentity(element)
+                       i = expressionList.indexOfIdentity(exp) // BUG illegal index
                         expressionList[i] = it as T
                     }
 
@@ -133,6 +138,8 @@ class ArgumentListWidget<T : Expression, N : Node>(
             addTailListener(arg)
         }
         addTailListener(arg)
+
+
 
         if (argumentWidgets.isEmpty()) {
             arg.moveBelow(openBracket.label)
@@ -176,6 +183,29 @@ class ArgumentListWidget<T : Expression, N : Node>(
                 }
             })
         }
+        arg.head.addKeyListenerInternal(object : KeyAdapter() {
+            override fun keyPressed(e: KeyEvent) {
+                if (e.isCombinedKey(SWT.ARROW_LEFT)) {
+                    val i = expressionList.indexOfIdentity(arg.node as T)
+                    if (i > 0) {
+                        owner.commandStack.execute(object : Command {
+                            override val target: Node =
+                                expressionList.parentNode.get()
+                            override val kind: CommandKind = CommandKind.MODIFY
+                            override val element = expressionList
+
+                            override fun run() {
+                                expressionList.swap(i, i-1)
+                            }
+
+                            override fun undo() {
+                                expressionList.swap(i, i-1)
+                            }
+                        })
+                    }
+                }
+            }
+        });
     }
 
     private fun createInsert(parent: Composite) {
@@ -221,7 +251,10 @@ class ArgumentListWidget<T : Expression, N : Node>(
                 StaticJavaParser.parseExpression<Expression>(insert.text)
             insert.delete()
             doAddArgummentCommand(insertExp)
-            doAddArgummentCommand(NameExpr(Configuration.fillInToken), insertExp)
+            doAddArgummentCommand(
+                NameExpr(Configuration.fillInToken),
+                insertExp
+            )
         }
         val listener = insert.addFocusLostAction {
             insert.text = " "

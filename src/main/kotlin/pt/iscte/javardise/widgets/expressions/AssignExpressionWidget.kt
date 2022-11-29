@@ -6,9 +6,7 @@ import com.github.javaparser.ast.expr.*
 import com.github.javaparser.ast.observer.ObservableProperty
 import com.github.javaparser.ast.stmt.ExpressionStmt
 import com.github.javaparser.ast.stmt.Statement
-import javassist.compiler.ast.CallExpr
 import org.eclipse.swt.widgets.Composite
-import pt.iscte.javardise.Configuration
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
 import pt.iscte.javardise.external.assignOperators
