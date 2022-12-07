@@ -113,14 +113,13 @@ class JavardiseClassicEditor(val display: Display, val folder: File) {
             fileList.add(it.name)
         }
 
-
         val menu = Menu(fileList)
         val newFile = MenuItem(menu, SWT.PUSH)
         newFile.text = "New file"
         newFile.addSelectionListener(object : SelectionAdapter() {
             override fun widgetSelected(e: SelectionEvent?) {
                 prompt("File name") {
-                    val f = File(folder, it + ".java")
+                    val f = File(folder, it)
                     f.createNewFile()
                     fileList.add(f.name)
                     fileList.requestLayout()

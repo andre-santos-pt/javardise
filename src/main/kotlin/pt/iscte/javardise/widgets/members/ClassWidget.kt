@@ -21,10 +21,7 @@ import org.eclipse.swt.widgets.Display
 import org.eclipse.swt.widgets.Event
 import pt.iscte.javardise.*
 import pt.iscte.javardise.basewidgets.*
-import pt.iscte.javardise.external.ROW_LAYOUT_H_SHRINK
-import pt.iscte.javardise.external.isChildOf
-import pt.iscte.javardise.external.isValidClassType
-import pt.iscte.javardise.external.observeProperty
+import pt.iscte.javardise.external.*
 import pt.iscte.javardise.widgets.statements.*
 import pt.iscte.javardise.widgets.statements.addInsert
 
@@ -169,7 +166,31 @@ open class ClassWidget(
 
         name = SimpleNameWidget(firstRow, type)
         name.addFocusLostAction(::isValidClassType) {
-            node.modifyCommand(node.nameAsString, it, node::setName)
+            commandStack.execute(object: Command {
+                override val target: Node
+                    get() = node
+                override val kind: CommandKind = CommandKind.MODIFY
+                override val element = node.name
+
+                override fun run() {
+                    node.setName(it)
+                    node.constructors.forEach { c->
+                        c.name = SimpleName(it)
+                    }
+                }
+
+                override fun undo() {
+                    node.setName(element)
+                    node.constructors.forEach { c->
+                        c.name = element
+                    }
+                }
+
+            })
+//            node.modifyCommand(node.nameAsString, it, node::setName)
+//            node.constructors.forEach { c->
+//                c.name = SimpleName(it)
+//            }
         }
         bodyWidget = SequenceWidget(
             column,
@@ -270,6 +291,15 @@ open class ClassWidget(
                 w.closingBracket.addInsert(w, bodyWidget, true)
                 w
             }
+            is ClassOrInterfaceDeclaration -> {
+                val w = ClassWidget(
+                    bodyWidget,
+                    dec,
+                    configuration = configuration,
+                    commandStack = commandStack)
+                w.closingBracket.addInsert(w, bodyWidget, true)
+                w
+            }
             else -> {
                 val w = UnsupportedWidget(bodyWidget, dec)
                 w.widget.addDeleteListener {
@@ -319,51 +349,53 @@ open class ClassWidget(
         }
 
         if (!staticClass)
-            insert.addKeyEvent(
-                ';', '=',
-                SWT.CR,
-                precondition = { it.matches(MEMBER_REGEX) }) {
-                val split = insert.text.split(Regex("\\s+"))
-                val newField = FieldDeclaration(
-                    modifiers(2),
-                    StaticJavaParser.parseType(split[split.lastIndex - 1]), // TODO possible bug
-                    split.last()
-                )
-                if (it.character == '=')
-                    newField.variables[0].setInitializer(NameExpr("expression"))
-
-                val insertIndex = seq.findIndexByModel(insert.widget)
-                node.members.addCommand(node, newField, insertIndex)
-                insert.delete()
-            }
-
-        if (!staticClass)
-            insert.addKeyEvent(
-                '(',
+            insert.addKeyEvent('(',
                 precondition = { it.matches(CONSTRUCTOR_REGEX()) }) {
                 val newConst =
                     ConstructorDeclaration(modifiers(1), node.nameAsString)
+
                 val insertIndex = seq.findIndexByModel(insert.widget)
                 node.members.addCommand(node, newConst, insertIndex)
                 insert.delete()
             }
 
+        val memberChars = if(staticClass) arrayOf('(') else arrayOf(';','=','(')
 
-        insert.addKeyEvent('(', precondition = { it.matches(MEMBER_REGEX) }) {
+        insert.addKeyEvent(*memberChars.toCharArray(), precondition = {
+            if(it.matches(MEMBER_REGEX)) {
+                val split = it.split(Regex("\\s+"))
+                isValidType(split[split.lastIndex-1]) && isValidSimpleName(split[split.lastIndex])
+            }
+            else
+                false
+        }) {
             val split = insert.text.split(Regex("\\s+"))
-            val newMethod = MethodDeclaration(
-                modifiers(2),
-                split.last(),
-                StaticJavaParser.parseType(split[split.lastIndex - 1]),    // TODO BUG parse type
-                NodeList()
-            )
-            if (node.isInterface)
-                newMethod.setBody(null)
+            val modifiers = NodeList(split.dropLast(2).map { matchModifier(it) })
+            val dec = if(it.character == ';' || it.character == '=') {
+                val newField = FieldDeclaration(
+                    modifiers,
+                    StaticJavaParser.parseType(split[split.lastIndex - 1]),
+                    split.last()
+                )
+                if (it.character == '=')
+                    newField.variables[0].setInitializer(NameExpr(Configuration.fillInToken))
+                newField
+            }
+            else {
+                val newMethod = MethodDeclaration(
+                    modifiers,
+                    split.last(),
+                    StaticJavaParser.parseType(split[split.lastIndex - 1]),
+                    NodeList()
+                )
+                if (node.isInterface)
+                    newMethod.setBody(null)
 
-            customizeNewMethodDeclaration(newMethod)
-
+                customizeNewMethodDeclaration(newMethod)
+                newMethod
+            }
             val insertIndex = seq.findIndexByModel(insert.widget)
-            node.members.addCommand(node, newMethod, insertIndex)
+            node.members.addCommand(node, dec, insertIndex)
             insert.delete()
         }
         insert.addFocusLostAction {

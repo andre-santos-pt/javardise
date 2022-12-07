@@ -85,7 +85,7 @@ open class DefaultConfiguration : Configuration {
     }
 
     override val backgroundColor by lazy {
-        Display.getDefault().getSystemColor(SWT.COLOR_WIDGET_BACKGROUND)
+        Display.getDefault().getSystemColor(SWT.COLOR_WHITE)
     }
 
     override val numberColor by lazy {

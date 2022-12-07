@@ -1,38 +1,63 @@
 package pt.iscte.javardise.examples
 
+import com.github.javaparser.StaticJavaParser
 import com.github.javaparser.ast.Modifier
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration
 import com.github.javaparser.ast.body.MethodDeclaration
 import com.github.javaparser.ast.comments.Comment
 import org.eclipse.swt.SWT
+import org.eclipse.swt.layout.FillLayout
 import org.eclipse.swt.layout.GridData
 import org.eclipse.swt.layout.GridLayout
 import org.eclipse.swt.widgets.*
-import pt.iscte.javardise.CommandStack
-import pt.iscte.javardise.CommandStack.Companion.create
 import pt.iscte.javardise.Configuration
+import pt.iscte.javardise.DefaultConfiguration
 import pt.iscte.javardise.widgets.members.ClassWidget
+import java.io.File
+import java.io.FileNotFoundException
 
+
+val testCode = """
+        public class StaticClass {
+        
+        }
+    """.trimIndent()
+fun main(args: Array<String>) {
+    val display = Display()
+    val shell = Shell(display)
+    shell.layout = FillLayout()
+    val w = StaticClassExerciseWidget(shell,
+        StaticJavaParser.parse(testCode).types[0] as ClassOrInterfaceDeclaration, DefaultConfiguration())
+
+    shell.open()
+    while (!shell.isDisposed) {
+        if (!display.readAndDispatch()) display.sleep()
+    }
+    display.dispose()
+}
 internal class StaticClassExerciseWidget(
     parent: Composite?,
     dec: ClassOrInterfaceDeclaration,
     conf: Configuration
 ) : Composite(parent, SWT.NONE) {
-    internal inner class CustomClassWidget(
-        arg0: Composite?,
-        arg1: ClassOrInterfaceDeclaration?,
-        arg2: Configuration?,
-        arg3: CommandStack?,
-        arg4: Boolean
+
+
+
+
+    internal inner class StaticClassWidget(
+        parent: Composite,
+        dec: ClassOrInterfaceDeclaration,
+        conf: Configuration
     ) : ClassWidget(
-        arg0!!, arg1!!, arg2!!, arg3!!, arg4
+        parent, dec, conf, staticClass =  true
     ) {
         override fun customizeNewMethodDeclaration(dec: MethodDeclaration) {
+            dec.addModifier(Modifier.Keyword.PUBLIC)
             dec.addModifier(Modifier.Keyword.STATIC)
         }
     }
 
-    var classWidget: CustomClassWidget
+    var classWidget: StaticClassWidget
 
     init {
         layout = GridLayout()
@@ -49,12 +74,12 @@ internal class StaticClassExerciseWidget(
         code.layoutData = GridData(GridData.FILL_HORIZONTAL)
         code.font = conf.font
 
-//			MethodWidget w = new MethodWidget(group, dec.addMe, SWT.NONE, new Conf(), CommandStack.Companion.create());
+        classWidget = StaticClassWidget(code, dec, conf)
 
-        // MethodWidget w = new MethodWidget(group, dec.getMethods().get(0), SWT.NONE,
-        // new Conf(), CommandStack.Companion.create());
-        classWidget = CustomClassWidget(code, dec, conf, create(), true)
         classWidget.layoutData = GridData(GridData.FILL_HORIZONTAL)
+
+        classWidget.bodyWidget.insertBeginning()
+
         val tests = Group(this, SWT.NONE)
         tests.text = "Tests"
         tests.layout = GridLayout()
@@ -69,4 +94,6 @@ internal class StaticClassExerciseWidget(
         val item2 = TableItem(table, SWT.None)
         item2.setText(arrayOf("f(2)", "1"))
     }
+
+
 }
