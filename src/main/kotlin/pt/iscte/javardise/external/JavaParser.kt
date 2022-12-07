@@ -88,7 +88,6 @@ fun substituteControlBlocks(node: Node) {
 }
 
 fun expandFieldDeclarations(type: TypeDeclaration<*>) {
-
     val changes = mutableListOf<Runnable>()
     type.accept(object : VoidVisitorAdapter<Any>() {
         override fun visit(dec: FieldDeclaration, arg: Any?) {
@@ -104,6 +103,23 @@ fun expandFieldDeclarations(type: TypeDeclaration<*>) {
             super.visit(dec, arg)
         }
 
+        override fun visit(stmt: ExpressionStmt, arg: Any?) {
+            if(stmt.expression is VariableDeclarationExpr) {
+                val dec = stmt.expression as VariableDeclarationExpr
+                val block = stmt.parentNode.get() as BlockStmt
+                dec.variables.drop(1).forEach { v ->
+                    changes.add {
+                        val varDec = VariableDeclarator(dec.elementType.clone(), v.name.clone())
+                        if (v.initializer.isPresent)
+                            varDec.setInitializer(v.initializer.get().clone())
+
+                        block.statements.addAfter(ExpressionStmt(VariableDeclarationExpr(varDec)), stmt)
+                        dec.variables.remove(v)
+                    }
+                }
+            }
+            super.visit(stmt, arg)
+        }
     }, null)
     changes.forEach { it.run() }
 
