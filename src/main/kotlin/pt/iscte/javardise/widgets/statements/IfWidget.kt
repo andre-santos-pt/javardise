@@ -10,9 +10,12 @@ import com.github.javaparser.ast.observer.ObservableProperty
 import com.github.javaparser.ast.stmt.BlockStmt
 import com.github.javaparser.ast.stmt.IfStmt
 import com.github.javaparser.ast.stmt.Statement
+import com.github.javaparser.ast.stmt.WhileStmt
 import org.eclipse.swt.SWT
 import org.eclipse.swt.widgets.Composite
 import org.eclipse.swt.widgets.Control
+import pt.iscte.javardise.Command
+import pt.iscte.javardise.CommandKind
 import pt.iscte.javardise.Configuration
 import pt.iscte.javardise.basewidgets.*
 import pt.iscte.javardise.external.*
@@ -42,7 +45,28 @@ class IfWidget(
     init {
         column = column {
             firstRow = row {
-                keyword = newKeywordWidget(this, "if")
+                keyword = newKeywordWidget(this, "if",
+                    alternatives = { if(node.hasElseBranch()) listOf() else listOf("while") }) {
+
+                    commandStack.execute(object : Command {
+                        override val target: Node = parentBlock
+                        override val kind: CommandKind = CommandKind.MODIFY
+                        override val element: Statement = node
+
+                        val whil = WhileStmt(
+                            node.condition.clone(),
+                            node.thenStmt.clone()
+                        )
+                        override fun run() {
+                            node.replace(whil)
+                        }
+
+                        override fun undo() {
+                            whil.replace(element)
+                        }
+
+                    })
+                }
                 keyword.addDelete(node, parentBlock)
                 keyword.addShallowDelete()
                 //keyword.setCopySource(node)

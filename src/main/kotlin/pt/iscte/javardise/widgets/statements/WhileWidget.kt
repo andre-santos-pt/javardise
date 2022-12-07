@@ -1,13 +1,17 @@
 package pt.iscte.javardise.widgets.statements
 
+import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.expr.Expression
 import com.github.javaparser.ast.expr.NameExpr
 import com.github.javaparser.ast.observer.ObservableProperty
 import com.github.javaparser.ast.stmt.BlockStmt
+import com.github.javaparser.ast.stmt.IfStmt
 import com.github.javaparser.ast.stmt.Statement
 import com.github.javaparser.ast.stmt.WhileStmt
 import org.eclipse.swt.SWT
 import org.eclipse.swt.widgets.Composite
+import pt.iscte.javardise.Command
+import pt.iscte.javardise.CommandKind
 import pt.iscte.javardise.Configuration
 import pt.iscte.javardise.basewidgets.*
 import pt.iscte.javardise.external.block
@@ -38,7 +42,28 @@ class WhileWidget(
     init {
         val col = column {
             firstRow = row {
-                keyword = newKeywordWidget(this, "while")
+                keyword = newKeywordWidget(this, "while",
+                    alternatives = { listOf("if") }) {
+                    commandStack.execute(object : Command {
+                        override val target: Node = parentBlock
+                        override val kind: CommandKind = CommandKind.MODIFY
+                        override val element: Statement = node
+
+                        val iff = IfStmt(
+                            node.condition.clone(),
+                            node.block.clone(),
+                            null
+                        )
+                        override fun run() {
+                            node.replace(iff)
+                        }
+
+                        override fun undo() {
+                            iff.replace(element)
+                        }
+
+                    })
+                }
                 keyword.addDelete(node, parentBlock)
                 keyword.addShallowDelete()
                 //keyword.setCopySource(node)
@@ -53,13 +78,15 @@ class WhileWidget(
         }
         closingBracket = TokenWidget(col, "}")
         closingBracket.addInsert(this, parent, true)
-       addMoveBracket()
+        addMoveBracket()
 
 
 
         node.observeProperty<Expression>(ObservableProperty.CONDITION) {
             condition.dispose()
-            condition = firstRow.createExpWidget(it ?: NameExpr(Configuration.fillInToken))
+            condition = firstRow.createExpWidget(
+                it ?: NameExpr(Configuration.fillInToken)
+            )
             condition.moveBelow(openClause.label)
             condition.requestLayout()
             condition.setFocusOnCreation()
@@ -70,7 +97,10 @@ class WhileWidget(
     private fun Composite.createExpWidget(condition: Expression) =
         createExpressionWidget(this, condition) {
             if (it == null)
-                parentBlock.statements.removeCommand(parentBlock.parentNode.get(), node)
+                parentBlock.statements.removeCommand(
+                    parentBlock.parentNode.get(),
+                    node
+                )
             else
                 node.modifyCommand(node.condition, it, node::setCondition)
         }
