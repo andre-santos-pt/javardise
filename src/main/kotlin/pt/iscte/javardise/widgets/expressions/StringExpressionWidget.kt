@@ -12,6 +12,7 @@ import pt.iscte.javardise.basewidgets.FixedToken
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
 
+// TODO empty string "     " and delete " editEvent
 class StringExpressionWidget(
     parent: Composite,
     override val node: StringLiteralExpr,
@@ -23,7 +24,10 @@ class StringExpressionWidget(
     val delListener = object : KeyAdapter() {
         override fun keyPressed(e: KeyEvent) {
             if(e.character == SWT.BS)
-                editEvent(NameExpr(node.value.filter { it.toString().matches(ID) }))
+                if(node.value.any { it.toString().matches(ID) })
+                    editEvent(NameExpr(node.value.filter { it.toString().matches(ID) }))
+                else
+                    editEvent(null)
         }
     }
 

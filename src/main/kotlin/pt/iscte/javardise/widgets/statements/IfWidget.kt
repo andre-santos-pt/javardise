@@ -165,6 +165,8 @@ class IfWidget(
 
         init {
             layout = ROW_LAYOUT_H_SHRINK
+            background = parent.background
+            foreground = parent.foreground
             font = parent.font
             column {
                 row {

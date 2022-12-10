@@ -58,6 +58,7 @@ class ReturnWidget(
                 expression?.dispose()
                 expression = null
                 keyword.widget.requestLayout()
+                keyword.setFocus()
             }
             else {
                 expression?.dispose()
