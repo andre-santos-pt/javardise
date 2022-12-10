@@ -1,7 +1,11 @@
 package pt.iscte.javardise.basewidgets
 
 import org.eclipse.swt.SWT
+import org.eclipse.swt.events.ControlEvent
+import org.eclipse.swt.events.ControlListener
+import org.eclipse.swt.events.PaintEvent
 import org.eclipse.swt.graphics.Color
+import org.eclipse.swt.graphics.GC
 import org.eclipse.swt.graphics.Point
 import org.eclipse.swt.widgets.*
 import java.util.function.BiFunction
@@ -27,9 +31,9 @@ fun Control.addNote(
     }, loc)
 }
 
-fun Control.addMark(color: Color): ICodeDecoration<Canvas> {
+fun Control.addMark(color: Color, text: String = ""): ICodeDecoration<Canvas> {
     class Rec(
-        parent: Composite?,
+        parent: Composite,
         var control: Control
     ) : Canvas(parent, SWT.NO_BACKGROUND) {
         override fun computeSize(wHint: Int, hHint: Int, changed: Boolean): Point {
@@ -42,21 +46,36 @@ fun Control.addMark(color: Color): ICodeDecoration<Canvas> {
         override fun computeSize(wHint: Int, hHint: Int): Point {
             return computeSize(wHint, hHint, true)
         }
-
+        var gc: GC? = null
         init {
             background = Display.getDefault().getSystemColor(SWT.TRANSPARENT)
-            addPaintListener { e ->
-                val dim = control.computeSize(SWT.DEFAULT, SWT.DEFAULT)
-                e.gc.foreground = color
-                e.gc.lineWidth = 3
-                e.gc.drawRectangle(0, 0, dim.x + 2, dim.y + 2)
+            toolTipText = text
+//            parent.addControlListener(object : ControlListener {
+//                override fun controlMoved(e: ControlEvent) {
+//
+//                    paint(GC(parent.shell))
+//                }
+//
+//                override fun controlResized(p: ControlEvent) {
+//                    paint(GC(parent.shell))
+//                }
+//
+//            })
+            parent.addPaintListener { e ->
+                paint(e.gc)
             }
+        }
+        private fun paint(gc: GC) {
+            val dim = control.computeSize(SWT.DEFAULT, SWT.DEFAULT)
+            gc.foreground = color
+            gc.lineWidth = 3
+            gc.drawRectangle(0, 0, dim.x + 2, dim.y + 2)
         }
     }
 
     val dec =
         addDecoration(
-            BiFunction<Composite, Control, Canvas> { p: Composite?, c: Control -> Rec(p, c) },
+            BiFunction<Composite, Control, Canvas> { p: Composite, c: Control -> Rec(p, c) },
             BiFunction<Point, Point, Point> { t: Point?, d: Point? ->
                 Point(
                     -2,
@@ -64,12 +83,10 @@ fun Control.addMark(color: Color): ICodeDecoration<Canvas> {
                 )
             }
         )
-    if (dec != null) {
         val d =
             dec as Decoration<Canvas>
         d.setAlpha(128)
         d.setBackground(Display.getDefault().getSystemColor(SWT.TRANSPARENT))
-    }
     return dec
 }
 

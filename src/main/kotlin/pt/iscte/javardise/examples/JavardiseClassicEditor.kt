@@ -148,24 +148,29 @@ class JavardiseClassicEditor(val display: Display, val folder: File) {
             it.value.forEach { it.delete() }
         }
         compileErrors.clear()
-        val errors = checkCompileErrors(
-            folder.listFiles(FileFilter { it.name.endsWith(".java") })
-                .map {
-                    Triple(
-                        it.absolutePath,
-                        StaticJavaParser.parse(it).findMainClass(),
-                        null
-                    )
-                }
+        val files = folder.listFiles(FileFilter { it.name.endsWith(".java") })
+            .map {
+                Triple(
+                    it.absolutePath,
+                    StaticJavaParser.parse(it).findMainClass(),
+                    null
+                )
+            }
 
-                .filter { it.second != null }
-                .map {
-                    Pair(
-                        it.second!!,
-                        openTabs.find { w -> (w.data as TabData).file.name == it.first } as? ClassWidget)
-                }
-                .map { println(it); it}
-        )
+            .filter { it.second != null }
+            .map {
+                Pair(
+                    it.second!!,
+                    openTabs.find { w -> (w.data as TabData).file.absolutePath == it.first}?.data as? TabData)
+            }
+            .filter {it.second != null}
+            .map {
+                Pair(
+                    it.first,
+                    it.second!!.classWidget!!)
+            }
+            .map { println(it); it }
+        val errors = checkCompileErrors(files)
         compileErrors.putAll(errors)
     }
 
@@ -210,10 +215,10 @@ class JavardiseClassicEditor(val display: Display, val folder: File) {
             }
             w.setAutoScroll()
 
-//            compile()
-//            compileErrors[model]?.forEach {
-//                it.show()
-//            }
+            compile()
+            compileErrors[model]?.forEach {
+                it.show()
+            }
 
             val scroll = w.parent as ScrolledComposite
             scroll.verticalBar.addListener(SWT.Selection, object : Listener {
@@ -229,10 +234,10 @@ class JavardiseClassicEditor(val display: Display, val folder: File) {
                 writer.println(model.toString())
                 writer.close()
 
-//                compile()
-//                compileErrors[model]?.forEach {
-//                    it.show()
-//                }
+                compile()
+                compileErrors[model]?.forEach {
+                    it.show()
+                }
 
             }
             tab.data = TabData(file, w)

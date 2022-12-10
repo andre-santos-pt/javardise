@@ -4,6 +4,7 @@ import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration
 import com.github.javaparser.ast.body.FieldDeclaration
 import com.github.javaparser.ast.body.MethodDeclaration
+import com.github.javaparser.ast.body.Parameter
 import com.github.javaparser.ast.expr.ArrayAccessExpr
 import com.github.javaparser.ast.expr.DoubleLiteralExpr
 import com.github.javaparser.ast.expr.NameExpr
@@ -113,6 +114,12 @@ class TokenVisitor(val list: MutableList<Token>, conf: PrinterConfiguration) :
     override fun visit(n: SimpleName, arg: Void?) {
         super.visit(n, arg)
         addToken(n.parentNode.get())
+        //println("V $n ${n.parentNode}")
+    }
+
+    override fun visit(n: Parameter, arg: Void?) {
+        super.visit(n, arg)
+        //println("P ${n.name} ${n.name.hashCode()} ${n.type}")
     }
 
     override fun visit(n: NameExpr, arg: Void?) {
@@ -129,6 +136,7 @@ class TokenVisitor(val list: MutableList<Token>, conf: PrinterConfiguration) :
         super.visit(m, arg)
         // addToken(m.type)
         // addToken(m.name)
+        addToken(m)
     }
 
     override fun visit(n: DoubleLiteralExpr, arg: Void?) {
@@ -147,18 +155,19 @@ class TokenVisitor(val list: MutableList<Token>, conf: PrinterConfiguration) :
             n
         )
         list.add(pos)
+        println("$pos - ${pos.node.hashCode()}")
     }
 }
 
 fun <K, V> MutableMap<K, MutableList<V>>.putPair(key: K, value: V) {
-    if(containsKey(key))
+    if (containsKey(key))
         get(key)?.add(value)
     else
         put(key, mutableListOf(value))
 }
 
 
-fun buildNodeSourceMap(model: ClassOrInterfaceDeclaration) : MutableList<Token> {
+fun buildNodeSourceMap(model: ClassOrInterfaceDeclaration): MutableList<Token> {
     val tokenList = mutableListOf<Token>()
     val printer = DefaultPrettyPrinter(
         { TokenVisitor(tokenList, it) },
@@ -168,11 +177,16 @@ fun buildNodeSourceMap(model: ClassOrInterfaceDeclaration) : MutableList<Token> 
     return tokenList
 }
 
-//data class CompileError(val type: ClassOrInterfaceDeclaration, val errors: List<ICodeDecoration<*>>)
 typealias CompileErrors = MutableMap<ClassOrInterfaceDeclaration, MutableList<ICodeDecoration<*>>>
-fun checkCompileErrors(models: List<Pair<ClassOrInterfaceDeclaration, ClassWidget?>>) : CompileErrors {
-    val errorDecs = mutableMapOf<ClassOrInterfaceDeclaration, MutableList<ICodeDecoration<*>>>()
-    val nodeMap = mutableMapOf<ClassOrInterfaceDeclaration, MutableList<Token>>()
+
+fun checkCompileErrors(models: List<Pair<ClassOrInterfaceDeclaration, ClassWidget>>): CompileErrors {
+    if (models.isEmpty())
+        return mutableMapOf()
+
+    val errorDecs =
+        mutableMapOf<ClassOrInterfaceDeclaration, MutableList<ICodeDecoration<*>>>()
+    val nodeMap =
+        mutableMapOf<ClassOrInterfaceDeclaration, MutableList<Token>>()
     for (i in models) {
         val model = i.first
         nodeMap[model] = buildNodeSourceMap(model)
@@ -180,7 +194,8 @@ fun checkCompileErrors(models: List<Pair<ClassOrInterfaceDeclaration, ClassWidge
     val errors = compile(models.map { it.first })
     for (e in errors) {
 
-        println("${(e.source as JavaSource).name} ERROR line ${e.lineNumber} ${e.columnNumber} ${e.kind} ${e.code} ${
+        println(
+            "${(e.source as JavaSource).name} ERROR line ${e.lineNumber} ${e.columnNumber} ${e.kind} ${e.code} ${
                 e.getMessage(
                     null
                 )
@@ -188,16 +203,39 @@ fun checkCompileErrors(models: List<Pair<ClassOrInterfaceDeclaration, ClassWidge
         )
         // zero-based in java compiler
         val m = (e.source as JavaSource).model
-        val t = nodeMap[m]?.find { it.line == e.lineNumber && it.col == e.columnNumber }
-        val widget = models.find { it.first == m}?.second
-        t?.let {
+        val t =
+            nodeMap[m]?.find { it.line == e.lineNumber && it.col == e.columnNumber }
+        val widget = models.find { it.first == m }?.second
+        if (t != null) {
             val child = widget?.findChild(t.node)
-            child?.let {
-                errorDecs.putPair(m, child.addMark(widget.configuration.errorColor))
+            if (child != null) {
+                errorDecs.putPair(
+                    m,
+                    child.addMark(
+                        widget.configuration.errorColor,
+                        e.getMessage(null)
+                    )
+                )
                 //child.addNote(e.getMessage(null), ICodeDecoration.Location.TOP).show()
+            } else {
+                errorDecs.putPair(
+                    m,
+                    widget!!.addMark(
+                        widget.configuration.errorColor,
+                        e.getMessage(null)
+                    )
+                )
             }
-            // TODO errors not mapped
+        } else {
+            errorDecs.putPair(
+                m,
+                widget!!.addMark(
+                    widget.configuration.errorColor,
+                    e.getMessage(null)
+                )
+            )
         }
+
 
     }
     return errorDecs

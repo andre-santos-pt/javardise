@@ -145,12 +145,12 @@ inline fun <reified T : Node> Control.findNode(): T? {
 fun Composite.findChild(model: Node): Control? {
     var n: Control? = null
     traverse {
-        if (it is NodeWidget<*> && it.node === model) {
+        if (it is NodeWidget<*> && it.node == model) {
             n = it
             return@traverse false
         }
 
-        if (it is Text && it.data === model) {
+        if (it is Text && it.data == model) {
             n = it
             return@traverse false
         }
@@ -254,6 +254,7 @@ class SimpleNameWidget<N : NodeWithSimpleName<*>>(
 }) {
     init {
         textWidget.data = node
+        textWidget.toolTipText = node.hashCode().toString()
         addUpdateColor(textWidget)
     }
 
@@ -290,6 +291,7 @@ class SimpleTypeWidget<N : Type>(parent: Composite, override val node: N)
 }), NodeWidget<N> {
     init {
         textWidget.data = node
+        textWidget.toolTipText = node::class.simpleName + " " + node.hashCode().toString()
         addUpdateColor(textWidget)
     }
 
