@@ -93,7 +93,7 @@ open class DefaultConfiguration : Configuration {
     }
 
     override val commentColor by lazy {
-        Display.getDefault().getSystemColor(SWT.COLOR_GREEN)
+        Display.getDefault().getSystemColor(SWT.COLOR_DARK_GREEN)
     }
 
     override val keywordColor by lazy {
@@ -112,6 +112,7 @@ open class DefaultConfiguration : Configuration {
 
     override val statementFeatures = listOf(
         EmptyStatementFeature,
+        LineCommentFeature,
         ReturnFeature,
         IfFeature,
         WhileFeature,

@@ -89,14 +89,16 @@ class BinaryExpressionWidget(
                         override val kind: CommandKind
                             get() = CommandKind.MOVE
                         override val element: Expression
-                            get() = node.right
+                            get() = node.left
+
+                        val prevright = node.right
 
                         override fun run() {
-                            editEvent(BinaryExpr(node.right.clone(),node.left.clone(),node.operator))
+                            editEvent(BinaryExpr(prevright.clone(), element.clone(),node.operator))
                         }
 
                         override fun undo() {
-                            TODO("Not yet implemented")
+                            editEvent(BinaryExpr(element.clone(), prevright.clone(), node.operator))
                         }
 
                     })

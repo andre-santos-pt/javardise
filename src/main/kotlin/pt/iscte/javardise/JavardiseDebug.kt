@@ -164,31 +164,6 @@ class JavardiseWindow(var file: File) {
             }
         }
 
-        composite.button("compile") {
-            classWidget!!.backgroundDefault()
-            val nodeMap = mutableListOf<Token>()
-            val printer = DefaultPrettyPrinter({ TestVis2(nodeMap, it) }, DefaultPrinterConfiguration())
-            val src = printer.print(model)
-            val errors = compile(listOf(model!!))
-
-            for (e in errors) {
-                println("ERROR line ${e.lineNumber} ${e.columnNumber} ${e.getMessage(null)}")
-                // zero-based in java compiler
-                val t = nodeMap.find { it.line == e.lineNumber && it.col == e.columnNumber }
-                t?.let {
-                    val child = classWidget!!.findChild(t.node)
-                    child?.let {
-                        child.traverse {
-                            it.background = (classWidget as ClassWidget).configuration.errorColor
-                            true
-                        }
-                        child.toolTipText = e.getMessage(null)
-                        child.requestLayout()
-                    }
-                }
-                // TODO show not handled
-            }
-        }
     }
 
     fun Control.backgroundDefault() = this.traverse {

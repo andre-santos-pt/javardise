@@ -23,8 +23,6 @@ class SimpleExpressionWidget(
 ) :
     ExpressionWidget<Expression>(parent) {
 
-    // TODO flag to require target expression
-
     var expression: TextWidget
     val keyListener: KeyListener
 

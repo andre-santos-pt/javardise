@@ -9,6 +9,7 @@ import com.github.javaparser.ast.stmt.ForEachStmt
 import com.github.javaparser.ast.stmt.Statement
 import com.github.javaparser.ast.type.PrimitiveType
 import org.eclipse.swt.widgets.Composite
+import pt.iscte.javardise.CommandStack
 import pt.iscte.javardise.basewidgets.*
 import pt.iscte.javardise.external.column
 import pt.iscte.javardise.external.observeNotNullProperty
@@ -92,6 +93,9 @@ object ForEachFeature : StatementFeature<ForEachStmt, ForEachWidget>(
 ) {
     override fun configureInsert(
         insert: TextWidget,
+        block: BlockStmt,
+        node: Statement,
+        commandStack: CommandStack,
         output: (Statement) -> Unit
     ) {
         insert.addKeyEvent(':', precondition = { it == "for" }) {

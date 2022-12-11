@@ -120,6 +120,9 @@ interface NodeWidget<T> {
     fun <N: Node> NodeList<in N>.changeCommand(owner: Node, e: N, index: Int) =
         commandStack.changeCommand(this, owner, e, index)
 
+    fun <N: Node> NodeList<in N>.replaceCommand(owner: Node, e: N, newElement: N) =
+        commandStack.replaceCommand(this, owner, e, newElement)
+
     fun <N: Node> NodeList<in N>.removeCommand(owner: Node, e: N) {
         commandStack.removeCommand(this, owner, e)
     }

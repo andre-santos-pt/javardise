@@ -6,10 +6,12 @@ import com.github.javaparser.ast.expr.NameExpr
 import com.github.javaparser.ast.expr.UnaryExpr
 import com.github.javaparser.ast.observer.AstObserver
 import com.github.javaparser.ast.observer.ObservableProperty
+import com.github.javaparser.ast.stmt.BlockStmt
 import com.github.javaparser.ast.stmt.ExpressionStmt
 import com.github.javaparser.ast.stmt.Statement
 import org.eclipse.swt.SWT
 import org.eclipse.swt.widgets.Composite
+import pt.iscte.javardise.CommandStack
 import pt.iscte.javardise.Configuration
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
@@ -115,6 +117,9 @@ object UnaryExpressionStatementFeature : StatementFeature<ExpressionStmt, Expres
 
     override fun configureInsert(
         insert: TextWidget,
+        block: BlockStmt,
+        node: Statement,
+        commandStack: CommandStack,
         output: (Statement) -> Unit
     ) {
         insert.addKeyEvent(';', precondition = {

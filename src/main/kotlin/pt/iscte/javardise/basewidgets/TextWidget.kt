@@ -12,6 +12,7 @@ import pt.iscte.javardise.widgets.statements.StatementWidget
 
 // TODO remove deps from javardise
 interface TextWidget {
+
     val widget: Text
 
     var text: String
@@ -41,6 +42,11 @@ interface TextWidget {
     val isModifiable: Boolean
         get() = widget.editable
 
+    val textUntilCursor: String
+        get() = widget.text.substring(0 until widget.caretPosition)
+
+    val textAfterCursor: String
+        get() = widget.text.substring(widget.caretPosition)
 
     fun delete() {
         widget.dispose()

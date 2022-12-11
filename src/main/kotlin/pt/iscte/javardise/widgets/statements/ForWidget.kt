@@ -10,6 +10,7 @@ import com.github.javaparser.ast.stmt.Statement
 import com.github.javaparser.ast.type.PrimitiveType
 import org.eclipse.swt.SWT
 import org.eclipse.swt.widgets.Composite
+import pt.iscte.javardise.CommandStack
 import pt.iscte.javardise.basewidgets.*
 import pt.iscte.javardise.external.*
 import pt.iscte.javardise.widgets.expressions.ExpressionWidget
@@ -134,6 +135,9 @@ object ForFeature : StatementFeature<ForStmt, ForWidget>(
 ) {
     override fun configureInsert(
         insert: TextWidget,
+        block: BlockStmt,
+        node: Statement,
+        commandStack: CommandStack,
         output: (Statement) -> Unit
     ) {
         insert.addKeyEvent(SWT.SPACE, '(', precondition = { it == "for" }) {

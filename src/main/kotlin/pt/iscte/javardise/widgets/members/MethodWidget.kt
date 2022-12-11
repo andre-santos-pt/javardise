@@ -21,6 +21,7 @@ import pt.iscte.javardise.*
 import pt.iscte.javardise.basewidgets.*
 import pt.iscte.javardise.external.*
 import pt.iscte.javardise.widgets.statements.SequenceContainer
+import pt.iscte.javardise.widgets.statements.addEmptyStatement
 import pt.iscte.javardise.widgets.statements.addInsert
 
 class MethodWidget(
@@ -112,7 +113,8 @@ class MethodWidget(
 
         if (body != null) {
             bodyWidget = createSequence(column, body)
-            TokenWidget(firstRow, "{").addInsert(null, bodyWidget!!, true)
+            val openBracket = TokenWidget(firstRow, "{")//.addInsert(null, bodyWidget!!, true)
+            addEmptyStatement(openBracket,body)
             closingBracket = TokenWidget(column, "}")
         } else
             closingBracket = TokenWidget(firstRow, ";")

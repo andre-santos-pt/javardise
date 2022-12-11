@@ -5,13 +5,12 @@ import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.body.VariableDeclarator
 import com.github.javaparser.ast.expr.*
 import com.github.javaparser.ast.observer.ObservableProperty
+import com.github.javaparser.ast.stmt.BlockStmt
 import com.github.javaparser.ast.stmt.ExpressionStmt
 import com.github.javaparser.ast.stmt.Statement
 import com.github.javaparser.ast.type.Type
 import org.eclipse.swt.widgets.Composite
-import pt.iscte.javardise.Id
-import pt.iscte.javardise.SimpleNameWidget
-import pt.iscte.javardise.SimpleTypeWidget
+import pt.iscte.javardise.*
 import pt.iscte.javardise.basewidgets.FixedToken
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.external.*
@@ -53,7 +52,7 @@ class VariableDeclarationWidget(
         }
         name.addKeyEvent('=') {
             val setter: KFunction1<Expression?, Node> = decl::setInitializer
-            decl.modifyCommand(decl.initializer.getOrNull, NameExpr("expression"), setter)
+            decl.modifyCommand(decl.initializer.getOrNull, NameExpr(Configuration.fillInToken), setter)
         }
         name.addDeleteEmptyListener {
             if(decl.initializer.isPresent)
@@ -118,6 +117,9 @@ object VariableDeclarationFeature : StatementFeature<ExpressionStmt, ExpressionS
 
     override fun configureInsert(
         insert: TextWidget,
+        block: BlockStmt,
+        node: Statement,
+        commandStack: CommandStack,
         output: (Statement) -> Unit
     ) {
 
@@ -150,7 +152,7 @@ object VariableDeclarationFeature : StatementFeature<ExpressionStmt, ExpressionS
             val dec = VariableDeclarator(
                 StaticJavaParser.parseType(split[0]),
                 split[1],
-                NameExpr("expression")
+                NameExpr(Configuration.fillInToken)
             )
             val stmt = ExpressionStmt(VariableDeclarationExpr(dec))
             output(stmt)

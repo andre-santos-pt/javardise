@@ -7,6 +7,8 @@ import com.github.javaparser.ast.stmt.BlockStmt
 import com.github.javaparser.ast.stmt.ReturnStmt
 import com.github.javaparser.ast.stmt.Statement
 import org.eclipse.swt.SWT
+import pt.iscte.javardise.CommandStack
+import pt.iscte.javardise.Configuration
 import pt.iscte.javardise.basewidgets.SequenceWidget
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
@@ -33,7 +35,7 @@ class ReturnWidget(
             precondition = { !node.expression.isPresent }) {
             node.modifyCommand(
                 null,
-                NameExpr("expression"),
+                NameExpr(Configuration.fillInToken),
                 node::setExpression
             )
         }
@@ -51,7 +53,9 @@ class ReturnWidget(
             }
         }
         semiColon = TokenWidget(this, ";")
-        semiColon.addInsert(this, this.parent as SequenceWidget, true)
+       // semiColon.addInsert(this, this.parent as SequenceWidget, true)
+
+        addEmptyStatement(semiColon, parentBlock, node)
 
         node.observeProperty<Expression>(ObservableProperty.EXPRESSION) {
             if (it == null) {
@@ -92,11 +96,14 @@ class ReturnWidget(
 object ReturnFeature : StatementFeature<ReturnStmt, ReturnWidget>(ReturnStmt::class.java, ReturnWidget::class.java) {
     override fun configureInsert(
         insert: TextWidget,
+        block: BlockStmt,
+        node: Statement,
+        commandStack: CommandStack,
         output: (Statement) -> Unit
     ) {
         insert.addKeyEvent(SWT.SPACE, ';', precondition = { it == "return" }) {
             output(
-                if (it.character == SWT.SPACE) ReturnStmt(NameExpr("expression"))
+                if (it.character == SWT.SPACE) ReturnStmt(NameExpr(Configuration.fillInToken))
                 else ReturnStmt()
             )
         }

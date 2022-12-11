@@ -4,14 +4,14 @@ import com.github.javaparser.StaticJavaParser
 import com.github.javaparser.ast.body.VariableDeclarator
 import com.github.javaparser.ast.expr.*
 import com.github.javaparser.ast.observer.ObservableProperty
+import com.github.javaparser.ast.stmt.BlockStmt
 import com.github.javaparser.ast.stmt.ExpressionStmt
 import com.github.javaparser.ast.stmt.Statement
 import org.eclipse.swt.widgets.Composite
+import pt.iscte.javardise.CommandStack
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
-import pt.iscte.javardise.external.assignOperators
-import pt.iscte.javardise.external.observeProperty
-import pt.iscte.javardise.external.tryParse
+import pt.iscte.javardise.external.*
 import pt.iscte.javardise.widgets.statements.ExpressionStatementWidget
 import pt.iscte.javardise.widgets.statements.StatementFeature
 
@@ -64,16 +64,43 @@ class AssignExpressionWidget(
         val w = createExpressionWidget(this, target) {
             if (it == null)
                 editEvent(null)
-            else
+            else if(it is NameExpr || it is ArrayAccessExpr || it is FieldAccessExpr)
                 node.modifyCommand(node.target, it, node::setTarget)
+            else {
+                this@AssignExpressionWidget.target.dispose()
+                this@AssignExpressionWidget.target =
+                    createTargetWidget(node.target)
+                this@AssignExpressionWidget.target.moveAbove(operator.widget)
+                this@AssignExpressionWidget.target.requestLayout()
+            }
         }
         w.head.addKeyEvent(' ', precondition = { node.target is NameExpr}) {
-            editEvent(VariableDeclarationExpr(
-                VariableDeclarator(
-                    StaticJavaParser.parseType("type"), //Configuration.fillInToken
-                    node.target.toString(),
-                    node.value.clone())
-            ))
+            if(w.head.isAtBeginning)
+                editEvent(
+                    VariableDeclarationExpr(
+                        VariableDeclarator(
+                            StaticJavaParser.parseType("type"), //Configuration.fillInToken
+                            node.target.toString(),
+                            node.value.clone()
+                        )
+                    )
+                )
+            else {
+                val left = w.head.textUntilCursor
+                val right = w.head.textAfterCursor
+                if(isValidType(left) && isValidSimpleName(right)) {
+                    editEvent(
+                        VariableDeclarationExpr(
+                            VariableDeclarator(
+                                StaticJavaParser.parseType(left),
+                                right,
+                                node.value.clone()
+                            )
+                        )
+                    )
+                }
+            }
+
         }
         return w;
     }
@@ -103,6 +130,9 @@ object AssignmentFeature : StatementFeature<ExpressionStmt, ExpressionStatementW
         stmt is ExpressionStmt && stmt.expression is AssignExpr
     override fun configureInsert(
         insert: TextWidget,
+        block: BlockStmt,
+        node: Statement,
+        commandStack: CommandStack,
         output: (Statement) -> Unit
     ) {
         insert.addKeyEvent('=', precondition = {

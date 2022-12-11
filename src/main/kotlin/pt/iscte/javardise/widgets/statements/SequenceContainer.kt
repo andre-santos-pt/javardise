@@ -14,6 +14,7 @@ import pt.iscte.javardise.basewidgets.SequenceWidget
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
 import pt.iscte.javardise.external.ListAddRemoveObserver
+import pt.iscte.javardise.external.indexOfIdentity
 
 
 interface SequenceContainer<T : Node> : NodeWidget<T>{
@@ -60,7 +61,7 @@ interface SequenceContainer<T : Node> : NodeWidget<T>{
                             override val kind: CommandKind
                                 get() = CommandKind.MOVE
                             override val element: Statement
-                                get() = parentBlock.statements[i + 1]
+                                = parentBlock.statements[i + 1]
 
                             override fun run() {
                                 body!!.asBlockStmt().statements.add(element.clone())
@@ -68,7 +69,8 @@ interface SequenceContainer<T : Node> : NodeWidget<T>{
                             }
 
                             override fun undo() {
-                                TODO("undo")
+                               parentBlock.statements.addAfter(element.clone(), target as Statement)
+                                body!!.asBlockStmt().statements.last.get().remove()
                             }
 
                         })
@@ -85,7 +87,7 @@ interface SequenceContainer<T : Node> : NodeWidget<T>{
                             override val kind: CommandKind
                                 get() = CommandKind.MOVE
                             override val element: Statement
-                                get() = body!!.statements.last()
+                                = body!!.statements.last()
 
                             override fun run() {
                                 parentBlock.statements.addAfter(
@@ -96,7 +98,8 @@ interface SequenceContainer<T : Node> : NodeWidget<T>{
                             }
 
                             override fun undo() {
-                                TODO("undo")
+                                body!!.asBlockStmt().statements.add(element.clone())
+                                element.remove()
                             }
 
                         })
@@ -122,15 +125,20 @@ interface SequenceContainer<T : Node> : NodeWidget<T>{
                         override val element: Statement
                             get() = node as Statement
 
+                        val index = parentBlock.statements.indexOfIdentity(element)
+                        val inner = body!!.statements.map { it.clone() }
                         override fun run() {
-                            body!!.statements.forEach {
-                                parentBlock.statements.addAfter(it.clone(), element)
+                            inner.forEach {
+                                parentBlock.statements.addAfter(it, element)
                             }
                             element.remove()
                         }
 
                         override fun undo() {
-                            TODO("undo")
+                           parentBlock.statements.add(index, element.clone())
+                            inner.forEach {
+                                it.remove()
+                            }
                         }
 
                     })
@@ -180,7 +188,7 @@ interface SequenceContainer<T : Node> : NodeWidget<T>{
                 val prev = seq.findByModelIndex(index) as? Control
                 val w = addWidget(node, block, seq)
                 if (prev != null) (w as Composite).moveAbove(prev) // bug with comments?
-                w.control.requestLayout()
+                seq.requestLayout()
                 w.setFocusOnCreation()
             }
 
@@ -226,12 +234,6 @@ interface SequenceContainer<T : Node> : NodeWidget<T>{
                     || c == SWT.BS
         }
 
-//    val insert = EmptyStatement(seq, EmptyStmt(), block) { c, s ->
-//                c.toString().matches(Regex("\\w|\\[|]|\\.|\\+|-|\\*|/|%"))
-//                || c == SWT.SPACE && !s.endsWith(SWT.SPACE)
-//                || c == SWT.BS
-//    }
-
         fun insert(stmt: Statement) {
             val insertIndex = seq.findIndexByModel(insert.widget)
             insert.delete()
@@ -239,20 +241,13 @@ interface SequenceContainer<T : Node> : NodeWidget<T>{
         }
 
         configuration.statementFeatures.forEach {
-            it.configureInsert(insert, ::insert)
+            it.configureInsert(insert, block, node as Statement, commandStack, ::insert)
         }
 
         insert.addFocusLostAction {
             insert.clear()
         }
 
-//    insert.addKeyListenerInternal(object : KeyAdapter() {
-//        override fun keyPressed(e: KeyEvent) {
-//            if ((e.stateMask == SWT.MOD1) && (e.keyCode == 'v'.code)) {
-//                Clipboard.paste(block, seq.findIndexByModel(insert.widget))
-//            }
-//        }
-//    })
         return insert
     }
 }

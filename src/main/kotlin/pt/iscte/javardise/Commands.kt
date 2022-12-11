@@ -2,6 +2,9 @@ package pt.iscte.javardise
 
 import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.NodeList
+import com.github.javaparser.ast.stmt.BlockStmt
+import com.github.javaparser.ast.stmt.EmptyStmt
+import com.github.javaparser.ast.stmt.Statement
 import pt.iscte.javardise.external.indexOfIdentity
 import kotlin.reflect.KFunction1
 
@@ -30,6 +33,9 @@ interface CommandStack {
     fun <N: Node> removeCommand(list: NodeList<in N>, owner: Node, e: N)
     fun <N: Node> changeCommand(list: NodeList<in N>, owner: Node, e: N, index: Int)
 
+    fun <N: Node> replaceCommand(list: NodeList<in N>, owner: Node, e: N, newElement: N) {
+
+    }
     companion object {
         fun create(): CommandStack = CommandStackImpl()
     }
@@ -101,6 +107,9 @@ private class CommandStackImpl : CommandStack {
         if (stack.isNotEmpty()) {
             val cmd = stack.removeLast()
             cmd.undo()
+            // TODO insert line on ADD undo
+//            if(cmd.kind == CommandKind.ADD && cmd.element is Statement)
+//                ((cmd.element as Statement).parentNode.get() as BlockStmt).statements.addAfter(EmptyStmt(), cmd.element as Statement)
             observers.forEach {
                 it(cmd, false)
             }
@@ -186,6 +195,23 @@ private class CommandStackImpl : CommandStack {
 
             override fun undo() {
                 list[index] = element.clone() as N
+            }
+        })
+    }
+
+    override fun <N: Node> replaceCommand(list: NodeList<in N>, owner: Node, e: N, newElement: N) {
+        execute(object : Command {
+            override val target = owner
+            override val kind: CommandKind = CommandKind.MODIFY
+            override val element: Node = e
+
+            val index = list.indexOfIdentity(e)
+            override fun run() {
+                list[index] = newElement
+            }
+
+            override fun undo() {
+                list[index] = e.clone() as N
             }
         })
     }

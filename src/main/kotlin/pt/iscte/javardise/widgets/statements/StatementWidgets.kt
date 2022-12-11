@@ -2,17 +2,20 @@ package pt.iscte.javardise.widgets.statements
 
 import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.stmt.BlockStmt
+import com.github.javaparser.ast.stmt.EmptyStmt
 import com.github.javaparser.ast.stmt.Statement
 import org.eclipse.swt.SWT
 import org.eclipse.swt.widgets.Composite
 import org.eclipse.swt.widgets.Control
 import pt.iscte.javardise.Command
 import pt.iscte.javardise.CommandKind
+import pt.iscte.javardise.CommandStack
 import pt.iscte.javardise.NodeWidget
 import pt.iscte.javardise.basewidgets.SequenceWidget
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
 import pt.iscte.javardise.external.ROW_LAYOUT_H_SHRINK
+import pt.iscte.javardise.external.indexOfIdentity
 
 abstract class StatementWidget<T : Statement>(
     parent: SequenceWidget,
@@ -27,7 +30,7 @@ abstract class StatementWidget<T : Statement>(
         font = configuration.font
         background = configuration.backgroundColor
         foreground = configuration.foregroundColor
-        if (node.comment.isPresent) CommentWidget(this, node)
+        //if (node.comment.isPresent) CommentWidget(this, node)
     }
 
     override val control: Control
@@ -70,6 +73,9 @@ abstract class StatementFeature<M: Statement, W: NodeWidget<*>>(val modelClass: 
 
     abstract fun configureInsert(
         insert: TextWidget,
+        block: BlockStmt,
+        node: Statement,
+        commandStack: CommandStack,
         output: (Statement) -> Unit
     )
 }
@@ -149,4 +155,19 @@ internal fun TokenWidget.addInsert(
         w.addInsert(w.widget, body, true)
     }
 }
+
+internal fun NodeWidget<*>.addEmptyStatement(
+    tokenWidget: TokenWidget,
+    block: BlockStmt,
+    after: Statement? = null
+) {
+
+    tokenWidget.addKeyEvent(SWT.CR) {
+       if(after == null)
+           block.statements.addCommand(block, EmptyStmt(), 0)
+       else
+           block.statements.addCommand(block, EmptyStmt(), block.statements.indexOfIdentity(after)+1)
+    }
+}
+
 

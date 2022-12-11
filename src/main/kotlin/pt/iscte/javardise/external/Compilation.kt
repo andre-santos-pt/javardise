@@ -198,7 +198,7 @@ fun checkCompileErrors(models: List<Pair<ClassOrInterfaceDeclaration, ClassWidge
             "${(e.source as JavaSource).name} ERROR line ${e.lineNumber} ${e.columnNumber} ${e.kind} ${e.code} ${
                 e.getMessage(
                     null
-                )
+                ) 
             }"
         )
         // zero-based in java compiler

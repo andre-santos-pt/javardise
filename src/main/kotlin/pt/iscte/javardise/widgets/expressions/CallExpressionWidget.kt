@@ -124,6 +124,9 @@ object CallFeature : StatementFeature<ExpressionStmt, CallStatementWidget>(
 
     override fun configureInsert(
         insert: TextWidget,
+        block: BlockStmt,
+        node: Statement,
+        commandStack: CommandStack,
         output: (Statement) -> Unit
     ) {
 

@@ -265,6 +265,9 @@ fun isValidType(type: String): Boolean =
         false
     }
 
+//val String.isValidType : Boolean
+//    = isValidType(this)
+
 fun isValidClassType(type: String): Boolean =
     try {
         StaticJavaParser.parseClassOrInterfaceType(type)

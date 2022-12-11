@@ -12,6 +12,7 @@ import org.eclipse.swt.SWT
 import org.eclipse.swt.widgets.Composite
 import pt.iscte.javardise.Command
 import pt.iscte.javardise.CommandKind
+import pt.iscte.javardise.CommandStack
 import pt.iscte.javardise.Configuration
 import pt.iscte.javardise.basewidgets.*
 import pt.iscte.javardise.external.block
@@ -118,6 +119,9 @@ object WhileFeature : StatementFeature<WhileStmt, WhileWidget>(
 ) {
     override fun configureInsert(
         insert: TextWidget,
+        block: BlockStmt,
+        node: Statement,
+        commandStack: CommandStack,
         output: (Statement) -> Unit
     ) {
         insert.addKeyEvent(SWT.SPACE, '(', precondition = { it == "while" }) {
