@@ -43,6 +43,7 @@ class DoWhileWidget(
                 keyword = newKeywordWidget(this, "do")
                 keyword.addDelete(node, parentBlock)
                 keyword.addShallowDelete()
+                keyword.addEmptyStatement(this@DoWhileWidget, parentBlock, node, false)
                 openBracket = TokenWidget(this, "{")
             }
             bodyWidget = createSequence(this, node.body.asBlockStmt())

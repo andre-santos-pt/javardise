@@ -61,6 +61,9 @@ class BracketsExpressionWidget(
         expressionWidget.setFocusOnCreation(firstFlag)
     }
 
+    override val head: TextWidget
+        get() = leftBracket
+
     override val tail: TextWidget
         get() = rightBracket
 }

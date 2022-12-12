@@ -25,6 +25,9 @@ class NewArrayInitExpressionWidget(
         args.setFocus()
     }
 
+    override val head: TextWidget
+        get() = args.openBracket
+
     override val tail: TextWidget
         get() = args.closeBracket
 }

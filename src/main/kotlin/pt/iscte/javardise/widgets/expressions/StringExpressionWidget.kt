@@ -18,7 +18,9 @@ class StringExpressionWidget(
     override val node: StringLiteralExpr,
     override val editEvent: (Expression?) -> Unit
 ) : ExpressionWidget<StringLiteralExpr>(parent) {
+
     val text: TextWidget
+    val open: TokenWidget
     val close: TokenWidget
 
     val delListener = object : KeyAdapter() {
@@ -32,9 +34,9 @@ class StringExpressionWidget(
     }
 
     init {
-        val open = FixedToken(this, "\"")
-        open.label.foreground = configuration.commentColor
-        open.addKeyListener(delListener)
+        open = TokenWidget(this, "\"")
+//        open.label.foreground = configuration.commentColor
+        open.addKeyListenerInternal(delListener)
         text = TextWidget.create(this, node.value) { _, _ -> true }
         text.widget.foreground = configuration.commentColor
         close = TokenWidget(this, "\"")

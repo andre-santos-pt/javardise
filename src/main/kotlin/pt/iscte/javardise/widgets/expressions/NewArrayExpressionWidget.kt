@@ -26,6 +26,7 @@ class NewArrayExpressionWidget(
 ) : ExpressionWidget<ArrayCreationExpr>(parent) {
 
     val levelWidgets = mutableListOf<LevelWidget>()
+    val keyword: TokenWidget
 
     data class LevelWidget(val open: FixedToken, var expression: Control, val close: TokenWidget) {
         fun dispose() {
@@ -53,7 +54,7 @@ class NewArrayExpressionWidget(
             TODO("array init ${node.initializer.get()}")
         }
         else {
-            newKeywordWidget(this, "new")
+            keyword = newKeywordWidget(this, "new")
             val id = SimpleTypeWidget(this, node.elementType)
             id.addFocusLostAction(::isValidType) {
                 node.modifyCommand(node.elementType, StaticJavaParser.parseType(id.text), node::setElementType)
@@ -155,6 +156,8 @@ class NewArrayExpressionWidget(
         levelWidgets.first().setFocus()
     }
 
+    override val head: TextWidget
+        get() = keyword
     override val tail: TextWidget
         get() = levelWidgets.last().close
 }

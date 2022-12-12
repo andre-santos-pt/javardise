@@ -35,7 +35,7 @@ class TokenWidget(
         widget.editable = false
         widget.addKeyListener(object : KeyAdapter() {
             override fun keyPressed(e: KeyEvent) {
-                if (e.character == SWT.CR) {
+                if (e.character == SWT.SPACE) {
                     addMenu(alternatives())
                     menu.setLocation(widget.toDisplay(0, 20))
                     menu.isVisible = true

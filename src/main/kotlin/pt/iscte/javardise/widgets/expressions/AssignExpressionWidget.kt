@@ -120,6 +120,9 @@ class AssignExpressionWidget(
             value.setFocusOnCreation()
     }
 
+    override val head: TextWidget
+        get() = target.head
+
     override val tail: TextWidget
         get() = value.tail
 }

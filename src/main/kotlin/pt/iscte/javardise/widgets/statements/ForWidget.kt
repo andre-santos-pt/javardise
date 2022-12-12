@@ -42,6 +42,7 @@ class ForWidget(
                 keyword = newKeywordWidget(this, "for")
                 keyword.addDelete(node, parentBlock)
                 keyword.addShallowDelete()
+                keyword.addEmptyStatement(this@ForWidget, parentBlock, node, false)
                 FixedToken(this, "(")
 
                 init = if (node.initialization.isEmpty()) null

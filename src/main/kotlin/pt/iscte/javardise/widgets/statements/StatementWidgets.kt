@@ -30,7 +30,6 @@ abstract class StatementWidget<T : Statement>(
         font = configuration.font
         background = configuration.backgroundColor
         foreground = configuration.foregroundColor
-        //if (node.comment.isPresent) CommentWidget(this, node)
     }
 
     override val control: Control
@@ -55,6 +54,27 @@ abstract class StatementWidget<T : Statement>(
                 }
             })
         })
+}
+
+internal fun TextWidget.addEmptyStatement(
+    nodeWidget: NodeWidget<*>,
+    block: BlockStmt,
+    location: Statement? = null,
+    after: Boolean = true
+) {
+
+    addKeyEvent(SWT.CR) {
+        with(nodeWidget) {
+            if (location == null)
+                block.statements.addCommand(block, EmptyStmt(), 0)
+            else
+                block.statements.addCommand(
+                    block,
+                    EmptyStmt(),
+                    block.statements.indexOfIdentity(location) + if(after) 1 else 0
+                )
+        }
+    }
 }
 
 
@@ -107,24 +127,6 @@ fun SequenceWidget.findByModelIndex(index: Int): NodeWidget<*>? {
 }
 
 
-internal fun TokenWidget.addEmptyStatement(
-    nodeWidget: NodeWidget<*>,
-    block: BlockStmt,
-    after: Statement? = null
-) {
 
-    addKeyEvent(SWT.CR) {
-        with(nodeWidget) {
-            if (after == null)
-                block.statements.addCommand(block, EmptyStmt(), 0)
-            else
-                block.statements.addCommand(
-                    block,
-                    EmptyStmt(),
-                    block.statements.indexOfIdentity(after) + 1
-                )
-        }
-    }
-}
 
 

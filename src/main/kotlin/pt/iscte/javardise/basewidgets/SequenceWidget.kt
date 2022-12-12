@@ -24,7 +24,7 @@ open class SequenceWidget(
         layout.marginBottom = 0
         layout.verticalSpacing = spacing
         layout.horizontalSpacing = 0
-        setLayout(layout)
+        this.layout = layout
     }
 
     fun insertBeginning() : TextWidget {
@@ -96,10 +96,6 @@ open class SequenceWidget(
         focusLast()
     else
         children[index].setFocus()
-
-    fun clear() {
-        children.forEach { if(it != insertWidget) it.dispose() }
-    }
 
     fun isEmpty(): Boolean = children.isEmpty()
 }

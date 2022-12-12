@@ -25,16 +25,15 @@ class LineCommentWidget(parent: SequenceWidget,
             val slashes = TokenWidget(this, "//")
             slashes.widget.foreground = configuration.commentColor
             slashes.addDelete(node, parentBlock)
+            slashes.addEmptyStatement(this@LineCommentWidget, parentBlock, node, false)
             val cmt = TextWidget.create(this, node.comment.get().content.trim()) { _, _ -> true }
+            cmt.addEmptyStatement(this@LineCommentWidget, parentBlock, node)
             cmt.addFocusLostAction {
                 node.modifyCommand(node.comment.getOrNull, LineComment(cmt.text), node::setComment)
             }
             cmt.widget.foreground = configuration.commentColor
         }
     }
-
-    override val control: Control
-        get() = this
 
     override fun setFocusOnCreation(firstFlag: Boolean) {
         setFocus()

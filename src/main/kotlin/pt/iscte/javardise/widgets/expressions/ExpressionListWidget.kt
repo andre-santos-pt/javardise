@@ -26,7 +26,7 @@ class ExpressionListWidget<T : Expression, N : Node>(
     val expressionList: NodeList<T>
 ) :
     Composite(parent, SWT.NONE) {
-    val openBracket: FixedToken
+    val openBracket: TokenWidget
     private lateinit var insert: TextWidget
     val closeBracket: TokenWidget
 
@@ -48,7 +48,7 @@ class ExpressionListWidget<T : Expression, N : Node>(
         background = parent.background
         foreground = parent.foreground
         font = parent.font
-        openBracket = FixedToken(this, open)
+        openBracket = TokenWidget(this, open)
         closeBracket = TokenWidget(this, close)
 
         if (expressionList.isEmpty())
@@ -147,7 +147,7 @@ class ExpressionListWidget<T : Expression, N : Node>(
 
 
         if (argumentWidgets.isEmpty()) {
-            arg.moveBelow(openBracket.label)
+            arg.moveBelow(openBracket.widget)
             argumentWidgets.add(index, ArgWidget(null, arg))
         } else {
             if (replace) {

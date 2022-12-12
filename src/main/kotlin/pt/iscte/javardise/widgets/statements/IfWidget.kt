@@ -76,6 +76,7 @@ class IfWidget(
                 }
                 keyword.addDelete(node, parentBlock)
                 keyword.addShallowDelete()
+                keyword.addEmptyStatement(this@IfWidget, parentBlock, node, false)
                 //keyword.setCopySource(node)
                 openClause = FixedToken(this, "(")
                 condition = this.createExpWidget(node.condition)
@@ -90,11 +91,6 @@ class IfWidget(
         }
         closingBracket = TokenWidget(column, "}")
         closingBracket.addEmptyStatement(this, parentBlock, node)
-//        closingBracket.addInsert(
-//            this@IfWidget,
-//            this@IfWidget.parent as SequenceWidget,
-//            true
-//        )
         addMoveBracket() {
             !node.hasElseBranch()
         }

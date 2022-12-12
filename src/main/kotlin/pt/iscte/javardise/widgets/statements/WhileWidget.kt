@@ -67,6 +67,7 @@ class WhileWidget(
                 }
                 keyword.addDelete(node, parentBlock)
                 keyword.addShallowDelete()
+                keyword.addEmptyStatement(this@WhileWidget, parentBlock, node, false)
                 //keyword.setCopySource(node)
                 openClause = FixedToken(this, "(")
                 condition = createExpWidget(node.condition)

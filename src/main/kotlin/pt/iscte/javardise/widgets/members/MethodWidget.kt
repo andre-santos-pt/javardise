@@ -22,7 +22,6 @@ import pt.iscte.javardise.basewidgets.*
 import pt.iscte.javardise.external.*
 import pt.iscte.javardise.widgets.statements.SequenceContainer
 import pt.iscte.javardise.widgets.statements.addEmptyStatement
-import pt.iscte.javardise.widgets.statements.addInsert
 
 class MethodWidget(
     parent: Composite,
@@ -113,7 +112,7 @@ class MethodWidget(
 
         if (body != null) {
             bodyWidget = createSequence(column, body)
-            val openBracket = TokenWidget(firstRow, "{")//.addInsert(null, bodyWidget!!, true)
+            val openBracket = TokenWidget(firstRow, "{")
             openBracket.addEmptyStatement(this, body)
             closingBracket = TokenWidget(column, "}")
         } else
@@ -236,10 +235,6 @@ class MethodWidget(
                     )
                 )
             }
-            if (body != null)
-                newInsert.addKeyEvent(SWT.CR) {
-                    this@MethodWidget.bodyWidget!!.insertBeginning()
-                }
             newInsert.addFocusLostAction {
                 newInsert.clear(" ")
             }
@@ -294,12 +289,7 @@ class MethodWidget(
                 name.addKeyEvent(SWT.BS, precondition = { it.isEmpty() }) {
                     parameters.removeCommand(this@MethodWidget.node, node)
                 }
-                if (body != null)
-                    name.addKeyEvent(
-                        SWT.CR,
-                        precondition = { this@ParamListWidget.children.last() === this }) {
-                        this@MethodWidget.bodyWidget!!.insertBeginning()
-                    }
+
                 name.addFocusLostAction(::isValidSimpleName) {
                     node.modifyCommand(
                         node.name,

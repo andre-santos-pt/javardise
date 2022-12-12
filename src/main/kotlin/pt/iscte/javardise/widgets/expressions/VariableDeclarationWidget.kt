@@ -99,6 +99,9 @@ class VariableDeclarationWidget(
            variable.modifyCommand(variable.initializer.getOrNull, it, variable::setInitializer)
         }
 
+    override val head: TextWidget
+        get() = type
+
     override val tail: TextWidget
         get() = expression?.tail ?: name
 

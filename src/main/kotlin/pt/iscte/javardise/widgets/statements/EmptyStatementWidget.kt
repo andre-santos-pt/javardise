@@ -12,6 +12,7 @@ import pt.iscte.javardise.CommandStack
 import pt.iscte.javardise.basewidgets.SequenceWidget
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.external.indexOfIdentity
+import java.util.concurrent.ThreadPoolExecutor.DiscardOldestPolicy
 
 class EmptyStatementWidget(
     parent: SequenceWidget,
@@ -34,6 +35,7 @@ class EmptyStatementWidget(
         semiColon.addKeyEvent(SWT.BS, precondition = {it.isEmpty()}) {
             parentBlock.statements.removeCommand(parentBlock, node)
         }
+
         semiColon.addKeyEvent(SWT.CR) {
             parentBlock.statements.addCommand(parentBlock, EmptyStmt(), parentBlock.statements.indexOfIdentity(node)+1)
         }
@@ -79,9 +81,9 @@ object EmptyStatementFeature : StatementFeature<EmptyStmt, EmptyStatementWidget>
         commandStack: CommandStack,
         output: (Statement) -> Unit
     ) {
-        insert.addKeyEvent(SWT.CR, precondition = { it.isEmpty() }) {
-            output(EmptyStmt())
-        }
+//        insert.addKeyEvent(SWT.CR, precondition = { it.isEmpty() }) {
+//            output(EmptyStmt())
+//        }
     }
 
     override fun targets(stmt: Statement): Boolean {

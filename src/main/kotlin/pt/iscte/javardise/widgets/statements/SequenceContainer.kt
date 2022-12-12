@@ -187,7 +187,7 @@ interface SequenceContainer<T : Node> : NodeWidget<T>{
             ) {
                 val prev = seq.findByModelIndex(index) as? Control
                 val w = addWidget(node, block, seq)
-                if (prev != null) (w as Composite).moveAbove(prev) // bug with comments?
+                if (prev != null) (w as Composite).moveAbove(prev)
                 seq.requestLayout()
                 w.setFocusOnCreation()
             }
@@ -204,8 +204,8 @@ interface SequenceContainer<T : Node> : NodeWidget<T>{
                 seq.requestLayout()
 
                 val childrenLen = seq.children.size
-                if (index < childrenLen) seq.children[index].setFocus()
-                else if (index - 1 in 0 until childrenLen) seq.children[index - 1].setFocus()
+                //if (index < childrenLen) seq.children[index].setFocus()
+                if (index - 1 in 0 until childrenLen) seq.children[index - 1].setFocus()
                 else seq.parent.setFocus()
             }
 
@@ -227,7 +227,8 @@ interface SequenceContainer<T : Node> : NodeWidget<T>{
         })
     }
 
-    fun createInsert(seq: SequenceWidget, block: BlockStmt): TextWidget {
+    private fun createInsert(seq: SequenceWidget, block: BlockStmt): TextWidget {
+        require(node is Statement)
         val insert = TextWidget.create(seq) { c, s ->
             c.toString().matches(Regex("\\w|\\[|]|\\.|\\+|-|\\*|/|%"))
                     || c == SWT.SPACE && !s.endsWith(SWT.SPACE)
@@ -241,7 +242,7 @@ interface SequenceContainer<T : Node> : NodeWidget<T>{
         }
 
         configuration.statementFeatures.forEach {
-            it.configureInsert(insert, block, node as Statement, commandStack, ::insert) // TODO BUG class com.github.javaparser.ast.body.MethodDeclaration cannot be cast to class com.github.javaparser.ast.stmt.Statement
+            it.configureInsert(insert, block, node as Statement, commandStack, ::insert)
         }
 
         insert.addFocusLostAction {

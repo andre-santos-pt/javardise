@@ -40,6 +40,7 @@ class ReturnWidget(
             )
         }
         keyword.addDelete(node, parentBlock)
+        keyword.addEmptyStatement(this@ReturnWidget, parentBlock, node, false)
        // keyword.setCopySource()
         // keyword.setMoveSource()
 

@@ -39,6 +39,8 @@ interface NodeWidget<T> {
 
     val node: T
     val control: Control
+
+
     fun setFocusOnCreation(firstFlag: Boolean = false)
 
     private fun findConf(n: Control): Configuration =
@@ -70,9 +72,9 @@ interface NodeWidget<T> {
     fun newKeywordWidget(
         parent: Composite, keyword: String,
         alternatives: () -> List<String> = { emptyList() },
-        editAtion: (String) -> Unit = {}
+        editAction: (String) -> Unit = {}
     ): TokenWidget {
-        val w = TokenWidget(parent, keyword, alternatives, editAtion)
+        val w = TokenWidget(parent, keyword, alternatives, editAction)
         w.widget.foreground = configuration.keywordColor
         return w
     }

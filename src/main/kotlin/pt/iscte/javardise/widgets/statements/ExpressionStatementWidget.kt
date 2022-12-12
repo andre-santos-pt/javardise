@@ -24,6 +24,7 @@ open class ExpressionStatementWidget(
     init {
         layout = ROW_LAYOUT_H_SHRINK
         expression = createExpression(node.expression)
+        expression.head.addEmptyStatement(this, parentBlock, node, false)
         semiColon = TokenWidget(this, ";")
         semiColon. addEmptyStatement(this, parentBlock, node)
         semiColon.addDeleteListener {

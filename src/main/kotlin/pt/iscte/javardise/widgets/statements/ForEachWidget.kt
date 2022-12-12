@@ -38,6 +38,8 @@ class ForEachWidget(parent: SequenceWidget, node: ForEachStmt,
                 keyword = newKeywordWidget(this, "for")
                 keyword.addDelete(node, parentBlock)
                 keyword.addShallowDelete()
+                keyword.addEmptyStatement(this@ForEachWidget, parentBlock, node, false)
+
                 FixedToken(this, "(")
                 variable = this.createVarExp(this, node.variable)
                 colon = FixedToken(this, ":")
