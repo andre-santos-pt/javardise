@@ -46,7 +46,7 @@ private fun createShell(display: Display, model: MethodDeclaration, editable: Bo
     val methodWidget = shell.column {
        layout = FillLayout()
         val methodWidget = scrollable {
-            MethodWidget(it, model, SWT.BORDER)
+            MethodWidget(it, model, style = SWT.BORDER)
         }
         methodWidget.enabled = editable
         grid(2) {

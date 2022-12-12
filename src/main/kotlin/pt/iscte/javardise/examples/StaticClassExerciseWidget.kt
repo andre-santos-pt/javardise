@@ -17,12 +17,13 @@ import java.io.File
 import java.io.FileNotFoundException
 
 
-val testCode = """
+
+fun main(args: Array<String>) {
+    val testCode = """
         public class StaticClass {
         
         }
     """.trimIndent()
-fun main(args: Array<String>) {
     val display = Display()
     val shell = Shell(display)
     shell.layout = FillLayout()

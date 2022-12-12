@@ -4,19 +4,29 @@ import com.github.javaparser.ParseProblemException
 import com.github.javaparser.StaticJavaParser
 import com.github.javaparser.ast.NodeList
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration
+import com.github.javaparser.ast.stmt.Statement
 import org.eclipse.swt.SWT
 import org.eclipse.swt.custom.ScrolledComposite
 import org.eclipse.swt.custom.StackLayout
 import org.eclipse.swt.events.SelectionAdapter
 import org.eclipse.swt.events.SelectionEvent
+import org.eclipse.swt.graphics.Font
 import org.eclipse.swt.graphics.Point
 import org.eclipse.swt.layout.FillLayout
 import org.eclipse.swt.layout.GridData
 import org.eclipse.swt.layout.GridLayout
 import org.eclipse.swt.widgets.*
 import org.eclipse.swt.widgets.List
+import pt.iscte.javardise.Configuration
+import pt.iscte.javardise.DefaultConfiguration
 import pt.iscte.javardise.external.*
+import pt.iscte.javardise.widgets.expressions.CallFeature
+import pt.iscte.javardise.widgets.expressions.VariableDeclarationFeature
 import pt.iscte.javardise.widgets.members.ClassWidget
+import pt.iscte.javardise.widgets.statements.EmptyStatementFeature
+import pt.iscte.javardise.widgets.statements.IfFeature
+import pt.iscte.javardise.widgets.statements.StatementFeature
+import pt.iscte.javardise.widgets.statements.StatementWidget
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.PrintWriter
@@ -205,6 +215,11 @@ class JavardiseClassicEditor(val display: Display, val folder: File) {
         }
     }
 
+    val File.extension get() = if(name.contains('.'))
+        name.substring(name.lastIndexOf('.') + 1)
+    else
+        ""
+
     private fun createTab(
         file: File,
         comp: Composite
@@ -213,10 +228,10 @@ class JavardiseClassicEditor(val display: Display, val folder: File) {
         val layout = FillLayout()
         tab.layout = layout
 
-        val typeName = if (file.name.endsWith(".java"))
-            file.name.dropLast(".java".length)
-        else
-            file.name
+        val typeName = if(file.name.contains('.'))
+                file.name.substring(0, file.name.lastIndexOf('.'))
+            else
+                file.name
 
         val model = if (file.exists()) {
             try {
@@ -241,7 +256,7 @@ class JavardiseClassicEditor(val display: Display, val folder: File) {
             }
         } else {
             val w = tab.scrollable {
-                ClassWidget(it, model)
+                createWidget(file.extension, it, model)
             }
             // TODO not working
             w.addFocusObserver { control ->
@@ -272,6 +287,19 @@ class JavardiseClassicEditor(val display: Display, val folder: File) {
         return tab
     }
 
+    fun createWidget(ext: String, parent: Composite, model: ClassOrInterfaceDeclaration) : ClassWidget =
+        when(ext) {
+            "sjava" -> StaticClassWidget(parent, model)
+            "fjava" -> StaticClassWidget(parent, model, configuration = object : DefaultConfiguration() {
+                override val fontSize: Int
+                    get() = 20
+
+                override val statementFeatures
+                    get() = listOf(EmptyStatementFeature, IfFeature, VariableDeclarationFeature, CallFeature)
+
+            })
+            else -> ClassWidget(parent, model)
+        }
 
 
     fun notFoundLabel(p: Composite) = Composite(p, SWT.BORDER).apply {

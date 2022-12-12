@@ -1,6 +1,7 @@
 package pt.iscte.javardise.widgets.members
 
 import com.github.javaparser.StaticJavaParser
+import com.github.javaparser.ast.Modifier
 import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.NodeList
 import com.github.javaparser.ast.body.CallableDeclaration
@@ -26,6 +27,7 @@ import pt.iscte.javardise.widgets.statements.addEmptyStatement
 class MethodWidget(
     parent: Composite,
     val dec: CallableDeclaration<*>,
+    validModifiers: List<Modifier.Keyword> = emptyList(),
     style: Int = SWT.NONE,
     configuration: Configuration = DefaultConfigurationSingleton,
     override val commandStack: CommandStack = CommandStack.create(),
@@ -34,6 +36,7 @@ class MethodWidget(
     MemberWidget<CallableDeclaration<*>>(
         parent,
         dec,
+        validModifiers,
         style = style,
         configuration = configuration
     ),

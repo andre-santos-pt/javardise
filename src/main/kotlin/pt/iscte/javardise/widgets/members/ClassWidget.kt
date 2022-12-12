@@ -165,7 +165,7 @@ open class ClassWidget(
 
         name = SimpleNameWidget(firstRow, type)
         name.addFocusLostAction(::isValidClassType) {
-            commandStack.execute(object: Command {
+            commandStack.execute(object : Command {
                 override val target: Node
                     get() = node
                 override val kind: CommandKind = CommandKind.MODIFY
@@ -173,14 +173,14 @@ open class ClassWidget(
 
                 override fun run() {
                     node.setName(it)
-                    node.constructors.forEach { c->
+                    node.constructors.forEach { c ->
                         c.name = SimpleName(it)
                     }
                 }
 
                 override fun undo() {
                     node.setName(element)
-                    node.constructors.forEach { c->
+                    node.constructors.forEach { c ->
                         c.name = element
                     }
                 }
@@ -276,17 +276,13 @@ open class ClassWidget(
     fun createMember(dec: BodyDeclaration<*>): Composite =
         when (dec) {
             is FieldDeclaration -> {
-                val w = FieldWidget(bodyWidget, dec, configuration = configuration)
+                val w =
+                    FieldWidget(bodyWidget, dec, configuration = configuration)
                 w.semiColon.addInsert(w, bodyWidget, true)
                 w
             }
             is MethodDeclaration, is ConstructorDeclaration -> {
-                val w = MethodWidget(
-                    bodyWidget,
-                    dec as CallableDeclaration<*>,
-                    configuration = configuration,
-                    commandStack = commandStack
-                )
+                val w = createMethodWidget(dec as MethodDeclaration)
                 w.closingBracket.addInsert(w, bodyWidget, true)
                 w
             }
@@ -295,7 +291,8 @@ open class ClassWidget(
                     bodyWidget,
                     dec,
                     configuration = configuration,
-                    commandStack = commandStack)
+                    commandStack = commandStack
+                )
                 w.closingBracket.addInsert(w, bodyWidget, true)
                 w
             }
@@ -320,7 +317,6 @@ open class ClassWidget(
                 }
             }
         }
-
 
 
     override fun dispose() {
@@ -358,19 +354,22 @@ open class ClassWidget(
                 insert.delete()
             }
 
-        val memberChars = if(staticClass) arrayOf('(') else arrayOf(';','=','(')
+        val memberChars =
+            if (staticClass) arrayOf('(') else arrayOf(';', '=', '(')
 
         insert.addKeyEvent(*memberChars.toCharArray(), precondition = {
-            if(it.matches(MEMBER_REGEX)) {
+            if (it.matches(MEMBER_REGEX)) {
                 val split = it.split(Regex("\\s+"))
-                isValidType(split[split.lastIndex-1]) && isValidSimpleName(split[split.lastIndex])
-            }
-            else
+                isValidType(split[split.lastIndex - 1]) && isValidSimpleName(
+                    split[split.lastIndex]
+                )
+            } else
                 false
         }) {
             val split = insert.text.split(Regex("\\s+"))
-            val modifiers = NodeList(split.dropLast(2).map { matchModifier(it) })
-            val dec = if(it.character == ';' || it.character == '=') {
+            val modifiers =
+                NodeList(split.dropLast(2).map { matchModifier(it) })
+            val dec = if (it.character == ';' || it.character == '=') {
                 val newField = FieldDeclaration(
                     modifiers,
                     StaticJavaParser.parseType(split[split.lastIndex - 1]),
@@ -379,8 +378,7 @@ open class ClassWidget(
                 if (it.character == '=')
                     newField.variables[0].setInitializer(NameExpr(Configuration.fillInToken))
                 newField
-            }
-            else {
+            } else {
                 val newMethod = MethodDeclaration(
                     modifiers,
                     split.last(),
@@ -406,6 +404,14 @@ open class ClassWidget(
     open fun customizeNewMethodDeclaration(dec: MethodDeclaration) {
 
     }
+
+    open fun createMethodWidget(dec: MethodDeclaration) =
+        MethodWidget(
+            bodyWidget,
+            dec as CallableDeclaration<*>,
+            configuration = configuration,
+            commandStack = commandStack
+        )
 
     override fun setFocusOnCreation(firstFlag: Boolean) {
         name.setFocus()
@@ -435,11 +441,9 @@ open class ClassWidget(
         addKeyEvent(SWT.CR) {
             val w = if (member == null) {
                 body.insertBeginning()
-            }
-            else if (after) {
+            } else if (after) {
                 body.insertLineAfter(member)
-            }
-            else
+            } else
                 body.insertLineAt(member)
             w.addInsert(w.widget, body, true)
         }

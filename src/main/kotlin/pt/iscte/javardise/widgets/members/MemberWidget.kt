@@ -51,7 +51,7 @@ abstract class MemberWidget<T : NodeWithModifiers<*>>(
         foreground = configuration.foregroundColor
         column = column {
             firstRow = row {
-                node.modifiers.forEach {
+                node.modifiers.filter { validModifiers.contains(it.keyword) }.forEach {
                     val token = createModifierToken(this, it)
                     modifiers.add(token)
                 }
