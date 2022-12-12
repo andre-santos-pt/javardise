@@ -81,12 +81,6 @@ abstract class StatementFeature<M: Statement, W: NodeWidget<*>>(val modelClass: 
 }
 
 
-
-
-
-
-
-
 fun SequenceWidget.findIndexByModel(control: Control): Int {
     var i = 0
     for (c in children) {
@@ -97,12 +91,6 @@ fun SequenceWidget.findIndexByModel(control: Control): Int {
     check(false)
     return -1
 }
-
-
-
-
-
-
 
 
 fun <T : Node> SequenceWidget.find(predicate: (T) -> Boolean): NodeWidget<T>? =
@@ -119,54 +107,23 @@ fun SequenceWidget.findByModelIndex(index: Int): NodeWidget<*>? {
 }
 
 
-
-
-
-internal fun TokenWidget.addInsert(
-    member: Control?,
-    body: SequenceWidget,
-    after: Boolean
-) {
-    fun TextWidget.addInsert(
-        member: Control?,
-        body: SequenceWidget,
-        after: Boolean
-    ) {
-        addKeyEvent(SWT.CR) {
-            val w = if (member == null)
-                body.insertBeginning()
-            else if (after)
-                body.insertLineAfter(member)
-            else
-                body.insertLineAt(member)
-            w.addInsert(w.widget, body, true)
-        }
-    }
-
-    addKeyEvent(SWT.CR) {
-        val w = if (member == null) {
-            body.insertBeginning()
-        }
-        else if (after) {
-            body.insertLineAfter(member)
-        }
-        else
-            body.insertLineAt(member)
-        w.addInsert(w.widget, body, true)
-    }
-}
-
-internal fun NodeWidget<*>.addEmptyStatement(
-    tokenWidget: TokenWidget,
+internal fun TokenWidget.addEmptyStatement(
+    nodeWidget: NodeWidget<*>,
     block: BlockStmt,
     after: Statement? = null
 ) {
 
-    tokenWidget.addKeyEvent(SWT.CR) {
-       if(after == null)
-           block.statements.addCommand(block, EmptyStmt(), 0)
-       else
-           block.statements.addCommand(block, EmptyStmt(), block.statements.indexOfIdentity(after)+1)
+    addKeyEvent(SWT.CR) {
+        with(nodeWidget) {
+            if (after == null)
+                block.statements.addCommand(block, EmptyStmt(), 0)
+            else
+                block.statements.addCommand(
+                    block,
+                    EmptyStmt(),
+                    block.statements.indexOfIdentity(after) + 1
+                )
+        }
     }
 }
 

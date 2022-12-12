@@ -24,7 +24,7 @@ class EmptyStatementWidget(
 
     init {
         require(!node.comment.isPresent)
-       // background = Display.getDefault().getSystemColor(SWT.COLOR_CYAN)
+       background = Display.getDefault().getSystemColor(SWT.COLOR_CYAN)
 
         semiColon = TextWidget.create(this, "") { c, s ->
             c.toString().matches(Regex("\\w|\\[|]|\\.|\\+|-|\\*|/|%"))

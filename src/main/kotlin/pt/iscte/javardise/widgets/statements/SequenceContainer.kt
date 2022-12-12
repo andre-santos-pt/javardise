@@ -241,7 +241,7 @@ interface SequenceContainer<T : Node> : NodeWidget<T>{
         }
 
         configuration.statementFeatures.forEach {
-            it.configureInsert(insert, block, node as Statement, commandStack, ::insert)
+            it.configureInsert(insert, block, node as Statement, commandStack, ::insert) // TODO BUG class com.github.javaparser.ast.body.MethodDeclaration cannot be cast to class com.github.javaparser.ast.stmt.Statement
         }
 
         insert.addFocusLostAction {

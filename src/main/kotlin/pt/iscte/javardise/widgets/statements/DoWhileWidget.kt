@@ -1,14 +1,17 @@
 package pt.iscte.javardise.widgets.statements
 
+import com.github.javaparser.ast.NodeList
 import com.github.javaparser.ast.expr.Expression
 import com.github.javaparser.ast.expr.NameExpr
 import com.github.javaparser.ast.observer.ObservableProperty
 import com.github.javaparser.ast.stmt.BlockStmt
 import com.github.javaparser.ast.stmt.DoStmt
+import com.github.javaparser.ast.stmt.EmptyStmt
 import com.github.javaparser.ast.stmt.Statement
 import org.eclipse.swt.SWT
 import org.eclipse.swt.widgets.Composite
 import pt.iscte.javardise.CommandStack
+import pt.iscte.javardise.Configuration
 import pt.iscte.javardise.basewidgets.*
 import pt.iscte.javardise.external.column
 import pt.iscte.javardise.external.observeProperty
@@ -43,7 +46,7 @@ class DoWhileWidget(
                 openBracket = TokenWidget(this, "{")
             }
             bodyWidget = createSequence(this, node.body.asBlockStmt())
-            openBracket.addInsert(null, bodyWidget, false)
+            openBracket.addEmptyStatement(this@DoWhileWidget, node.body.asBlockStmt())
             TokenWidget(this, "}")
 
             lastRow = row {
@@ -52,7 +55,7 @@ class DoWhileWidget(
                 condition = createExpWidget(node.condition)
                 FixedToken(this, ")")
                 closingBracket = TokenWidget(this, ";")
-                closingBracket.addInsert(this@DoWhileWidget, parent, true)
+                closingBracket.addEmptyStatement(this@DoWhileWidget, parentBlock, node)
             }
         }
         node.observeProperty<Expression>(ObservableProperty.CONDITION) {
@@ -73,7 +76,7 @@ class DoWhileWidget(
     override fun setFocus(): Boolean = keyword.setFocus()
 
     override fun setFocusOnCreation(firstFlag: Boolean) {
-        condition.setFocus()
+        bodyWidget.setFocus()
     }
 }
 
@@ -86,7 +89,7 @@ object DoWhileFeature : StatementFeature<DoStmt, DoWhileWidget>(DoStmt::class.ja
         output: (Statement) -> Unit
     ) {
         insert.addKeyEvent(SWT.SPACE, '{', precondition = { it == "do"}) {
-            output( DoStmt(BlockStmt(), NameExpr("condition")))
+            output( DoStmt(BlockStmt(NodeList(EmptyStmt())), NameExpr(Configuration.fillInToken)))
         }
     }
 }

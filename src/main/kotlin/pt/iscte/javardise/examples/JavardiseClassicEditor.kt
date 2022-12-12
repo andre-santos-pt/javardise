@@ -92,8 +92,9 @@ class JavardiseClassicEditor(val display: Display, val folder: File) {
                     if (find != null) {
                         stacklayout.topControl = find
                         editorArea.layout()
-                        if (focusMap.containsKey(find))
-                            focusMap[find]?.setFocus()
+                        // TODO repor
+//                        if (focusMap.containsKey(find))
+//                            focusMap[find]?.setFocus()
                     } else {
                         val tab = createTab(
                             File(

@@ -27,7 +27,7 @@ class CallExpressionWidget(
     private var scope: ExpressionWidget<*>? = null
     private var dot: FixedToken? = null
     private var methodName: Id
-    private val args: ArgumentListWidget<Expression, MethodCallExpr>
+    private val args: ExpressionListWidget<Expression, MethodCallExpr>
 
     init {
         layout = ROW_LAYOUT_H_CALL
@@ -42,11 +42,14 @@ class CallExpressionWidget(
         methodName.addKeyEvent(
             SWT.BS,
             precondition = { methodName.isAtBeginning }) {
+            if(node.scope.isPresent)
             node.modifyCommand(
                 node.scope.getOrNull,
                 null,
                 node::setScope
             )
+            else
+                editEvent(null)
         }
         methodName.addKeyEvent(
             '.',
@@ -66,7 +69,7 @@ class CallExpressionWidget(
         if (node.scope.isPresent)
             createScope(node.scope.get())
 
-        args = ArgumentListWidget(this, "(", ")", this, node.arguments)
+        args = ExpressionListWidget(this, "(", ")", this, node.arguments)
 
         node.observeProperty<Expression>(ObservableProperty.SCOPE) {
             scope?.dispose()

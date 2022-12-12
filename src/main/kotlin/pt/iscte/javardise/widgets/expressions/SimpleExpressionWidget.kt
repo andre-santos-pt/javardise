@@ -86,8 +86,7 @@ class SimpleExpressionWidget(
                     val biop = binaryOperators.find {
                         it.asString().startsWith(e.character)
                     }
-                    if (biop != null && expression.isAtEnd &&
-                        tryParse<Expression>(expression.text)
+                    if (biop != null && tryParse<Expression>(expression.text)
                     ) {
                         node =
                             BinaryExpr(

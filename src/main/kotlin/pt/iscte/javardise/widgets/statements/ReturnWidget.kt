@@ -53,9 +53,7 @@ class ReturnWidget(
             }
         }
         semiColon = TokenWidget(this, ";")
-       // semiColon.addInsert(this, this.parent as SequenceWidget, true)
-
-        addEmptyStatement(semiColon, parentBlock, node)
+        semiColon.addEmptyStatement(this, parentBlock, node)
 
         node.observeProperty<Expression>(ObservableProperty.EXPRESSION) {
             if (it == null) {

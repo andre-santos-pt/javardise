@@ -45,7 +45,7 @@ class AssignExpressionWidget(
             target = createTargetWidget(it!!)
             target.moveAbove(operator.widget)
             target.requestLayout()
-            target.setFocus()
+            target.setFocusOnCreation()
         }
         node.observeProperty<AssignExpr.Operator>(ObservableProperty.OPERATOR) {
             operator.set(it?.asString() ?: "??")
@@ -115,9 +115,9 @@ class AssignExpressionWidget(
 
     override fun setFocusOnCreation(firstFlag: Boolean) {
         if(firstFlag)
-            target.setFocus()
+            target.setFocusOnCreation()
         else
-            value.setFocus()
+            value.setFocusOnCreation()
     }
 
     override val tail: TextWidget

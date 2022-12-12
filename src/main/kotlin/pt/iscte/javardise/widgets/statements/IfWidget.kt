@@ -85,12 +85,11 @@ class IfWidget(
             bodyWidget = createSequence(this, node.thenBlock)
 
             openThenBracket = TokenWidget(firstRow, "{")
-            //openThenBracket.addInsert(null, bodyWidget, false)
-            addEmptyStatement(openThenBracket, node.thenBlock)
+            openThenBracket.addEmptyStatement(this@IfWidget, node.thenBlock)
             //setThenBracketsVisibility(node.thenBlock.statements.size, openThenBracket, closeThenBracket)
         }
         closingBracket = TokenWidget(column, "}")
-        addEmptyStatement(closingBracket, parentBlock, node)
+        closingBracket.addEmptyStatement(this, parentBlock, node)
 //        closingBracket.addInsert(
 //            this@IfWidget,
 //            this@IfWidget.parent as SequenceWidget,
@@ -194,16 +193,10 @@ class IfWidget(
                 }
                 elseBody = createSequence(this, elseStatement as BlockStmt)
                 closeBracketElse = TokenWidget(this, "}")
-                addEmptyStatement(closeBracketElse, parentBlock, node)
-//                closeBracketElse.addInsert(
-//                    this@IfWidget,
-//                    this@IfWidget.parent as SequenceWidget,
-//                    true
-//                )
+                closeBracketElse.addEmptyStatement(this@IfWidget, parentBlock, node)
                 addMoveBracket() // TODO special case shallow delete ELSE
             }
-            //openBracketElse.addInsert(null, elseBody, false)
-            addEmptyStatement(openBracketElse, elseStatement as BlockStmt)
+            openBracketElse.addEmptyStatement(this@IfWidget, elseStatement as BlockStmt)
         }
 
         fun focusOpenBracket() {
@@ -259,21 +252,6 @@ object IfFeature : StatementFeature<IfStmt, IfWidget>(
                         prev::setElseStmt
                     )
             }
-//            val seq = insert.widget.parent
-//            val seqIndex = seq.children.indexOf(insert.widget)
-//            if (seqIndex > 0) {
-//                val prev = seq.children[seqIndex - 1]
-//                if (prev is IfWidget && !prev.node.hasElseBranch()) {
-//                    insert.delete()
-//                    with(prev) {
-//                        node.modifyCommand(
-//                            null,
-//                            BlockStmt(),
-//                            prev.node::setElseStmt
-//                        )
-//                    }
-//                }
-//            }
         }
     }
 }

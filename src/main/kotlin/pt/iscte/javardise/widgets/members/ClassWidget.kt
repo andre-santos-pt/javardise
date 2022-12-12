@@ -23,7 +23,6 @@ import pt.iscte.javardise.*
 import pt.iscte.javardise.basewidgets.*
 import pt.iscte.javardise.external.*
 import pt.iscte.javardise.widgets.statements.*
-import pt.iscte.javardise.widgets.statements.addInsert
 
 
 val MODIFIERS = "(${
@@ -410,6 +409,40 @@ open class ClassWidget(
 
     override fun setFocusOnCreation(firstFlag: Boolean) {
         name.setFocus()
+    }
+
+    internal fun TokenWidget.addInsert(
+        member: Control?,
+        body: SequenceWidget,
+        after: Boolean
+    ) {
+        fun TextWidget.addInsert(
+            member: Control?,
+            body: SequenceWidget,
+            after: Boolean
+        ) {
+            addKeyEvent(SWT.CR) {
+                val w = if (member == null)
+                    body.insertBeginning()
+                else if (after)
+                    body.insertLineAfter(member)
+                else
+                    body.insertLineAt(member)
+                w.addInsert(w.widget, body, true)
+            }
+        }
+
+        addKeyEvent(SWT.CR) {
+            val w = if (member == null) {
+                body.insertBeginning()
+            }
+            else if (after) {
+                body.insertLineAfter(member)
+            }
+            else
+                body.insertLineAt(member)
+            w.addInsert(w.widget, body, true)
+        }
     }
 }
 

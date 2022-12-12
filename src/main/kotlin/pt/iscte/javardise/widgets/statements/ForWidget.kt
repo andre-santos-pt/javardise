@@ -58,10 +58,10 @@ class ForWidget(
                 openBracket = TokenWidget(this, "{")
             }
             bodyWidget = createSequence(this, node.body.asBlockStmt())
-            openBracket.addInsert(null, bodyWidget, true)
+            openBracket.addEmptyStatement(this@ForWidget, node.body.asBlockStmt())
         }
         closingBracket = TokenWidget(col, "}")
-        closingBracket.addInsert(this, parent, true)
+        closingBracket.addEmptyStatement(this, parentBlock, node)
 
         node.initialization.observeList(object : ListObserver<Expression> {
             override fun elementReplace(

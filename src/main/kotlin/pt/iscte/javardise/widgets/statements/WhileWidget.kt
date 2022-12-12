@@ -74,11 +74,11 @@ class WhileWidget(
                 openBracket = TokenWidget(this, "{")
             }
             bodyWidget = createSequence(this, node.block)
-            openBracket.addInsert(null, bodyWidget, false)
+            openBracket.addEmptyStatement(this@WhileWidget, node.block.asBlockStmt())
 
         }
         closingBracket = TokenWidget(col, "}")
-        closingBracket.addInsert(this, parent, true)
+        closingBracket.addEmptyStatement(this, parentBlock, node)
         addMoveBracket()
 
 

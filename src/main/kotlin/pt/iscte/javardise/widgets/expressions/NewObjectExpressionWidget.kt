@@ -15,7 +15,7 @@ class NewObjectExpressionWidget(
 ) : ExpressionWidget<ObjectCreationExpr>(parent) {
 
     val id: TextWidget
-    val args: ArgumentListWidget<Expression, ObjectCreationExpr>
+    val args: ExpressionListWidget<Expression, ObjectCreationExpr>
 
     init {
         if (node.scope.isPresent) {
@@ -28,7 +28,7 @@ class NewObjectExpressionWidget(
             node.modifyCommand(node.typeAsString, it, node::setType)
         }
 
-        args = ArgumentListWidget(this, "(", ")", this, node.arguments)
+        args = ExpressionListWidget(this, "(", ")", this, node.arguments)
     }
 
     override fun setFocusOnCreation(firstFlag: Boolean) {

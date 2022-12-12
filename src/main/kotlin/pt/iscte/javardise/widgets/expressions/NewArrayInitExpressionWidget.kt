@@ -12,10 +12,10 @@ class NewArrayInitExpressionWidget(
     override val editEvent: (Expression?) -> Unit
 ) : ExpressionWidget<ArrayInitializerExpr>(parent) {
 
-    val args: ArgumentListWidget<Expression, ArrayInitializerExpr>
+    val args: ExpressionListWidget<Expression, ArrayInitializerExpr>
 
     init {
-        args = ArgumentListWidget(this, "{", "}", this, node.values)
+        args = ExpressionListWidget(this, "{", "}", this, node.values)
         args.closeBracket.addDeleteListener {
             editEvent(NameExpr("expression"))
         }

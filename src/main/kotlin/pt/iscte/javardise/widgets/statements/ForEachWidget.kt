@@ -47,9 +47,9 @@ class ForEachWidget(parent: SequenceWidget, node: ForEachStmt,
             }
             bodyWidget = createSequence(this, node.body.asBlockStmt())
             closingBracket = TokenWidget(this, "}")
-            closingBracket.addInsert(this@ForEachWidget, parent, true)
+            closingBracket.addEmptyStatement(this@ForEachWidget, parentBlock, node)
         }
-        openBracket.addInsert(null, bodyWidget, true)
+        openBracket.addEmptyStatement(this@ForEachWidget, node.body.asBlockStmt())
 
         node.observeNotNullProperty<VariableDeclarationExpr>(ObservableProperty.VARIABLE) {
             variable.dispose()

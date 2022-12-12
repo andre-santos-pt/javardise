@@ -3,8 +3,10 @@ package pt.iscte.javardise.widgets.expressions
 import com.github.javaparser.StaticJavaParser
 import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.NodeList
+import com.github.javaparser.ast.expr.BinaryExpr
 import com.github.javaparser.ast.expr.Expression
 import com.github.javaparser.ast.expr.NameExpr
+import com.github.javaparser.ast.expr.UnaryExpr
 import com.github.javaparser.ast.nodeTypes.NodeWithArguments
 import org.eclipse.swt.SWT
 import org.eclipse.swt.events.KeyAdapter
@@ -16,7 +18,7 @@ import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
 import pt.iscte.javardise.external.*
 
-class ArgumentListWidget<T : Expression, N : Node>(
+class ExpressionListWidget<T : Expression, N : Node>(
     parent: Composite,
     open: String,
     close: String,
@@ -79,7 +81,7 @@ class ArgumentListWidget<T : Expression, N : Node>(
                 node: T
             ) {
                 argumentWidgets[index].dispose()
-                if(index == 0 && argumentWidgets.size > 1) {
+                if (index == 0 && argumentWidgets.size > 1) {
                     argumentWidgets[1].comma?.dispose()
                     argumentWidgets[1].comma = null
                 }
@@ -90,7 +92,7 @@ class ArgumentListWidget<T : Expression, N : Node>(
                 else if (index != 0)
                     argumentWidgets[index - 1].arg.setFocus()
                 else {
-                    createInsert(this@ArgumentListWidget)
+                    createInsert(this@ExpressionListWidget)
                     insert.setFocus()
                 }
             }
@@ -109,7 +111,7 @@ class ArgumentListWidget<T : Expression, N : Node>(
 
                     var i: Int = -1
                     override fun run() {
-                       i = expressionList.indexOfIdentity(exp)
+                        i = expressionList.indexOfIdentity(exp)
                         expressionList.removeAt(i)
                     }
 
@@ -125,7 +127,8 @@ class ArgumentListWidget<T : Expression, N : Node>(
 
                     var i: Int = -1
                     override fun run() {
-                       i = expressionList.indexOfIdentity(exp) // BUG illegal index
+                        i =
+                            expressionList.indexOfIdentity(exp) // BUG illegal index
                         expressionList[i] = it as T
                     }
 
@@ -197,11 +200,11 @@ class ArgumentListWidget<T : Expression, N : Node>(
                             override val element = expressionList
 
                             override fun run() {
-                                expressionList.swap(i, i-1)
+                                expressionList.swap(i, i - 1)
                             }
 
                             override fun undo() {
-                                expressionList.swap(i, i-1)
+                                expressionList.swap(i, i - 1)
                             }
                         })
                     }
@@ -236,7 +239,7 @@ class ArgumentListWidget<T : Expression, N : Node>(
         }
 
         insert = TextWidget.create(parent, " ") { c, _ ->
-            c.toString().matches(TYPE_CHARS)
+            c.toString().matches(TYPE_CHARS) || c == SWT.BS
         }
 
         insert.moveAboveInternal(closeBracket.widget)
@@ -248,16 +251,80 @@ class ArgumentListWidget<T : Expression, N : Node>(
             } else
                 insert.clear()
         }
-        insert.addKeyEvent(',', precondition = { tryParse<Expression>(it) }) {
-            val insertExp =
-                StaticJavaParser.parseExpression<Expression>(insert.text)
-            insert.delete()
-            doAddArgummentCommand(insertExp)
-            doAddArgummentCommand(
-                NameExpr(Configuration.fillInToken),
-                insertExp
-            )
+//        insert.addKeyEvent(',', precondition = { tryParse<Expression>(it) }) {
+//            val insertExp =
+//                StaticJavaParser.parseExpression<Expression>(insert.text)
+//            insert.delete()
+//            doAddArgummentCommand(insertExp)
+//            doAddArgummentCommand(
+//                NameExpr(Configuration.fillInToken),
+//                insertExp
+//            )
+//        }
+
+        val keyListener = object : KeyAdapter() {
+            override fun keyPressed(e: KeyEvent) {
+                if (isDisposed)
+                    return
+
+                if (insert.isAtBeginning) {
+
+                    val unop = unaryOperators.filter { it.isPrefix }
+                        .find { it.asString().startsWith(e.character) }
+                    if (unop != null) {
+                        if (tryParse<Expression>(insert.text)) {
+                            val exp = insert.text
+                            insert.delete()
+                            doAddArgummentCommand(
+                                UnaryExpr(
+                                    StaticJavaParser.parseExpression(exp),
+                                    unop
+                                )
+                            )
+
+                        } else if (insert.text.isBlank()) {
+                            insert.delete()
+                            doAddArgummentCommand(
+                                UnaryExpr(
+                                    NameExpr(Configuration.fillInToken),
+                                    unop
+                                )
+                            )
+
+                        }
+                    }
+                }
+                else if (insert.isAtEnd) {
+                    val biop = binaryOperators.find {
+                        it.asString().startsWith(e.character)
+                    }
+                    if (biop != null  && tryParse<Expression>(insert.text)
+                    ) {
+                        val exp = insert.text
+                        insert.delete()
+                        doAddArgummentCommand(
+                            BinaryExpr(
+                                StaticJavaParser.parseExpression(exp),
+                                NameExpr(Configuration.fillInToken), biop
+                            )
+                        )
+                    }
+                }
+                else if(e.character == ',') {
+                    if(tryParse<Expression>(insert.text)) {
+                        val insertExp =
+                            StaticJavaParser.parseExpression<Expression>(insert.text)
+                        insert.delete()
+                        doAddArgummentCommand(insertExp)
+                        doAddArgummentCommand(
+                            NameExpr(Configuration.fillInToken),
+                            insertExp
+                        )
+                    }
+                }
+            }
         }
+        insert.addKeyListenerInternal(keyListener)
         val listener = insert.addFocusLostAction {
             insert.text = " "
         }

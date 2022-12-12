@@ -114,7 +114,7 @@ class MethodWidget(
         if (body != null) {
             bodyWidget = createSequence(column, body)
             val openBracket = TokenWidget(firstRow, "{")//.addInsert(null, bodyWidget!!, true)
-            addEmptyStatement(openBracket,body)
+            openBracket.addEmptyStatement(this, body)
             closingBracket = TokenWidget(column, "}")
         } else
             closingBracket = TokenWidget(firstRow, ";")
