@@ -35,7 +35,7 @@ class StringExpressionWidget(
 
     init {
         open = TokenWidget(this, "\"")
-//        open.label.foreground = configuration.commentColor
+        open.widget.foreground = configuration.commentColor
         open.addKeyListenerInternal(delListener)
         text = TextWidget.create(this, node.value) { _, _ -> true }
         text.widget.foreground = configuration.commentColor

@@ -13,6 +13,7 @@ import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
 import pt.iscte.javardise.external.getOrNull
 import pt.iscte.javardise.external.row
+import pt.iscte.javardise.setCopySource
 
 class LineCommentWidget(parent: SequenceWidget,
                         override val node: EmptyStmt,
@@ -26,6 +27,7 @@ class LineCommentWidget(parent: SequenceWidget,
             slashes.widget.foreground = configuration.commentColor
             slashes.addDelete(node, parentBlock)
             slashes.addEmptyStatement(this@LineCommentWidget, parentBlock, node, false)
+            slashes.setCopySource(node)
             val cmt = TextWidget.create(this, node.comment.get().content.trim()) { _, _ -> true }
             cmt.addEmptyStatement(this@LineCommentWidget, parentBlock, node)
             cmt.addFocusLostAction {

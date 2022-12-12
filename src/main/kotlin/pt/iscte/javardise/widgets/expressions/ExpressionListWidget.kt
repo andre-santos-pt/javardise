@@ -99,6 +99,9 @@ class ExpressionListWidget<T : Expression, N : Node>(
         })
     }
 
+    override fun setFocus(): Boolean {
+        return if(argumentWidgets.isEmpty()) insert.setFocus() else argumentWidgets.first().arg.setFocus()
+    }
 
     private fun createArgument(exp: T, index: Int, replace: Boolean):
             ExpressionWidget<*> {
@@ -251,23 +254,13 @@ class ExpressionListWidget<T : Expression, N : Node>(
             } else
                 insert.clear()
         }
-//        insert.addKeyEvent(',', precondition = { tryParse<Expression>(it) }) {
-//            val insertExp =
-//                StaticJavaParser.parseExpression<Expression>(insert.text)
-//            insert.delete()
-//            doAddArgummentCommand(insertExp)
-//            doAddArgummentCommand(
-//                NameExpr(Configuration.fillInToken),
-//                insertExp
-//            )
-//        }
 
         val keyListener = object : KeyAdapter() {
             override fun keyPressed(e: KeyEvent) {
-                if (isDisposed)
+                if (insert.widget.isDisposed)
                     return
 
-                if (insert.isAtBeginning) {
+                if (insert.isAtBeginning || insert.isEmpty) {
 
                     val unop = unaryOperators.filter { it.isPrefix }
                         .find { it.asString().startsWith(e.character) }
@@ -310,7 +303,8 @@ class ExpressionListWidget<T : Expression, N : Node>(
                         )
                     }
                 }
-                else if(e.character == ',') {
+
+                if(e.character == ',') {
                     if(tryParse<Expression>(insert.text)) {
                         val insertExp =
                             StaticJavaParser.parseExpression<Expression>(insert.text)

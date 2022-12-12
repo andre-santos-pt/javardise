@@ -37,18 +37,35 @@ object Clipboard {
 //        }
 //        Commands.execute(AddStatementCommand(onCopy!!.first.clone() as Statement, block, index))
 //    }
+
+    var copyStatement: Statement? = null
 }
 
 fun TextWidget.setCopySource(node: Statement) {
     addKeyListenerInternal(object : KeyAdapter() {
         override fun keyPressed(e: KeyEvent) {
-            if ((e.stateMask == SWT.MOD1) && (e.keyCode == 'c'.code)) {
-                Clipboard.copy(node) { node, dest, index ->
-                    if (index != null) (dest as BlockStmt).statements.add(
-                        index,
-                        node as Statement
-                    )
+            if ((e.stateMask == SWT.MOD1) && (e.character == 'c')) {
+                Clipboard.copyStatement = node.clone()
+                println("copy $node")
+            }
+        }
+    })
+}
+
+fun TextWidget.setPasteTarget(clipboard: (Statement) -> Unit) {
+    addKeyListenerInternal(object : KeyAdapter() {
+        override fun keyPressed(e: KeyEvent) {
+            if ((e.stateMask == SWT.MOD1) && (e.character == 'v')) {
+                Clipboard.copyStatement?.let {
+                    clipboard(it.clone())
+                    println("paste $it")
                 }
+//                Clipboard.copy(node) { node, dest, index ->
+//                    if (index != null) (dest as BlockStmt).statements.add(
+//                        index,
+//                        node as Statement
+//                    )
+//                }
             }
 //                else if ((e.stateMask == SWT.MOD1) && (e.keyCode == 'x'.code)) {
 //                    Clipboard.cut(node) { node, dest, index ->
@@ -59,6 +76,7 @@ fun TextWidget.setCopySource(node: Statement) {
         }
     })
 }
+
 
 fun TextWidget.setMoveSource(stmt: Statement, block: BlockStmt) {
     addKeyListenerInternal(object : KeyAdapter() {

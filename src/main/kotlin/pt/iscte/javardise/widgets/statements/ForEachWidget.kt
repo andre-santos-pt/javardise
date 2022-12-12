@@ -14,6 +14,7 @@ import pt.iscte.javardise.basewidgets.*
 import pt.iscte.javardise.external.column
 import pt.iscte.javardise.external.observeNotNullProperty
 import pt.iscte.javardise.external.row
+import pt.iscte.javardise.setCopySource
 import pt.iscte.javardise.widgets.expressions.ExpressionWidget
 import pt.iscte.javardise.widgets.expressions.createExpressionWidget
 
@@ -39,6 +40,7 @@ class ForEachWidget(parent: SequenceWidget, node: ForEachStmt,
                 keyword.addDelete(node, parentBlock)
                 keyword.addShallowDelete()
                 keyword.addEmptyStatement(this@ForEachWidget, parentBlock, node, false)
+                keyword.setCopySource(node)
 
                 FixedToken(this, "(")
                 variable = this.createVarExp(this, node.variable)

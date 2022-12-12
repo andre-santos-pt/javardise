@@ -25,7 +25,7 @@ class CharacterExpressionWidget(
 
     init {
         open = TokenWidget(this, "'")
-        //open.label.foreground = configuration.commentColor
+        open.widget.foreground = configuration.commentColor
         text = TextWidget.create(this, node.value)
 
         text.widget.foreground =  configuration.commentColor

@@ -12,6 +12,8 @@ import pt.iscte.javardise.CommandStack
 import pt.iscte.javardise.basewidgets.SequenceWidget
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.external.indexOfIdentity
+import pt.iscte.javardise.setMoveSource
+import pt.iscte.javardise.setPasteTarget
 import java.util.concurrent.ThreadPoolExecutor.DiscardOldestPolicy
 
 class EmptyStatementWidget(
@@ -48,6 +50,9 @@ class EmptyStatementWidget(
             }
             else
                 semiColon.clear()
+        }
+        semiColon.setPasteTarget {
+            parentBlock.statements.replaceCommand(parentBlock, node, it)
         }
 
         configuration.statementFeatures.forEach {

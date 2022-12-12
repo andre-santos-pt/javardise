@@ -16,6 +16,7 @@ import pt.iscte.javardise.basewidgets.*
 import pt.iscte.javardise.external.column
 import pt.iscte.javardise.external.observeProperty
 import pt.iscte.javardise.external.row
+import pt.iscte.javardise.setCopySource
 import pt.iscte.javardise.widgets.expressions.ExpressionWidget
 import pt.iscte.javardise.widgets.expressions.createExpressionWidget
 
@@ -44,6 +45,7 @@ class DoWhileWidget(
                 keyword.addDelete(node, parentBlock)
                 keyword.addShallowDelete()
                 keyword.addEmptyStatement(this@DoWhileWidget, parentBlock, node, false)
+                keyword.setCopySource(node)
                 openBracket = TokenWidget(this, "{")
             }
             bodyWidget = createSequence(this, node.body.asBlockStmt())
@@ -57,6 +59,7 @@ class DoWhileWidget(
                 FixedToken(this, ")")
                 closingBracket = TokenWidget(this, ";")
                 closingBracket.addEmptyStatement(this@DoWhileWidget, parentBlock, node)
+                closingBracket.addDelete(node, parentBlock)
             }
         }
         node.observeProperty<Expression>(ObservableProperty.CONDITION) {

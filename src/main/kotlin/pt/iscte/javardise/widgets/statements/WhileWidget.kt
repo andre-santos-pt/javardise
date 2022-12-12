@@ -10,10 +10,7 @@ import com.github.javaparser.ast.stmt.Statement
 import com.github.javaparser.ast.stmt.WhileStmt
 import org.eclipse.swt.SWT
 import org.eclipse.swt.widgets.Composite
-import pt.iscte.javardise.Command
-import pt.iscte.javardise.CommandKind
-import pt.iscte.javardise.CommandStack
-import pt.iscte.javardise.Configuration
+import pt.iscte.javardise.*
 import pt.iscte.javardise.basewidgets.*
 import pt.iscte.javardise.external.block
 import pt.iscte.javardise.external.column
@@ -68,7 +65,8 @@ class WhileWidget(
                 keyword.addDelete(node, parentBlock)
                 keyword.addShallowDelete()
                 keyword.addEmptyStatement(this@WhileWidget, parentBlock, node, false)
-                //keyword.setCopySource(node)
+                keyword.setCopySource(node)
+
                 openClause = FixedToken(this, "(")
                 condition = createExpWidget(node.condition)
                 FixedToken(this, ")")

@@ -13,6 +13,7 @@ import org.eclipse.swt.widgets.Composite
 import pt.iscte.javardise.CommandStack
 import pt.iscte.javardise.basewidgets.*
 import pt.iscte.javardise.external.*
+import pt.iscte.javardise.setCopySource
 import pt.iscte.javardise.widgets.expressions.ExpressionWidget
 import pt.iscte.javardise.widgets.expressions.createExpressionWidget
 
@@ -43,6 +44,8 @@ class ForWidget(
                 keyword.addDelete(node, parentBlock)
                 keyword.addShallowDelete()
                 keyword.addEmptyStatement(this@ForWidget, parentBlock, node, false)
+                keyword.setCopySource(node)
+
                 FixedToken(this, "(")
 
                 init = if (node.initialization.isEmpty()) null

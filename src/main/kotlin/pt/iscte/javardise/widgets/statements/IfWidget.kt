@@ -14,11 +14,8 @@ import com.github.javaparser.ast.stmt.WhileStmt
 import org.eclipse.swt.SWT
 import org.eclipse.swt.widgets.Composite
 import org.eclipse.swt.widgets.Control
-import pt.iscte.javardise.Command
-import pt.iscte.javardise.CommandKind
-import pt.iscte.javardise.CommandStack
+import pt.iscte.javardise.*
 import pt.iscte.javardise.CommandStack.NullStack.modifyCommand
-import pt.iscte.javardise.Configuration
 import pt.iscte.javardise.basewidgets.*
 import pt.iscte.javardise.external.*
 import pt.iscte.javardise.widgets.expressions.ExpressionWidget
@@ -77,7 +74,7 @@ class IfWidget(
                 keyword.addDelete(node, parentBlock)
                 keyword.addShallowDelete()
                 keyword.addEmptyStatement(this@IfWidget, parentBlock, node, false)
-                //keyword.setCopySource(node)
+                keyword.setCopySource(node)
                 openClause = FixedToken(this, "(")
                 condition = this.createExpWidget(node.condition)
                 FixedToken(this, ")")
