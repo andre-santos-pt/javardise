@@ -7,10 +7,7 @@ import com.github.javaparser.ast.expr.NameExpr
 import com.github.javaparser.ast.observer.AstObserver
 import com.github.javaparser.ast.observer.AstObserverAdapter
 import com.github.javaparser.ast.observer.ObservableProperty
-import com.github.javaparser.ast.stmt.BlockStmt
-import com.github.javaparser.ast.stmt.IfStmt
-import com.github.javaparser.ast.stmt.Statement
-import com.github.javaparser.ast.stmt.WhileStmt
+import com.github.javaparser.ast.stmt.*
 import org.eclipse.swt.SWT
 import org.eclipse.swt.widgets.Composite
 import org.eclipse.swt.widgets.Control
@@ -133,9 +130,10 @@ class IfWidget(
     private fun Composite.createExpWidget(condition: Expression) =
         createExpressionWidget(this, condition) {
             if (it == null)
-                parentBlock.statements.removeCommand(
+                parentBlock.statements.replaceCommand(
                     parentBlock.parentNode.get(),
-                    node
+                    node,
+                    EmptyStmt()
                 )
             else
                 node.modifyCommand(node.condition, it, node::setCondition)

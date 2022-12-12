@@ -1,5 +1,6 @@
 package pt.iscte.javardise.widgets.statements
 
+import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.comments.LineComment
 import com.github.javaparser.ast.stmt.BlockStmt
 import com.github.javaparser.ast.stmt.EmptyStmt
@@ -8,12 +9,10 @@ import org.eclipse.swt.SWT
 import org.eclipse.swt.events.KeyListener
 import org.eclipse.swt.widgets.Display
 import org.eclipse.swt.widgets.Text
-import pt.iscte.javardise.CommandStack
+import pt.iscte.javardise.*
 import pt.iscte.javardise.basewidgets.SequenceWidget
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.external.indexOfIdentity
-import pt.iscte.javardise.setMoveSource
-import pt.iscte.javardise.setPasteTarget
 import java.util.concurrent.ThreadPoolExecutor.DiscardOldestPolicy
 
 class EmptyStatementWidget(
@@ -27,7 +26,6 @@ class EmptyStatementWidget(
 
     init {
         require(!node.comment.isPresent)
-       background = Display.getDefault().getSystemColor(SWT.COLOR_CYAN)
 
         semiColon = TextWidget.create(this, "") { c, s ->
             c.toString().matches(Regex("\\w|\\[|]|\\.|\\+|-|\\*|/|%"))
@@ -52,7 +50,37 @@ class EmptyStatementWidget(
                 semiColon.clear()
         }
         semiColon.setPasteTarget {
-            parentBlock.statements.replaceCommand(parentBlock, node, it)
+            commandStack.execute(object : Command {
+                override val target: Node = parentBlock
+                override val kind: CommandKind = CommandKind.MODIFY
+                override val element: Statement = it
+
+                val added = mutableListOf<Statement>()
+
+                override fun run() {
+                    if(element is BlockStmt) {
+                        added.addAll(element.statements)
+                        added.reversed().forEach {
+                            parentBlock.statements.addAfter(it, node)
+                        }
+//                        if(element.statements.first.isPresent)
+//                          parentBlock.statements.replaceCommand(parentBlock, node, element.statements.first.get())
+                    }
+                    else {
+                        added.add(element)
+                        //parentBlock.statements.replaceCommand(parentBlock, node, it)
+                        parentBlock.statements.addAfter(element, node)
+                    }
+                }
+
+                override fun undo() {
+                    added.forEach {
+                        it.remove()
+                    }
+                }
+
+            })
+          //  parentBlock.statements.replaceCommand(parentBlock, node, it)
         }
 
         configuration.statementFeatures.forEach {

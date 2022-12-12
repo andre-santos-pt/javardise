@@ -2,6 +2,7 @@ package pt.iscte.javardise
 
 import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.stmt.BlockStmt
+import com.github.javaparser.ast.stmt.EmptyStmt
 import com.github.javaparser.ast.stmt.Statement
 import org.eclipse.swt.SWT
 import org.eclipse.swt.events.KeyAdapter
@@ -45,8 +46,15 @@ fun TextWidget.setCopySource(node: Statement) {
     addKeyListenerInternal(object : KeyAdapter() {
         override fun keyPressed(e: KeyEvent) {
             if ((e.stateMask == SWT.MOD1) && (e.character == 'c')) {
-                Clipboard.copyStatement = node.clone()
-                println("copy $node")
+                if(node == Clipboard.copyStatement && node.parentNode.isPresent && node.parentNode.get() is BlockStmt) {
+                    Clipboard.copyStatement = (node.parentNode.get() as Statement).clone()
+//                    if(Clipboard.copyStatement is BlockStmt)
+//                        (Clipboard.copyStatement as BlockStmt).statements.dropWhile { it is EmptyStmt }.dropLastWhile { it is EmptyStmt }
+                }
+                else
+                    Clipboard.copyStatement = node.clone()
+                println("copy ${Clipboard.copyStatement}")
+
             }
         }
     })

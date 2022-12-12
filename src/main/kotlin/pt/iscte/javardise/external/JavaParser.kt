@@ -13,6 +13,7 @@ import com.github.javaparser.ast.observer.Observable
 import com.github.javaparser.ast.observer.ObservableProperty
 import com.github.javaparser.ast.stmt.*
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter
+import pt.iscte.javardise.Configuration
 import java.io.File
 import java.util.*
 
@@ -72,9 +73,11 @@ fun substituteControlBlocks(node: Node) {
             if (n.body !is BlockStmt)
                 n.body = if (n.body == null) BlockStmt() else BlockStmt(NodeList(n.body))
 
-            if(!n.compare.isPresent)
-                n.setCompare(BooleanLiteralExpr(true))
+//            if(!n.compare.isPresent)
+//                n.setCompare(BooleanLiteralExpr(true))
 
+            if(n.update.isEmpty())
+                n.update.add(Configuration.hole())
             super.visit(n, arg)
         }
 

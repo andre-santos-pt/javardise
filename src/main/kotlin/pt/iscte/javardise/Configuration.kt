@@ -1,6 +1,7 @@
 package pt.iscte.javardise
 
 import com.github.javaparser.ast.Node
+import com.github.javaparser.ast.expr.NameExpr
 import com.github.javaparser.ast.stmt.Statement
 import org.eclipse.swt.SWT
 import org.eclipse.swt.events.KeyEvent
@@ -39,7 +40,11 @@ interface Configuration {
         const val noParseToken = "\$NOPARSE"
         const val fillInToken = "\$HOLE"
         val maskKey = SWT.MOD1
+
+        fun hole() = NameExpr(fillInToken)
     }
+
+
 }
 
 fun KeyEvent.isCombinedKey(key: Int) =

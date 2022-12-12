@@ -9,6 +9,7 @@ import pt.iscte.javardise.basewidgets.TokenWidget
 import pt.iscte.javardise.external.ROW_LAYOUT_H_SHRINK
 import pt.iscte.javardise.external.isIncrementorOrDecrementor
 import pt.iscte.javardise.external.observeProperty
+import pt.iscte.javardise.setCopySource
 import pt.iscte.javardise.widgets.expressions.ExpressionWidget
 import pt.iscte.javardise.widgets.expressions.createExpressionWidget
 
@@ -25,6 +26,7 @@ open class ExpressionStatementWidget(
         layout = ROW_LAYOUT_H_SHRINK
         expression = createExpression(node.expression)
         expression.head.addEmptyStatement(this, parentBlock, node, false)
+        expression.head.setCopySource(node)
         semiColon = TokenWidget(this, ";")
         semiColon. addEmptyStatement(this, parentBlock, node)
         semiColon.addDeleteListener {

@@ -11,13 +11,14 @@ import com.github.javaparser.ast.type.PrimitiveType
 import org.eclipse.swt.SWT
 import org.eclipse.swt.widgets.Composite
 import pt.iscte.javardise.CommandStack
+import pt.iscte.javardise.Configuration
 import pt.iscte.javardise.basewidgets.*
 import pt.iscte.javardise.external.*
 import pt.iscte.javardise.setCopySource
 import pt.iscte.javardise.widgets.expressions.ExpressionWidget
 import pt.iscte.javardise.widgets.expressions.createExpressionWidget
 
-// TODO multi init/update
+// TODO multi init/update, fix bugs with empty, i++
 class ForWidget(
     parent: SequenceWidget,
     node: ForStmt,
@@ -52,7 +53,7 @@ class ForWidget(
                 else createInitExp(node.initialization[0])
 
                 firstSemiColon = FixedToken(this, ";")
-                condition = createCompareExp(node.compare.get())
+                condition = createCompareExp(node.compare.getOrNull ?: Configuration.hole())
                 secondSemiColon = FixedToken(this, ";")
 
                 prog = if (node.update.isEmpty()) null
@@ -84,7 +85,7 @@ class ForWidget(
 
         node.observeProperty<Expression>(ObservableProperty.COMPARE) {
             condition.dispose()
-            condition = firstRow.createCompareExp(it!!)
+            condition = firstRow.createCompareExp(it ?: Configuration.hole())
             condition.moveAbove(secondSemiColon.label)
             condition.requestLayout()
             condition.setFocusOnCreation()
@@ -103,6 +104,18 @@ class ForWidget(
                 prog?.requestLayout()
                 prog?.setFocus()
             }
+
+            override fun elementAdd(
+                list: NodeList<Expression>,
+                index: Int,
+                node: Expression
+            ) {
+                prog?.dispose()
+                prog = firstRow.createUpdateExp(node)
+                prog?.moveBelow(secondSemiColon.label)
+                prog?.requestLayout()
+                prog?.setFocus()
+            }
         })
     }
 
@@ -116,16 +129,18 @@ class ForWidget(
 
     private fun Composite.createCompareExp(exp: Expression) =
         createExpressionWidget(this, exp) {
-            if (it == null)
-                node.modifyCommand(node.compare.get(), BooleanLiteralExpr(true), node::setCompare)
-            else
-                node.modifyCommand(node.compare.get(), it, node::setCompare)
+            node.modifyCommand(node.compare.getOrNull, it, node::setCompare)
         }
 
     private fun Composite.createUpdateExp(exp: Expression) =
         createExpressionWidget(this, exp) {
             if (it != null)
-                node.update.changeCommand(node, it, 0)
+                if(node.update.isEmpty())
+                    node.update.addCommand(node, it)
+                else
+                    node.update.changeCommand(node, it, 0)
+            else
+                node.update.clear()
         }
 
     override fun setFocusOnCreation(firstFlag: Boolean) {
@@ -155,7 +170,7 @@ object ForFeature : StatementFeature<ForStmt, ForWidget>(
                                 IntegerLiteralExpr("0")
                             )
                         )
-                    ), NameExpr("condition"),
+                    ), NameExpr(Configuration.fillInToken),
                     NodeList(
                         UnaryExpr(
                             NameExpr("i"),

@@ -64,7 +64,7 @@ class DoWhileWidget(
         }
         node.observeProperty<Expression>(ObservableProperty.CONDITION) {
             condition.dispose()
-            condition = lastRow.createExpWidget(it ?: NameExpr("condition"))
+            condition = lastRow.createExpWidget(it ?: NameExpr(Configuration.fillInToken))
             condition.moveBelow(openClause.label)
             condition.requestLayout()
             condition.setFocusOnCreation()
@@ -73,7 +73,9 @@ class DoWhileWidget(
 
     private fun Composite.createExpWidget(condition: Expression) =
         createExpressionWidget(this, condition) {
-            if(it != null)
+            if(it == null)
+                node.modifyCommand(node.condition, NameExpr(Configuration.fillInToken), node::setCondition)
+            else
                 node.modifyCommand(node.condition, it, node::setCondition)
         }
 
