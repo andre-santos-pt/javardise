@@ -2,16 +2,11 @@ package pt.iscte.javardise.examples
 
 import com.github.javaparser.ParseProblemException
 import com.github.javaparser.StaticJavaParser
-import com.github.javaparser.ast.CompilationUnit
 import com.github.javaparser.ast.NodeList
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration
-import com.github.javaparser.ast.expr.SimpleName
-import com.github.javaparser.ast.observer.ObservableProperty
 import org.eclipse.swt.SWT
 import org.eclipse.swt.custom.ScrolledComposite
 import org.eclipse.swt.custom.StackLayout
-import org.eclipse.swt.events.ControlEvent
-import org.eclipse.swt.events.ControlListener
 import org.eclipse.swt.events.SelectionAdapter
 import org.eclipse.swt.events.SelectionEvent
 import org.eclipse.swt.graphics.Point
@@ -20,15 +15,12 @@ import org.eclipse.swt.layout.GridData
 import org.eclipse.swt.layout.GridLayout
 import org.eclipse.swt.widgets.*
 import org.eclipse.swt.widgets.List
-import pt.iscte.javardise.basewidgets.ICodeDecoration
 import pt.iscte.javardise.external.*
 import pt.iscte.javardise.widgets.members.ClassWidget
 import java.io.File
-import java.io.FileFilter
 import java.io.FileNotFoundException
 import java.io.PrintWriter
-import java.util.WeakHashMap
-import javax.lang.model.SourceVersion
+import java.util.*
 
 
 fun main(args: Array<String>) {
@@ -51,6 +43,14 @@ fun main(args: Array<String>) {
     val window = JavardiseClassicEditor(display, root)
     window.open()
 }
+
+
+data class TabData(
+    val file: File,
+    val model: ClassOrInterfaceDeclaration?,
+    val classWidget: ClassWidget?
+)
+
 
 class JavardiseClassicEditor(val display: Display, val folder: File) {
 
@@ -99,39 +99,60 @@ class JavardiseClassicEditor(val display: Display, val folder: File) {
                             File(
                                 folder.absoluteFile,
                                 fileList.selection.first()
-                            ), fileList, editorArea
+                            ), editorArea
                         )
                         openTabs.add(tab)
                         stacklayout.topControl = tab
+
                         editorArea.layout()
+
+                        val data = tab.data as TabData
+//                        if (data.model != null)
+//                            compile(data.model)
                     }
                 }
             }
         })
 
-        folder.listFiles(FileFilter { it.name.endsWith(".java") })?.forEach {
+        // FileFilter { it.name.endsWith(".java") }
+        folder.listFiles()?.forEach {
             fileList.add(it.name)
         }
 
-        val menu = Menu(fileList)
-        val newFile = MenuItem(menu, SWT.PUSH)
-        newFile.text = "New file"
-        newFile.addSelectionListener(object : SelectionAdapter() {
-            override fun widgetSelected(e: SelectionEvent?) {
-                prompt("File name") {
+
+//        val menu = Menu(fileList)
+//        val newFile = MenuItem(menu, SWT.PUSH)
+//        newFile.text = "New file"
+//        newFile.addSelectionListener(object : SelectionAdapter() {
+//            override fun widgetSelected(e: SelectionEvent?) {
+//                prompt("File name") {
+//                    val f = File(folder, it)
+//                    f.createNewFile()
+//                    fileList.add(f.name)
+//                    fileList.requestLayout()
+//                    fileList.select(fileList.itemCount)
+//                }
+//            }
+//        })
+        fileList.menu {
+            item("New file") {
+                shell.prompt("New file", "name") {
                     val f = File(folder, it)
                     f.createNewFile()
                     fileList.add(f.name)
                     fileList.requestLayout()
                     fileList.select(fileList.itemCount)
                 }
-//                val newTab = createTab(f, fileList, editorArea)
-//                stacklayout.topControl = newTab
-//                editorArea.layout()
-
             }
-        })
-        fileList.menu = menu
+            item("Compile") {
+                if(stacklayout.topControl != null) {
+                    val model = (stacklayout.topControl.data as TabData).model
+                    model?.let {
+                        compile(it)
+                    }
+                }
+            }
+        }
 
         // BUG lost focus
         display.addFilter(SWT.KeyDown) {
@@ -143,12 +164,15 @@ class JavardiseClassicEditor(val display: Display, val folder: File) {
         }
     }
 
-    private fun compile() {
+    private fun compile(model: ClassOrInterfaceDeclaration) {
         compileErrors.forEach {
             it.value.forEach { it.delete() }
         }
+
         compileErrors.clear()
-        val files = folder.listFiles(FileFilter { it.name.endsWith(".java") })
+        // FileFilter { it.name.endsWith(".java") }
+
+        val files = folder.listFiles()
             .map {
                 Triple(
                     it.absolutePath,
@@ -161,29 +185,38 @@ class JavardiseClassicEditor(val display: Display, val folder: File) {
             .map {
                 Pair(
                     it.second!!,
-                    openTabs.find { w -> (w.data as TabData).file.absolutePath == it.first}?.data as? TabData)
+                    openTabs.find { w -> (w.data as TabData).file.absolutePath == it.first }?.data as? TabData
+                )
             }
-            .filter {it.second != null}
+            .filter { it.second != null }
             .map {
                 Pair(
                     it.first,
-                    it.second!!.classWidget!!)
+                    it.second!!.classWidget!!
+                )
             }
             .map { println(it); it }
         val errors = checkCompileErrors(files)
         compileErrors.putAll(errors)
+
+        compileErrors[model]?.forEach {
+            it.show()
+        }
     }
 
     private fun createTab(
         file: File,
-        list: List,
         comp: Composite
     ): Composite {
         val tab = Composite(comp, SWT.BORDER)
         val layout = FillLayout()
         tab.layout = layout
 
-        val typeName = file.name.dropLast(".java".length)
+        val typeName = if (file.name.endsWith(".java"))
+            file.name.dropLast(".java".length)
+        else
+            file.name
+
         val model = if (file.exists()) {
             try {
                 val cu = loadCompilationUnit(file)
@@ -199,7 +232,7 @@ class JavardiseClassicEditor(val display: Display, val folder: File) {
         }
 
         if (model == null) {
-            tab.data = TabData(file, null)
+            tab.data = TabData(file, null, null)
             tab.fill {
                 val src = file.readLines().joinToString(separator = "\n")
                 label(src).foreground =
@@ -215,11 +248,6 @@ class JavardiseClassicEditor(val display: Display, val folder: File) {
             }
             w.setAutoScroll()
 
-            compile()
-            compileErrors[model]?.forEach {
-                it.show()
-            }
-
             val scroll = w.parent as ScrolledComposite
             scroll.verticalBar.addListener(SWT.Selection, object : Listener {
                 override fun handleEvent(p0: Event?) {
@@ -234,52 +262,22 @@ class JavardiseClassicEditor(val display: Display, val folder: File) {
                 writer.println(model.toString())
                 writer.close()
 
-                compile()
-                compileErrors[model]?.forEach {
-                    it.show()
-                }
-
+               // compile(model)
             }
-            tab.data = TabData(file, w)
+            tab.data = TabData(file, model, w)
+
+
         }
         return tab
     }
 
-    data class TabData(val file: File, val classWidget: ClassWidget?)
+
 
     fun notFoundLabel(p: Composite) = Composite(p, SWT.BORDER).apply {
         layout = FillLayout()
         Label(this, SWT.NONE).apply {
             text = "No public class found"
         }
-    }
-
-
-    private fun load(file: File): ClassOrInterfaceDeclaration {
-        require(file.name.endsWith(".java")) {
-            "Java file must have '.java' extension"
-        }
-        val typeName = file.name.dropLast(".java".length)
-
-        require(SourceVersion.isIdentifier(typeName)) {
-            "'$typeName' is not a valid identifier for a Java type"
-        }
-
-        val model = if (file.exists()) {
-            val cu = loadCompilationUnit(file)
-            cu.findMainClass() ?: ClassOrInterfaceDeclaration(
-                NodeList(), false, typeName
-            )
-        } else {
-            val cu = CompilationUnit()
-            cu.addClass(typeName)
-        }
-
-        model.observeProperty<SimpleName>(ObservableProperty.NAME) {
-            shell.text = it?.toString() ?: "No public class found"
-        }
-        shell.requestLayout()
-        return model
     }
 
 
@@ -291,6 +289,34 @@ class JavardiseClassicEditor(val display: Display, val folder: File) {
         }
         display.dispose()
     }
+
+
+//    private fun load(file: File): ClassOrInterfaceDeclaration {
+//        require(file.name.endsWith(".java")) {
+//            "Java file must have '.java' extension"
+//        }
+//        val typeName = file.name.dropLast(".java".length)
+//
+//        require(SourceVersion.isIdentifier(typeName)) {
+//            "'$typeName' is not a valid identifier for a Java type"
+//        }
+//
+//        val model = if (file.exists()) {
+//            val cu = loadCompilationUnit(file)
+//            cu.findMainClass() ?: ClassOrInterfaceDeclaration(
+//                NodeList(), false, typeName
+//            )
+//        } else {
+//            val cu = CompilationUnit()
+//            cu.addClass(typeName)
+//        }
+//
+//        model.observeProperty<SimpleName>(ObservableProperty.NAME) {
+//            shell.text = it?.toString() ?: "No public class found"
+//        }
+//        shell.requestLayout()
+//        return model
+//    }
 }
 
 

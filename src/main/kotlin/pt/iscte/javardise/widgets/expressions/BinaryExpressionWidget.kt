@@ -31,6 +31,8 @@ class BinaryExpressionWidget(
     val rightObserver: AstObserver
     val operatorObserver: AstObserver
 
+    private val rightExp get() = right
+
     init {
         operator = TokenWidget(this, node.operator.asString(),
             alternatives = { binaryOperators.map { it.asString() } }) {
@@ -39,6 +41,7 @@ class BinaryExpressionWidget(
                 binaryOperators.find { op -> op.asString() == it },
                 node::setOperator
             )
+            rightExp.setFocus()
         }
         left = drawLeft(this, node.left)
         right = drawRight(this, node.right)
@@ -157,6 +160,8 @@ class BinaryExpressionWidget(
     override fun toString(): String {
         return "BiExp $node"
     }
+
+
 
     override val tail: TextWidget
         get() = right.tail

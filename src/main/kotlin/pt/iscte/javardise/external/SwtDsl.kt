@@ -6,6 +6,7 @@ import org.eclipse.swt.custom.StackLayout
 import org.eclipse.swt.events.*
 import org.eclipse.swt.graphics.Font
 import org.eclipse.swt.graphics.FontData
+import org.eclipse.swt.graphics.Point
 import org.eclipse.swt.graphics.Rectangle
 import org.eclipse.swt.layout.FillLayout
 import org.eclipse.swt.layout.GridData
@@ -228,33 +229,44 @@ fun message(init: Shell.() -> Unit) {
     s.open()
 }
 
-fun prompt(message: String, action: (String) -> Unit) {
-    val s = shell(SWT.DIALOG_TRIM or SWT.APPLICATION_MODAL) {
-        layout = RowLayout(SWT.VERTICAL)
-        label(message)
-        val t = text {
-
-        }
-        t.addKeyListener(object : KeyAdapter() {
-            override fun keyPressed(e: KeyEvent) {
-                if(e.character == SWT.CR) {
-                    action(t.text)
-                    this@shell.close()
-                }
+fun Shell.prompt(title: String, message: String, action: (String) -> Unit) {
+    val s = shell(SWT.DIALOG_TRIM or SWT.APPLICATION_MODAL, this, title) {
+        grid(3) {
+            label(message)
+            val t = text {
             }
-        })
-        button("OK") {
-            action(t.text)
-            this@shell.close()
+            t.addKeyListener(object : KeyAdapter() {
+                override fun keyPressed(e: KeyEvent) {
+                    if (e.character == SWT.CR) {
+                        action(t.text)
+                        this@shell.close()
+                    }
+                }
+            })
+            button("OK") {
+                if (t.text.isNotEmpty())
+                    action(t.text)
+                this@shell.close()
+            }
         }
+
     }
-    s.center()
     s.pack()
+    s.location = location
     s.open()
 }
 
-fun shell(style: Int = SWT.NONE, content: Shell.() -> Unit): Shell {
-    val s = Shell(Display.getDefault())
+fun shell(
+    style: Int = SWT.NONE,
+    parent: Shell? = null,
+    title: String = "",
+    content: Shell.() -> Unit
+): Shell {
+    val s = if (parent == null)
+        Shell(Display.getDefault())
+    else
+        Shell(parent)
+    s.text = title
     s.layout = FillLayout()
     content(s)
     return s
@@ -350,8 +362,6 @@ val ROW_LAYOUT_V_SPACED = create(SWT.VERTICAL, 20)
 val ROW_LAYOUT_V_SHRINK = create(SWT.VERTICAL, spacing = 1, top = 0)
 
 
-
-
 fun Control.traverse(visit: (Control) -> Boolean) {
     val enter = visit(this)
     if (this is Composite && enter)
@@ -363,3 +373,18 @@ val Text.isNumeric: Boolean
         val regex = "-?\\d*(\\.\\d+)?".toRegex()
         return text.matches(regex)
     }
+
+fun Control.menu(content: Menu.() -> Unit = {}) {
+    menu = Menu(this)
+    content(menu)
+}
+
+fun Menu.item(text: String, action: MenuItem.() -> Unit) {
+    val item = MenuItem(this, SWT.PUSH)
+    item.text = text
+    item.addSelectionListener(object : SelectionAdapter() {
+        override fun widgetSelected(e: SelectionEvent?) {
+            action(item)
+        }
+    })
+}
