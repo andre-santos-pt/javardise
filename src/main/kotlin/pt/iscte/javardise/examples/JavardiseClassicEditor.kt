@@ -163,6 +163,7 @@ class JavardiseClassicEditor(val display: Display, val folder: File) {
                     }
                 }
             }
+
         }
 
         // BUG lost focus
@@ -282,8 +283,14 @@ class JavardiseClassicEditor(val display: Display, val folder: File) {
             }
             tab.data = TabData(file, model, w)
 
-
+            tab.menu {
+                item("API view") {
+                    val view = APIView(display, model)
+                    view.open()
+                }
+            }
         }
+
         return tab
     }
 

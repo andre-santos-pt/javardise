@@ -409,6 +409,7 @@ open class ClassWidget(
         MethodWidget(
             bodyWidget,
             dec as CallableDeclaration<*>,
+            validModifiers = listOf(Modifier.Keyword.PUBLIC,Modifier.Keyword.PRIVATE),
             configuration = configuration,
             commandStack = commandStack
         )

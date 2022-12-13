@@ -60,7 +60,7 @@ fun Composite.text(
 }
 
 fun Composite.multitext(text: String, style: Int = SWT.BORDER) =
-    text(text, style or SWT.MULTI)
+    text(text, style or SWT.MULTI or SWT.WRAP)
 
 fun Composite.combo(
     style: Int = SWT.BORDER,
