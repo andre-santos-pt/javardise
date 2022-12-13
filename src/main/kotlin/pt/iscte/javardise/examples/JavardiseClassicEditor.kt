@@ -23,10 +23,7 @@ import pt.iscte.javardise.external.*
 import pt.iscte.javardise.widgets.expressions.CallFeature
 import pt.iscte.javardise.widgets.expressions.VariableDeclarationFeature
 import pt.iscte.javardise.widgets.members.ClassWidget
-import pt.iscte.javardise.widgets.statements.EmptyStatementFeature
-import pt.iscte.javardise.widgets.statements.IfFeature
-import pt.iscte.javardise.widgets.statements.StatementFeature
-import pt.iscte.javardise.widgets.statements.StatementWidget
+import pt.iscte.javardise.widgets.statements.*
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.PrintWriter
@@ -302,7 +299,7 @@ class JavardiseClassicEditor(val display: Display, val folder: File) {
                     get() = 20
 
                 override val statementFeatures
-                    get() = listOf(EmptyStatementFeature, IfFeature, VariableDeclarationFeature, CallFeature)
+                    get() = listOf(EmptyStatementFeature, IfFeature, VariableDeclarationFeature, CallFeature, ReturnFeature)
 
             })
             else -> ClassWidget(parent, model)

@@ -282,7 +282,7 @@ open class ClassWidget(
                 w
             }
             is MethodDeclaration, is ConstructorDeclaration -> {
-                val w = createMethodWidget(dec as MethodDeclaration)
+                val w = createMethodWidget(dec as CallableDeclaration<*>)
                 w.closingBracket.addInsert(w, bodyWidget, true)
                 w
             }
@@ -310,10 +310,7 @@ open class ClassWidget(
         }.apply {
             if (this is MemberWidget<*>) {
                 name.addKeyEvent(SWT.BS, precondition = { it.isEmpty() }) {
-                    this@ClassWidget.node.members.removeCommand(
-                        node as Node,
-                        dec
-                    )
+                    this@ClassWidget.node.members.removeCommand(node as Node, dec)
                 }
             }
         }
@@ -405,11 +402,11 @@ open class ClassWidget(
 
     }
 
-    open fun createMethodWidget(dec: MethodDeclaration) =
+    open fun createMethodWidget(dec: CallableDeclaration<*>) =
         MethodWidget(
             bodyWidget,
-            dec as CallableDeclaration<*>,
-            validModifiers = listOf(Modifier.Keyword.PUBLIC,Modifier.Keyword.PRIVATE),
+            dec,
+            validModifiers = configuration.methodModifiers,
             configuration = configuration,
             commandStack = commandStack
         )

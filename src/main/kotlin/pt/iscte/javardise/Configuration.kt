@@ -1,5 +1,6 @@
 package pt.iscte.javardise
 
+import com.github.javaparser.ast.Modifier
 import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.expr.NameExpr
 import com.github.javaparser.ast.stmt.Statement
@@ -35,6 +36,7 @@ interface Configuration {
     val commentColor: Color
     val keywordColor: Color
     val statementFeatures: List<StatementFeature<out Statement, out StatementWidget<out Statement>>>
+    val methodModifiers: List<Modifier.Keyword>
 
     companion object {
         const val noParseToken = "\$NOPARSE"
@@ -129,6 +131,14 @@ open class DefaultConfiguration : Configuration {
         AssignmentFeature,
         CallFeature,
         UnaryExpressionStatementFeature
+    )
+    override val methodModifiers = listOf(
+        Modifier.Keyword.PUBLIC,
+        Modifier.Keyword.PROTECTED,
+        Modifier.Keyword.PRIVATE,
+        Modifier.Keyword.STATIC,
+        Modifier.Keyword.FINAL,
+        Modifier.Keyword.ABSTRACT
     )
 }
 

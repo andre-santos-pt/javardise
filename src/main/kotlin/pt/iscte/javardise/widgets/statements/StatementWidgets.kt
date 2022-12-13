@@ -38,19 +38,21 @@ abstract class StatementWidget<T : Statement>(
     fun TokenWidget.addDelete(node: Statement, block: BlockStmt) =
         addKeyEvent(SWT.BS, action = {
             commandStack.execute(object : Command {
-                val index = block.statements.indexOf(node)
+
                 override val target: Node = block
                 override val kind = CommandKind.REMOVE
                 override val element: Node = node
 
+                var index: Int? = null
                 override fun run() {
-                    block.statements.remove(node)
+                    index = block.statements.indexOfIdentity(node)
+                    block.statements.removeAt(index!!)
                 }
 
                 override fun undo() {
                     // BUG statements list, after parent removal, is not the same (EXC: Widget is disposed)
                     // possible solution: locate by indexing
-                    block.statements.add(index, node.clone())
+                    block.statements.add(index!!, node.clone())
                 }
             })
         })

@@ -85,7 +85,6 @@ interface TextWidget {
             }
         }
         widget.addKeyListener(l)
-        widget.toolTipText += chars.joinToString() + " do something\n"
         return l
     }
 

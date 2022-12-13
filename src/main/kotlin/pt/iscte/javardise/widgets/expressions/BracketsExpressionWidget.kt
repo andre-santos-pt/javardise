@@ -41,6 +41,7 @@ class BracketsExpressionWidget(
 
     private fun drawExpression(parent: Composite, expression: Expression): ExpressionWidget<*> {
         expressionWidget = createExpressionWidget(parent, expression) {
+            // TODO handle null
             node.modifyCommand(node.inner, it, node::setInner)
             expressionWidget.dispose()
             if(it != null)

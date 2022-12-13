@@ -193,9 +193,6 @@ open class Id(parent: Composite, id: NodeWithSimpleName<*>, allowedChars: Regex,
                             || c == SWT.CR)
         }
        // textWidget.menu = Menu(textWidget) // prevent system menu
-
-
-
 //        updateColor(textWidget)
 //
 //        textWidget.addModifyListener {

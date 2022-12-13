@@ -43,7 +43,6 @@ class MethodWidget(
     SequenceContainer<CallableDeclaration<*>>,
     ConfigurationRoot {
 
-
     var typeId: Id? = null
     override val name: Id
 
@@ -102,12 +101,6 @@ class MethodWidget(
         if (node.isConstructorDeclaration) {
             name.setReadOnly()
             name.setToolTip("Constructor name is not editable. Renaming the class modifies constructors accordingly.")
-            // BUG problem with MVC
-//            (node.parentNode.get() as TypeDeclaration<*>)
-//                .observeProperty<SimpleName>(ObservableProperty.NAME) {
-//                    name.set((it as SimpleName).asString())
-//                    (node as ConstructorDeclaration).name = it
-//                }
         }
         FixedToken(firstRow, "(")
         paramsWidget = ParamListWidget(firstRow, node.parameters)

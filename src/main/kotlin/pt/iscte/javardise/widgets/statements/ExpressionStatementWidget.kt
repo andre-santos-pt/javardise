@@ -66,7 +66,7 @@ open class ExpressionStatementWidget(
         if (node.expression.isUnaryExpr)
             semiColon.setFocus()
         else
-            expression.setFocusOnCreation(firstFlag)
+            expression.setFocusOnCreation()
     }
 }
 

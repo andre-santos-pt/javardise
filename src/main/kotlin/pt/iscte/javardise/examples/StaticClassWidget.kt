@@ -27,10 +27,10 @@ class StaticClassWidget(
         dec.addModifier(Modifier.Keyword.STATIC)
     }
 
-    override fun createMethodWidget(dec: MethodDeclaration) =
+    override fun createMethodWidget(dec: CallableDeclaration<*>) =
         MethodWidget(
             bodyWidget,
-            dec as CallableDeclaration<*>,
+            dec,
             emptyList(),
             configuration = configuration,
             commandStack = commandStack
