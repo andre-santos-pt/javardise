@@ -73,9 +73,6 @@ fun substituteControlBlocks(node: Node) {
             if (n.body !is BlockStmt)
                 n.body = if (n.body == null) BlockStmt() else BlockStmt(NodeList(n.body))
 
-//            if(!n.compare.isPresent)
-//                n.setCompare(BooleanLiteralExpr(true))
-
             if(n.update.isEmpty())
                 n.update.add(Configuration.hole())
             super.visit(n, arg)
@@ -163,6 +160,8 @@ fun <T : Node> NodeList<T>.observeList(observer: ListObserver<T>): ListAddRemove
     register(obs)
     return obs
 }
+
+
 
 fun <T : Node> NodeList<T>.swap(i: Int, j: Int) {
     require(i in 0..lastIndex)

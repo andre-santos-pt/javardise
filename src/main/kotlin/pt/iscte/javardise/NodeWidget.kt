@@ -19,10 +19,7 @@ import org.eclipse.swt.widgets.Control
 import org.eclipse.swt.widgets.Text
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
-import pt.iscte.javardise.external.PropertyObserver
-import pt.iscte.javardise.external.isNumeric
-import pt.iscte.javardise.external.isValidType
-import pt.iscte.javardise.external.traverse
+import pt.iscte.javardise.external.*
 import javax.lang.model.SourceVersion
 import kotlin.reflect.KFunction1
 
@@ -58,16 +55,6 @@ interface NodeWidget<T> {
             findComm(n.parent)
         else
             CommandStack.NullStack
-
-//    fun <T : Node> observeProperty(prop: ObservableProperty, event: (T?) -> Unit): AstObserver {
-//        val obs = object : PropertyObserver<T>(prop) {
-//            override fun modified(oldValue: T?, newValue: T?) {
-//                event(newValue)
-//            }
-//        }
-//        (node as Node).register(obs)
-//        return obs
-//    }
 
     fun newKeywordWidget(
         parent: Composite, keyword: String,
@@ -119,6 +106,7 @@ interface NodeWidget<T> {
     fun <N: Node> NodeList<in N>.addCommand(owner: Node, e: N, index: Int = size) =
         commandStack.addCommand(this, owner, e, index)
 
+    // TODO change and replace are the same?
     fun <N: Node> NodeList<in N>.changeCommand(owner: Node, e: N, index: Int) =
         commandStack.changeCommand(this, owner, e, index)
 
@@ -129,7 +117,6 @@ interface NodeWidget<T> {
         commandStack.removeCommand(this, owner, e)
     }
 
-    // TODO change and replace are the same?
 }
 
 inline fun <reified T : NodeWidget<*>> Control.findAncestor(): T? {
@@ -165,7 +152,39 @@ fun Composite.findChild(model: Node): Control? {
     return n
 }
 
+fun <T : Node> Control.observeListUntilDispose(list: NodeList<T>, observer: ListObserver<T>) {
+    val obs = list.observeList(observer)
+    addDisposeListener{
+        list.unregister(obs)
+    }
+}
 
+abstract class ObserverWidget<T : Node>(parent: Composite)
+    : Composite(parent, SWT.NONE), NodeWidget<T> {
+    private val registeredObservers = mutableListOf<Pair<Node,AstObserver>>()
+
+    init {
+        addDisposeListener {
+            registeredObservers.forEach {
+                it.first.unregister(it.second)
+            }
+        }
+    }
+
+    fun <T> observeProperty(prop: ObservableProperty, target: Node = node, event: (T?) -> Unit): AstObserver {
+        val obs = target.observeProperty(prop, event)
+        target.register(obs)
+        registeredObservers.add(Pair(target, obs))
+        return obs
+    }
+
+    fun <P> observeNotNullProperty(prop: ObservableProperty, target: Node = node, event: (P) -> Unit): AstObserver {
+        val obs = target.observeNotNullProperty(prop, event)
+        target.register(obs)
+        registeredObservers.add(Pair(target, obs))
+        return obs
+    }
+}
 
 val ID = Regex("[a-zA-Z][a-zA-Z0-9_]*")
 val ID_CHARS = Regex("[a-zA-Z0-9_]")

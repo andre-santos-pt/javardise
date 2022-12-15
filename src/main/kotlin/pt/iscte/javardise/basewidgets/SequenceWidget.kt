@@ -12,8 +12,6 @@ open class SequenceWidget(
     val insertWidgetCreator: (SequenceWidget, Boolean) -> TextWidget
 ) : Composite(parent, SWT.NONE) {
 
-    var insertWidget: Control? = null
-
     init {
         background = parent.background
         foreground = parent.foreground

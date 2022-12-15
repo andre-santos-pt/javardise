@@ -14,6 +14,7 @@ import org.eclipse.swt.widgets.Composite
 import org.eclipse.swt.widgets.Control
 import pt.iscte.javardise.Configuration
 import pt.iscte.javardise.NodeWidget
+import pt.iscte.javardise.ObserverWidget
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.external.*
 
@@ -21,8 +22,8 @@ import pt.iscte.javardise.external.*
  * ArchRule: subclasses should register node observers using observeNotNullProperty(..)
  * defined here. In this way, those observers are unregistered when the widget is disposed.
  */
-abstract class ExpressionWidget<T : Expression>(parent: Composite) :
-    Composite(parent, SWT.NONE), NodeWidget<T> {
+abstract class ExpressionWidget<T : Expression>(parent: Composite)
+    : ObserverWidget<T>(parent) {
 
     init {
         layout = ROW_LAYOUT_H_SHRINK
@@ -48,30 +49,6 @@ abstract class ExpressionWidget<T : Expression>(parent: Composite) :
 
     override val control: Control
         get() = this
-
-    private val registeredObservers = mutableListOf<Pair<Node,AstObserver>>()
-
-    fun <T> observeProperty(prop: ObservableProperty, target: Node = node, event: (T?) -> Unit): AstObserver {
-        val obs = target.observeProperty(prop, event)
-        target.register(obs)
-        registeredObservers.add(Pair(target, obs))
-        return obs
-    }
-
-    fun <P> observeNotNullProperty(prop: ObservableProperty, target: Node = node, event: (P) -> Unit): AstObserver {
-        val obs = target.observeNotNullProperty(prop, event)
-        target.register(obs)
-        registeredObservers.add(Pair(target, obs))
-        return obs
-    }
-
-    init {
-        addDisposeListener {
-            registeredObservers.forEach {
-                it.first.unregister(it.second)
-            }
-        }
-    }
 }
 
 
@@ -163,14 +140,6 @@ fun <E : Expression> createExpressionWidget(
                                     it.asString().startsWith(e.character)
                                 }
                                 op?.let {
-//                                        editEvent(
-//                                            BinaryExpr(
-//                                                (expression.parentNode.get() as Expression).clone(),
-//                                                NameExpr(Configuration.fillInToken),
-//                                                it
-//                                            )
-//                                        )
-//                                    else
                                         editEvent(
                                             BinaryExpr(
                                                 expression.clone(),

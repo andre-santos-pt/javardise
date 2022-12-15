@@ -77,13 +77,9 @@ class WhileWidget(
         closingBracket.addEmptyStatement(this, parentBlock, node)
         addMoveBracket()
 
-
-
-        node.observeProperty<Expression>(ObservableProperty.CONDITION) {
+        observeNotNullProperty<Expression>(ObservableProperty.CONDITION) {
             condition.dispose()
-            condition = firstRow.createExpWidget(
-                it ?: NameExpr(Configuration.fillInToken)
-            )
+            condition = firstRow.createExpWidget(it)
             condition.moveBelow(openClause.label)
             condition.requestLayout()
             condition.setFocusOnCreation()

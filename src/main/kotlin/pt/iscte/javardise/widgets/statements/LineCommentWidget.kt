@@ -1,6 +1,8 @@
 package pt.iscte.javardise.widgets.statements
 
+import com.github.javaparser.ast.comments.Comment
 import com.github.javaparser.ast.comments.LineComment
+import com.github.javaparser.ast.observer.ObservableProperty
 import com.github.javaparser.ast.stmt.BlockStmt
 import com.github.javaparser.ast.stmt.EmptyStmt
 import com.github.javaparser.ast.stmt.Statement
@@ -34,6 +36,10 @@ class LineCommentWidget(parent: SequenceWidget,
                 node.modifyCommand(node.comment.getOrNull, LineComment(cmt.text), node::setComment)
             }
             cmt.widget.foreground = configuration.commentColor
+
+            observeProperty<Comment>(ObservableProperty.COMMENT) {
+                cmt.text = it?.content?.toString() ?: ""
+            }
         }
     }
 

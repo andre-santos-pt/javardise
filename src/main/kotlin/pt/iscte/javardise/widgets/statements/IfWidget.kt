@@ -103,9 +103,9 @@ class IfWidget(
             }
         })
 
-        node.observeProperty<Expression>(ObservableProperty.CONDITION) {
+        observeNotNullProperty<Expression>(ObservableProperty.CONDITION) {
             condition.dispose()
-            condition = firstRow.createExpWidget(it!!)
+            condition = firstRow.createExpWidget(it)
             condition.moveBelow(openClause.label)
             condition.requestLayout()
             condition.setFocusOnCreation()
@@ -114,7 +114,7 @@ class IfWidget(
         if (node.hasElseBranch())
             elseWidget = ElseWidget(column, node.elseBlock)
 
-        node.observeProperty<Statement>(ObservableProperty.ELSE_STMT) {
+        observeProperty<Statement>(ObservableProperty.ELSE_STMT) {
             if (it == null) {
                 elseWidget?.dispose()
                 requestLayout()

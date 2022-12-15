@@ -81,7 +81,7 @@ class NewArrayExpressionWidget(
                 id.set(it.asString())
             }
 
-            val obs = node.levels.observeList(object : ListObserver<ArrayCreationLevel> {
+            observeListUntilDispose(node.levels, object : ListObserver<ArrayCreationLevel> {
                 override fun elementAdd(
                     list: NodeList<ArrayCreationLevel>,
                     index: Int,
@@ -129,9 +129,6 @@ class NewArrayExpressionWidget(
                 }
 
             })
-            addDisposeListener {
-                node.levels.unregister(obs)
-            }
         }
     }
 

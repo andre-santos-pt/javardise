@@ -8,8 +8,6 @@ import pt.iscte.javardise.basewidgets.SequenceWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
 import pt.iscte.javardise.external.ROW_LAYOUT_H_SHRINK
 import pt.iscte.javardise.external.isIncrementorOrDecrementor
-import pt.iscte.javardise.external.observeNotNullProperty
-import pt.iscte.javardise.external.observeProperty
 import pt.iscte.javardise.setCopySource
 import pt.iscte.javardise.widgets.expressions.ExpressionWidget
 import pt.iscte.javardise.widgets.expressions.createExpressionWidget
@@ -29,17 +27,17 @@ open class ExpressionStatementWidget(
         expression.head.addEmptyStatement(this, parentBlock, node, false)
         expression.head.setCopySource(node)
         semiColon = TokenWidget(this, ";")
-        semiColon. addEmptyStatement(this, parentBlock, node)
+        semiColon.addEmptyStatement(this, parentBlock, node)
         semiColon.addDeleteListener {
             parentBlock.statements.removeCommand(parentBlock, node)
         }
 
-        node.observeNotNullProperty<Expression>(ObservableProperty.EXPRESSION) {
-                expression.dispose()
-                expression = createExpression(it)
-                expression.moveAbove(semiColon.widget)
-                expression.requestLayout()
-                expression.setFocus()
+        observeNotNullProperty<Expression>(ObservableProperty.EXPRESSION) {
+            expression.dispose()
+            expression = createExpression(it)
+            expression.moveAbove(semiColon.widget)
+            expression.requestLayout()
+            expression.setFocus()
         }
     }
 
@@ -47,11 +45,12 @@ open class ExpressionStatementWidget(
         createExpressionWidget(this, e) {
             if (it == null)
                 parentBlock.statements.removeCommand(parentBlock, node)
-            else if(
+            else if (
                 it.isVariableDeclarationExpr ||
                 it.isAssignExpr ||
                 it.isMethodCallExpr ||
-                it.isIncrementorOrDecrementor)
+                it.isIncrementorOrDecrementor
+            )
                 node.modifyCommand(node.expression, it, node::setExpression)
         }
 

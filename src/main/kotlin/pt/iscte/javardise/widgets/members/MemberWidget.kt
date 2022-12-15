@@ -27,7 +27,7 @@ abstract class MemberWidget<T : NodeWithModifiers<*>>(
     validModifiers: List<Modifier.Keyword> = emptyList(),
     style: Int = SWT.NONE,
     final override val configuration: Configuration
-) : Composite(parent, style), NodeWidget<T> {
+) : ObserverWidget<T>(parent) {
     val modifiers = mutableListOf<TokenWidget>()
 
     val column: Composite

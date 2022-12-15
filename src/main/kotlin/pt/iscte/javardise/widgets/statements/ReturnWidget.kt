@@ -41,7 +41,7 @@ class ReturnWidget(
             )
         }
         keyword.addDelete(node, parentBlock)
-        keyword.addEmptyStatement(this@ReturnWidget, parentBlock, node, false)
+        keyword.addEmptyStatement(this, parentBlock, node, false)
         keyword.setCopySource(node)
 
         if (node.expression.isPresent) {
@@ -54,9 +54,10 @@ class ReturnWidget(
             }
         }
         semiColon = TokenWidget(this, ";")
+        semiColon.addDelete(node, parentBlock)
         semiColon.addEmptyStatement(this, parentBlock, node)
 
-        node.observeProperty<Expression>(ObservableProperty.EXPRESSION) {
+        observeProperty<Expression>(ObservableProperty.EXPRESSION) {
             if (it == null) {
                 expression?.dispose()
                 expression = null

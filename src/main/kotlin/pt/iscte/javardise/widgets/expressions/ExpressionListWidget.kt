@@ -99,10 +99,7 @@ class ExpressionListWidget<T : Expression, N : Node>(
                 }
             }
         }
-        val obs = expressionList.observeList(listObserver)
-        addDisposeListener {
-            expressionList.unregister(obs)
-        }
+        observeListUntilDispose(expressionList, listObserver)
     }
 
     override fun setFocus(): Boolean {

@@ -62,9 +62,9 @@ class DoWhileWidget(
                 closingBracket.addDelete(node, parentBlock)
             }
         }
-        node.observeProperty<Expression>(ObservableProperty.CONDITION) {
+        observeNotNullProperty<Expression>(ObservableProperty.CONDITION) {
             condition.dispose()
-            condition = lastRow.createExpWidget(it ?: NameExpr(Configuration.fillInToken))
+            condition = lastRow.createExpWidget(it)
             condition.moveBelow(openClause.label)
             condition.requestLayout()
             condition.setFocusOnCreation()
@@ -74,7 +74,7 @@ class DoWhileWidget(
     private fun Composite.createExpWidget(condition: Expression) =
         createExpressionWidget(this, condition) {
             if(it == null)
-                node.modifyCommand(node.condition, NameExpr(Configuration.fillInToken), node::setCondition)
+                node.modifyCommand(node.condition, Configuration.hole(), node::setCondition)
             else
                 node.modifyCommand(node.condition, it, node::setCondition)
         }
@@ -95,7 +95,7 @@ object DoWhileFeature : StatementFeature<DoStmt, DoWhileWidget>(DoStmt::class.ja
         output: (Statement) -> Unit
     ) {
         insert.addKeyEvent(SWT.SPACE, '{', precondition = { it == "do"}) {
-            output( DoStmt(BlockStmt(NodeList(EmptyStmt())), NameExpr(Configuration.fillInToken)))
+            output(DoStmt(BlockStmt(NodeList(EmptyStmt())), Configuration.hole()))
         }
     }
 }

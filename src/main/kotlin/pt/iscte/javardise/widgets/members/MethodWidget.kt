@@ -94,6 +94,7 @@ class MethodWidget(
         node.observeProperty<Type>(ObservableProperty.TYPE) {
             typeId?.set(it?.asString())
         }
+
         node.observeProperty<SimpleName>(ObservableProperty.NAME) {
             name.set(it?.asString())
         }

@@ -5,12 +5,10 @@ import com.github.javaparser.ast.stmt.BlockStmt
 import com.github.javaparser.ast.stmt.EmptyStmt
 import com.github.javaparser.ast.stmt.Statement
 import org.eclipse.swt.SWT
-import org.eclipse.swt.widgets.Composite
 import org.eclipse.swt.widgets.Control
-import pt.iscte.javardise.Command
-import pt.iscte.javardise.CommandKind
 import pt.iscte.javardise.CommandStack
 import pt.iscte.javardise.NodeWidget
+import pt.iscte.javardise.ObserverWidget
 import pt.iscte.javardise.basewidgets.SequenceWidget
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
@@ -20,8 +18,7 @@ import pt.iscte.javardise.external.indexOfIdentity
 abstract class StatementWidget<T : Statement>(
     parent: SequenceWidget,
     override val node: T
-) :
-    Composite(parent, SWT.NONE), NodeWidget<T> {
+) : ObserverWidget<T>(parent) {
 
     abstract val parentBlock: BlockStmt
 
@@ -36,26 +33,9 @@ abstract class StatementWidget<T : Statement>(
         get() = this
 
     fun TokenWidget.addDelete(node: Statement, block: BlockStmt) =
-        addKeyEvent(SWT.BS, action = {
-            commandStack.execute(object : Command {
-
-                override val target: Node = block
-                override val kind = CommandKind.REMOVE
-                override val element: Node = node
-
-                var index: Int? = null
-                override fun run() {
-                    index = block.statements.indexOfIdentity(node)
-                    block.statements.removeAt(index!!)
-                }
-
-                override fun undo() {
-                    // BUG statements list, after parent removal, is not the same (EXC: Widget is disposed)
-                    // possible solution: locate by indexing
-                    block.statements.add(index!!, node.clone())
-                }
-            })
-        })
+        addKeyEvent(SWT.BS) {
+            block.statements.removeCommand(block, node)
+        }
 }
 
 internal fun TextWidget.addEmptyStatement(
@@ -113,7 +93,6 @@ fun SequenceWidget.findIndexByModel(control: Control): Int {
     check(false)
     return -1
 }
-
 
 fun <T : Node> SequenceWidget.find(predicate: (T) -> Boolean): NodeWidget<T>? =
     children.find { predicate((it as NodeWidget<T>).node) } as NodeWidget<T>

@@ -17,7 +17,7 @@ import pt.iscte.javardise.external.ListAddRemoveObserver
 import pt.iscte.javardise.external.indexOfIdentity
 
 
-interface SequenceContainer<T : Node> : NodeWidget<T>{
+interface SequenceContainer<T : Node> : NodeWidget<T> {
 
     val body: BlockStmt?
     val bodyWidget: SequenceWidget?
@@ -28,24 +28,23 @@ interface SequenceContainer<T : Node> : NodeWidget<T>{
     }
 
     fun focusLast() {
-        if(bodyWidget?.children?.isNotEmpty() == true) {
+        if (bodyWidget?.children?.isNotEmpty() == true) {
             val last = bodyWidget!!.children.last()
-            if(last is SequenceContainer<*>)
-                if(last is IfWidget && last.elseWidget != null)
+            if (last is SequenceContainer<*>)
+                if (last is IfWidget && last.elseWidget != null)
                     last.elseWidget?.closingBracket?.setFocus()
                 else
                     last.closingBracket.setFocus()
             else
                 last.setFocus()
-        }
-        else
+        } else
             setFocus()
     }
 
     val closingBracket: TextWidget
 
 
-    fun addMoveBracket(precondition: () -> Boolean = {true}) {
+    fun addMoveBracket(precondition: () -> Boolean = { true }) {
         require(node is Statement)
 
         closingBracket.addKeyListenerInternal(object : KeyAdapter() {
@@ -60,8 +59,8 @@ interface SequenceContainer<T : Node> : NodeWidget<T>{
                                 get() = node
                             override val kind: CommandKind
                                 get() = CommandKind.MOVE
-                            override val element: Statement
-                                = parentBlock.statements[i + 1]
+                            override val element: Statement =
+                                parentBlock.statements[i + 1]
 
                             override fun run() {
                                 body!!.asBlockStmt().statements.add(element.clone())
@@ -69,8 +68,12 @@ interface SequenceContainer<T : Node> : NodeWidget<T>{
                             }
 
                             override fun undo() {
-                               parentBlock.statements.addAfter(element.clone(), target as Statement)
-                                body!!.asBlockStmt().statements.last.get().remove()
+                                parentBlock.statements.addAfter(
+                                    element.clone(),
+                                    target as Statement
+                                )
+                                body!!.asBlockStmt().statements.last.get()
+                                    .remove()
                             }
 
                         })
@@ -86,8 +89,8 @@ interface SequenceContainer<T : Node> : NodeWidget<T>{
                                 get() = node
                             override val kind: CommandKind
                                 get() = CommandKind.MOVE
-                            override val element: Statement
-                                = body!!.statements.last()
+                            override val element: Statement =
+                                body!!.statements.last()
 
                             override fun run() {
                                 parentBlock.statements.addAfter(
@@ -125,7 +128,8 @@ interface SequenceContainer<T : Node> : NodeWidget<T>{
                         override val element: Statement
                             get() = node as Statement
 
-                        val index = parentBlock.statements.indexOfIdentity(element)
+                        val index =
+                            parentBlock.statements.indexOfIdentity(element)
                         val inner = body!!.statements.map { it.clone() }
                         override fun run() {
                             inner.forEach {
@@ -135,7 +139,7 @@ interface SequenceContainer<T : Node> : NodeWidget<T>{
                         }
 
                         override fun undo() {
-                           parentBlock.statements.add(index, element.clone())
+                            parentBlock.statements.add(index, element.clone())
                             inner.forEach {
                                 it.remove()
                             }
@@ -146,7 +150,6 @@ interface SequenceContainer<T : Node> : NodeWidget<T>{
             }
         })
     }
-
 
 
     fun addWidget(
@@ -171,15 +174,10 @@ interface SequenceContainer<T : Node> : NodeWidget<T>{
         val seq = SequenceWidget(parent, configuration.tabLength) { w, e ->
             createInsert(w, block)
         }
-        populateSequence(seq, block)
-        return seq
-    }
-
-    private fun populateSequence(seq: SequenceWidget, block: BlockStmt) {
         block.statements.forEach {
             addWidget(it, block, seq)
         }
-        block.statements.register(object : ListAddRemoveObserver<Statement>() {
+        val obs = object : ListAddRemoveObserver<Statement>() {
             override fun elementAdd(
                 list: NodeList<Statement>,
                 index: Int,
@@ -224,10 +222,18 @@ interface SequenceContainer<T : Node> : NodeWidget<T>{
                 w.control.requestLayout()
                 w.setFocusOnCreation(true)
             }
-        })
+        }
+        block.statements.register(obs)
+        seq.addDisposeListener {
+            block.statements.unregister(obs)
+        }
+        return seq
     }
 
-    private fun createInsert(seq: SequenceWidget, block: BlockStmt): TextWidget {
+    private fun createInsert(
+        seq: SequenceWidget,
+        block: BlockStmt
+    ): TextWidget {
         require(node is Statement)
         val insert = TextWidget.create(seq) { c, s ->
             c.toString().matches(Regex("\\w|\\[|]|\\.|\\+|-|\\*|/|%"))
@@ -238,11 +244,21 @@ interface SequenceContainer<T : Node> : NodeWidget<T>{
         fun insert(stmt: Statement) {
             val insertIndex = seq.findIndexByModel(insert.widget)
             insert.delete()
-            block.statements.addCommand(block.parentNode.get(), stmt, insertIndex)
+            block.statements.addCommand(
+                block.parentNode.get(),
+                stmt,
+                insertIndex
+            )
         }
 
         configuration.statementFeatures.forEach {
-            it.configureInsert(insert, block, node as Statement, commandStack, ::insert)
+            it.configureInsert(
+                insert,
+                block,
+                node as Statement,
+                commandStack,
+                ::insert
+            )
         }
 
         insert.addFocusLostAction {

@@ -14,6 +14,7 @@ import pt.iscte.javardise.CommandStack
 import pt.iscte.javardise.Configuration
 import pt.iscte.javardise.basewidgets.*
 import pt.iscte.javardise.external.*
+import pt.iscte.javardise.observeListUntilDispose
 import pt.iscte.javardise.setCopySource
 import pt.iscte.javardise.widgets.expressions.ExpressionWidget
 import pt.iscte.javardise.widgets.expressions.createExpressionWidget
@@ -68,7 +69,7 @@ class ForWidget(
         closingBracket = TokenWidget(col, "}")
         closingBracket.addEmptyStatement(this, parentBlock, node)
 
-        node.initialization.observeList(object : ListObserver<Expression> {
+        observeListUntilDispose(node.initialization, object : ListObserver<Expression> {
             override fun elementReplace(
                 list: NodeList<Expression>,
                 index: Int,
@@ -83,7 +84,7 @@ class ForWidget(
             }
         })
 
-        node.observeProperty<Expression>(ObservableProperty.COMPARE) {
+        observeProperty<Expression>(ObservableProperty.COMPARE) {
             condition.dispose()
             condition = firstRow.createCompareExp(it ?: Configuration.hole())
             condition.moveAbove(secondSemiColon.label)
@@ -91,7 +92,7 @@ class ForWidget(
             condition.setFocusOnCreation()
         }
 
-        node.update.observeList(object : ListObserver<Expression> {
+        observeListUntilDispose(node.update, object : ListObserver<Expression> {
             override fun elementReplace(
                 list: NodeList<Expression>,
                 index: Int,

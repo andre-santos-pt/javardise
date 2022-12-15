@@ -27,6 +27,7 @@ import org.eclipse.swt.widgets.Display
 import org.eclipse.swt.widgets.Shell
 import org.eclipse.swt.widgets.Text
 import pt.iscte.javardise.external.*
+import pt.iscte.javardise.observeListUntilDispose
 
 class APIView(parent: Display, model: ClassOrInterfaceDeclaration) {
     val shell: Shell
@@ -82,7 +83,7 @@ class APIView(parent: Display, model: ClassOrInterfaceDeclaration) {
                     }
                 }
             }
-            m.parameters.observeList(object : ListObserver<Parameter> {
+            observeListUntilDispose(m.parameters, object : ListObserver<Parameter> {
                 override fun elementAdd(
                     list: NodeList<Parameter>,
                     index: Int,
@@ -116,7 +117,7 @@ class APIView(parent: Display, model: ClassOrInterfaceDeclaration) {
             group.text = it.toString()
             group.requestLayout()
         }
-        m.modifiers.observeList(object : ListObserver<Modifier> {
+        observeListUntilDispose(m.modifiers, object : ListObserver<Modifier> {
             override fun elementAdd(
                 list: NodeList<Modifier>,
                 index: Int,

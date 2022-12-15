@@ -63,12 +63,9 @@ class EmptyStatementWidget(
                         added.reversed().forEach {
                             parentBlock.statements.addAfter(it, node)
                         }
-//                        if(element.statements.first.isPresent)
-//                          parentBlock.statements.replaceCommand(parentBlock, node, element.statements.first.get())
                     }
                     else {
                         added.add(element)
-                        //parentBlock.statements.replaceCommand(parentBlock, node, it)
                         parentBlock.statements.addAfter(element, node)
                     }
                 }
@@ -78,9 +75,7 @@ class EmptyStatementWidget(
                         it.remove()
                     }
                 }
-
             })
-          //  parentBlock.statements.replaceCommand(parentBlock, node, it)
         }
 
         configuration.statementFeatures.forEach {
@@ -113,11 +108,7 @@ object EmptyStatementFeature : StatementFeature<EmptyStmt, EmptyStatementWidget>
         node: Statement,
         commandStack: CommandStack,
         output: (Statement) -> Unit
-    ) {
-//        insert.addKeyEvent(SWT.CR, precondition = { it.isEmpty() }) {
-//            output(EmptyStmt())
-//        }
-    }
+    ) { }
 
     override fun targets(stmt: Statement): Boolean {
         return super.targets(stmt) && !stmt.comment.isPresent

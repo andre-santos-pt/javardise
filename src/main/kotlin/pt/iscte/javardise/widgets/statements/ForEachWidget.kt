@@ -5,6 +5,7 @@ import com.github.javaparser.ast.expr.NameExpr
 import com.github.javaparser.ast.expr.VariableDeclarationExpr
 import com.github.javaparser.ast.observer.ObservableProperty
 import com.github.javaparser.ast.stmt.BlockStmt
+import com.github.javaparser.ast.stmt.EmptyStmt
 import com.github.javaparser.ast.stmt.ForEachStmt
 import com.github.javaparser.ast.stmt.Statement
 import com.github.javaparser.ast.type.PrimitiveType
@@ -43,7 +44,7 @@ class ForEachWidget(parent: SequenceWidget, node: ForEachStmt,
                 keyword.setCopySource(node)
 
                 FixedToken(this, "(")
-                variable = this.createVarExp(this, node.variable)
+                variable = createVarExp(this, node.variable)
                 colon = FixedToken(this, ":")
                 iterable = createIterableExp(this, node.iterable)
                 FixedToken(this, ")")
@@ -55,14 +56,14 @@ class ForEachWidget(parent: SequenceWidget, node: ForEachStmt,
         }
         openBracket.addEmptyStatement(this@ForEachWidget, node.body.asBlockStmt())
 
-        node.observeNotNullProperty<VariableDeclarationExpr>(ObservableProperty.VARIABLE) {
+        observeNotNullProperty<VariableDeclarationExpr>(ObservableProperty.VARIABLE) {
             variable.dispose()
             variable = createVarExp(firstRow, it)
             variable.moveAbove(colon.label)
             variable.requestLayout()
         }
 
-        node.observeNotNullProperty<Expression>(ObservableProperty.ITERABLE) {
+        observeNotNullProperty<Expression>(ObservableProperty.ITERABLE) {
             iterable.dispose()
             iterable = createIterableExp(firstRow, it)
             iterable.moveBelow(colon.label)
@@ -70,18 +71,18 @@ class ForEachWidget(parent: SequenceWidget, node: ForEachStmt,
         }
     }
 
-    private fun Composite.createVarExp(parent: Composite, exp: VariableDeclarationExpr) =
+    private fun createVarExp(parent: Composite, exp: VariableDeclarationExpr) =
         createExpressionWidget(parent, exp) {
             if (it == null)
-                ;//block.statements.removeCommand(block.parentNode.get(), node)
+                parentBlock.statements.replaceCommand(parentBlock, node, EmptyStmt())
             else
                 node.modifyCommand(node.variable, it as VariableDeclarationExpr, node::setVariable)
         }
 
-    private fun Composite.createIterableExp(parent: Composite, exp: Expression) =
+    private fun createIterableExp(parent: Composite, exp: Expression) =
         createExpressionWidget(parent, exp) {
             if (it == null)
-                ;//block.statements.removeCommand(block.parentNode.get(), node)
+                parentBlock.statements.replaceCommand(parentBlock, node, EmptyStmt())
             else
                 node.modifyCommand(node.iterable, it, node::setIterable)
         }
