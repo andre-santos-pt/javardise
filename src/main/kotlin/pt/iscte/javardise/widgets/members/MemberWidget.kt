@@ -16,10 +16,7 @@ import org.eclipse.swt.widgets.Text
 import pt.iscte.javardise.*
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
-import pt.iscte.javardise.external.ROW_LAYOUT_H_SHRINK
-import pt.iscte.javardise.external.column
-import pt.iscte.javardise.external.isChildOf
-import pt.iscte.javardise.external.row
+import pt.iscte.javardise.external.*
 
 abstract class MemberWidget<N: Node>(
     parent: Composite,
@@ -58,48 +55,51 @@ abstract class MemberWidget<N: Node>(
                     modifiers.add(token)
                 }
 
-                member.modifiers.register(object : AstObserverAdapter() {
-                    override fun listReplacement(
-                        observedNode: NodeList<*>?,
+                observeListUntilDispose(member.modifiers, object : ListObserver<Modifier> {
+                    override fun elementAdd(
+                        list: NodeList<Modifier>,
                         index: Int,
-                        oldNode: Node?,
-                        newNode: Node?
+                        modifier: Modifier
                     ) {
-                        modifiers.find { it.text == (oldNode as Modifier).keyword.asString() }?.text =
-                            (newNode as Modifier).keyword.asString()
+                        val token = createModifierToken(this@row, modifier)
+
+                        if (modifiers.isEmpty())
+                            token.moveAboveInternal(firstRow.children[0])
+                        else if (index == modifiers.size)
+                            token.moveBelowInternal(modifiers.last().widget)
+                        else
+                            token.moveAboveInternal(modifiers[index].widget)
+                        modifiers.add(token)
+                        token.setFocus()
+                        requestLayout()
                     }
 
-                    override fun listChange(
-                        observedNode: NodeList<*>,
-                        type: AstObserver.ListChangeType,
+                    override fun elementRemove(
+                        list: NodeList<Modifier>,
                         index: Int,
-                        nodeAddedOrRemoved: Node
+                        modifier: Modifier
                     ) {
-                        val mod = nodeAddedOrRemoved as Modifier
-                        if (type == AstObserver.ListChangeType.ADDITION) {
-                            val token = createModifierToken(this@row, mod)
-
-                            if (modifiers.isEmpty())
-                                token.moveAboveInternal(firstRow.children[0])
-                            else if (index == modifiers.size)
-                                token.moveBelowInternal(modifiers.last().widget)
+                        val index =
+                            modifiers.indexOfFirst { it.text == modifier.keyword.asString() }
+                        if (index != -1) {
+                            modifiers[index].dispose()
+                            modifiers.removeAt(index)
+                            if (index < modifiers.size)
+                                modifiers[index].setFocus()
                             else
-                                token.moveAboveInternal(modifiers[index].widget)
-                            modifiers.add(token)
-                            token.setFocus()
-                        } else {
-                            val index =
-                                modifiers.indexOfFirst { it.text == mod.keyword.asString() }
-                            if (index != -1) {
-                                modifiers[index].dispose()
-                                modifiers.removeAt(index)
-                                if (index < modifiers.size)
-                                    modifiers[index].setFocus()
-                                else
-                                    firstRow.children[index].setFocus()
-                            }
+                                firstRow.children[index].setFocus()
+                            requestLayout()
                         }
-                        requestLayout()
+                    }
+
+                    override fun elementReplace(
+                        list: NodeList<Modifier>,
+                        index: Int,
+                        old: Modifier,
+                        new: Modifier
+                    ) {
+                        modifiers.find { it.text == old.keyword.asString() }
+                            ?.text = new.keyword.asString()
                     }
                 })
             }
@@ -211,6 +211,8 @@ abstract class MemberWidget<N: Node>(
             n
         } else null
     }
+
+
 
     fun getChildOnFocus(): Text? {
         val onFocus = Display.getDefault().focusControl

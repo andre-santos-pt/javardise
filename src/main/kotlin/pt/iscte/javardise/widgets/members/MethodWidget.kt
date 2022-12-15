@@ -14,6 +14,7 @@ import com.github.javaparser.ast.stmt.BlockStmt
 import com.github.javaparser.ast.stmt.ExpressionStmt
 import com.github.javaparser.ast.type.Type
 import org.eclipse.swt.SWT
+import org.eclipse.swt.layout.RowLayout
 import org.eclipse.swt.widgets.Composite
 import org.eclipse.swt.widgets.Control
 import org.eclipse.swt.widgets.Display
@@ -73,6 +74,9 @@ class MethodWidget(
     }
 
     init {
+        layout = RowLayout()
+        (layout as RowLayout).marginTop = 10
+
         if (node.isMethodDeclaration) {
             type = SimpleTypeWidget(
                 firstRow,
@@ -285,10 +289,10 @@ class MethodWidget(
                     )
                 }
 
-                observeNotNullProperty<Type>(ObservableProperty.TYPE) {
+                observeNotNullProperty<Type>(ObservableProperty.TYPE, target = node) {
                     type.set(it.asString())
                 }
-                observeNotNullProperty<SimpleName>(ObservableProperty.NAME) {
+                observeNotNullProperty<SimpleName>(ObservableProperty.NAME, target = node) {
                     name.set(it.asString())
                 }
             }

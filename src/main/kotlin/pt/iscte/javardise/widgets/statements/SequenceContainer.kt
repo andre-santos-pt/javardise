@@ -14,6 +14,7 @@ import pt.iscte.javardise.basewidgets.SequenceWidget
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
 import pt.iscte.javardise.external.ListAddRemoveObserver
+import pt.iscte.javardise.external.ListObserver
 import pt.iscte.javardise.external.indexOfIdentity
 
 
@@ -177,7 +178,7 @@ interface SequenceContainer<T : Node> : NodeWidget<T> {
         block.statements.forEach {
             addWidget(it, block, seq)
         }
-        val obs = object : ListAddRemoveObserver<Statement>() {
+        val obs = object : ListObserver<Statement> {
             override fun elementAdd(
                 list: NodeList<Statement>,
                 index: Int,
@@ -223,10 +224,8 @@ interface SequenceContainer<T : Node> : NodeWidget<T> {
                 w.setFocusOnCreation(true)
             }
         }
-        block.statements.register(obs)
-        seq.addDisposeListener {
-            block.statements.unregister(obs)
-        }
+
+        seq.observeListUntilDispose(block.statements, obs)
         return seq
     }
 

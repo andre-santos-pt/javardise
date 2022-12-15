@@ -128,20 +128,6 @@ class JavardiseClassicEditor(val display: Display, val folder: File) {
         }
 
 
-//        val menu = Menu(fileList)
-//        val newFile = MenuItem(menu, SWT.PUSH)
-//        newFile.text = "New file"
-//        newFile.addSelectionListener(object : SelectionAdapter() {
-//            override fun widgetSelected(e: SelectionEvent?) {
-//                prompt("File name") {
-//                    val f = File(folder, it)
-//                    f.createNewFile()
-//                    fileList.add(f.name)
-//                    fileList.requestLayout()
-//                    fileList.select(fileList.itemCount)
-//                }
-//            }
-//        })
         fileList.menu {
             item("New file") {
                 shell.prompt("New file", "name") {
@@ -153,7 +139,7 @@ class JavardiseClassicEditor(val display: Display, val folder: File) {
                 }
             }
             item("Compile") {
-                if(stacklayout.topControl != null) {
+                if (stacklayout.topControl != null) {
                     val model = (stacklayout.topControl.data as TabData).model
                     model?.let {
                         compile(it)
@@ -163,13 +149,26 @@ class JavardiseClassicEditor(val display: Display, val folder: File) {
 
         }
 
-        // BUG lost focus
         display.addFilter(SWT.KeyDown) {
             if (it.stateMask == SWT.MOD1 && it.keyCode == 'z'.code) {
                 println("undo")
                 val cmd = classOnFocus?.commandStack
                 cmd?.undo()
                 it.doit = false
+            } else if (it.keyCode == SWT.PAGE_DOWN) {
+                classOnFocus?.getMemberOnFocus()?.let {
+                    val members = classOnFocus!!.node.members
+                    val index = members.indexOf(it)
+                    if (index + 1 < members.size)
+                        classOnFocus?.focus(members[index + 1])
+                }
+            } else if (it.keyCode == SWT.PAGE_UP) {
+                classOnFocus?.getMemberOnFocus()?.let {
+                    val members = classOnFocus!!.node.members
+                    val index = members.indexOf(it)
+                    if (index - 1 >= 0)
+                        classOnFocus?.focus(members[index - 1])
+                }
             }
         }
     }
@@ -214,10 +213,11 @@ class JavardiseClassicEditor(val display: Display, val folder: File) {
         }
     }
 
-    val File.extension get() = if(name.contains('.'))
-        name.substring(name.lastIndexOf('.') + 1)
-    else
-        ""
+    val File.extension
+        get() = if (name.contains('.'))
+            name.substring(name.lastIndexOf('.') + 1)
+        else
+            ""
 
     private fun createTab(
         file: File,
@@ -227,10 +227,10 @@ class JavardiseClassicEditor(val display: Display, val folder: File) {
         val layout = FillLayout()
         tab.layout = layout
 
-        val typeName = if(file.name.contains('.'))
-                file.name.substring(0, file.name.lastIndexOf('.'))
-            else
-                file.name
+        val typeName = if (file.name.contains('.'))
+            file.name.substring(0, file.name.lastIndexOf('.'))
+        else
+            file.name
 
         val model = if (file.exists()) {
             try {
@@ -277,7 +277,7 @@ class JavardiseClassicEditor(val display: Display, val folder: File) {
                 writer.println(model.toString())
                 writer.close()
 
-               // compile(model)
+                // compile(model)
             }
             tab.data = TabData(file, model, w)
 
@@ -292,17 +292,30 @@ class JavardiseClassicEditor(val display: Display, val folder: File) {
         return tab
     }
 
-    fun createWidget(ext: String, parent: Composite, model: ClassOrInterfaceDeclaration) : ClassWidget =
-        when(ext) {
+    fun createWidget(
+        ext: String,
+        parent: Composite,
+        model: ClassOrInterfaceDeclaration
+    ): ClassWidget =
+        when (ext) {
             "sjava" -> StaticClassWidget(parent, model)
-            "fjava" -> StaticClassWidget(parent, model, configuration = object : DefaultConfiguration() {
-                override val fontSize: Int
-                    get() = 20
+            "fjava" -> StaticClassWidget(
+                parent,
+                model,
+                configuration = object : DefaultConfiguration() {
+                    override val fontSize: Int
+                        get() = 20
 
-                override val statementFeatures
-                    get() = listOf(EmptyStatementFeature, IfFeature, VariableDeclarationFeature, CallFeature, ReturnFeature)
+                    override val statementFeatures
+                        get() = listOf(
+                            EmptyStatementFeature,
+                            IfFeature,
+                            VariableDeclarationFeature,
+                            CallFeature,
+                            ReturnFeature
+                        )
 
-            })
+                })
             else -> ClassWidget(parent, model)
         }
 

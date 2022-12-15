@@ -8,10 +8,10 @@ import com.github.javaparser.ast.NodeList
 import com.github.javaparser.ast.body.*
 import com.github.javaparser.ast.expr.NameExpr
 import com.github.javaparser.ast.expr.SimpleName
-import com.github.javaparser.ast.observer.AstObserver
-import com.github.javaparser.ast.observer.AstObserverAdapter
 import com.github.javaparser.ast.observer.ObservableProperty
 import com.github.javaparser.ast.stmt.BlockStmt
+import com.github.javaparser.ast.stmt.EmptyStmt
+import com.github.javaparser.ast.stmt.ExpressionStmt
 import org.eclipse.swt.SWT
 import org.eclipse.swt.custom.ScrolledComposite
 import org.eclipse.swt.layout.RowLayout
@@ -20,9 +20,14 @@ import org.eclipse.swt.widgets.Control
 import org.eclipse.swt.widgets.Display
 import org.eclipse.swt.widgets.Event
 import pt.iscte.javardise.*
-import pt.iscte.javardise.basewidgets.*
+import pt.iscte.javardise.basewidgets.SequenceWidget
+import pt.iscte.javardise.basewidgets.TextWidget
+import pt.iscte.javardise.basewidgets.TokenWidget
 import pt.iscte.javardise.external.*
-import pt.iscte.javardise.widgets.statements.*
+import pt.iscte.javardise.widgets.statements.SequenceContainer
+import pt.iscte.javardise.widgets.statements.find
+import pt.iscte.javardise.widgets.statements.findByModelIndex
+import pt.iscte.javardise.widgets.statements.findIndexByModel
 
 
 val MODIFIERS = "(${
@@ -83,6 +88,17 @@ open class ClassWidget(
             }
         }
     }
+
+    fun getMemberOnFocus(): BodyDeclaration<*>? {
+        val onFocus = Display.getDefault().focusControl
+        return onFocus?.findNode()
+    }
+
+    fun focus(member: BodyDeclaration<*>) {
+        require(node.members.contains(member))
+        findChild(member)?.setFocus()
+    }
+
 
     fun setAutoScroll() {
         require(parent is ScrolledComposite)
@@ -401,6 +417,7 @@ open class ClassWidget(
                     StaticJavaParser.parseType(split[split.lastIndex - 1]),
                     NodeList()
                 )
+                newMethod.body.get().statements.add(EmptyStmt())
                 if (node.isInterface)
                     newMethod.setBody(null)
 
@@ -465,5 +482,7 @@ open class ClassWidget(
             //w.addInsert(w.widget, body, true)
         }
     }
+
+
 }
 

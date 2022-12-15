@@ -89,20 +89,6 @@ class IfWidget(
             !node.hasElseBranch()
         }
 
-
-        node.thenBlock.statements.register(object : AstObserverAdapter() {
-            override fun listChange(
-                observedNode: NodeList<*>,
-                type: AstObserver.ListChangeType,
-                index: Int,
-                nodeAddedOrRemoved: Node?
-            ) {
-                val newSize =
-                    observedNode.size + if (type == AstObserver.ListChangeType.ADDITION) 1 else -1
-                //setThenBracketsVisibility(newSize, openThenBracket, closeThenBracket)
-            }
-        })
-
         observeNotNullProperty<Expression>(ObservableProperty.CONDITION) {
             condition.dispose()
             condition = firstRow.createExpWidget(it)

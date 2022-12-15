@@ -138,12 +138,12 @@ inline fun <reified T : Node> Control.findNode(): T? {
 fun Composite.findChild(model: Node): Control? {
     var n: Control? = null
     traverse {
-        if (it is NodeWidget<*> && it.node == model) {
+        if (it is NodeWidget<*> && it.node === model) {
             n = it
             return@traverse false
         }
 
-        if (it is Text && it.data == model) {
+        if (it is Text && it.data === model) {
             n = it
             return@traverse false
         }
@@ -252,6 +252,7 @@ open class Id(parent: Composite, id: NodeWithSimpleName<*>, allowedChars: Regex,
 
     fun setReadOnly() {
         readOnly = true
+        textWidget.editable = false
     }
 
     fun set(text: String?) {
