@@ -145,8 +145,8 @@ interface ListObserver<T : Node> {
     fun elementReplace(list: NodeList<T>, index: Int, old: T, new: T) {}
 }
 
-fun <T : Node> NodeList<T>.observeList(observer: ListObserver<T>) {
-    register(object : ListAddRemoveObserver<T>() {
+fun <T : Node> NodeList<T>.observeList(observer: ListObserver<T>): ListAddRemoveObserver<T> {
+    val obs = object : ListAddRemoveObserver<T>() {
         override fun elementAdd(list: NodeList<T>, index: Int, node: T) {
             observer.elementAdd(list, index, node)
         }
@@ -159,7 +159,9 @@ fun <T : Node> NodeList<T>.observeList(observer: ListObserver<T>) {
                                     new: T) {
             observer.elementReplace(list, index, old, new)
         }
-    })
+    }
+    register(obs)
+    return obs
 }
 
 fun <T : Node> NodeList<T>.swap(i: Int, j: Int) {
@@ -259,6 +261,8 @@ inline fun <reified E : Expression> tryParse(exp: String): Boolean {
         return false
     }
 }
+
+
 
 fun isValidType(type: String): Boolean =
     try {

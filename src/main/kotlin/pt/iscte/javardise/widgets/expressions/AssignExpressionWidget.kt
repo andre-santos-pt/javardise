@@ -9,6 +9,7 @@ import com.github.javaparser.ast.stmt.ExpressionStmt
 import com.github.javaparser.ast.stmt.Statement
 import org.eclipse.swt.widgets.Composite
 import pt.iscte.javardise.CommandStack
+import pt.iscte.javardise.Configuration
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
 import pt.iscte.javardise.external.*
@@ -35,25 +36,25 @@ class AssignExpressionWidget(
             val find = AssignExpr.Operator.values()
                 .find { op -> op.asString() == it }!!
 
-            node.modifyCommand(node.operator, find, node::setOperator)
+            node.modifyCommand(node.operator, find, node::setOperator) // TODO BUG node is not same instance on undo
         }
 
         value = createValueWidget(node.value)
 
-        node.observeProperty<Expression>(ObservableProperty.TARGET) {
+        observeNotNullProperty<Expression>(ObservableProperty.TARGET) {
             target.dispose()
-            target = createTargetWidget(it!!)
+            target = createTargetWidget(it)
             target.moveAbove(operator.widget)
             target.requestLayout()
             target.setFocusOnCreation()
         }
-        node.observeProperty<AssignExpr.Operator>(ObservableProperty.OPERATOR) {
-            operator.set(it?.asString() ?: "??")
+        observeNotNullProperty<AssignExpr.Operator>(ObservableProperty.OPERATOR) {
+            operator.set(it.asString())
             value.setFocus()
         }
-        node.observeProperty<Expression>(ObservableProperty.VALUE) {
+        observeNotNullProperty<Expression>(ObservableProperty.VALUE) {
             value.dispose()
-            value = createValueWidget(it!!)
+            value = createValueWidget(it)
             value.moveBelow(operator.widget)
             value.requestLayout()
             value.setFocusOnCreation()
@@ -158,7 +159,7 @@ object AssignmentFeature : StatementFeature<ExpressionStmt, ExpressionStatementW
             val stmt = ExpressionStmt(
                 AssignExpr(
                     StaticJavaParser.parseExpression(target),
-                    NameExpr("exp"),
+                    Configuration.hole(),
                     operator
                 )
             )

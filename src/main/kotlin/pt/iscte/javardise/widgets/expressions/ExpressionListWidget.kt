@@ -8,6 +8,7 @@ import com.github.javaparser.ast.expr.Expression
 import com.github.javaparser.ast.expr.NameExpr
 import com.github.javaparser.ast.expr.UnaryExpr
 import com.github.javaparser.ast.nodeTypes.NodeWithArguments
+import com.github.javaparser.ast.observer.AstObserver
 import org.eclipse.swt.SWT
 import org.eclipse.swt.events.KeyAdapter
 import org.eclipse.swt.events.KeyEvent
@@ -53,11 +54,12 @@ class ExpressionListWidget<T : Expression, N : Node>(
 
         if (expressionList.isEmpty())
             createInsert(this)
+
         expressionList.forEachIndexed { index, expression ->
             createArgument(expression, index, false)
         }
 
-        expressionList.observeList(object : ListObserver<T> {
+        val listObserver = object : ListObserver<T> {
             override fun elementAdd(
                 list: NodeList<T>,
                 index: Int,
@@ -96,7 +98,11 @@ class ExpressionListWidget<T : Expression, N : Node>(
                     insert.setFocus()
                 }
             }
-        })
+        }
+        val obs = expressionList.observeList(listObserver)
+        addDisposeListener {
+            expressionList.unregister(obs)
+        }
     }
 
     override fun setFocus(): Boolean {
@@ -130,8 +136,7 @@ class ExpressionListWidget<T : Expression, N : Node>(
 
                     var i: Int = -1
                     override fun run() {
-                        i =
-                            expressionList.indexOfIdentity(exp) // BUG illegal index
+                        i = expressionList.indexOfIdentity(exp) // BUG illegal index
                         expressionList[i] = it as T
                     }
 
@@ -227,7 +232,7 @@ class ExpressionListWidget<T : Expression, N : Node>(
                 override val element = expression
 
                 override fun run() {
-                    target as NodeWithArguments<*>
+                    target as NodeWithArguments<*>  // TODO BUG invalid cast for ArrayInit { }
                     if (after != null)
                         target.arguments.addAfter(element, after)
                     else
@@ -319,6 +324,7 @@ class ExpressionListWidget<T : Expression, N : Node>(
             }
         }
         insert.addKeyListenerInternal(keyListener)
+
         val listener = insert.addFocusLostAction {
             insert.text = " "
         }

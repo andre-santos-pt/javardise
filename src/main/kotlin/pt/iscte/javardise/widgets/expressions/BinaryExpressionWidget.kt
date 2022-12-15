@@ -15,6 +15,7 @@ import pt.iscte.javardise.Configuration
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
 import pt.iscte.javardise.external.binaryOperators
+import pt.iscte.javardise.external.observeNotNullProperty
 import pt.iscte.javardise.external.observeProperty
 
 class BinaryExpressionWidget(
@@ -27,9 +28,6 @@ class BinaryExpressionWidget(
     var left: ExpressionWidget<*>
     var operator: TokenWidget
     var right: ExpressionWidget<*>
-    val leftObserver: AstObserver
-    val rightObserver: AstObserver
-    val operatorObserver: AstObserver
 
     private val rightExp get() = right
 
@@ -45,29 +43,19 @@ class BinaryExpressionWidget(
         }
         left = drawLeft(this, node.left)
         right = drawRight(this, node.right)
-        leftObserver =
-            node.observeProperty<Expression>(ObservableProperty.LEFT) {
+        observeNotNullProperty<Expression>(ObservableProperty.LEFT) {
                 left.dispose()
-                drawLeft(this, it!!)
+                drawLeft(this, it)
             }
-        rightObserver =
-            node.observeProperty<Expression>(ObservableProperty.RIGHT) {
+       observeNotNullProperty<Expression>(ObservableProperty.RIGHT) {
                 right.dispose()
-                drawRight(this, it!!)
+                drawRight(this, it)
                 tailChanged()
             }
-        operatorObserver =
-            node.observeProperty<BinaryExpr.Operator>(ObservableProperty.OPERATOR) {
-                operator.set(it?.asString() ?: "??")
+        observeNotNullProperty<BinaryExpr.Operator>(ObservableProperty.OPERATOR) {
+                operator.set(it.asString())
                 operator.setFocus()
             }
-    }
-
-    override fun dispose() {
-        super.dispose()
-        node.unregister(leftObserver)
-        node.unregister(rightObserver)
-        node.unregister(operatorObserver)
     }
 
     private fun drawLeft(
@@ -83,31 +71,31 @@ class BinaryExpressionWidget(
         left.moveAbove(operator.widget)
         left.requestLayout()
         left.setFocusOnCreation()
-        left.tail.addKeyListenerInternal(object : KeyAdapter() {
-            override fun keyPressed(e: KeyEvent) {
-                if(e.stateMask == Configuration.maskKey && e.keyCode == SWT.ARROW_RIGHT) {
-                    commandStack.execute(object: Command {
-                        override val target: Node
-                            get() = node
-                        override val kind: CommandKind
-                            get() = CommandKind.MOVE
-                        override val element: Expression
-                            get() = node.left
-
-                        val prevright = node.right
-
-                        override fun run() {
-                            editEvent(BinaryExpr(prevright.clone(), element.clone(),node.operator))
-                        }
-
-                        override fun undo() {
-                            editEvent(BinaryExpr(element.clone(), prevright.clone(), node.operator))
-                        }
-
-                    })
-                }
-            }
-        })
+//        left.tail.addKeyListenerInternal(object : KeyAdapter() {
+//            override fun keyPressed(e: KeyEvent) {
+//                if(e.stateMask == Configuration.maskKey && e.keyCode == SWT.ARROW_RIGHT) {
+//                    commandStack.execute(object: Command {
+//                        override val target: Node
+//                            get() = node
+//                        override val kind: CommandKind
+//                            get() = CommandKind.MOVE
+//                        override val element: Expression
+//                            get() = node.left
+//
+//                        val prevright = node.right
+//
+//                        override fun run() {
+//                            editEvent(BinaryExpr(prevright.clone(), element.clone(),node.operator))
+//                        }
+//
+//                        override fun undo() {
+//                            editEvent(BinaryExpr(element.clone(), prevright.clone(), node.operator))
+//                        }
+//
+//                    })
+//                }
+//            }
+//        })
         return left
     }
 
@@ -124,31 +112,31 @@ class BinaryExpressionWidget(
         right.moveBelow(operator.widget)
         right.requestLayout()
         right.setFocusOnCreation()
-        right.tail.addKeyListenerInternal(object : KeyAdapter() {
-            override fun keyPressed(e: KeyEvent) {
-                if(e.stateMask == Configuration.maskKey && e.keyCode == SWT.ARROW_LEFT) {
-                    commandStack.execute(object: Command {
-                        override val target: Node
-                            get() = node
-                        override val kind: CommandKind
-                            get() = CommandKind.MOVE
-                        override val element: Expression
-                            get() = node.right
-
-                        val prevleft = node.left
-
-                        override fun run() {
-                            editEvent(BinaryExpr(element.clone(), prevleft.clone(), node.operator))
-                        }
-
-                        override fun undo() {
-                            editEvent(BinaryExpr(prevleft.clone(), element.clone(),node.operator))
-                        }
-
-                    })
-                }
-            }
-        })
+//        right.tail.addKeyListenerInternal(object : KeyAdapter() {
+//            override fun keyPressed(e: KeyEvent) {
+//                if(e.stateMask == Configuration.maskKey && e.keyCode == SWT.ARROW_LEFT) {
+//                    commandStack.execute(object: Command {
+//                        override val target: Node
+//                            get() = node
+//                        override val kind: CommandKind
+//                            get() = CommandKind.MOVE
+//                        override val element: Expression
+//                            get() = node.right
+//
+//                        val prevleft = node.left
+//
+//                        override fun run() {
+//                            editEvent(BinaryExpr(element.clone(), prevleft.clone(), node.operator))
+//                        }
+//
+//                        override fun undo() {
+//                            editEvent(BinaryExpr(prevleft.clone(), element.clone(),node.operator))
+//                        }
+//
+//                    })
+//                }
+//            }
+//        })
         return right
     }
 

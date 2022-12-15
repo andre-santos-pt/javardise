@@ -12,7 +12,7 @@ import pt.iscte.javardise.basewidgets.FixedToken
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
 
-// TODO empty string "     " and delete " editEvent
+// TODO empty string "     "
 class StringExpressionWidget(
     parent: Composite,
     override val node: StringLiteralExpr,
@@ -29,7 +29,7 @@ class StringExpressionWidget(
                 if(node.value.any { it.toString().matches(ID) })
                     editEvent(NameExpr(node.value.filter { it.toString().matches(ID) }))
                 else
-                    editEvent(null)
+                    editEvent(Configuration.hole())
         }
     }
 
@@ -64,6 +64,9 @@ class StringExpressionWidget(
     override fun setFocusOnCreation(firstFlag: Boolean) {
         text.setFocus()
     }
+
+    override val head: TextWidget
+        get() = open
 
     override val tail: TextWidget
         get() = close

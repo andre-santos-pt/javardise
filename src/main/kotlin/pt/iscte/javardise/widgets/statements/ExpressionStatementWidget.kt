@@ -8,6 +8,7 @@ import pt.iscte.javardise.basewidgets.SequenceWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
 import pt.iscte.javardise.external.ROW_LAYOUT_H_SHRINK
 import pt.iscte.javardise.external.isIncrementorOrDecrementor
+import pt.iscte.javardise.external.observeNotNullProperty
 import pt.iscte.javardise.external.observeProperty
 import pt.iscte.javardise.setCopySource
 import pt.iscte.javardise.widgets.expressions.ExpressionWidget
@@ -33,16 +34,12 @@ open class ExpressionStatementWidget(
             parentBlock.statements.removeCommand(parentBlock, node)
         }
 
-        node.observeProperty<Expression>(ObservableProperty.EXPRESSION) {
-            if (it == null)
-                parentBlock.statements.removeCommand(parentBlock, node)
-            else {
+        node.observeNotNullProperty<Expression>(ObservableProperty.EXPRESSION) {
                 expression.dispose()
                 expression = createExpression(it)
                 expression.moveAbove(semiColon.widget)
                 expression.requestLayout()
                 expression.setFocus()
-            }
         }
     }
 
@@ -68,5 +65,6 @@ open class ExpressionStatementWidget(
         else
             expression.setFocusOnCreation()
     }
+
 }
 

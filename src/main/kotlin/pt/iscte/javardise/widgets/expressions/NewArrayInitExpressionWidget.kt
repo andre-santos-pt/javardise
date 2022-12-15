@@ -2,22 +2,26 @@ package pt.iscte.javardise.widgets.expressions
 
 import com.github.javaparser.ast.expr.ArrayInitializerExpr
 import com.github.javaparser.ast.expr.Expression
-import com.github.javaparser.ast.expr.NameExpr
 import org.eclipse.swt.widgets.Composite
+import pt.iscte.javardise.Configuration
 import pt.iscte.javardise.basewidgets.TextWidget
 
+// TODO BUG in ExpressionList cast
 class NewArrayInitExpressionWidget(
     parent: Composite,
     override val node: ArrayInitializerExpr,
     override val editEvent: (Expression?) -> Unit
 ) : ExpressionWidget<ArrayInitializerExpr>(parent) {
 
-    val args: ExpressionListWidget<Expression, ArrayInitializerExpr>
+    val args: ExpressionListWidget<Expression, ArrayInitializerExpr> =
+        ExpressionListWidget(this, "{", "}", this, node.values)
 
     init {
-        args = ExpressionListWidget(this, "{", "}", this, node.values)
+        args.openBracket.addDeleteListener {
+            editEvent(Configuration.hole())
+        }
         args.closeBracket.addDeleteListener {
-            editEvent(NameExpr("expression"))
+            editEvent(Configuration.hole())
         }
     }
 

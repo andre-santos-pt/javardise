@@ -19,9 +19,6 @@ class ArrayAccessExpressionWidget(
     val close: TokenWidget
     var index: ExpressionWidget<*>
 
-    val targetObserver: AstObserver
-    val indexObserver: AstObserver
-
     init {
         open = TokenWidget(this, "[")
         close = TokenWidget(this, "]")
@@ -31,17 +28,15 @@ class ArrayAccessExpressionWidget(
         target = drawExpression(node.name)
         index = drawIndex(node.index)
 
-        targetObserver =
-            node.observeNotNullProperty<Expression>(ObservableProperty.NAME) {
-                target.dispose()
-                drawExpression(it)
-            }
+        observeNotNullProperty<Expression>(ObservableProperty.NAME) {
+            target.dispose()
+            drawExpression(it)
+        }
 
-        indexObserver =
-            node.observeNotNullProperty<Expression>(ObservableProperty.INDEX) {
-                index.dispose()
-                drawIndex(it)
-            }
+        observeNotNullProperty<Expression>(ObservableProperty.INDEX) {
+            index.dispose()
+            drawIndex(it)
+        }
     }
 
     private fun drawExpression(
@@ -74,16 +69,12 @@ class ArrayAccessExpressionWidget(
         return index
     }
 
-
-    override fun dispose() {
-        node.unregister(targetObserver)
-        node.unregister(indexObserver)
-        super.dispose()
-    }
-
     override fun setFocusOnCreation(firstFlag: Boolean) {
         index.setFocus()
     }
+
+    override val head: TextWidget
+        get() = target.head
 
     override val tail: TextWidget
         get() = close

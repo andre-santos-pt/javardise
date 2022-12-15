@@ -29,9 +29,9 @@ class VariableDeclarationWidget(
     var expression: ExpressionWidget<*>? = null
 
     init {
-        val decl = node.variables[0] // multi variable not supported
+        val dec = node.variables[0] // multi variable not supported
 
-        type = SimpleTypeWidget(this, decl.type)
+        type = SimpleTypeWidget(this, dec.type)
         type.addFocusLostAction(::isValidType) {
             node.modifyCommand(
                 node.commonType,
@@ -40,39 +40,39 @@ class VariableDeclarationWidget(
             )
         }
         type.addDeleteListener {
-            if(decl.initializer.isPresent)
-                editEvent(AssignExpr(decl.nameAsExpression, decl.initializer.get(),  AssignExpr.Operator.ASSIGN))
+            if(dec.initializer.isPresent)
+                editEvent(AssignExpr(dec.nameAsExpression, dec.initializer.get(),  AssignExpr.Operator.ASSIGN))
             else
                 editEvent(null)
         }
 
-        name = SimpleNameWidget(this, decl)
+        name = SimpleNameWidget(this, dec)
         name.addFocusLostAction(::isValidSimpleName) {
-            node.modifyCommand(decl.name, SimpleName(name.text), decl::setName)
+            node.modifyCommand(dec.name, SimpleName(name.text), dec::setName)
         }
         name.addKeyEvent('=') {
-            val setter: KFunction1<Expression?, Node> = decl::setInitializer
-            decl.modifyCommand(decl.initializer.getOrNull, NameExpr(Configuration.fillInToken), setter)
+            val setter: KFunction1<Expression?, Node> = dec::setInitializer
+            dec.modifyCommand(dec.initializer.getOrNull, NameExpr(Configuration.fillInToken), setter)
         }
         name.addDeleteEmptyListener {
-            if(decl.initializer.isPresent)
-                editEvent(AssignExpr(decl.nameAsExpression, decl.initializer.get(),  AssignExpr.Operator.ASSIGN))
+            if(dec.initializer.isPresent)
+                editEvent(AssignExpr(dec.nameAsExpression, dec.initializer.get(),  AssignExpr.Operator.ASSIGN))
             else
                 editEvent(null)
         }
 
-        if (decl.initializer.isPresent) {
+        if (dec.initializer.isPresent) {
             equals = FixedToken(this, "=")
-            expression = createExpWidget(decl, decl.initializer.get())
+            expression = createExpWidget(dec, dec.initializer.get())
         }
 
-        node.observeProperty<Type>(ObservableProperty.TYPE) {
-            type.set(it?.asString())
+        observeNotNullProperty<Type>(ObservableProperty.TYPE, target = dec) {
+            type.set(it.asString())
         }
-        decl.observeProperty<SimpleName>(ObservableProperty.NAME) {
+        observeNotNullProperty<SimpleName>(ObservableProperty.NAME, target = dec) {
             name.set(it.toString())
         }
-        decl.observeProperty<Expression>(ObservableProperty.INITIALIZER) {
+        observeProperty<Expression>(ObservableProperty.INITIALIZER, target = dec) {
             if(it == null) {
                 equals?.dispose()
                 equals = null
@@ -85,7 +85,7 @@ class VariableDeclarationWidget(
                 expression?.dispose()
                 if(equals == null)
                     equals = FixedToken(this, "=")
-                expression = this.createExpWidget(decl, it)
+                expression = this.createExpWidget(dec, it)
                 expression!!.requestLayout()
                 expression!!.setFocusOnCreation()
             }
@@ -96,7 +96,10 @@ class VariableDeclarationWidget(
         variable: VariableDeclarator,
         expression: Expression
     ) = createExpressionWidget(this, expression) {
-           variable.modifyCommand(variable.initializer.getOrNull, it, variable::setInitializer)
+        if(it == null)
+            editEvent(Configuration.hole())
+        else
+            variable.modifyCommand(variable.initializer.getOrNull, it, variable::setInitializer)
         }
 
     override val head: TextWidget

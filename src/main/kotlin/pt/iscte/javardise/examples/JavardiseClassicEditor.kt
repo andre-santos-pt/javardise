@@ -169,6 +169,7 @@ class JavardiseClassicEditor(val display: Display, val folder: File) {
                 println("undo")
                 val cmd = classOnFocus?.commandStack
                 cmd?.undo()
+                it.doit = false
             }
         }
     }

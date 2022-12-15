@@ -1,5 +1,6 @@
 package pt.iscte.javardise.widgets.expressions
 
+import com.github.javaparser.ParseProblemException
 import com.github.javaparser.StaticJavaParser
 import com.github.javaparser.ast.ArrayCreationLevel
 import com.github.javaparser.ast.NodeList
@@ -42,7 +43,7 @@ class SimpleExpressionWidget(
 
         expression = TextWidget.create(this, text) { c, s ->
             c.toString()
-                .matches(Regex("[a-zA-Z\\d_().]")) ||
+                .matches(Regex("[a-zA-Z\\d_.]")) ||
                     c == SWT.BS ||
                     c == SWT.SPACE && !s.endsWith(" ")
         }
@@ -78,7 +79,6 @@ class SimpleExpressionWidget(
                                     NameExpr(Configuration.fillInToken),
                                     unop
                                 )
-                            expression.removeFocusOutListeners()
                             editEvent(node)
                         }
                     }
@@ -88,14 +88,26 @@ class SimpleExpressionWidget(
                     }
                     if (biop != null && tryParse<Expression>(expression.text)
                     ) {
-                        node =
-                            BinaryExpr(
-                                StaticJavaParser.parseExpression(
-                                    expression.text
-                                ), NameExpr(Configuration.fillInToken), biop
+                        // TODO var decl error
+//                        at java.base/java.util.Optional.get(Optional.java:143)
+//                        at pt.iscte.javardise.widgets.expressions.SimpleExpressionWidget$2.keyPressed(SimpleExpressionWidget.kt:92)
+//                        at org.eclipse.swt.widgets.TypedListener.handleEvent(TypedListener.java:171)
+                        if(node.parentNode.get() is BinaryExpr) {
+                            val parentExp = node.parentNode.get().clone() as BinaryExpr
+                            val newnode = BinaryExpr(parentExp,
+                                NameExpr(Configuration.fillInToken), biop
                             )
-                        expression.removeFocusOutListeners()
-                        editEvent(node)
+                            (parent as ExpressionWidget<Expression>).editEvent(newnode)
+                        }
+                        else {
+                            node =
+                                BinaryExpr(
+                                    StaticJavaParser.parseExpression(
+                                        expression.text
+                                    ), NameExpr(Configuration.fillInToken), biop
+                                )
+                            editEvent(node)
+                        }
                     }
                 } else {
                     val op = binaryOperators.find {
@@ -105,11 +117,9 @@ class SimpleExpressionWidget(
                         val left = tail.text.slice(0 until tail.caretPosition)
                         val right =
                             tail.text.slice(tail.caretPosition until tail.text.length)
-                        if (tryParse<Expression>(left) && tryParse<Expression>(
-                                right
-                            )
+                        if (tryParse<Expression>(left) && tryParse<Expression>(right)
                         ) {
-                            editEvent(
+                            editEvent( // TODO new parse with hole
                                 BinaryExpr(
                                     StaticJavaParser.parseExpression(left),
                                     StaticJavaParser.parseExpression(right),
@@ -121,7 +131,7 @@ class SimpleExpressionWidget(
                 }
             }
         }
-        // bug remove listener?
+
         expression.addKeyListenerInternal(keyListener)
 
         expression.addKeyEvent('"') {
@@ -147,7 +157,7 @@ class SimpleExpressionWidget(
             editEvent(arrayCreationExpr)
         }
 
-        expression.addKeyEvent('[', precondition = { tryParse<NameExpr>(it) }) {
+        expression.addKeyEvent('[', precondition = { expression.isAtEnd && tryParse<NameExpr>(it) }) {
             val arrayAccess = ArrayAccessExpr(
                 StaticJavaParser.parseExpression(expression.text),
                 NameExpr(Configuration.fillInToken)
@@ -173,48 +183,61 @@ class SimpleExpressionWidget(
             editEvent(objectCreationExpr)
         }
 
-        expression.addKeyEvent('(', precondition = { it.isBlank() }) {
-            editEvent(EnclosedExpr(NameExpr(Configuration.fillInToken)))
+        expression.addKeyEvent('(', precondition = {expression.isAtBeginning}) {
+            editEvent(EnclosedExpr(parseExpression(expression.text)))
         }
 
-        expression.addKeyEvent(
-            SWT.BS,
-            precondition = { it.isEmpty() && this.parent is BinaryExpressionWidget }) {
-            val pp = (this.parent as BinaryExpressionWidget).parent
-            if (pp is SimpleExpressionWidget) {
-                val biexp = node.parentNode.get() as BinaryExpr
-                val part = if (node === biexp.left) biexp.right else biexp.left
-                pp.editEvent(part.clone())
+        expression.addKeyEvent(')', precondition = {expression.isAtEnd}) {
+            editEvent(EnclosedExpr(parseExpression(expression.text)))
+        }
+
+        expression.addKeyEvent('{', precondition={expression.isEmpty}) {
+            editEvent(ArrayInitializerExpr())
+        }
+
+        expression.addKeyEvent(SWT.CR) {
+            expression.widget.traverse(SWT.TRAVERSE_TAB_NEXT)
+        }
+
+        expression.addFocusLostAction {
+            if(!expression.widget.isDisposed) {
+                val new = parseExpression(expression.text)
+                if(new != node) {
+                    node = new
+                    expression.widget.data = node
+                    editEvent(node)
+                }
             }
         }
+
+//        expression.addKeyEvent(
+//            SWT.BS,
+//            precondition = { it.isEmpty() && this.parent is BinaryExpressionWidget }) {
+//            val pp = (this.parent as BinaryExpressionWidget).parent
+//            if (pp is SimpleExpressionWidget) {
+//                val biexp = node.parentNode.get() as BinaryExpr
+//                val part = if (node === biexp.left) biexp.right else biexp.left
+//                pp.editEvent(part.clone())
+//            }
+//        }
 //        expression.widget.addModifyListener {
 //            expression.updateColor()
 //        }
 
-        expression.addFocusLostAction {
-            if (tryParse<Expression>(expression.text)) {
-                val newExp =
-                    StaticJavaParser.parseExpression<Expression>(expression.text)
-                if (newExp != node) {
-                    node.setComment(null)
-                    node = newExp
-                    expression.widget.data = newExp
-                    editEvent(node)
-                }
-            } else if (expression.text.isEmpty()) {
-                expression.widget.background = configuration.fillInColor
-                val fillin = NameExpr(Configuration.fillInToken)
-                if (node != fillin)
-                    editEvent(fillin)
-            } else {
-                expression.widget.background = configuration.errorColor
-                val noparse = NameExpr(Configuration.noParseToken)
-                noparse.setComment(BlockComment(expression.text))
-                if (node != noparse)
-                    editEvent(noparse)
-            }
-        }
     }
+
+    private inline fun parseExpression(exp: String): Expression =
+        try {
+            StaticJavaParser.parseExpression(exp)
+        } catch (_: ParseProblemException) {
+            if(exp.isBlank())
+                Configuration.hole()
+            else
+                Configuration.typo(exp)
+        }
+
+    override val head: TextWidget
+        get() = expression
 
     override val tail: TextWidget
         get() = expression
@@ -223,8 +246,8 @@ class SimpleExpressionWidget(
         expression.setFocus()
     }
 
-    override fun dispose() {
-        expression.widget.removeKeyListener(keyListener) // TODO BUG Widget is disposed
-        super.dispose()
-    }
+//    override fun dispose() {
+//        expression.widget.removeKeyListener(keyListener) // TODO BUG Widget is disposed
+//        super.dispose()
+//    }
 }

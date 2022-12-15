@@ -2,6 +2,8 @@ package pt.iscte.javardise.widgets.expressions
 
 import com.github.javaparser.ast.expr.Expression
 import com.github.javaparser.ast.expr.ObjectCreationExpr
+import com.github.javaparser.ast.observer.ObservableProperty
+import com.github.javaparser.ast.type.ClassOrInterfaceType
 import org.eclipse.swt.widgets.Composite
 import pt.iscte.javardise.SimpleTypeWidget
 import pt.iscte.javardise.basewidgets.TextWidget
@@ -32,6 +34,10 @@ class NewObjectExpressionWidget(
         }
 
         args = ExpressionListWidget(this, "(", ")", this, node.arguments)
+
+        observeNotNullProperty<ClassOrInterfaceType>(ObservableProperty.TYPE) {
+            id.text = it.nameAsString
+        }
     }
 
     override fun setFocusOnCreation(firstFlag: Boolean) {

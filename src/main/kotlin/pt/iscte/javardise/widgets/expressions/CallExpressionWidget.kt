@@ -71,7 +71,7 @@ class CallExpressionWidget(
 
         args = ExpressionListWidget(this, "(", ")", this, node.arguments)
 
-        node.observeProperty<Expression>(ObservableProperty.SCOPE) {
+        observeProperty<Expression>(ObservableProperty.SCOPE) {
             scope?.dispose()
             scope = null
             dot?.dispose()
@@ -81,8 +81,8 @@ class CallExpressionWidget(
             setFocus()
             requestLayout()
         }
-        node.observeNotNullProperty<SimpleName>(ObservableProperty.NAME)
-        {
+
+        observeNotNullProperty<SimpleName>(ObservableProperty.NAME) {
             methodName.set(it.asString())
         }
     }

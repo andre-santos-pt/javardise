@@ -138,7 +138,7 @@ private class CommandStackImpl : CommandStack {
 
                 override fun undo() {
                     if (old is Node)
-                        setOperation(old.clone() as E)
+                        setOperation(old as E)
                     else
                         setOperation(old)
                 }
@@ -149,6 +149,7 @@ private class CommandStackImpl : CommandStack {
             false
     }
 
+
     override fun <N: Node> addCommand(list: NodeList<in N>, owner: Node, e: N, index: Int) {
         execute(object : Command {
             override val target = owner
@@ -156,7 +157,7 @@ private class CommandStackImpl : CommandStack {
             override val element = e
 
             override fun run() {
-                list.add(index, e)
+                list.add(index, element)
             }
 
             override fun undo() {
@@ -171,14 +172,13 @@ private class CommandStackImpl : CommandStack {
             override val kind: CommandKind = CommandKind.REMOVE
             override val element = e
 
-            var i: Int = -1
+            var index: Int = list.indexOfIdentity(element)
             override fun run() {
-                i = list.indexOfIdentity(element)
-                list.removeAt(i)
+                list.removeAt(index)
             }
 
             override fun undo() {
-                list.add(i, element.clone() as N)
+                list.add(index, element)
             }
         })
     }
@@ -187,14 +187,14 @@ private class CommandStackImpl : CommandStack {
         execute(object : Command {
             override val target = owner
             override val kind: CommandKind = CommandKind.MODIFY
-            override val element: Node = e
+            override val element: N = e
 
             override fun run() {
                 list[index] = e
             }
 
             override fun undo() {
-                list[index] = element.clone() as N
+                list[index] = element
             }
         })
     }
@@ -203,15 +203,16 @@ private class CommandStackImpl : CommandStack {
         execute(object : Command {
             override val target = owner
             override val kind: CommandKind = CommandKind.MODIFY
-            override val element: Node = e
+            override val element: N = e
 
-            val index = list.indexOfIdentity(e)
+            val index = list.indexOfIdentity(element)
+
             override fun run() {
                 list[index] = newElement
             }
 
             override fun undo() {
-                list[index] = e.clone() as N
+                list[index] = element
             }
         })
     }

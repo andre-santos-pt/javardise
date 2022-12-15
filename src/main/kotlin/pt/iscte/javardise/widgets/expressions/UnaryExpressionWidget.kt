@@ -26,8 +26,6 @@ class UnaryExpressionWidget(
 ) : ExpressionWidget<UnaryExpr>(parent) {
     var operator: TokenWidget
     var expressionWidget: ExpressionWidget<*>
-    val expressionObserver: AstObserver
-    val operatorObserver: AstObserver
 
     init {
         operator = TokenWidget(this, node.operator.asString(),
@@ -58,20 +56,16 @@ class UnaryExpressionWidget(
             editEvent(null)
         }
 
-        operatorObserver =
-            node.observeNotNullProperty<UnaryExpr.Operator>(ObservableProperty.OPERATOR) {
-                operator.set(it.asString())
-                operator.widget.traverse(SWT.TRAVERSE_TAB_NEXT)
-            }
+        observeNotNullProperty<UnaryExpr.Operator>(ObservableProperty.OPERATOR) {
+            operator.set(it.asString())
+            operator.widget.traverse(SWT.TRAVERSE_TAB_NEXT)
+        }
 
-        expressionObserver =
-            node.observeNotNullProperty<Expression>(ObservableProperty.EXPRESSION) {
-                expressionWidget.dispose()
-                drawExpression(this, it)
-                tailChanged()
-            }
-
-
+        observeNotNullProperty<Expression>(ObservableProperty.EXPRESSION) {
+            expressionWidget.dispose()
+            drawExpression(this, it)
+            tailChanged()
+        }
     }
 
     private fun drawExpression(
@@ -79,7 +73,7 @@ class UnaryExpressionWidget(
         expression: Expression
     ): ExpressionWidget<*> {
         expressionWidget = createExpressionWidget(parent, expression) {
-            if(it == null)
+            if (it == null)
                 editEvent(NameExpr(Configuration.fillInToken))
             else
                 node.modifyCommand(node.expression, it, node::setExpression)
@@ -89,12 +83,6 @@ class UnaryExpressionWidget(
         expressionWidget.requestLayout()
         expressionWidget.setFocusOnCreation()
         return expressionWidget
-    }
-
-    override fun dispose() {
-        super.dispose()
-        node.unregister(expressionObserver)
-        node.unregister(operatorObserver)
     }
 
     override fun setFocusOnCreation(firstFlag: Boolean) {
@@ -108,10 +96,11 @@ class UnaryExpressionWidget(
         get() = operator
 }
 
-object UnaryExpressionStatementFeature : StatementFeature<ExpressionStmt, ExpressionStatementWidget>(
-    ExpressionStmt::class.java,
-    ExpressionStatementWidget::class.java
-) {
+object UnaryExpressionStatementFeature :
+    StatementFeature<ExpressionStmt, ExpressionStatementWidget>(
+        ExpressionStmt::class.java,
+        ExpressionStatementWidget::class.java
+    ) {
     override fun targets(stmt: Statement): Boolean =
         stmt is ExpressionStmt && stmt.expression is UnaryExpr
 

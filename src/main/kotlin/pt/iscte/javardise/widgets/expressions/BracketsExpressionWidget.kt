@@ -1,13 +1,19 @@
 package pt.iscte.javardise.widgets.expressions
 
+import com.github.javaparser.ast.expr.BinaryExpr
 import com.github.javaparser.ast.expr.EnclosedExpr
 import com.github.javaparser.ast.expr.Expression
 import com.github.javaparser.ast.observer.AstObserver
 import com.github.javaparser.ast.observer.ObservableProperty
+import org.eclipse.swt.SWT
+import org.eclipse.swt.events.KeyAdapter
+import org.eclipse.swt.events.KeyEvent
 import org.eclipse.swt.widgets.Composite
+import pt.iscte.javardise.Configuration
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
 import pt.iscte.javardise.external.moveAbove
+import pt.iscte.javardise.external.observeNotNullProperty
 import pt.iscte.javardise.external.observeProperty
 
 class BracketsExpressionWidget(
@@ -19,43 +25,71 @@ class BracketsExpressionWidget(
     val rightBracket: TokenWidget
 
     var expressionWidget: ExpressionWidget<*>
-    val expressionObserver: AstObserver
 
     init {
         leftBracket = TokenWidget(this, "(")
         rightBracket = TokenWidget(this, ")")
         expressionWidget = drawExpression(this, node.inner)
 
-        expressionObserver = node.observeProperty<Expression>(ObservableProperty.EXPRESSION) {
+        observeNotNullProperty<Expression>(ObservableProperty.INNER) {
             expressionWidget.dispose()
-            drawExpression(this, node.inner)
+            drawExpression(this, it)
         }
 
         leftBracket.addDeleteListener {
             editEvent(node.inner.clone())
         }
+
         rightBracket.addDeleteListener {
             editEvent(node.inner.clone())
         }
+
+        rightBracket.addKeyListenerInternal(object : KeyAdapter() {
+            override fun keyPressed(e: KeyEvent) {
+                if (e.stateMask == Configuration.maskKey && e.keyCode == SWT.ARROW_RIGHT) {
+                    println("->")
+                    val parentExp = node.parentNode.get()
+                    if (parentExp is BinaryExpr && parentExp.left == node) {
+                        (parent as ExpressionWidget<Expression>).editEvent(
+                            EnclosedExpr(
+                                BinaryExpr(
+                                    node.inner.clone(),
+                                    parentExp.right.clone(),
+                                    parentExp.operator
+                                )
+                            )
+                        )
+                    }
+                } else if (e.stateMask == Configuration.maskKey && e.keyCode == SWT.ARROW_LEFT) {
+                    println("<-")
+                    if (node.inner is BinaryExpr) {
+                        val binner = node.inner as BinaryExpr
+                        editEvent(
+                            BinaryExpr(
+                                EnclosedExpr(binner.left.clone()),
+                                binner.right.clone(), binner.operator
+                            )
+                        )
+                    }
+                }
+            }
+        })
     }
 
-    private fun drawExpression(parent: Composite, expression: Expression): ExpressionWidget<*> {
+    private fun drawExpression(
+        parent: Composite,
+        expression: Expression
+    ): ExpressionWidget<*> {
         expressionWidget = createExpressionWidget(parent, expression) {
-            // TODO handle null
-            node.modifyCommand(node.inner, it, node::setInner)
-            expressionWidget.dispose()
-            if(it != null)
-                drawExpression(parent, it)
+            if (it == null)
+                editEvent(Configuration.hole())
+            else
+                node.modifyCommand(node.inner, it, node::setInner)
         }
         expressionWidget.moveAbove(rightBracket)
         expressionWidget.requestLayout()
         expressionWidget.setFocusOnCreation()
         return expressionWidget
-    }
-
-    override fun dispose() {
-        super.dispose()
-        node.unregister(expressionObserver)
     }
 
     override fun setFocusOnCreation(firstFlag: Boolean) {

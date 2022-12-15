@@ -2,6 +2,7 @@ package pt.iscte.javardise
 
 import com.github.javaparser.ast.Modifier
 import com.github.javaparser.ast.Node
+import com.github.javaparser.ast.comments.LineComment
 import com.github.javaparser.ast.expr.NameExpr
 import com.github.javaparser.ast.stmt.Statement
 import org.eclipse.swt.SWT
@@ -44,6 +45,12 @@ interface Configuration {
         val maskKey = SWT.MOD1
 
         fun hole() = NameExpr(fillInToken)
+
+        fun typo(text: String): NameExpr {
+            val t = NameExpr(noParseToken)
+            t.setComment(LineComment(text))
+            return t
+        }
     }
 
 

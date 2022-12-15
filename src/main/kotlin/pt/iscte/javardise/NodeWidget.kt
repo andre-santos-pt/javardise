@@ -59,15 +59,15 @@ interface NodeWidget<T> {
         else
             CommandStack.NullStack
 
-    fun <T : Node> observeProperty(prop: ObservableProperty, event: (T?) -> Unit): AstObserver {
-        val obs = object : PropertyObserver<T>(prop) {
-            override fun modified(oldValue: T?, newValue: T?) {
-                event(newValue)
-            }
-        }
-        (node as Node).register(obs)
-        return obs
-    }
+//    fun <T : Node> observeProperty(prop: ObservableProperty, event: (T?) -> Unit): AstObserver {
+//        val obs = object : PropertyObserver<T>(prop) {
+//            override fun modified(oldValue: T?, newValue: T?) {
+//                event(newValue)
+//            }
+//        }
+//        (node as Node).register(obs)
+//        return obs
+//    }
 
     fun newKeywordWidget(
         parent: Composite, keyword: String,
@@ -129,6 +129,7 @@ interface NodeWidget<T> {
         commandStack.removeCommand(this, owner, e)
     }
 
+    // TODO change and replace are the same?
 }
 
 inline fun <reified T : NodeWidget<*>> Control.findAncestor(): T? {

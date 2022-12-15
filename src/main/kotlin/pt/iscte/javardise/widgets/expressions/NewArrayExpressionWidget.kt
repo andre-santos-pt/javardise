@@ -77,10 +77,11 @@ class NewArrayExpressionWidget(
                 levelWidgets.add(LevelWidget(open, explevel, close))
             }
 
-            node.observeProperty<Type>(ObservableProperty.ELEMENT_TYPE) {
-                id.set(it?.asString() ?: "??")
+            observeNotNullProperty<Type>(ObservableProperty.ELEMENT_TYPE) {
+                id.set(it.asString())
             }
-            node.levels.observeList(object : ListObserver<ArrayCreationLevel> {
+
+            val obs = node.levels.observeList(object : ListObserver<ArrayCreationLevel> {
                 override fun elementAdd(
                     list: NodeList<ArrayCreationLevel>,
                     index: Int,
@@ -128,6 +129,9 @@ class NewArrayExpressionWidget(
                 }
 
             })
+            addDisposeListener {
+                node.levels.unregister(obs)
+            }
         }
     }
 
@@ -137,17 +141,6 @@ class NewArrayExpressionWidget(
     ): ExpressionWidget<*> {
         val w = createExpressionWidget(this, expression) {
             node.levels.changeCommand(node, ArrayCreationLevel(it), index )
-            //node.modifyCommand(node.levels[index], ArrayCreationLevel(it), node.levels::set)
-//            Commands.execute(object :
-//                ModifyCommand<ArrayCreationLevel>(node, node.levels[index]) {
-//                override fun run() {
-//                    node.levels[index] = ArrayCreationLevel(it)
-//                }
-//
-//                override fun undo() {
-//                    node.levels[index] = element
-//                }
-//            })
         }
         return w
     }
