@@ -133,11 +133,16 @@ open class DefaultConfiguration : Configuration {
         DoWhileFeature,
         ForFeature,
         ForEachFeature,
-        VariableDeclarationFeature,
 
+        BreakFeature,
+        ContinueFeature,
+
+        VariableDeclarationFeature,
         AssignmentFeature,
         CallFeature,
-        UnaryExpressionStatementFeature
+        UnaryExpressionStatementFeature,
+
+        AssertFeature
     )
     override val methodModifiers = listOf(
         Modifier.Keyword.PUBLIC,
