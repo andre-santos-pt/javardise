@@ -276,7 +276,6 @@ class SimpleNameWidget<N : NodeWithSimpleName<*>>(
 }) {
     init {
         textWidget.data = node
-        textWidget.toolTipText = node.hashCode().toString()
         addUpdateColor(textWidget)
     }
 

@@ -28,7 +28,6 @@ class MethodWidget(
     parent: Composite,
     val dec: CallableDeclaration<*>,
     validModifiers: List<Modifier.Keyword> = emptyList(),
-    style: Int = SWT.NONE,
     configuration: Configuration = DefaultConfigurationSingleton,
     override val commandStack: CommandStack = CommandStack.create(),
     freezeSignature: Boolean = false
@@ -37,13 +36,12 @@ class MethodWidget(
         parent,
         dec,
         validModifiers,
-        style = style,
         configuration = configuration
     ),
     SequenceContainer<CallableDeclaration<*>>,
     ConfigurationRoot {
 
-    var typeId: Id? = null
+    override var type: Id? = null
     override val name: Id
 
     override var bodyWidget: SequenceWidget? = null
@@ -76,11 +74,11 @@ class MethodWidget(
 
     init {
         if (node.isMethodDeclaration) {
-            typeId = SimpleTypeWidget(
+            type = SimpleTypeWidget(
                 firstRow,
                 (node as MethodDeclaration).type
             )
-            typeId!!.addFocusLostAction(::isValidType) {
+            type!!.addFocusLostAction(::isValidType) {
                 node.modifyCommand(node.typeAsString, it, node::setType)
             }
         }
@@ -91,11 +89,11 @@ class MethodWidget(
             node.modifyCommand(node.nameAsString, it, node::setName)
         }
 
-        node.observeProperty<Type>(ObservableProperty.TYPE) {
-            typeId?.set(it?.asString())
+        observeProperty<Type>(ObservableProperty.TYPE) {
+            type?.set(it?.asString())
         }
 
-        node.observeProperty<SimpleName>(ObservableProperty.NAME) {
+        observeProperty<SimpleName>(ObservableProperty.NAME) {
             name.set(it?.asString())
         }
 
@@ -119,11 +117,10 @@ class MethodWidget(
             firstRow.enabled = false
 
         Display.getDefault().addFilter(SWT.FocusIn, focusListener)
-    }
 
-    override fun dispose() {
-        Display.getDefault().removeFilter(SWT.FocusIn, focusListener)
-        super.dispose()
+        addDisposeListener {
+            Display.getDefault().removeFilter(SWT.FocusIn, focusListener)
+        }
     }
 
     inner class ParamListWidget(
@@ -143,7 +140,7 @@ class MethodWidget(
 
             addParams()
 
-            parameters.register(object : ListAddRemoveObserver<Parameter>() {
+            observeListUntilDispose(parameters, object : ListObserver<Parameter> {
                 override fun elementAdd(
                     list: NodeList<Parameter>,
                     index: Int,
@@ -196,8 +193,6 @@ class MethodWidget(
                         (children[prev] as ParamWidget).setFocusOnCreation(false)
                     }
                     requestLayout()
-
-
                 }
 
                 override fun elementReplace(
@@ -208,13 +203,8 @@ class MethodWidget(
                 ) {
                     TODO("parameter replacement")
                 }
+
             })
-        }
-
-
-        override fun dispose() {
-            Display.getDefault().removeFilter(SWT.FocusIn, focusListener)
-            super.dispose()
         }
 
         private fun createInsert() {
@@ -295,11 +285,11 @@ class MethodWidget(
                     )
                 }
 
-                node.observeProperty<Type>(ObservableProperty.TYPE) {
-                    type.set(it!!.asString())
+                observeNotNullProperty<Type>(ObservableProperty.TYPE) {
+                    type.set(it.asString())
                 }
-                node.observeProperty<SimpleName>(ObservableProperty.NAME) {
-                    name.set(it!!.asString())
+                observeNotNullProperty<SimpleName>(ObservableProperty.NAME) {
+                    name.set(it.asString())
                 }
             }
 

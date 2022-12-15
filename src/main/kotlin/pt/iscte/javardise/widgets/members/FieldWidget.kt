@@ -18,13 +18,22 @@ import pt.iscte.javardise.external.observeProperty
 import pt.iscte.javardise.widgets.expressions.ExpressionWidget
 import pt.iscte.javardise.widgets.expressions.createExpressionWidget
 
-class FieldWidget(parent: Composite, val dec: FieldDeclaration, configuration: Configuration = DefaultConfigurationSingleton) :
-    MemberWidget<FieldDeclaration>(parent, dec, listOf(PUBLIC, PRIVATE, PROTECTED, FINAL), configuration = configuration) {
+class FieldWidget(
+    parent: Composite,
+    val dec: FieldDeclaration,
+    configuration: Configuration = DefaultConfigurationSingleton
+) :
+    MemberWidget<FieldDeclaration>(
+        parent,
+        dec,
+        listOf(PUBLIC, PRIVATE, PROTECTED, FINAL),
+        configuration = configuration
+    ) {
 
     // multi var is transformed to list of singles on parse
     val FieldDeclaration.variable: VariableDeclarator get() = this.variables[0]
 
-    val type: Id
+    override val type: Id
     override val name: Id
     var equals: TokenWidget? = null
     var initializer: ExpressionWidget<*>? = null
@@ -33,45 +42,63 @@ class FieldWidget(parent: Composite, val dec: FieldDeclaration, configuration: C
 
     init {
         type = SimpleTypeWidget(firstRow, dec.elementType)
+        type.addFocusLostAction(::isValidType) {
+            dec.modifyCommand(
+                dec.elementType,
+                StaticJavaParser.parseType(it),
+                dec::setAllTypes
+            )
+        }
 
-        type.addInsertModifier()
+        //type.addInsertModifier()
 
         name = SimpleNameWidget(firstRow, dec.variable)
+        name.addFocusLostAction(::isValidSimpleName) {
+            node.modifyCommand(
+                dec.variable.nameAsString,
+                it,
+                dec.variable::setName
+            )
+        }
 
         semiColon = TokenWidget(firstRow, ";")
 
         semiColon.addKeyEvent('=', precondition = { initializer == null }) {
-            node.modifyCommand(dec.variable.initializer.getOrNull, NameExpr("expression"), dec.variable::setInitializer)
+            node.modifyCommand(
+                dec.variable.initializer.getOrNull,
+                Configuration.hole(),
+                dec.variable::setInitializer
+            )
         }
 
         if (dec.variable.initializer.isPresent)
             addInitializer(dec.variable.initializer.get())
 
-        type.addFocusLostAction(::isValidType) {
-            dec.modifyCommand(dec.elementType, StaticJavaParser.parseType(it), dec::setAllTypes)
-        }
 
-        name.addFocusLostAction(::isValidSimpleName) {
-            node.modifyCommand(dec.variable.nameAsString, it, dec.variable::setName)
-        }
 
-        dec.variable.observeProperty<SimpleName>(ObservableProperty.NAME) {
-            name.set(it?.id ?: "")
+
+
+        observeNotNullProperty<SimpleName>(
+            ObservableProperty.NAME,
+            target = dec.variable
+        ) {
+            name.set(it.id)
             name.textWidget.data = it
         }
-        dec.variable.observeProperty<Expression>(ObservableProperty.INITIALIZER) {
+
+        observeProperty<Expression>(
+            ObservableProperty.INITIALIZER,
+            target = dec.variable
+        ) {
             if (initializer == null && it != null) {
                 addInitializer(it)
-            }
-
-            else if (initializer != null && it == null) {
+            } else if (initializer != null && it == null) {
                 equals!!.dispose()
                 initializer!!.dispose()
                 initializer = null
                 name.setFocus()
                 firstRow.requestLayout()
-            }
-            else {
+            } else {
                 it?.let {
                     equals?.dispose()
                     initializer?.dispose()
@@ -84,7 +111,11 @@ class FieldWidget(parent: Composite, val dec: FieldDeclaration, configuration: C
     private fun addInitializer(expression: Expression) {
         equals = TokenWidget(firstRow, "=")
         initializer = createExpressionWidget(firstRow, expression) {
-            dec.modifyCommand(dec.variable.initializer.getOrNull, it, dec.variable::setInitializer)
+            dec.modifyCommand(
+                dec.variable.initializer.getOrNull,
+                it,
+                dec.variable::setInitializer
+            )
         }
         equals!!.moveAboveInternal(semiColon.widget)
         initializer!!.moveBelow(equals!!.widget)

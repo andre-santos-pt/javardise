@@ -42,23 +42,26 @@ fun matchModifier(keyword: String) =
 // TODO require compliant model
 open class ClassWidget(
     parent: Composite,
-    type: ClassOrInterfaceDeclaration,
+    dec: ClassOrInterfaceDeclaration,
     configuration: Configuration = DefaultConfigurationSingleton,
     override val commandStack: CommandStack = CommandStack.create(),
-    val staticClass: Boolean = false
+    val staticClass: Boolean = false,
 ) :
     MemberWidget<ClassOrInterfaceDeclaration>(
         parent,
-        type,
+        dec,
         listOf(PUBLIC, FINAL, ABSTRACT),
         configuration = configuration
     ), SequenceContainer<ClassOrInterfaceDeclaration>,
     ConfigurationRoot {
 
     private val keyword: TokenWidget
-    override val name: Id
-    override lateinit var bodyWidget: SequenceWidget
-    override val closingBracket: TokenWidget
+
+    override val type: TextWidget? = null
+    final override val name: Id
+
+    final override val bodyWidget: SequenceWidget
+    final override val closingBracket: TokenWidget
 
     override val body: BlockStmt? = null
 
@@ -128,7 +131,8 @@ open class ClassWidget(
         layout.marginTop = 10
         layout.marginLeft = 10
         this.layout = layout
-        keyword = newKeywordWidget(firstRow, "class",
+
+        keyword = newKeywordWidget(firstRow, if(node.isInterface) "interface" else "class",
             alternatives = { TypeTypes.values().map { it.name.lowercase() } }) {
             commandStack.execute(object : Command {
                 override val target = node
@@ -163,7 +167,7 @@ open class ClassWidget(
             })
         }
 
-        name = SimpleNameWidget(firstRow, type)
+        name = SimpleNameWidget(firstRow, dec)
         name.addFocusLostAction(::isValidClassType) {
             commandStack.execute(object : Command {
                 override val target: Node
@@ -179,17 +183,13 @@ open class ClassWidget(
                 }
 
                 override fun undo() {
-                    node.setName(element)
+                    node.name = element
                     node.constructors.forEach { c ->
                         c.name = element
                     }
                 }
 
             })
-//            node.modifyCommand(node.nameAsString, it, node::setName)
-//            node.constructors.forEach { c->
-//                c.name = SimpleName(it)
-//            }
         }
         bodyWidget = SequenceWidget(
             column,
@@ -211,8 +211,56 @@ open class ClassWidget(
             closingBracket.dispose()
         }
 
-        registerObservers()
+        observeNotNullProperty<Boolean>(ObservableProperty.INTERFACE) {
+            keyword.set(if(it) "interface" else "class")
+            name.setFocus()
+        }
+        observeNotNullProperty<SimpleName>(ObservableProperty.NAME) {
+            name.set("$it")
+            name.textWidget.data = it
+        }
+        observeListUntilDispose(node.members, object : ListObserver<BodyDeclaration<*>> {
+            override fun elementAdd(
+                list: NodeList<BodyDeclaration<*>>,
+                index: Int,
+                member: BodyDeclaration<*>
+            ) {
+                val tail = index == node.members.size
+                val w = createMember(member)
+                if (!tail)
+                    w.moveAbove(bodyWidget.findByModelIndex(index) as Control)
+
+                if (w is MethodWidget)
+                    w.focusParameters()
+                else
+                    (w as FieldWidget).focusExpressionOrSemiColon()
+                bodyWidget.requestLayout()
+            }
+
+            override fun elementRemove(
+                list: NodeList<BodyDeclaration<*>>,
+                index: Int,
+                member: BodyDeclaration<*>
+            ) {
+                (bodyWidget.find(member) as? Control)?.dispose()
+                bodyWidget.focusAt(index)
+                bodyWidget.requestLayout()
+            }
+
+            override fun elementReplace(
+                list: NodeList<BodyDeclaration<*>>,
+                index: Int,
+                old: BodyDeclaration<*>,
+                new: BodyDeclaration<*>
+            ) {
+                TODO("member replace")
+            }
+        })
+
         Display.getDefault().addFilter(SWT.FocusIn, focusListenerGlobal)
+        addDisposeListener {
+            Display.getDefault().removeFilter(SWT.FocusIn, focusListenerGlobal)
+        }
     }
 
     /**
@@ -234,51 +282,18 @@ open class ClassWidget(
         modelFocusObservers.remove(action)
     }
 
-    private fun registerObservers() {
-        node.observeProperty<Boolean>(ObservableProperty.INTERFACE) {
-            keyword.set(if (it!!) "interface" else "class")
-            name.setFocus()
-        }
-        node.observeProperty<SimpleName>(ObservableProperty.NAME) {
-            name.set(it?.id ?: "")
-            name.textWidget.data = it
-        }
-
-        node.members.register(
-            object : AstObserverAdapter() {
-                override fun listChange(
-                    observedNode: NodeList<*>,
-                    change: AstObserver.ListChangeType,
-                    index: Int,
-                    nodeAddedOrRemoved: Node
-                ) {
-                    if (change == AstObserver.ListChangeType.ADDITION) {
-                        val tail = index == node.members.size
-                        val w =
-                            createMember(nodeAddedOrRemoved as BodyDeclaration<*>)
-                        if (!tail)
-                            w.moveAbove(bodyWidget.findByModelIndex(index) as Control)
-
-                        if (w is MethodWidget)
-                            w.focusParameters()
-                        else
-                            (w as FieldWidget).focusExpressionOrSemiColon()
-
-                    } else {
-                        (bodyWidget.find(nodeAddedOrRemoved) as? Control)?.dispose()
-                        bodyWidget.focusAt(index)
-                    }
-                    bodyWidget.requestLayout()
-                }
-            })
-    }
-
     fun createMember(dec: BodyDeclaration<*>): Composite =
         when (dec) {
             is FieldDeclaration -> {
                 val w =
                     FieldWidget(bodyWidget, dec, configuration = configuration)
                 w.semiColon.addInsert(w, bodyWidget, true)
+                w.semiColon.addDeleteListener {
+                    this@ClassWidget.node.members.removeCommand(
+                        node as Node,
+                        dec
+                    )
+                }
                 w
             }
             is MethodDeclaration, is ConstructorDeclaration -> {
@@ -309,17 +324,21 @@ open class ClassWidget(
             }
         }.apply {
             if (this is MemberWidget<*>) {
-                name.addKeyEvent(SWT.BS, precondition = { it.isEmpty() }) {
-                    this@ClassWidget.node.members.removeCommand(node as Node, dec)
+                type?.addKeyEvent(SWT.BS, precondition = { it.isEmpty() }) {
+                    this@ClassWidget.node.members.removeCommand(
+                        node as Node,
+                        dec
+                    )
+                }
+                name.addKeyEvent(SWT.BS, precondition = { it.isEmpty() || this.node.isConstructorDeclaration}) {
+                    this@ClassWidget.node.members.removeCommand(
+                        node as Node,
+                        dec
+                    )
                 }
             }
         }
 
-
-    override fun dispose() {
-        Display.getDefault().removeFilter(SWT.FocusIn, focusListenerGlobal)
-        super.dispose()
-    }
 
     private fun createInsert(seq: SequenceWidget): TextWidget {
         val CONSTRUCTOR_REGEX =
@@ -443,7 +462,7 @@ open class ClassWidget(
                 body.insertLineAfter(member)
             } else
                 body.insertLineAt(member)
-            w.addInsert(w.widget, body, true)
+            //w.addInsert(w.widget, body, true)
         }
     }
 }

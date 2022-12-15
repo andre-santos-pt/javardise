@@ -21,23 +21,25 @@ import pt.iscte.javardise.external.column
 import pt.iscte.javardise.external.isChildOf
 import pt.iscte.javardise.external.row
 
-abstract class MemberWidget<T : NodeWithModifiers<*>>(
+abstract class MemberWidget<N: Node>(
     parent: Composite,
-    override val node: T,
+    final override val node: N,
     validModifiers: List<Modifier.Keyword> = emptyList(),
-    style: Int = SWT.NONE,
     final override val configuration: Configuration
-) : ObserverWidget<T>(parent) {
+) : ObserverWidget<N>(parent) {
+    val member = node as  NodeWithModifiers<N>
     val modifiers = mutableListOf<TokenWidget>()
 
     val column: Composite
     lateinit var firstRow: Composite
 
+    abstract val type: TextWidget?
+
     abstract val name: TextWidget
 
     private val filterModifiers = {
         validModifiers.filter {
-            !node.modifiers.map { it.keyword }.contains(it)
+            !member.modifiers.map { it.keyword }.contains(it)
         }.map { it.asString() }
     }
 
@@ -51,12 +53,12 @@ abstract class MemberWidget<T : NodeWithModifiers<*>>(
         foreground = configuration.foregroundColor
         column = column {
             firstRow = row {
-                node.modifiers.filter { validModifiers.contains(it.keyword) }.forEach {
+                member.modifiers.filter { validModifiers.contains(it.keyword) }.forEach {
                     val token = createModifierToken(this, it)
                     modifiers.add(token)
                 }
 
-                node.modifiers.register(object : AstObserverAdapter() {
+                member.modifiers.register(object : AstObserverAdapter() {
                     override fun listReplacement(
                         observedNode: NodeList<*>?,
                         index: Int,
@@ -118,13 +120,13 @@ abstract class MemberWidget<T : NodeWithModifiers<*>>(
                 override val kind: CommandKind = CommandKind.MODIFY
                 override val element =
                     Modifier(Modifier.Keyword.valueOf(token.uppercase()))
-                val index = node.modifiers.indexOf(modifier)
+                val index = member.modifiers.indexOf(modifier)
                 override fun run() {
-                    node.modifiers[index] = element
+                    member.modifiers[index] = element
                 }
 
                 override fun undo() {
-                    node.modifiers[index] = modifier
+                    member.modifiers[index] = modifier
                 }
 
             })
@@ -135,15 +137,15 @@ abstract class MemberWidget<T : NodeWithModifiers<*>>(
 
                 override val target = node as BodyDeclaration<*>
                 override val kind = CommandKind.REMOVE
-                override val element = node.modifiers[index]
+                override val element = member.modifiers[index]
 
 
                 override fun run() {
-                    node.modifiers.removeAt(index)
+                    member.modifiers.removeAt(index)
                 }
 
                 override fun undo() {
-                    node.modifiers.add(index, modifier.clone())
+                    member.modifiers.add(index, modifier.clone())
                 }
             })
         }
@@ -163,14 +165,14 @@ abstract class MemberWidget<T : NodeWithModifiers<*>>(
                 override val element = modifier
 
                 val index =
-                    node.modifiers.indexOfFirst { it.keyword.asString() == modifierString }
+                    member.modifiers.indexOfFirst { it.keyword.asString() == modifierString }
 
                 override fun run() {
-                    node.modifiers.removeAt(index)
+                    member.modifiers.removeAt(index)
                 }
 
                 override fun undo() {
-                    node.modifiers.add(index, modifier.clone())
+                    member.modifiers.add(index, modifier.clone())
                 }
             })
         }
@@ -184,16 +186,16 @@ abstract class MemberWidget<T : NodeWithModifiers<*>>(
                 override val element = Modifier(Modifier.Keyword.PUBLIC)
 
                 val index =
-                    if (atModifier == null) 0 else node.modifiers.indexOf(
+                    if (atModifier == null) 0 else member.modifiers.indexOf(
                         atModifier
                     )
 
                 override fun run() {
-                    node.modifiers.add(index, element)
+                    member.modifiers.add(index, element)
                 }
 
                 override fun undo() {
-                    node.modifiers.remove(element)
+                    member.modifiers.remove(element)
                 }
             })
         }
