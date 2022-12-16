@@ -15,7 +15,8 @@ import pt.iscte.javardise.widgets.members.ClassWidget
 import kotlin.check
 
 /**
- * Demons
+ * Demonstrates the Class Documentation View. The code editor and the documentation view work over the same model.
+ * The right-most view is the actual source code that is obtained from the model.
  */
 fun main() {
     val src = """

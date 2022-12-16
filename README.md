@@ -56,3 +56,9 @@ An example of using a widget to edit a method in isolation. This example also il
 [pt.iscte.javardise.examples.DemoMethodMVC](https://github.com/andre-santos-pt/JavardiseJP/blob/master/src/main/kotlin/pt/iscte/javardise/examples/DemoMethodMVC.kt)
 
 
+### Documentation view
+
+An example of using the class documentation view, editing code and documentation in parallel over the same model.
+
+[pt.iscte.javardise.examples.DemoClassDocumentationView](https://github.com/andre-santos-pt/JavardiseJP/blob/master/src/main/kotlin/pt/iscte/javardise/examples/DemoClassDocumentationView.kt)
+
