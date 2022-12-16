@@ -1,6 +1,7 @@
 package pt.iscte.javardise.external
 
 import org.eclipse.swt.SWT
+import org.eclipse.swt.custom.SashForm
 import org.eclipse.swt.custom.ScrolledComposite
 import org.eclipse.swt.custom.StackLayout
 import org.eclipse.swt.events.*
@@ -59,8 +60,16 @@ fun Composite.text(
     return t
 }
 
-fun Composite.multitext(text: String, style: Int = SWT.BORDER) =
-    text(text, style or SWT.MULTI or SWT.WRAP)
+fun Composite.multitext(text: String = "", style: Int = SWT.BORDER,  init: Text.() -> Unit = {}): Text {
+    val text = text(text, style or SWT.MULTI or SWT.WRAP or SWT.V_SCROLL, init)
+    text.addVerifyListener {
+        if(it.character == SWT.TAB) {
+            text.traverse(SWT.TRAVERSE_TAB_NEXT)
+            it.doit = false
+        }
+    }
+    return text
+}
 
 fun Composite.combo(
     style: Int = SWT.BORDER,
@@ -172,6 +181,11 @@ fun Composite.grid(
     return c
 }
 
+fun Composite.horizonalPanels(content: Composite.() -> Unit) {
+    val sash = SashForm(this, SWT.HORIZONTAL)
+    content(sash)
+}
+
 fun Composite.group(text: String, content: Composite.() -> Unit): Group {
     val g = Group(this, SWT.BORDER)
     g.layout = RowLayout()
@@ -217,7 +231,7 @@ fun Control.onClick(action: () -> Unit) {
     })
 }
 
-fun message(init: Shell.() -> Unit) {
+fun Control.message(init: Shell.() -> Unit) {
     val s = shell(SWT.DIALOG_TRIM or SWT.APPLICATION_MODAL) {
         layout = RowLayout(SWT.VERTICAL)
         init(this)
@@ -226,6 +240,7 @@ fun message(init: Shell.() -> Unit) {
         }
     }
     s.pack()
+    s.location = location
     s.open()
 }
 
@@ -296,8 +311,8 @@ fun font(face: String, size: Int, style: Int = SWT.NONE) =
     Font(Display.getDefault(), FontData(face, size, style))
 
 // only works when parent has FillLayout
-fun <T : Composite> Composite.scrollable(create: (Composite) -> T): T {
-    val scroll = ScrolledComposite(this, SWT.H_SCROLL or SWT.V_SCROLL)
+fun <T : Composite> Composite.scrollable(style: Int = SWT.H_SCROLL or SWT.V_SCROLL, create: (Composite) -> T): T {
+    val scroll = ScrolledComposite(this, style)
     val layout = GridLayout()
     layout.marginTop = 10
     layout.marginLeft = 10
@@ -385,6 +400,24 @@ fun Menu.item(text: String, action: MenuItem.() -> Unit) {
     item.addSelectionListener(object : SelectionAdapter() {
         override fun widgetSelected(e: SelectionEvent?) {
             action(item)
+        }
+    })
+}
+
+fun <T:Control> T.focusGained(action: T.() -> Unit) {
+    val c = this
+    addFocusListener(object : FocusAdapter() {
+        override fun focusGained(e: FocusEvent?) {
+            action(c)
+        }
+    })
+}
+
+fun <T:Control> T.focusLost(action: T.() -> Unit) {
+    val c = this
+    addFocusListener(object : FocusAdapter() {
+        override fun focusLost(e: FocusEvent?) {
+            action(c)
         }
     })
 }

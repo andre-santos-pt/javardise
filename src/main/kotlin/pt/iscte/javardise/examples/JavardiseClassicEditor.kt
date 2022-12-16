@@ -4,22 +4,20 @@ import com.github.javaparser.ParseProblemException
 import com.github.javaparser.StaticJavaParser
 import com.github.javaparser.ast.NodeList
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration
-import com.github.javaparser.ast.stmt.Statement
 import org.eclipse.swt.SWT
 import org.eclipse.swt.custom.ScrolledComposite
 import org.eclipse.swt.custom.StackLayout
 import org.eclipse.swt.events.SelectionAdapter
 import org.eclipse.swt.events.SelectionEvent
-import org.eclipse.swt.graphics.Font
 import org.eclipse.swt.graphics.Point
 import org.eclipse.swt.layout.FillLayout
 import org.eclipse.swt.layout.GridData
 import org.eclipse.swt.layout.GridLayout
 import org.eclipse.swt.widgets.*
 import org.eclipse.swt.widgets.List
-import pt.iscte.javardise.Configuration
 import pt.iscte.javardise.DefaultConfiguration
 import pt.iscte.javardise.external.*
+import pt.iscte.javardise.views.ClassDocumentationView
 import pt.iscte.javardise.widgets.expressions.CallFeature
 import pt.iscte.javardise.widgets.expressions.VariableDeclarationFeature
 import pt.iscte.javardise.widgets.members.ClassWidget
@@ -28,6 +26,18 @@ import java.io.File
 import java.io.FileNotFoundException
 import java.io.PrintWriter
 import java.util.*
+import kotlin.collections.filter
+import kotlin.collections.find
+import kotlin.collections.first
+import kotlin.collections.forEach
+import kotlin.collections.isEmpty
+import kotlin.collections.isNotEmpty
+import kotlin.collections.joinToString
+import kotlin.collections.listOf
+import kotlin.collections.map
+import kotlin.collections.mutableListOf
+import kotlin.collections.mutableMapOf
+import kotlin.collections.set
 
 
 fun main(args: Array<String>) {
@@ -145,6 +155,12 @@ class JavardiseClassicEditor(val display: Display, val folder: File) {
                         compile(it)
                     }
                 }
+            }
+            item("Documentation") {
+                val model = (stacklayout.topControl.data as TabData).model
+                shell {
+                    ClassDocumentationView(this, model!!)
+                }.open()
             }
 
         }
@@ -281,15 +297,40 @@ class JavardiseClassicEditor(val display: Display, val folder: File) {
             }
             tab.data = TabData(file, model, w)
 
-            tab.menu {
-                item("API view") {
-                    val view = APIView(display, model)
-                    view.open()
-                }
-            }
+
+            //addUndoScale(tab, w)
         }
 
         return tab
+    }
+
+    private fun addUndoScale(
+        tab: Composite,
+        w: ClassWidget
+    ) {
+        val scale = Scale(tab, SWT.BORDER)
+        scale.minimum = 0
+        scale.maximum = 1
+        scale.pageIncrement = 1
+        scale.addSelectionListener(object : SelectionAdapter() {
+            override fun widgetSelected(e: SelectionEvent?) {
+                println(scale.selection)
+                var diff = scale.maximum - scale.selection
+                while (diff-- > 0)
+                    w.commandStack.undo()
+                while (diff++ < 0)
+                    w.commandStack.redo()
+            }
+        })
+
+        w.commandStack.addObserver { command, exec ->
+            if (exec)
+                scale.maximum++
+            else
+                scale.maximum--
+            scale.selection = scale.maximum
+            scale.requestLayout()
+        }
     }
 
     fun createWidget(

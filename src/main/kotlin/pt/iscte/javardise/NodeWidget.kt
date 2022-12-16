@@ -152,12 +152,7 @@ fun Composite.findChild(model: Node): Control? {
     return n
 }
 
-fun <T : Node> Control.observeListUntilDispose(list: NodeList<T>, observer: ListObserver<T>) {
-    val obs = list.observeList(observer)
-    addDisposeListener{
-        list.unregister(obs)
-    }
-}
+
 
 abstract class ObserverWidget<T : Node>(parent: Composite)
     : Composite(parent, SWT.NONE), NodeWidget<T> {
@@ -185,6 +180,14 @@ abstract class ObserverWidget<T : Node>(parent: Composite)
         return obs
     }
 }
+
+fun <T : Node> Control.observeListUntilDispose(list: NodeList<T>, observer: ListObserver<T>) {
+    val obs = list.observeList(observer)
+    addDisposeListener{
+        list.unregister(obs)
+    }
+}
+
 
 val ID = Regex("[a-zA-Z][a-zA-Z0-9_]*")
 val ID_CHARS = Regex("[a-zA-Z0-9_]")

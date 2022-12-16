@@ -26,6 +26,7 @@ interface CommandStack {
     val stackElements: List<Command>
     fun execute(c: Command)
     fun undo()
+    fun redo()
     fun addObserver(o: (Command, Boolean) -> Unit)
     fun reset()
     fun <E: Any?> modifyCommand(target: Node, old: E, new: E, setOperation: KFunction1<E, Node>) : Boolean
@@ -49,6 +50,9 @@ interface CommandStack {
 
        override fun undo() { }
 
+        override fun redo() {
+            TODO("Not yet implemented")
+        }
        override fun addObserver(o: (Command, Boolean) -> Unit) { }
 
        override fun reset() { }
@@ -93,11 +97,13 @@ private class CommandStackImpl : CommandStack {
     override val stackElements: List<Command> get() = stack.toList()
 
     private val stack = ArrayDeque<Command>()
+    private var top = -1
     private val observers = mutableListOf<(Command, Boolean) -> Unit>()
 
     override fun execute(c: Command) {
         c.run()
         stack.addLast(c)
+        top++
         observers.forEach {
             it(c, true)
         }
@@ -107,12 +113,18 @@ private class CommandStackImpl : CommandStack {
         if (stack.isNotEmpty()) {
             val cmd = stack.removeLast()
             cmd.undo()
-            // TODO insert line on ADD undo
-//            if(cmd.kind == CommandKind.ADD && cmd.element is Statement)
-//                ((cmd.element as Statement).parentNode.get() as BlockStmt).statements.addAfter(EmptyStmt(), cmd.element as Statement)
+            top--
             observers.forEach {
                 it(cmd, false)
             }
+        }
+    }
+
+    override fun redo() {
+        if(top < stack.size - 1) {
+            val cmd = stack[top]
+            cmd.run()
+            top++
         }
     }
 
