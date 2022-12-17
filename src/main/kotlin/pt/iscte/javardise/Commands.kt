@@ -23,6 +23,7 @@ interface Command {
 
 interface CommandStack {
     val stackSize: Int
+    val stackTop: Int
     val stackElements: List<Command>
     fun execute(c: Command)
     fun undo()
@@ -44,7 +45,9 @@ interface CommandStack {
     // TODO NUllStack not well designed
    object NullStack : CommandStack {
        override val stackSize: Int = 0
-       override val stackElements: List<Command> = emptyList()
+        override val stackTop: Int
+            get() = TODO("Not yet implemented")
+        override val stackElements: List<Command> = emptyList()
 
        override fun execute(c: Command) { }
 
@@ -95,23 +98,27 @@ interface CommandStack {
 private class CommandStackImpl : CommandStack {
     override val stackSize: Int get() = stack.size
     override val stackElements: List<Command> get() = stack.toList()
-
     private val stack = ArrayDeque<Command>()
+
     private var top = -1
     private val observers = mutableListOf<(Command, Boolean) -> Unit>()
 
+    override val stackTop: Int
+        get() = top
     override fun execute(c: Command) {
         c.run()
+        while(stack.lastIndex > top)
+            stack.removeLast()
         stack.addLast(c)
-        top++
+        top = stack.lastIndex
         observers.forEach {
             it(c, true)
         }
     }
 
     override fun undo() {
-        if (stack.isNotEmpty()) {
-            val cmd = stack.removeLast()
+        if (top >= 0) {
+            val cmd = stack[top]
             cmd.undo()
             top--
             observers.forEach {
@@ -121,10 +128,9 @@ private class CommandStackImpl : CommandStack {
     }
 
     override fun redo() {
-        if(top < stack.size - 1) {
-            val cmd = stack[top]
+        if(top < stack.lastIndex) {
+            val cmd = stack[++top]
             cmd.run()
-            top++
         }
     }
 

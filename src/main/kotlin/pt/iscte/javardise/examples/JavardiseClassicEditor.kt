@@ -21,22 +21,13 @@ import pt.iscte.javardise.views.ClassDocumentationView
 import pt.iscte.javardise.widgets.expressions.CallFeature
 import pt.iscte.javardise.widgets.expressions.VariableDeclarationFeature
 import pt.iscte.javardise.widgets.members.ClassWidget
-import pt.iscte.javardise.widgets.statements.*
+import pt.iscte.javardise.widgets.statements.EmptyStatementFeature
+import pt.iscte.javardise.widgets.statements.IfFeature
+import pt.iscte.javardise.widgets.statements.ReturnFeature
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.PrintWriter
 import java.util.*
-import kotlin.collections.filter
-import kotlin.collections.find
-import kotlin.collections.first
-import kotlin.collections.forEach
-import kotlin.collections.isEmpty
-import kotlin.collections.isNotEmpty
-import kotlin.collections.joinToString
-import kotlin.collections.listOf
-import kotlin.collections.map
-import kotlin.collections.mutableListOf
-import kotlin.collections.mutableMapOf
 import kotlin.collections.set
 
 
@@ -165,11 +156,21 @@ class JavardiseClassicEditor(val display: Display, val folder: File) {
 
         }
 
+        handleShortcuts()
+    }
+
+    private fun handleShortcuts() {
         display.addFilter(SWT.KeyDown) {
             if (it.stateMask == SWT.MOD1 && it.keyCode == 'z'.code) {
                 println("undo")
-                val cmd = classOnFocus?.commandStack
-                cmd?.undo()
+                val commandStack = classOnFocus?.commandStack
+                commandStack?.undo()
+                it.doit = false
+            } else if (it.stateMask == SWT.MOD1 or SWT.SHIFT && it.keyCode == 'z'.code) {
+
+                println("redo")
+                val commandStack = classOnFocus?.commandStack
+                commandStack?.redo()
                 it.doit = false
             } else if (it.keyCode == SWT.PAGE_DOWN) {
                 classOnFocus?.getMemberOnFocus()?.let {
@@ -178,6 +179,7 @@ class JavardiseClassicEditor(val display: Display, val folder: File) {
                     if (index + 1 < members.size)
                         classOnFocus?.focus(members[index + 1])
                 }
+                it.doit = false
             } else if (it.keyCode == SWT.PAGE_UP) {
                 classOnFocus?.getMemberOnFocus()?.let {
                     val members = classOnFocus!!.node.members
@@ -185,7 +187,9 @@ class JavardiseClassicEditor(val display: Display, val folder: File) {
                     if (index - 1 >= 0)
                         classOnFocus?.focus(members[index - 1])
                 }
+                it.doit = false
             }
+
         }
     }
 
@@ -297,7 +301,6 @@ class JavardiseClassicEditor(val display: Display, val folder: File) {
             }
             tab.data = TabData(file, model, w)
 
-
             //addUndoScale(tab, w)
         }
 
@@ -308,27 +311,30 @@ class JavardiseClassicEditor(val display: Display, val folder: File) {
         tab: Composite,
         w: ClassWidget
     ) {
+
         val scale = Scale(tab, SWT.BORDER)
         scale.minimum = 0
         scale.maximum = 1
         scale.pageIncrement = 1
+        scale.enabled = false
+
         scale.addSelectionListener(object : SelectionAdapter() {
             override fun widgetSelected(e: SelectionEvent?) {
-                println(scale.selection)
-                var diff = scale.maximum - scale.selection
-                while (diff-- > 0)
+                while (scale.selection  < w.commandStack.stackTop)
                     w.commandStack.undo()
-                while (diff++ < 0)
+                while (scale.selection  > w.commandStack.stackTop) {
                     w.commandStack.redo()
+                }
             }
         })
-
         w.commandStack.addObserver { command, exec ->
-            if (exec)
-                scale.maximum++
-            else
-                scale.maximum--
-            scale.selection = scale.maximum
+            if (w.commandStack.stackTop >= 0) {
+                scale.enabled = true
+                scale.maximum = w.commandStack.stackSize-1
+                scale.selection = w.commandStack.stackTop
+            } else {
+                scale.enabled = false
+            }
             scale.requestLayout()
         }
     }

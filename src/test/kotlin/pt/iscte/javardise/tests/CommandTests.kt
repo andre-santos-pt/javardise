@@ -116,18 +116,20 @@ class CommandTests : SWTTest(
             step {
                 prev = a(prev)
                 assertEquals(i + 1, commandStack.stackSize)
+                assertEquals(i, commandStack.stackTop)
             }
         }
 
         actions.forEachIndexed { i, _ ->
             step {
+                assertEquals(actions.lastIndex - i, commandStack.stackTop)
                 commandStack.undo()
-                assertEquals(actions.size - (i + 1), commandStack.stackSize)
+                assertEquals(actions.size, commandStack.stackSize)
             }
         }
 
         step {
-            assertEquals(0, commandStack.stackSize)
+            assertEquals(-1, commandStack.stackTop)
         }
         terminate()
     }

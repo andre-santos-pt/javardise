@@ -7,6 +7,7 @@ import org.junit.platform.suite.api.Suite
 @SelectClasses(
     MethodSignatureTest::class,
     CommandTests::class,
+    UndoRedoTest::class,
     //FocusTest::class,
     ObserverTests::class)
 class TestSuite

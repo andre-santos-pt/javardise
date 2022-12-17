@@ -14,12 +14,16 @@ import pt.iscte.javardise.external.loadCompilationUnit
 import pt.iscte.javardise.external.scrollable
 import pt.iscte.javardise.widgets.members.ClassWidget
 
-abstract class SWTTest(val classModel: ClassOrInterfaceDeclaration, val speed: Int = TEST_SPEED) {
+abstract class SWTTest(
+    val classModel: ClassOrInterfaceDeclaration,
+    val speed: Int = TEST_SPEED
+) {
 
     private val display: Display = Display.getDefault()
     private val shell: Shell = Shell(display)
     private val code: Text
     internal val classWidget: ClassWidget
+
     constructor(src: String, speed: Int = TEST_SPEED)
             : this(loadCompilationUnit(src).findMainClass()!!, speed)
 
@@ -41,13 +45,12 @@ abstract class SWTTest(val classModel: ClassOrInterfaceDeclaration, val speed: I
     fun step(step: (Control?) -> Unit) {
         display.timerExec((stepIndex + 1) * speed) {
             step(display.focusControl)
-            if(!shell.isDisposed) {
+            if (!shell.isDisposed) {
                 code.text = classModel.toString()
                 shell.pack()
             }
         }
         stepIndex++
-
     }
 
     @AfterEach
