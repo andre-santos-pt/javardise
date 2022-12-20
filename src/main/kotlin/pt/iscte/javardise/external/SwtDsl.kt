@@ -9,10 +9,7 @@ import org.eclipse.swt.graphics.Font
 import org.eclipse.swt.graphics.FontData
 import org.eclipse.swt.graphics.Point
 import org.eclipse.swt.graphics.Rectangle
-import org.eclipse.swt.layout.FillLayout
-import org.eclipse.swt.layout.GridData
-import org.eclipse.swt.layout.GridLayout
-import org.eclipse.swt.layout.RowLayout
+import org.eclipse.swt.layout.*
 import org.eclipse.swt.widgets.*
 import pt.iscte.javardise.Configuration
 import pt.iscte.javardise.basewidgets.TextWidget
@@ -367,7 +364,9 @@ fun create(style: Int, top: Int = 0, spacing: Int = 0): RowLayout {
 }
 
 val ROW_LAYOUT_H_CALL = create(SWT.HORIZONTAL, spacing = 0)
-val ROW_LAYOUT_H_STRING = create(SWT.HORIZONTAL, spacing = -3)
+val ROW_LAYOUT_H_STRING = create(SWT.HORIZONTAL, spacing = -2)
+val ROW_DATA_STRING = RowData(3, SWT.DEFAULT)
+
 val ROW_LAYOUT_H_SHRINK = create(SWT.HORIZONTAL, spacing = 1, top = 0)
 val ROW_LAYOUT_H_ZERO = create(SWT.HORIZONTAL, 2)
 val ROW_LAYOUT_H = create(SWT.HORIZONTAL, 3)

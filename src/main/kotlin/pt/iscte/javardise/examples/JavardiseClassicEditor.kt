@@ -162,13 +162,10 @@ class JavardiseClassicEditor(val display: Display, val folder: File) {
     private fun handleShortcuts() {
         display.addFilter(SWT.KeyDown) {
             if (it.stateMask == SWT.MOD1 && it.keyCode == 'z'.code) {
-                println("undo")
                 val commandStack = classOnFocus?.commandStack
                 commandStack?.undo()
                 it.doit = false
             } else if (it.stateMask == SWT.MOD1 or SWT.SHIFT && it.keyCode == 'z'.code) {
-
-                println("redo")
                 val commandStack = classOnFocus?.commandStack
                 commandStack?.redo()
                 it.doit = false

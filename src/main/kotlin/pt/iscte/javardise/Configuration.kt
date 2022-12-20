@@ -87,7 +87,7 @@ open class DefaultConfiguration : Configuration {
     }
 
     override val fillInColor by lazy {
-       backgroundColor.brighter(-30)
+       backgroundColor.brighter(if(darkMode) 30 else -30)
     }
 
     override val foregroundColor by lazy {
@@ -99,15 +99,21 @@ open class DefaultConfiguration : Configuration {
     }
 
     override val backgroundColor by lazy {
-        Display.getDefault().getSystemColor(SWT.COLOR_WHITE)
+        Display.getDefault().getSystemColor(SWT.COLOR_WIDGET_BACKGROUND)
     }
 
     override val numberColor by lazy {
-        Display.getDefault().getSystemColor(SWT.COLOR_BLUE)
+        if(darkMode)
+            Display.getDefault().getSystemColor(SWT.COLOR_CYAN)
+        else
+            Display.getDefault().getSystemColor(SWT.COLOR_BLUE)
     }
 
     override val commentColor by lazy {
-        Display.getDefault().getSystemColor(SWT.COLOR_DARK_GREEN)
+        if(darkMode)
+            Display.getDefault().getSystemColor(SWT.COLOR_GREEN)
+        else
+            Display.getDefault().getSystemColor(SWT.COLOR_DARK_GREEN)
     }
 
     override val keywordColor by lazy {

@@ -3,16 +3,20 @@ package pt.iscte.javardise.widgets.expressions
 import com.github.javaparser.ast.expr.Expression
 import com.github.javaparser.ast.expr.NameExpr
 import com.github.javaparser.ast.expr.StringLiteralExpr
+import com.github.javaparser.ast.observer.ObservableProperty
 import org.eclipse.swt.SWT
 import org.eclipse.swt.events.KeyAdapter
 import org.eclipse.swt.events.KeyEvent
 import org.eclipse.swt.widgets.Composite
-import pt.iscte.javardise.*
-import pt.iscte.javardise.basewidgets.FixedToken
+import pt.iscte.javardise.Command
+import pt.iscte.javardise.CommandKind
+import pt.iscte.javardise.Configuration
+import pt.iscte.javardise.ID
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
+import pt.iscte.javardise.external.ROW_DATA_STRING
+import pt.iscte.javardise.external.ROW_LAYOUT_H_STRING
 
-// TODO empty string "     "
 class StringExpressionWidget(
     parent: Composite,
     override val node: StringLiteralExpr,
@@ -23,7 +27,7 @@ class StringExpressionWidget(
     val open: TokenWidget
     val close: TokenWidget
 
-    val delListener = object : KeyAdapter() {
+    private val delListener = object : KeyAdapter() {
         override fun keyPressed(e: KeyEvent) {
             if(e.character == SWT.BS)
                 if(node.value.any { it.toString().matches(ID) })
@@ -34,14 +38,28 @@ class StringExpressionWidget(
     }
 
     init {
+        layout = ROW_LAYOUT_H_STRING
         open = TokenWidget(this, "\"")
         open.widget.foreground = configuration.commentColor
         open.addKeyListenerInternal(delListener)
         text = TextWidget.create(this, node.value) { _, _ -> true }
         text.widget.foreground = configuration.commentColor
+        if(node.value.isEmpty())
+            text.widget.layoutData = ROW_DATA_STRING
+        text.widget.addModifyListener {
+            text.widget.layoutData =  if(text.text.isEmpty()) ROW_DATA_STRING else null
+        }
+        text.addDeleteEmptyListener {
+            editEvent(Configuration.hole())
+        }
         close = TokenWidget(this, "\"")
         close.widget.foreground = configuration.commentColor
         close.widget.addKeyListener(delListener)
+
+        observeNotNullProperty<String>(ObservableProperty.VALUE) {
+            text.text = it
+            close.setFocus()
+        }
 
         text.addFocusLostAction {
             commandStack.execute(object : Command {
@@ -55,7 +73,6 @@ class StringExpressionWidget(
 
                 override fun undo() {
                     node.value = element
-                    text.text = element
                 }
             })
         }
