@@ -22,6 +22,8 @@ abstract class StatementWidget<T : Statement>(
 
     abstract val parentBlock: BlockStmt
 
+    abstract val tail: TextWidget
+
     init {
         layout = ROW_LAYOUT_H_SHRINK
         font = configuration.font

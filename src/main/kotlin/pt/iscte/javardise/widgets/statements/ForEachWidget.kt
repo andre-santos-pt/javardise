@@ -13,7 +13,6 @@ import org.eclipse.swt.widgets.Composite
 import pt.iscte.javardise.CommandStack
 import pt.iscte.javardise.basewidgets.*
 import pt.iscte.javardise.external.column
-import pt.iscte.javardise.external.observeNotNullProperty
 import pt.iscte.javardise.external.row
 import pt.iscte.javardise.setCopySource
 import pt.iscte.javardise.widgets.expressions.ExpressionWidget
@@ -33,7 +32,8 @@ class ForEachWidget(parent: SequenceWidget, node: ForEachStmt,
     lateinit var firstRow: Composite
 
     override val body: BlockStmt = node.body.asBlockStmt()
-
+    override val tail: TextWidget
+        get() = closingBracket
     init {
         column {
             firstRow = row {
@@ -50,7 +50,7 @@ class ForEachWidget(parent: SequenceWidget, node: ForEachStmt,
                 FixedToken(this, ")")
                 openBracket = TokenWidget(this, "{")
             }
-            bodyWidget = createSequence(this, node.body.asBlockStmt())
+            bodyWidget = createBlockSequence(this, node.body.asBlockStmt())
             closingBracket = TokenWidget(this, "}")
             closingBracket.addEmptyStatement(this@ForEachWidget, parentBlock, node)
         }

@@ -1,10 +1,8 @@
 package pt.iscte.javardise.widgets.expressions
 
-import com.github.javaparser.ParseProblemException
 import com.github.javaparser.StaticJavaParser
 import com.github.javaparser.ast.ArrayCreationLevel
 import com.github.javaparser.ast.NodeList
-import com.github.javaparser.ast.comments.BlockComment
 import com.github.javaparser.ast.expr.*
 import org.eclipse.swt.SWT
 import org.eclipse.swt.events.KeyAdapter
@@ -14,6 +12,7 @@ import org.eclipse.swt.widgets.Composite
 import pt.iscte.javardise.Configuration
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.external.*
+import pt.iscte.javardise.parseFillIn
 
 val TYPE = Regex("[a-zA-Z]\\w*")
 
@@ -92,19 +91,18 @@ class SimpleExpressionWidget(
 //                        at java.base/java.util.Optional.get(Optional.java:143)
 //                        at pt.iscte.javardise.widgets.expressions.SimpleExpressionWidget$2.keyPressed(SimpleExpressionWidget.kt:92)
 //                        at org.eclipse.swt.widgets.TypedListener.handleEvent(TypedListener.java:171)
-                        if(node.parentNode.get() is BinaryExpr) {
+                        if(node.parentNode.getOrNull is BinaryExpr) {
                             val parentExp = node.parentNode.get().clone() as BinaryExpr
+                            parentExp.right = parseFillIn(expression.text)
                             val newnode = BinaryExpr(parentExp,
-                                NameExpr(Configuration.fillInToken), biop
+                                Configuration.hole(), biop
                             )
                             (parent as ExpressionWidget<Expression>).editEvent(newnode)
                         }
                         else {
                             node =
                                 BinaryExpr(
-                                    StaticJavaParser.parseExpression(
-                                        expression.text
-                                    ), NameExpr(Configuration.fillInToken), biop
+                                    parseFillIn(expression.text), Configuration.hole(), biop
                                 )
                             editEvent(node)
                         }
@@ -151,7 +149,7 @@ class SimpleExpressionWidget(
         }) {
             val arrayCreationExpr = ArrayCreationExpr(
                 StaticJavaParser.parseType(expression.text.split(Regex("\\s+"))[1]),
-                NodeList.nodeList(ArrayCreationLevel(NameExpr(Configuration.fillInToken))),
+                NodeList.nodeList(ArrayCreationLevel(Configuration.hole())),
                 null
             )
             editEvent(arrayCreationExpr)
@@ -184,11 +182,11 @@ class SimpleExpressionWidget(
         }
 
         expression.addKeyEvent('(', precondition = {expression.isAtBeginning}) {
-            editEvent(EnclosedExpr(parseExpression(expression.text)))
+            editEvent(EnclosedExpr(parseFillIn(expression.text)))
         }
 
         expression.addKeyEvent(')', precondition = {expression.isAtEnd}) {
-            editEvent(EnclosedExpr(parseExpression(expression.text)))
+            editEvent(EnclosedExpr(parseFillIn(expression.text)))
         }
 
         expression.addKeyEvent('{', precondition={expression.isEmpty}) {
@@ -201,7 +199,7 @@ class SimpleExpressionWidget(
 
         expression.addFocusLostAction {
             if(!expression.widget.isDisposed) {
-                val new = parseExpression(expression.text)
+                val new = parseFillIn(expression.text)
                 if(new != node) {
                     node = new
                     expression.widget.data = node
@@ -209,32 +207,9 @@ class SimpleExpressionWidget(
                 }
             }
         }
-
-//        expression.addKeyEvent(
-//            SWT.BS,
-//            precondition = { it.isEmpty() && this.parent is BinaryExpressionWidget }) {
-//            val pp = (this.parent as BinaryExpressionWidget).parent
-//            if (pp is SimpleExpressionWidget) {
-//                val biexp = node.parentNode.get() as BinaryExpr
-//                val part = if (node === biexp.left) biexp.right else biexp.left
-//                pp.editEvent(part.clone())
-//            }
-//        }
-//        expression.widget.addModifyListener {
-//            expression.updateColor()
-//        }
-
     }
 
-    private inline fun parseExpression(exp: String): Expression =
-        try {
-            StaticJavaParser.parseExpression(exp)
-        } catch (_: ParseProblemException) {
-            if(exp.isBlank())
-                Configuration.hole()
-            else
-                Configuration.typo(exp)
-        }
+
 
     override val head: TextWidget
         get() = expression
@@ -245,9 +220,4 @@ class SimpleExpressionWidget(
     override fun setFocusOnCreation(firstFlag: Boolean) {
         expression.setFocus()
     }
-
-//    override fun dispose() {
-//        expression.widget.removeKeyListener(keyListener) // TODO BUG Widget is disposed
-//        super.dispose()
-//    }
 }

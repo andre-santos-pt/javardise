@@ -26,8 +26,7 @@ class ReturnWidget(
     StatementWidget<ReturnStmt>(parent, node) {
     val keyword: TokenWidget
     var expression: ExpressionWidget<*>? = null
-    val semiColon: TokenWidget
-
+    override val tail: TextWidget
 
     init {
         keyword = newKeywordWidget(this, "return")
@@ -53,9 +52,9 @@ class ReturnWidget(
                 )
             }
         }
-        semiColon = TokenWidget(this, ";")
-        semiColon.addDelete(node, parentBlock)
-        semiColon.addEmptyStatement(this, parentBlock, node)
+        tail = TokenWidget(this, ";")
+        tail.addDelete(node, parentBlock)
+        tail.addEmptyStatement(this, parentBlock, node)
 
         observeProperty<Expression>(ObservableProperty.EXPRESSION) {
             if (it == null) {
@@ -73,7 +72,7 @@ class ReturnWidget(
                         node::setExpression
                     )
                 }
-                expression!!.moveAbove(semiColon.widget)
+                expression!!.moveAbove(tail.widget)
                 expression!!.requestLayout()
                 expression!!.setFocusOnCreation()
             }
@@ -89,7 +88,7 @@ class ReturnWidget(
         if(expression != null)
             expression!!.setFocus()
         else
-            semiColon.setFocus()
+            tail.setFocus()
     }
 }
 

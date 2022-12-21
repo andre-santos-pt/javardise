@@ -209,7 +209,7 @@ open class ClassWidget(
         bodyWidget = SequenceWidget(
             column,
             if (staticClass) 0 else configuration.tabLength,
-            10
+            if (staticClass) 0 else 10
         ) { seq, _ ->
             createInsert(seq)
         }

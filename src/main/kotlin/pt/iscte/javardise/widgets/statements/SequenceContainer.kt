@@ -13,7 +13,6 @@ import pt.iscte.javardise.*
 import pt.iscte.javardise.basewidgets.SequenceWidget
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
-import pt.iscte.javardise.external.ListAddRemoveObserver
 import pt.iscte.javardise.external.ListObserver
 import pt.iscte.javardise.external.indexOfIdentity
 
@@ -171,8 +170,8 @@ interface SequenceContainer<T : Node> : NodeWidget<T> {
         }
     }
 
-    fun createSequence(parent: Composite, block: BlockStmt): SequenceWidget {
-        val seq = SequenceWidget(parent, configuration.tabLength) { w, e ->
+    fun createBlockSequence(parent: Composite, block: BlockStmt, tabs: Int = 1): SequenceWidget {
+        val seq = SequenceWidget(parent, tabs * configuration.tabLength) { w, e ->
             createInsert(w, block)
         }
         block.statements.forEach {
@@ -204,7 +203,7 @@ interface SequenceContainer<T : Node> : NodeWidget<T> {
 
                 val childrenLen = seq.children.size
                 //if (index < childrenLen) seq.children[index].setFocus()
-                if (index - 1 in 0 until childrenLen) seq.children[index - 1].setFocus()
+                if (index - 1 in 0 until childrenLen) (seq.children[index - 1] as StatementWidget<*>).tail.setFocus()
                 else seq.parent.setFocus()
             }
 

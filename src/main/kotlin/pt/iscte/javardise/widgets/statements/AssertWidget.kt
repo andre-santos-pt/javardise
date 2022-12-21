@@ -27,7 +27,7 @@ class AssertWidget(
     StatementWidget<AssertStmt>(parent, node) {
     val keyword: TokenWidget
     var expression: ExpressionWidget<*>? = null
-    val semiColon: TokenWidget
+    override val tail: TokenWidget
 
 
     init {
@@ -39,16 +39,16 @@ class AssertWidget(
         expression = createExpressionWidget(this, node.check) {
             node.modifyCommand(node.check, it, node::setCheck)
         }
-        semiColon = TokenWidget(this, ";")
-        semiColon.addDelete(node, parentBlock)
-        semiColon.addEmptyStatement(this, parentBlock, node)
+        tail = TokenWidget(this, ";")
+        tail.addDelete(node, parentBlock)
+        tail.addEmptyStatement(this, parentBlock, node)
 
         observeNotNullProperty<Expression>(ObservableProperty.CHECK) {
             expression?.dispose()
             expression = createExpressionWidget(this, it) { e ->
                 node.modifyCommand(node.check, it, node::setCheck)
             }
-            expression!!.moveAbove(semiColon.widget)
+            expression!!.moveAbove(tail.widget)
             expression!!.requestLayout()
             expression!!.setFocusOnCreation()
         }
@@ -63,7 +63,7 @@ class AssertWidget(
         if (expression != null)
             expression!!.setFocus()
         else
-            semiColon.setFocus()
+            tail.setFocus()
     }
 }
 

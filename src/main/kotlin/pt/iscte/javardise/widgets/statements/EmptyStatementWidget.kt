@@ -22,34 +22,33 @@ class EmptyStatementWidget(
 ) :
     StatementWidget<EmptyStmt>(parent, node), TextWidget   {
 
-    val semiColon: TextWidget
-
+    override val tail: TextWidget
     init {
         require(!node.comment.isPresent)
 
-        semiColon = TextWidget.create(this, "") { c, s ->
+        tail = TextWidget.create(this, "") { c, s ->
             c.toString().matches(Regex("\\w|\\[|]|\\.|\\+|-|\\*|/|%"))
                     || c == SWT.SPACE && !s.endsWith(SWT.SPACE)
                     || c == SWT.BS
         }
-        semiColon.addKeyEvent(SWT.BS, precondition = {it.isEmpty()}) {
+        tail.addKeyEvent(SWT.BS, precondition = {it.isEmpty()}) {
             parentBlock.statements.removeCommand(parentBlock, node)
         }
 
-        semiColon.addKeyEvent(SWT.CR) {
+        tail.addKeyEvent(SWT.CR) {
             parentBlock.statements.addCommand(parentBlock, EmptyStmt(), parentBlock.statements.indexOfIdentity(node)+1)
         }
 
-        semiColon.addFocusLostAction {
-            if(semiColon.text.startsWith("//")) {
+        tail.addFocusLostAction {
+            if(tail.text.startsWith("//")) {
                 val stmt = EmptyStmt()
-                stmt.setComment(LineComment(semiColon.text.substring(2)))
+                stmt.setComment(LineComment(tail.text.substring(2)))
                 parentBlock.statements.replaceCommand(parentBlock, node, stmt)
             }
             else
-                semiColon.clear()
+                tail.clear()
         }
-        semiColon.setPasteTarget {
+        tail.setPasteTarget {
             commandStack.execute(object : Command {
                 override val target: Node = parentBlock
                 override val kind: CommandKind = CommandKind.MODIFY
@@ -79,25 +78,25 @@ class EmptyStatementWidget(
         }
 
         configuration.statementFeatures.forEach {
-            it.configureInsert(semiColon, parentBlock, node,commandStack) {
+            it.configureInsert(tail, parentBlock, node,commandStack) {
                 parentBlock.statements.replaceCommand(parentBlock, node, it)
             }
         }
     }
 
     override fun setFocusOnCreation(firstFlag: Boolean) {
-        semiColon.setFocus()
+        tail.setFocus()
     }
 
     override val widget: Text
-        get() = semiColon.widget
+        get() = tail.widget
 
     override fun setFocus(): Boolean {
-        return semiColon.setFocus()
+        return tail.setFocus()
     }
 
     override fun addKeyListenerInternal(listener: KeyListener) {
-        semiColon.addKeyListenerInternal(listener)
+        tail.addKeyListenerInternal(listener)
     }
 }
 

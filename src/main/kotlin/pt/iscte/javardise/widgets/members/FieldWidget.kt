@@ -61,8 +61,15 @@ class FieldWidget(
             )
         }
 
-        semiColon = TokenWidget(firstRow, ";")
+        name.addKeyEvent('=', precondition = {name.isAtEnd}) {
+            node.modifyCommand(
+                dec.variable.initializer.getOrNull,
+                Configuration.hole(),
+                dec.variable::setInitializer
+            )
+        }
 
+        semiColon = TokenWidget(firstRow, ";")
         semiColon.addKeyEvent('=', precondition = { initializer == null }) {
             node.modifyCommand(
                 dec.variable.initializer.getOrNull,

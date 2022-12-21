@@ -11,7 +11,6 @@ import pt.iscte.javardise.*
 import pt.iscte.javardise.basewidgets.*
 import pt.iscte.javardise.external.block
 import pt.iscte.javardise.external.column
-import pt.iscte.javardise.external.observeProperty
 import pt.iscte.javardise.external.row
 import pt.iscte.javardise.widgets.expressions.ExpressionWidget
 import pt.iscte.javardise.widgets.expressions.createExpressionWidget
@@ -34,6 +33,8 @@ class WhileWidget(
 
     override val body: BlockStmt = node.block.asBlockStmt()
 
+    override val tail: TextWidget
+        get() = closingBracket
     init {
         val col = column {
             firstRow = row {
@@ -69,7 +70,7 @@ class WhileWidget(
                 FixedToken(this, ")")
                 openBracket = TokenWidget(this, "{")
             }
-            bodyWidget = createSequence(this, node.block)
+            bodyWidget = createBlockSequence(this, node.block)
             openBracket.addEmptyStatement(this@WhileWidget, node.block.asBlockStmt())
 
         }

@@ -39,6 +39,9 @@ class ForWidget(
     override val closingBracket: TextWidget
     override val body: BlockStmt = node.body.asBlockStmt()
 
+    override val tail: TextWidget
+        get() = closingBracket
+
     init {
         val col = column {
             firstRow = row {
@@ -63,7 +66,7 @@ class ForWidget(
                 FixedToken(this, ")")
                 openBracket = TokenWidget(this, "{")
             }
-            bodyWidget = createSequence(this, node.body.asBlockStmt())
+            bodyWidget = createBlockSequence(this, node.body.asBlockStmt())
             openBracket.addEmptyStatement(this@ForWidget, node.body.asBlockStmt())
         }
         closingBracket = TokenWidget(col, "}")

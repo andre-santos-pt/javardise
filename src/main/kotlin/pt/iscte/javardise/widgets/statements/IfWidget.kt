@@ -1,18 +1,14 @@
 package pt.iscte.javardise.widgets.statements
 
 import com.github.javaparser.ast.Node
-import com.github.javaparser.ast.NodeList
 import com.github.javaparser.ast.expr.Expression
 import com.github.javaparser.ast.expr.NameExpr
-import com.github.javaparser.ast.observer.AstObserver
-import com.github.javaparser.ast.observer.AstObserverAdapter
 import com.github.javaparser.ast.observer.ObservableProperty
 import com.github.javaparser.ast.stmt.*
 import org.eclipse.swt.SWT
 import org.eclipse.swt.widgets.Composite
 import org.eclipse.swt.widgets.Control
 import pt.iscte.javardise.*
-import pt.iscte.javardise.CommandStack.NullStack.modifyCommand
 import pt.iscte.javardise.basewidgets.*
 import pt.iscte.javardise.external.*
 import pt.iscte.javardise.widgets.expressions.ExpressionWidget
@@ -38,6 +34,8 @@ class IfWidget(
     lateinit var openThenBracket: TokenWidget
     override val closingBracket: TokenWidget
 
+    override val tail: TextWidget
+        get() = closingBracket
     init {
         column = column {
             firstRow = row {
@@ -77,7 +75,7 @@ class IfWidget(
                 FixedToken(this, ")")
             }
 
-            bodyWidget = createSequence(this, node.thenBlock)
+            bodyWidget = createBlockSequence(this, node.thenBlock)
 
             openThenBracket = TokenWidget(firstRow, "{")
             openThenBracket.addEmptyStatement(this@IfWidget, node.thenBlock)
@@ -168,7 +166,7 @@ class IfWidget(
                     keyword.addShallowDelete()
                     openBracketElse = TokenWidget(this, "{")
                 }
-                elseBody = createSequence(this, elseStatement as BlockStmt)
+                elseBody = createBlockSequence(this, elseStatement as BlockStmt)
                 closeBracketElse = TokenWidget(this, "}")
                 closeBracketElse.addEmptyStatement(this@IfWidget, parentBlock, node)
                 addMoveBracket() // TODO special case shallow delete ELSE

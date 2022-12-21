@@ -2,7 +2,6 @@ package pt.iscte.javardise.widgets.statements
 
 import com.github.javaparser.ast.NodeList
 import com.github.javaparser.ast.expr.Expression
-import com.github.javaparser.ast.expr.NameExpr
 import com.github.javaparser.ast.observer.ObservableProperty
 import com.github.javaparser.ast.stmt.BlockStmt
 import com.github.javaparser.ast.stmt.DoStmt
@@ -14,7 +13,6 @@ import pt.iscte.javardise.CommandStack
 import pt.iscte.javardise.Configuration
 import pt.iscte.javardise.basewidgets.*
 import pt.iscte.javardise.external.column
-import pt.iscte.javardise.external.observeProperty
 import pt.iscte.javardise.external.row
 import pt.iscte.javardise.setCopySource
 import pt.iscte.javardise.widgets.expressions.ExpressionWidget
@@ -35,6 +33,8 @@ class DoWhileWidget(
 
     lateinit var openBracket: TokenWidget
     override lateinit var closingBracket: TokenWidget
+    override val tail: TextWidget
+        get() = closingBracket
 
     override val body: BlockStmt = node.body.asBlockStmt()
 
@@ -48,7 +48,7 @@ class DoWhileWidget(
                 keyword.setCopySource(node)
                 openBracket = TokenWidget(this, "{")
             }
-            bodyWidget = createSequence(this, node.body.asBlockStmt())
+            bodyWidget = createBlockSequence(this, node.body.asBlockStmt())
             openBracket.addEmptyStatement(this@DoWhileWidget, node.body.asBlockStmt())
             TokenWidget(this, "}")
 

@@ -16,7 +16,6 @@ import pt.iscte.javardise.external.ROW_LAYOUT_H_SHRINK
 import pt.iscte.javardise.external.findMainClass
 import pt.iscte.javardise.external.loadCompilationUnit
 import pt.iscte.javardise.external.scrollable
-import pt.iscte.javardise.widgets.members.ClassWidget
 import pt.iscte.javardise.widgets.statements.SequenceContainer
 
 
@@ -73,7 +72,7 @@ ConfigurationRoot {
 
     init {
         layout = ROW_LAYOUT_H_SHRINK
-        bodyWidget = createSequence(this, body)
+        bodyWidget = createBlockSequence(this, body, tabs = 0)
         addUndoSupport(SWT.MOD1, 'z'.code)
     }
 

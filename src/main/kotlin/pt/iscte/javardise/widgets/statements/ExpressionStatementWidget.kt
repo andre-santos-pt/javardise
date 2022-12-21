@@ -5,6 +5,7 @@ import com.github.javaparser.ast.observer.ObservableProperty
 import com.github.javaparser.ast.stmt.BlockStmt
 import com.github.javaparser.ast.stmt.ExpressionStmt
 import pt.iscte.javardise.basewidgets.SequenceWidget
+import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
 import pt.iscte.javardise.external.ROW_LAYOUT_H_SHRINK
 import pt.iscte.javardise.external.isIncrementorOrDecrementor
@@ -19,23 +20,25 @@ open class ExpressionStatementWidget(
 ) :
     StatementWidget<ExpressionStmt>(parent, node) {
     var expression: ExpressionWidget<*>
-    val semiColon: TokenWidget
+
+    override val tail: TextWidget
+
 
     init {
         layout = ROW_LAYOUT_H_SHRINK
         expression = createExpression(node.expression)
         expression.head.addEmptyStatement(this, parentBlock, node, false)
         expression.head.setCopySource(node)
-        semiColon = TokenWidget(this, ";")
-        semiColon.addEmptyStatement(this, parentBlock, node)
-        semiColon.addDeleteListener {
+        tail = TokenWidget(this, ";")
+        tail.addEmptyStatement(this, parentBlock, node)
+        tail.addDeleteListener {
             parentBlock.statements.removeCommand(parentBlock, node)
         }
 
         observeNotNullProperty<Expression>(ObservableProperty.EXPRESSION) {
             expression.dispose()
             expression = createExpression(it)
-            expression.moveAbove(semiColon.widget)
+            expression.moveAbove(tail.widget)
             expression.requestLayout()
             expression.setFocus()
         }
@@ -60,7 +63,7 @@ open class ExpressionStatementWidget(
 
     override fun setFocusOnCreation(firstFlag: Boolean) {
         if (node.expression.isUnaryExpr)
-            semiColon.setFocus()
+            tail.setFocus()
         else
             expression.setFocusOnCreation()
     }

@@ -17,7 +17,10 @@ import pt.iscte.javardise.NodeWidget
 import pt.iscte.javardise.ObserverWidget
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.external.*
+import pt.iscte.javardise.parseFillIn
 
+// TODO field access expression
+// TODO cast expression
 /**
  * ArchRule: subclasses should register node observers using observeNotNullProperty(..)
  * defined here. In this way, those observers are unregistered when the widget is disposed.
@@ -129,7 +132,7 @@ fun <E : Expression> createExpressionWidget(
                                 op?.let {
                                     editEvent(
                                         UnaryExpr(
-                                            expression.clone(),
+                                            parseFillIn(tail.text),
                                             it
                                         )
                                     )
@@ -142,8 +145,8 @@ fun <E : Expression> createExpressionWidget(
                                 op?.let {
                                         editEvent(
                                             BinaryExpr(
-                                                expression.clone(),
-                                                NameExpr(Configuration.fillInToken),
+                                                parseFillIn(tail.text),
+                                                Configuration.hole(),
                                                 it
                                             )
                                         )

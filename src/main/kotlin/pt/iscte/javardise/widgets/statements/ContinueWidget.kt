@@ -18,7 +18,7 @@ class ContinueWidget(
 ) :
     StatementWidget<ContinueStmt>(parent, node) {
     val keyword: TokenWidget
-    val semiColon: TokenWidget
+    override val tail: TextWidget
 
     init {
         keyword = newKeywordWidget(this, "continue")
@@ -26,9 +26,9 @@ class ContinueWidget(
         keyword.addEmptyStatement(this, parentBlock, node, false)
         keyword.setCopySource(node)
 
-        semiColon = TokenWidget(this, ";")
-        semiColon.addDelete(node, parentBlock)
-        semiColon.addEmptyStatement(this, parentBlock, node)
+        tail = TokenWidget(this, ";")
+        tail.addDelete(node, parentBlock)
+        tail.addEmptyStatement(this, parentBlock, node)
     }
 
     override fun setFocus(): Boolean {
@@ -36,7 +36,7 @@ class ContinueWidget(
     }
 
     override fun setFocusOnCreation(firstFlag: Boolean) {
-        semiColon.setFocus()
+        tail.setFocus()
     }
 }
 

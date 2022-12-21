@@ -17,29 +17,42 @@ import pt.iscte.javardise.external.getOrNull
 import pt.iscte.javardise.external.row
 import pt.iscte.javardise.setCopySource
 
-class LineCommentWidget(parent: SequenceWidget,
-                        override val node: EmptyStmt,
-                        override val parentBlock: BlockStmt
-)
-    :StatementWidget<EmptyStmt>(parent, node), NodeWidget<EmptyStmt> {
+class LineCommentWidget(
+    parent: SequenceWidget,
+    override val node: EmptyStmt,
+    override val parentBlock: BlockStmt
+) : StatementWidget<EmptyStmt>(parent, node), NodeWidget<EmptyStmt> {
+
+    override val tail: TextWidget
+
     init {
         require(node.comment.isPresent)
-        row {
-            val slashes = TokenWidget(this, "//")
-            slashes.widget.foreground = configuration.commentColor
-            slashes.addDelete(node, parentBlock)
-            slashes.addEmptyStatement(this@LineCommentWidget, parentBlock, node, false)
-            slashes.setCopySource(node)
-            val cmt = TextWidget.create(this, node.comment.get().content.trim()) { _, _ -> true }
-            cmt.addEmptyStatement(this@LineCommentWidget, parentBlock, node)
-            cmt.addFocusLostAction {
-                node.modifyCommand(node.comment.getOrNull, LineComment(cmt.text), node::setComment)
-            }
-            cmt.widget.foreground = configuration.commentColor
+        val slashes = TokenWidget(this, "//")
+        slashes.widget.foreground = configuration.commentColor
+        slashes.addDelete(node, parentBlock)
+        slashes.addEmptyStatement(
+            this@LineCommentWidget,
+            parentBlock,
+            node,
+            false
+        )
+        slashes.setCopySource(node)
+        tail = TextWidget.create(
+            this,
+            node.comment.get().content.trim()
+        ) { _, _ -> true }
+        tail.addEmptyStatement(this@LineCommentWidget, parentBlock, node)
+        tail.addFocusLostAction {
+            node.modifyCommand(
+                node.comment.getOrNull,
+                LineComment(tail.text),
+                node::setComment
+            )
+        }
+        tail.widget.foreground = configuration.commentColor
 
-            observeProperty<Comment>(ObservableProperty.COMMENT) {
-                cmt.text = it?.content?.toString() ?: ""
-            }
+        observeProperty<Comment>(ObservableProperty.COMMENT) {
+            tail.text = it?.content?.toString() ?: ""
         }
     }
 
@@ -49,7 +62,10 @@ class LineCommentWidget(parent: SequenceWidget,
 }
 
 
-object LineCommentFeature : StatementFeature<EmptyStmt, LineCommentWidget>(EmptyStmt::class.java, LineCommentWidget::class.java) {
+object LineCommentFeature : StatementFeature<EmptyStmt, LineCommentWidget>(
+    EmptyStmt::class.java,
+    LineCommentWidget::class.java
+) {
     override fun configureInsert(
         insert: TextWidget,
         block: BlockStmt,
@@ -65,7 +81,7 @@ object LineCommentFeature : StatementFeature<EmptyStmt, LineCommentWidget>(Empty
     }
 
     override fun targets(stmt: Statement): Boolean {
-        return  super.targets(stmt) && stmt.comment.isPresent
+        return super.targets(stmt) && stmt.comment.isPresent
     }
 
 }
