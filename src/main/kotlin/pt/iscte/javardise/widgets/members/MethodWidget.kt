@@ -25,6 +25,7 @@ import pt.iscte.javardise.external.*
 import pt.iscte.javardise.widgets.statements.SequenceContainer
 import pt.iscte.javardise.widgets.statements.addEmptyStatement
 
+// TODO arrow down/up navigation in abstract methods
 class MethodWidget(
     parent: Composite,
     val dec: CallableDeclaration<*>,

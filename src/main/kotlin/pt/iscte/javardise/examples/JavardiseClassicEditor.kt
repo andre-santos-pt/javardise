@@ -360,6 +360,7 @@ class JavardiseClassicEditor(val display: Display, val folder: File) {
                         )
 
                 })
+            //"mjava" -> MainScriptWidget(parent, model)
             else -> ClassWidget(parent, model)
         }
 

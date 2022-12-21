@@ -62,15 +62,27 @@ fun KeyEvent.isCombinedKey(key: Int) =
 interface ConfigurationRoot {
     val configuration: Configuration
     val commandStack: CommandStack
+
+    fun addUndoSupport(mask: Int, keycode: Int) {
+        Display.getDefault().addFilter(SWT.KeyDown) {
+            if (it.stateMask == mask && it.keyCode == keycode) {
+                commandStack.undo()
+                it.doit = false
+            }
+        }
+
+    }
 }
 
 fun Color.brighter(f: Int) =
-        Color(Display.getDefault(),
-            (red + f).coerceIn(0, 255),
-            (green + f).coerceIn(0, 255),
-            (blue + f).coerceIn(0, 255))
+    Color(
+        Display.getDefault(),
+        (red + f).coerceIn(0, 255),
+        (green + f).coerceIn(0, 255),
+        (blue + f).coerceIn(0, 255)
+    )
 
-fun Color.luminance() : Int =
+fun Color.luminance(): Int =
     (red * .21 + green * .71 + red * .08).roundToInt()
 
 
@@ -87,7 +99,7 @@ open class DefaultConfiguration : Configuration {
     }
 
     override val fillInColor by lazy {
-       backgroundColor.brighter(if(darkMode) 30 else -30)
+        backgroundColor.brighter(if (darkMode) 30 else -30)
     }
 
     override val foregroundColor by lazy {
@@ -95,7 +107,7 @@ open class DefaultConfiguration : Configuration {
     }
 
     override val foregroundColorLight by lazy {
-       foregroundColor.brighter(if(darkMode) -160 else 160)
+        foregroundColor.brighter(if (darkMode) -160 else 160)
     }
 
     override val backgroundColor by lazy {
@@ -103,14 +115,14 @@ open class DefaultConfiguration : Configuration {
     }
 
     override val numberColor by lazy {
-        if(darkMode)
+        if (darkMode)
             Display.getDefault().getSystemColor(SWT.COLOR_CYAN)
         else
             Display.getDefault().getSystemColor(SWT.COLOR_BLUE)
     }
 
     override val commentColor by lazy {
-        if(darkMode)
+        if (darkMode)
             Display.getDefault().getSystemColor(SWT.COLOR_GREEN)
         else
             Display.getDefault().getSystemColor(SWT.COLOR_DARK_GREEN)
