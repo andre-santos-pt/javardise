@@ -292,6 +292,10 @@ fun isValidSimpleName(name: String): Boolean =
         false
     }
 
+
+fun isValidMethodCallScope(expression: Expression) =
+    expression is NameExpr || expression is FieldAccessExpr || expression is ArrayAccessExpr || expression is MethodCallExpr
+
 val binaryOperators : List<BinaryExpr.Operator> = BinaryExpr.Operator.values().toList()
 
 val unaryOperators : List<UnaryExpr.Operator> = UnaryExpr.Operator.values().toList()

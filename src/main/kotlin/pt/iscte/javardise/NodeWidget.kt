@@ -55,7 +55,7 @@ interface NodeWidget<T> {
         else if(n.parent != null)
             findComm(n.parent)
         else
-            CommandStack.NullStack
+            CommandStack.nullStack
 
     fun newKeywordWidget(
         parent: Composite, keyword: String,

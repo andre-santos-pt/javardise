@@ -1,8 +1,11 @@
 package pt.iscte.javardise.examples
 
+import com.github.javaparser.ast.NodeList
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration
 import com.github.javaparser.ast.body.MethodDeclaration
 import com.github.javaparser.ast.stmt.BlockStmt
+import com.github.javaparser.ast.stmt.EmptyStmt
+import com.github.javaparser.ast.stmt.Statement
 import org.eclipse.swt.SWT
 import org.eclipse.swt.layout.FillLayout
 import org.eclipse.swt.widgets.Composite
@@ -65,11 +68,8 @@ class MainScriptWidget(
 ConfigurationRoot {
 
     override val body: BlockStmt = node.body.get()
-
     override val bodyWidget: SequenceWidget
-
     override val closingBracket: TextWidget
-
     override val control: Control = this
 
     init {
@@ -77,6 +77,16 @@ ConfigurationRoot {
         bodyWidget = createBlockSequence(this, body, tabs = 0)
         addUndoSupport(SWT.MOD1, 'z'.code)
         closingBracket = TokenWidget(this, " ")
+        observeListUntilDispose(body.statements, object : ListObserver<Statement> {
+            override fun elementRemove(
+                list: NodeList<Statement>,
+                index: Int,
+                node: Statement
+            ) {
+                if(list.size == 1)
+                    list.add(EmptyStmt())
+            }
+        })
     }
 
     override fun setFocusOnCreation(firstFlag: Boolean) {
@@ -86,7 +96,7 @@ ConfigurationRoot {
     override val configuration: Configuration
         get() = DefaultConfigurationSingleton
 
-    override val commandStack: CommandStack = CommandStack.create()
+    override val commandStack: CommandStack = CommandStack.nullStack
 }
 
 
