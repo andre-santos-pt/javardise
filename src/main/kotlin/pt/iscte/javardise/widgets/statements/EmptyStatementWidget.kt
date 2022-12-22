@@ -78,7 +78,7 @@ class EmptyStatementWidget(
         }
 
         configuration.statementFeatures.forEach {
-            it.configureInsert(tail, parentBlock, node,commandStack) {
+            it.configureInsert(tail, parentBlock, node, commandStack) {
                 parentBlock.statements.replaceCommand(parentBlock, node, it)
             }
         }

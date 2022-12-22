@@ -30,8 +30,21 @@ class VariableDeclarationWidget(
     var equals: FixedToken? = null
     var expression: ExpressionWidget<*>? = null
 
+    val dec = node.variables[0] // multi variable not supported
+
     init {
-        val dec = node.variables[0] // multi variable not supported
+        fun toAssign() {
+            if (dec.initializer.isPresent)
+                editEvent(
+                    AssignExpr(
+                        dec.nameAsExpression,
+                        dec.initializer.get(),
+                        AssignExpr.Operator.ASSIGN
+                    )
+                )
+            else
+                editEvent(null)
+        }
 
         type = SimpleTypeWidget(this, dec.type)
         type.addFocusLostAction(::isValidType) {
@@ -41,11 +54,9 @@ class VariableDeclarationWidget(
                 node::setAllTypes
             )
         }
-        type.addDeleteListener {
-            if(dec.initializer.isPresent)
-                editEvent(AssignExpr(dec.nameAsExpression, dec.initializer.get(),  AssignExpr.Operator.ASSIGN))
-            else
-                editEvent(null)
+
+        type.addDeleteEmptyListener {
+            toAssign()
         }
 
         name = SimpleNameWidget(this, dec)
@@ -54,11 +65,21 @@ class VariableDeclarationWidget(
         }
         name.addKeyEvent('=') {
             val setter: KFunction1<Expression?, Node> = dec::setInitializer
-            dec.modifyCommand(dec.initializer.getOrNull, NameExpr(Configuration.fillInToken), setter)
+            dec.modifyCommand(
+                dec.initializer.getOrNull,
+                NameExpr(Configuration.fillInToken),
+                setter
+            )
         }
         name.addDeleteEmptyListener {
-            if(dec.initializer.isPresent)
-                editEvent(AssignExpr(dec.nameAsExpression, dec.initializer.get(),  AssignExpr.Operator.ASSIGN))
+            if (dec.initializer.isPresent)
+                editEvent(
+                    AssignExpr(
+                        dec.nameAsExpression,
+                        dec.initializer.get(),
+                        AssignExpr.Operator.ASSIGN
+                    )
+                )
             else
                 editEvent(null)
         }
@@ -71,21 +92,26 @@ class VariableDeclarationWidget(
         observeNotNullProperty<Type>(ObservableProperty.TYPE, target = dec) {
             type.set(it.asString())
         }
-        observeNotNullProperty<SimpleName>(ObservableProperty.NAME, target = dec) {
+        observeNotNullProperty<SimpleName>(
+            ObservableProperty.NAME,
+            target = dec
+        ) {
             name.set(it.toString())
         }
-        observeProperty<Expression>(ObservableProperty.INITIALIZER, target = dec) {
-            if(it == null) {
+        observeProperty<Expression>(
+            ObservableProperty.INITIALIZER,
+            target = dec
+        ) {
+            if (it == null) {
                 equals?.dispose()
                 equals = null
                 expression?.dispose()
                 expression = null
                 requestLayout()
                 name.setFocus()
-            }
-            else {
+            } else {
                 expression?.dispose()
-                if(equals == null)
+                if (equals == null)
                     equals = FixedToken(this, "=")
                 expression = this.createExpWidget(dec, it)
                 expression!!.requestLayout()
@@ -98,8 +124,12 @@ class VariableDeclarationWidget(
         variable: VariableDeclarator,
         expression: Expression
     ) = createExpressionWidget(this, expression) {
-            variable.modifyCommand(variable.initializer.getOrNull, it, variable::setInitializer)
-        }
+        variable.modifyCommand(
+            variable.initializer.getOrNull,
+            it,
+            variable::setInitializer
+        )
+    }
 
     override val head: TextWidget
         get() = type
@@ -112,13 +142,21 @@ class VariableDeclarationWidget(
     }
 
     override fun setFocusOnCreation(firstFlag: Boolean) {
-        expression?.setFocus() ?: name.setFocus()
+        if (dec.type.asString() == Configuration.fillInToken)
+            type.setFocus()
+        else
+            expression?.setFocus() ?: name.setFocus()
     }
 }
 
-object VariableDeclarationFeature : StatementFeature<ExpressionStmt, ExpressionStatementWidget>(ExpressionStmt::class.java, ExpressionStatementWidget::class.java) {
+object VariableDeclarationFeature :
+    StatementFeature<ExpressionStmt, ExpressionStatementWidget>(
+        ExpressionStmt::class.java,
+        ExpressionStatementWidget::class.java
+    ) {
 
-    override fun targets(stmt: Statement): Boolean = stmt is ExpressionStmt && stmt.expression is VariableDeclarationExpr
+    override fun targets(stmt: Statement): Boolean =
+        stmt is ExpressionStmt && stmt.expression is VariableDeclarationExpr
 
     override fun configureInsert(
         insert: TextWidget,
@@ -128,8 +166,15 @@ object VariableDeclarationFeature : StatementFeature<ExpressionStmt, ExpressionS
         output: (Statement) -> Unit
     ) {
 
-        insert.addKeyEvent(SWT.SPACE, precondition = { insert.isAtEnd && isValidType(it) }) {
-            val stmt = ExpressionStmt(VariableDeclarationExpr(StaticJavaParser.parseType(insert.text), Configuration.fillInToken))
+        insert.addKeyEvent(
+            SWT.SPACE,
+            precondition = { insert.isAtEnd && isValidType(it) }) {
+            val stmt = ExpressionStmt(
+                VariableDeclarationExpr(
+                    StaticJavaParser.parseType(insert.text),
+                    Configuration.fillInToken
+                )
+            )
             output(stmt)
         }
 //        insert.addKeyEvent(';', precondition = {

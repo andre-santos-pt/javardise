@@ -77,7 +77,9 @@ interface NodeWidget<T> {
                     action(widget.text)
                     if(!widget.isDisposed)
                         widget.background = configuration.backgroundColor
-                } else
+                } else if(widget.text.isBlank())
+                    widget.background = configuration.fillInColor
+                else
                     widget.background = configuration.errorColor
             }
         }
@@ -86,7 +88,7 @@ interface NodeWidget<T> {
     }
 
     fun updateColor(text: Text) {
-        if (SourceVersion.isKeyword(text.text))
+       if (SourceVersion.isKeyword(text.text))
             text.foreground = configuration.keywordColor
         else if (text.isNumeric)
             text.foreground = configuration.numberColor
@@ -325,7 +327,6 @@ class SimpleTypeWidget<N : Type>(parent: Composite, override val node: N)
 }), NodeWidget<N> {
     init {
         textWidget.data = node
-        textWidget.toolTipText = node::class.simpleName + " " + node.hashCode().toString()
         addUpdateColor(textWidget)
     }
 

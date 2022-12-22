@@ -81,7 +81,7 @@ class AssignExpressionWidget(
                 editEvent(
                     VariableDeclarationExpr(
                         VariableDeclarator(
-                            StaticJavaParser.parseType("type"), //Configuration.fillInToken
+                            StaticJavaParser.parseType(Configuration.fillInToken), //Configuration.fillInToken
                             node.target.toString(),
                             node.value.clone()
                         )
