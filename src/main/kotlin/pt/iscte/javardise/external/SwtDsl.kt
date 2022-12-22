@@ -216,8 +216,9 @@ fun Composite.stack(content: Composite.() -> Unit): StackComposite {
     return c
 }
 
+// TODO
 fun Composite.image(path: String, style: Int = SWT.NONE) {
-    TODO()
+
 }
 
 fun Control.onClick(action: () -> Unit) {
@@ -384,7 +385,7 @@ fun Control.traverse(visit: (Control) -> Boolean) {
 
 val Text.isNumeric: Boolean
     get() {
-        val regex = "-?\\d*(\\.\\d+)?".toRegex()
+        val regex = "-?\\d*(\\.\\d*)?".toRegex()
         return text.matches(regex)
     }
 

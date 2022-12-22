@@ -8,13 +8,13 @@ import org.eclipse.swt.SWT
 import org.eclipse.swt.events.KeyAdapter
 import org.eclipse.swt.events.KeyEvent
 import org.eclipse.swt.widgets.Composite
-import pt.iscte.javardise.Command
-import pt.iscte.javardise.CommandKind
 import pt.iscte.javardise.Configuration
+import pt.iscte.javardise.Configuration.Companion.hole
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
 import pt.iscte.javardise.external.ROW_LAYOUT_H_STRING
 
+// TODO escape chars
 class CharacterExpressionWidget(
     parent: Composite,
     override val node: CharLiteralExpr,
@@ -29,6 +29,9 @@ class CharacterExpressionWidget(
         open = TokenWidget(this, "'")
         open.widget.foreground = configuration.commentColor
         text = TextWidget.create(this, node.value)
+        text.addDeleteListener {
+            editEvent(hole())
+        }
         text.widget.foreground =  configuration.commentColor
         close = TokenWidget(this, "'")
         close.addDeleteListener {
@@ -43,20 +46,8 @@ class CharacterExpressionWidget(
 
         text.addKeyListenerInternal(object : KeyAdapter() {
             override fun keyPressed(e: KeyEvent) {
-                if(e.character.isLetter() || e.character.isDigit() || e.character == SWT.SPACE) {
-                    commandStack.execute(object : Command {
-                        override val target = node
-                        override val kind = CommandKind.MODIFY
-                        override val element = node.value
-
-                        override fun run() {
-                            node.value = e.character.toString()
-                        }
-
-                        override fun undo() {
-                            node.value = element
-                        }
-                    })
+                if((e.stateMask == SWT.NONE || e.stateMask == SWT.SHIFT) && e.character >= SWT.SPACE && e.character <= '~') {
+                    editEvent(CharLiteralExpr(e.character.toString()))
                 }
             }
         })

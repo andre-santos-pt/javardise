@@ -12,10 +12,8 @@ import org.eclipse.swt.widgets.Shell
 import pt.iscte.javardise.*
 import pt.iscte.javardise.basewidgets.SequenceWidget
 import pt.iscte.javardise.basewidgets.TextWidget
-import pt.iscte.javardise.external.ROW_LAYOUT_H_SHRINK
-import pt.iscte.javardise.external.findMainClass
-import pt.iscte.javardise.external.loadCompilationUnit
-import pt.iscte.javardise.external.scrollable
+import pt.iscte.javardise.basewidgets.TokenWidget
+import pt.iscte.javardise.external.*
 import pt.iscte.javardise.widgets.statements.SequenceContainer
 
 
@@ -71,14 +69,14 @@ ConfigurationRoot {
     override val bodyWidget: SequenceWidget
 
     override val closingBracket: TextWidget
-        get() = TODO("Not yet implemented")
 
     override val control: Control = this
 
     init {
-        layout = ROW_LAYOUT_H_SHRINK
+        layout = ROW_LAYOUT_V_SPACED
         bodyWidget = createBlockSequence(this, body, tabs = 0)
         addUndoSupport(SWT.MOD1, 'z'.code)
+        closingBracket = TokenWidget(this, " ")
     }
 
     override fun setFocusOnCreation(firstFlag: Boolean) {
