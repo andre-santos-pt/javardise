@@ -5,43 +5,75 @@ import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.NodeList
 import com.github.javaparser.ast.body.BodyDeclaration
 import com.github.javaparser.ast.nodeTypes.NodeWithModifiers
-import com.github.javaparser.ast.observer.AstObserver
-import com.github.javaparser.ast.observer.AstObserverAdapter
 import com.github.javaparser.ast.stmt.ExpressionStmt
 import org.eclipse.swt.SWT
-import org.eclipse.swt.widgets.Composite
-import org.eclipse.swt.widgets.Control
-import org.eclipse.swt.widgets.Display
-import org.eclipse.swt.widgets.Text
+import org.eclipse.swt.events.KeyAdapter
+import org.eclipse.swt.events.KeyEvent
+import org.eclipse.swt.events.SelectionAdapter
+import org.eclipse.swt.events.SelectionEvent
+import org.eclipse.swt.widgets.*
 import pt.iscte.javardise.*
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
 import pt.iscte.javardise.external.*
 
-abstract class MemberWidget<N: Node>(
+// TODO filter incompatible
+abstract class MemberWidget<N : Node>(
     parent: Composite,
     final override val node: N,
-    validModifiers: List<Modifier.Keyword> = emptyList(),
-    final override val configuration: Configuration
+    final override val configuration: Configuration,
+    val validModifiers: List<List<Modifier.Keyword>> = emptyList()
 ) : ObserverWidget<N>(parent) {
-    val member = node as  NodeWithModifiers<N>
+    val member = node as NodeWithModifiers<N>
     val modifiers = mutableListOf<TokenWidget>()
 
     val column: Composite
+
     lateinit var firstRow: Composite
-
     abstract val type: TextWidget?
-
     abstract val name: TextWidget
-
-    private val filterModifiers = {
-        validModifiers.filter {
-            !member.modifiers.map { it.keyword }.contains(it)
-        }.map { it.asString() }
-    }
-
     override val control: Control
         get() = this
+
+    inner class ModifierList(parent: Composite) : Composite(parent, SWT.NONE) {
+
+        init {
+            layout = ROW_LAYOUT_H_SHRINK
+            font = parent.font
+            background = parent.background
+            foreground = parent.foreground
+            addModifiers(member.modifiers)
+
+            observeListUntilDispose(
+                member.modifiers,
+                object : ListAnyModificationObserverPost<Modifier> {
+                    override fun listModification(
+                        postList: NodeList<Modifier>,
+                        indexChanged: Int
+                    ) {
+                        refresh(postList, indexChanged)
+                    }
+                })
+        }
+
+        private fun addModifiers(modifiers: NodeList<Modifier>) {
+            modifiers  //.filter { validModifiers.contains(it.keyword) }
+                .forEach {
+                    createModifierToken(this, it)
+                }
+        }
+
+        private fun refresh(postList: NodeList<Modifier>, indexChanged: Int) {
+            children.forEach { it.dispose() }
+            addModifiers(postList)
+            requestLayout()
+            if (indexChanged < postList.size)
+                children[indexChanged].setFocus()
+            else
+                traverse(SWT.TRAVERSE_TAB_NEXT)
+        }
+
+    }
 
     init {
         layout = ROW_LAYOUT_H_SHRINK
@@ -50,61 +82,63 @@ abstract class MemberWidget<N: Node>(
         foreground = configuration.foregroundColor
         column = column {
             firstRow = row {
-                member.modifiers.filter { validModifiers.contains(it.keyword) }.forEach {
-                    val token = createModifierToken(this, it)
-                    modifiers.add(token)
-                }
-
-                observeListUntilDispose(member.modifiers, object : ListObserver<Modifier> {
-                    override fun elementAdd(
-                        list: NodeList<Modifier>,
-                        index: Int,
-                        modifier: Modifier
-                    ) {
-                        val token = createModifierToken(this@row, modifier)
-
-                        if (modifiers.isEmpty())
-                            token.moveAboveInternal(firstRow.children[0])
-                        else if (index == modifiers.size)
-                            token.moveBelowInternal(modifiers.last().widget)
-                        else
-                            token.moveAboveInternal(modifiers[index].widget)
-                        modifiers.add(token)
-                        token.setFocus()
-                        requestLayout()
-                    }
-
-                    override fun elementRemove(
-                        list: NodeList<Modifier>,
-                        index: Int,
-                        modifier: Modifier
-                    ) {
-                        val index =
-                            modifiers.indexOfFirst { it.text == modifier.keyword.asString() }
-                        if (index != -1) {
-                            modifiers[index].dispose()
-                            modifiers.removeAt(index)
-                            if (index < modifiers.size)
-                                modifiers[index].setFocus()
-                            else
-                                firstRow.children[index].setFocus()
-                            requestLayout()
-                        }
-                    }
-
-                    override fun elementReplace(
-                        list: NodeList<Modifier>,
-                        index: Int,
-                        old: Modifier,
-                        new: Modifier
-                    ) {
-                        modifiers.find { it.text == old.keyword.asString() }
-                            ?.text = new.keyword.asString()
-                    }
-                })
+                ModifierList(this)
             }
         }
     }
+
+    protected fun configureInsert(insertModifier: TextWidget) {
+        insertModifier.addKeyEvent(SWT.BS, precondition = {insertModifier.isAtBeginning}) {
+            if (member.modifiers.isNotEmpty())
+                member.modifiers.removeCommand(
+                    node,
+                    member.modifiers.last()
+                )
+        }
+        insertModifier.addKeyListenerInternal(object : KeyAdapter() {
+            override fun keyPressed(e: KeyEvent) {
+                if (e.character == SWT.SPACE) {
+                    addMenu(insertModifier.widget,
+                        validModifiers.flatten()
+                            .filter { !member.modifiers.contains(Modifier(it)) }
+                            .map { it.asString() })
+                    insertModifier.widget.menu.setLocation(
+                        insertModifier.widget.toDisplay(
+                            0,
+                            20
+                        )
+                    )
+                    insertModifier.widget.menu.isVisible = true
+                }
+            }
+        })
+
+    }
+
+
+    private fun addMenu(widget: Control, alternatives: List<String>)  {
+        val menu = Menu(widget)
+        for (t in alternatives) {
+            val item = MenuItem(menu, SWT.NONE)
+            item.text = t
+            item.addSelectionListener(object : SelectionAdapter() {
+                override fun widgetSelected(e: SelectionEvent) {
+                    val mod = Modifier(Modifier.Keyword.valueOf(item.text.uppercase()))
+                    // TODO replace instead of add if incompatible
+                    member.modifiers.addCommand(node, mod)
+                }
+            })
+        }
+        widget.menu = menu
+    }
+    private fun List<List<Modifier.Keyword>>.findCompatible(existing: List<Modifier>) =
+        find { it.none { k -> existing.contains(Modifier(k)) } }?.first()
+
+    private fun List<List<Modifier.Keyword>>.findMutuallyExclusive(existing: Modifier) =
+        find { it.any { k -> Modifier(k) == existing } }
+            ?.filter { Modifier(it) != existing }
+            ?: emptyList()
+
 
     private fun createModifierToken(
         parent: Composite,
@@ -113,92 +147,22 @@ abstract class MemberWidget<N: Node>(
         val mod = newKeywordWidget(
             parent,
             modifier.keyword.asString(),
-            filterModifiers
+            { validModifiers.findMutuallyExclusive(modifier)
+
+                .map { it.asString() } }
         ) { token ->
-            commandStack.execute(object : Command {
-                override val target: Node = node as Node
-                override val kind: CommandKind = CommandKind.MODIFY
-                override val element =
-                    Modifier(Modifier.Keyword.valueOf(token.uppercase()))
-                val index = member.modifiers.indexOf(modifier)
-                override fun run() {
-                    member.modifiers[index] = element
-                }
-
-                override fun undo() {
-                    member.modifiers[index] = modifier
-                }
-
-            })
+            member.modifiers.setCommand(
+                member as Node,
+                Modifier(Modifier.Keyword.valueOf(token.uppercase())),
+                member.modifiers.indexOf(modifier)
+            )
         }
         mod.addKeyEvent(SWT.BS) {
-            commandStack.execute(object : Command {
-                val index = parent.children.indexOf(mod.widget)
-
-                override val target = node as BodyDeclaration<*>
-                override val kind = CommandKind.REMOVE
-                override val element = member.modifiers[index]
-
-
-                override fun run() {
-                    member.modifiers.removeAt(index)
-                }
-
-                override fun undo() {
-                    member.modifiers.add(index, modifier.clone())
-                }
-            })
+            member.modifiers.removeCommand(member as Node, modifier)
         }
         mod.widget.data = modifier
-        //mod.addDeleteListener(it)
-        mod.addInsertModifier(modifier)
+        // mod.addInsertModifier(modifier)
         return mod
-    }
-
-
-    private fun TokenWidget.addDeleteListener(modifier: Modifier) {
-        val modifierString = modifier.keyword.asString()
-        addDeleteEmptyListener {
-            commandStack.execute(object : Command {
-                override val target = node as BodyDeclaration<*>
-                override val kind = CommandKind.REMOVE
-                override val element = modifier
-
-                val index =
-                    member.modifiers.indexOfFirst { it.keyword.asString() == modifierString }
-
-                override fun run() {
-                    member.modifiers.removeAt(index)
-                }
-
-                override fun undo() {
-                    member.modifiers.add(index, modifier.clone())
-                }
-            })
-        }
-    }
-
-    internal fun TextWidget.addInsertModifier(atModifier: Modifier? = null) {
-        addKeyEvent(SWT.SPACE, precondition = { this.isAtBeginning }) {
-            commandStack.execute(object : Command {
-                override val target = node as BodyDeclaration<*>
-                override val kind = CommandKind.ADD
-                override val element = Modifier(Modifier.Keyword.PUBLIC)
-
-                val index =
-                    if (atModifier == null) 0 else member.modifiers.indexOf(
-                        atModifier
-                    )
-
-                override fun run() {
-                    member.modifiers.add(index, element)
-                }
-
-                override fun undo() {
-                    member.modifiers.remove(element)
-                }
-            })
-        }
     }
 
     fun getChildNodeOnFocus(): Node? {
@@ -211,7 +175,6 @@ abstract class MemberWidget<N: Node>(
             n
         } else null
     }
-
 
 
     fun getChildOnFocus(): Text? {

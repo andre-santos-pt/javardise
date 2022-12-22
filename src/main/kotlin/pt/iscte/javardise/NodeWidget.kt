@@ -208,8 +208,6 @@ open class Id(parent: Composite, id: NodeWithSimpleName<*>, allowedChars: Regex,
     internal val textWidget: Text
     private var skip = false
 
-
-
     init {
         fun nodeText(): String {
             return if (id.nameAsString == Configuration.fillInToken)

@@ -55,6 +55,9 @@ class VariableDeclarationWidget(
             )
         }
 
+        if(dec.type.asString() == Configuration.fillInToken)
+            type.widget.background = configuration.fillInColor
+
         type.addDeleteEmptyListener {
             toAssign()
         }

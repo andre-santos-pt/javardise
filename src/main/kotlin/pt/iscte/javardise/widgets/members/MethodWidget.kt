@@ -29,16 +29,13 @@ import pt.iscte.javardise.widgets.statements.addEmptyStatement
 class MethodWidget(
     parent: Composite,
     val dec: CallableDeclaration<*>,
-    validModifiers: List<Modifier.Keyword> = emptyList(),
     configuration: Configuration = DefaultConfigurationSingleton,
+    validModifiers: List<List<Modifier.Keyword>> = configuration.methodModifiers,
     override val commandStack: CommandStack = CommandStack.create(),
     freezeSignature: Boolean = false
 ) :
     MemberWidget<CallableDeclaration<*>>(
-        parent,
-        dec,
-        validModifiers,
-        configuration = configuration
+        parent, dec, configuration, validModifiers
     ),
     SequenceContainer<CallableDeclaration<*>>,
     ConfigurationRoot {
@@ -83,9 +80,13 @@ class MethodWidget(
                 firstRow,
                 (node as MethodDeclaration).type
             )
+//            type!!.addKeyEvent(SWT.SPACE, precondition = { Modifier.Keyword.values().any { k -> k.asString() == it.substring(0, type!!.caretPosition)} }) {
+//                node.modifiers.addCommand(node, Modifier.publicModifier())
+//            }
             type!!.addFocusLostAction(::isValidType) {
                 node.modifyCommand(node.typeAsString, it, node::setType)
             }
+            configureInsert(type!!)
         }
 
         name = SimpleNameWidget(firstRow, node)
@@ -258,12 +259,14 @@ class MethodWidget(
                 background = parent.background
                 foreground = parent.foreground
                 type = SimpleTypeWidget(this, node.type)
+
                 type.addKeyEvent(SWT.BS, precondition = { it.isEmpty() }) {
                     parameters.removeCommand(
                         this@MethodWidget.node,
                         node
                     ) // TODO BUG Index -1 out of bounds for length 1
                 }
+
                 type.addFocusLostAction(::isValidType) {
                     node.modifyCommand(node.typeAsString, it, node::setType)
                 }

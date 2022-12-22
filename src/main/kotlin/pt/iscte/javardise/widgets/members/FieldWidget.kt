@@ -1,11 +1,10 @@
 package pt.iscte.javardise.widgets.members
 
 import com.github.javaparser.StaticJavaParser
-import com.github.javaparser.ast.Modifier.Keyword.*
+import com.github.javaparser.ast.Modifier
 import com.github.javaparser.ast.body.FieldDeclaration
 import com.github.javaparser.ast.body.VariableDeclarator
 import com.github.javaparser.ast.expr.Expression
-import com.github.javaparser.ast.expr.NameExpr
 import com.github.javaparser.ast.expr.SimpleName
 import com.github.javaparser.ast.observer.ObservableProperty
 import org.eclipse.swt.widgets.Composite
@@ -14,20 +13,17 @@ import pt.iscte.javardise.basewidgets.TokenWidget
 import pt.iscte.javardise.external.getOrNull
 import pt.iscte.javardise.external.isValidSimpleName
 import pt.iscte.javardise.external.isValidType
-import pt.iscte.javardise.external.observeProperty
 import pt.iscte.javardise.widgets.expressions.ExpressionWidget
 import pt.iscte.javardise.widgets.expressions.createExpressionWidget
 
 class FieldWidget(
     parent: Composite,
     val dec: FieldDeclaration,
-    configuration: Configuration = DefaultConfigurationSingleton
+    configuration: Configuration = DefaultConfigurationSingleton,
+    validModifiers: List<List<Modifier.Keyword>> = configuration.fieldModifiers,
 ) :
     MemberWidget<FieldDeclaration>(
-        parent,
-        dec,
-        listOf(PUBLIC, PRIVATE, PROTECTED, FINAL),
-        configuration = configuration
+        parent, dec, configuration, validModifiers
     ) {
 
     // multi var is transformed to list of singles on parse
@@ -49,8 +45,7 @@ class FieldWidget(
                 dec::setAllTypes
             )
         }
-
-        //type.addInsertModifier()
+        configureInsert(type)
 
         name = SimpleNameWidget(firstRow, dec.variable)
         name.addFocusLostAction(::isValidSimpleName) {

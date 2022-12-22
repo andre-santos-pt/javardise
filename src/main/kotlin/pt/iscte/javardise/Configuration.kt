@@ -41,7 +41,10 @@ interface Configuration {
     val commentColor: Color
     val keywordColor: Color
     val statementFeatures: List<StatementFeature<out Statement, out StatementWidget<out Statement>>>
-    val methodModifiers: List<Modifier.Keyword>
+
+    val classModifiers: List<List<Modifier.Keyword>>
+    val fieldModifiers: List<List<Modifier.Keyword>>
+    val methodModifiers: List<List<Modifier.Keyword>>
 
     companion object {
         const val noParseToken = "\$NOPARSE"
@@ -60,18 +63,12 @@ interface Configuration {
     }
 }
 
+
+
+
 val Node.isNoParse get() = (this is NameExpr || this is SimpleName) && toString() == Configuration.noParseToken
 
 val Node.isFillIn get() = (this is NameExpr || this is SimpleName) && toString() == Configuration.fillInToken
-
-//fun expressionText(exp: Expression): String {
-//    return if (exp.isNoParse) {
-//        if (exp.comment.isPresent) exp.comment.get().content else ""
-//    } else if (exp.isFillIn)
-//        ""
-//    else
-//        exp.toString()
-//}
 
 fun nodeText(node: Node): String {
     return if (node.isNoParse) {
@@ -83,12 +80,11 @@ fun nodeText(node: Node): String {
 }
 
 
-
 internal inline fun parseFillIn(exp: String): Expression =
     try {
         StaticJavaParser.parseExpression(exp)
     } catch (_: ParseProblemException) {
-        if(exp.isBlank())
+        if (exp.isBlank())
             Configuration.hole()
         else
             Configuration.typo(exp)
@@ -200,13 +196,30 @@ open class DefaultConfiguration : Configuration {
 
         AssertFeature
     )
+
+    override val classModifiers = listOf(
+        listOf(Modifier.Keyword.PUBLIC),
+        listOf(Modifier.Keyword.FINAL, Modifier.Keyword.ABSTRACT)
+    )
+
+    override val fieldModifiers = listOf(
+        listOf(
+            Modifier.Keyword.PUBLIC,
+            Modifier.Keyword.PROTECTED,
+            Modifier.Keyword.PRIVATE
+        ),
+        listOf(Modifier.Keyword.FINAL)
+    )
+
     override val methodModifiers = listOf(
-        Modifier.Keyword.PUBLIC,
-        Modifier.Keyword.PROTECTED,
-        Modifier.Keyword.PRIVATE,
-        Modifier.Keyword.STATIC,
-        Modifier.Keyword.FINAL,
-        Modifier.Keyword.ABSTRACT
+        listOf(
+            Modifier.Keyword.PUBLIC,
+            Modifier.Keyword.PROTECTED,
+            Modifier.Keyword.PRIVATE
+        ),
+        listOf(Modifier.Keyword.STATIC),
+        listOf(Modifier.Keyword.SYNCHRONIZED),
+        listOf(Modifier.Keyword.FINAL, Modifier.Keyword.ABSTRACT)
     )
 }
 

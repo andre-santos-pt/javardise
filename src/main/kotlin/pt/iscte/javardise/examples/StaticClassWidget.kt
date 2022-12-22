@@ -31,8 +31,8 @@ class StaticClassWidget(
         MethodWidget(
             bodyWidget,
             dec,
-            emptyList(),
             configuration = configuration,
+            emptyList(),
             commandStack = commandStack
         )
 }

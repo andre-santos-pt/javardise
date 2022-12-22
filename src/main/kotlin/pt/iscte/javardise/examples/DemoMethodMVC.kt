@@ -1,7 +1,6 @@
 package pt.iscte.javardise.examples
 
 import com.github.javaparser.ast.body.MethodDeclaration
-import org.eclipse.swt.SWT
 import org.eclipse.swt.layout.FillLayout
 import org.eclipse.swt.widgets.Display
 import org.eclipse.swt.widgets.Shell

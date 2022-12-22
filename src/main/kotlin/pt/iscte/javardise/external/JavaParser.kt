@@ -142,6 +142,28 @@ interface ListObserver<T : Node> {
     fun elementReplace(list: NodeList<T>, index: Int, old: T, new: T) {}
 }
 
+interface ListAnyModificationObserverPost<T: Node> : ListObserver<T> {
+    override fun elementAdd(list: NodeList<T>, index: Int, node: T) {
+        val post = NodeList(list)
+        post.add(index, node)
+        listModification(post, index)
+    }
+
+    override fun elementRemove(list: NodeList<T>, index: Int, node: T) {
+        val post = NodeList(list)
+        post.removeAt(index)
+        listModification(post, index)
+    }
+
+    override fun elementReplace(list: NodeList<T>, index: Int, old: T, new: T) {
+        val post = NodeList(list)
+        post[index] = new
+        listModification(post, index)
+    }
+
+    fun listModification(postList: NodeList<T>, indexChanged: Int)
+}
+
 internal fun <T : Node> NodeList<T>.observeList(observer: ListObserver<T>): AstObserver {
     val obs = object : ListAddRemoveObserver<T>() {
         override fun elementAdd(list: NodeList<T>, index: Int, node: T) {

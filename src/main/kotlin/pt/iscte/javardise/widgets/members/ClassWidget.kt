@@ -2,7 +2,6 @@ package pt.iscte.javardise.widgets.members
 
 import com.github.javaparser.StaticJavaParser
 import com.github.javaparser.ast.Modifier
-import com.github.javaparser.ast.Modifier.Keyword.*
 import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.NodeList
 import com.github.javaparser.ast.body.*
@@ -29,6 +28,8 @@ import pt.iscte.javardise.widgets.statements.findByModelIndex
 import pt.iscte.javardise.widgets.statements.findIndexByModel
 
 
+// TODO implements, extends
+
 val MODIFIERS = "(${
     Modifier.Keyword.values().joinToString(separator = "|") { it.asString() }
 })"
@@ -44,18 +45,18 @@ fun matchModifier(keyword: String) =
 
 
 // TODO require compliant model
+// TODO arrow down
+// TODO incompatible interface modifiers
 open class ClassWidget(
     parent: Composite,
     dec: ClassOrInterfaceDeclaration,
     configuration: Configuration = DefaultConfigurationSingleton,
+    validModifiers: List<List<Modifier.Keyword>> = configuration.classModifiers,
     override val commandStack: CommandStack = CommandStack.create(),
     val staticClass: Boolean = false,
 ) :
     MemberWidget<ClassOrInterfaceDeclaration>(
-        parent,
-        dec,
-        listOf(PUBLIC, FINAL, ABSTRACT),
-        configuration = configuration
+        parent, dec, configuration, validModifiers
     ), SequenceContainer<ClassOrInterfaceDeclaration>,
     ConfigurationRoot {
 
@@ -147,6 +148,10 @@ open class ClassWidget(
         layout.marginLeft = 10
         this.layout = layout
 
+        val insertModifier = TextWidget.create(firstRow)
+        insertModifier.widget.layoutData = ROW_DATA_STRING
+        configureInsert(insertModifier)
+
         keyword = newKeywordWidget(firstRow, if(node.isInterface) "interface" else "class",
             alternatives = { TypeTypes.values().map { it.name.lowercase() } }) {
             commandStack.execute(object : Command {
@@ -164,23 +169,23 @@ open class ClassWidget(
                 }
             })
         }
-        keyword.addKeyEvent(SWT.SPACE) {
-            commandStack.execute(object : Command {
-                override val target = node
-                override val kind = CommandKind.ADD
-                override val element = Modifier(PUBLIC)
-
-                val index = node.modifiers.size
-
-                override fun run() {
-                    node.modifiers.add(index, element)
-                }
-
-                override fun undo() {
-                    node.modifiers.remove(element)
-                }
-            })
-        }
+//        keyword.addKeyEvent(SWT.SPACE) {
+//            commandStack.execute(object : Command {
+//                override val target = node
+//                override val kind = CommandKind.ADD
+//                override val element = Modifier(PUBLIC)
+//
+//                val index = node.modifiers.size
+//
+//                override fun run() {
+//                    node.modifiers.add(index, element)
+//                }
+//
+//                override fun undo() {
+//                    node.modifiers.remove(element)
+//                }
+//            })
+//        }
 
         name = SimpleNameWidget(firstRow, dec)
         name.addFocusLostAction(::isValidClassType) {
@@ -441,8 +446,8 @@ open class ClassWidget(
         MethodWidget(
             bodyWidget,
             dec,
-            validModifiers = configuration.methodModifiers,
             configuration = configuration,
+            validModifiers = configuration.methodModifiers,
             commandStack = commandStack
         )
 
