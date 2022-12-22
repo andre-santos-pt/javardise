@@ -3,12 +3,14 @@ package pt.iscte.javardise.widgets.statements
 import com.github.javaparser.ast.expr.Expression
 import com.github.javaparser.ast.observer.ObservableProperty
 import com.github.javaparser.ast.stmt.BlockStmt
+import com.github.javaparser.ast.stmt.EmptyStmt
 import com.github.javaparser.ast.stmt.ExpressionStmt
 import pt.iscte.javardise.basewidgets.SequenceWidget
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
 import pt.iscte.javardise.external.ROW_LAYOUT_H_SHRINK
 import pt.iscte.javardise.external.isIncrementorOrDecrementor
+import pt.iscte.javardise.isFillIn
 import pt.iscte.javardise.setCopySource
 import pt.iscte.javardise.widgets.expressions.ExpressionWidget
 import pt.iscte.javardise.widgets.expressions.createExpressionWidget
@@ -55,6 +57,8 @@ open class ExpressionStatementWidget(
                 it.isIncrementorOrDecrementor
             )
                 node.modifyCommand(node.expression, it, node::setExpression)
+            else if(it.isFillIn)
+                parentBlock.statements.replace(node, EmptyStmt())
         }
 
     override fun setFocus(): Boolean {

@@ -71,7 +71,20 @@ class CallExpressionWidget(
         if (node.scope.isPresent)
             createScope(node.scope.get())
 
-        args = ExpressionListWidget(this, "(", ")", this, node.arguments)
+        fun delete() {
+            if(node.scope.isPresent)
+                editEvent(FieldAccessExpr(node.scope.get().clone(), node.nameAsString))
+            else
+                editEvent(NameExpr(node.nameAsString))
+        }
+
+        args = ExpressionListWidget(this, "(", ")", this, node.arguments) {
+            delete()
+        }
+
+        args.closeBracket.addDeleteListener {
+          delete()
+        }
 
         observeProperty<Expression>(ObservableProperty.SCOPE) {
             scope?.dispose()

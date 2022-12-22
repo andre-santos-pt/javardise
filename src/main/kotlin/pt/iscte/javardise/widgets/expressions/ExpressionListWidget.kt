@@ -4,8 +4,11 @@ import com.github.javaparser.StaticJavaParser
 import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.NodeList
 import com.github.javaparser.ast.expr.BinaryExpr
+import com.github.javaparser.ast.expr.CharLiteralExpr
 import com.github.javaparser.ast.expr.Expression
+import com.github.javaparser.ast.expr.IntegerLiteralExpr
 import com.github.javaparser.ast.expr.NameExpr
+import com.github.javaparser.ast.expr.StringLiteralExpr
 import com.github.javaparser.ast.expr.UnaryExpr
 import com.github.javaparser.ast.nodeTypes.NodeWithArguments
 import com.github.javaparser.ast.observer.AstObserver
@@ -14,17 +17,20 @@ import org.eclipse.swt.events.KeyAdapter
 import org.eclipse.swt.events.KeyEvent
 import org.eclipse.swt.widgets.Composite
 import pt.iscte.javardise.*
+import pt.iscte.javardise.Configuration.Companion.hole
 import pt.iscte.javardise.basewidgets.FixedToken
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
 import pt.iscte.javardise.external.*
 
+// TODO first expression
 class ExpressionListWidget<T : Expression, N : Node>(
     parent: Composite,
     open: String,
     close: String,
     val owner: NodeWidget<N>,
-    val expressionList: NodeList<T>
+    val expressionList: NodeList<T>,
+    val deleteEmptyEvent: () -> Unit
 ) :
     Composite(parent, SWT.NONE) {
     val openBracket: TokenWidget
@@ -244,7 +250,8 @@ class ExpressionListWidget<T : Expression, N : Node>(
         }
 
         insert = TextWidget.create(parent, "") { c, _ ->
-            c.toString().matches(TYPE_CHARS) || c == SWT.BS
+            //c.toString().matches(TYPE_CHARS) || c == SWT.BS
+            false
         }
 
         insert.widget.layoutData = ROW_DATA_STRING
@@ -255,22 +262,35 @@ class ExpressionListWidget<T : Expression, N : Node>(
 
         insert.moveAboveInternal(closeBracket.widget)
 
-        insert.addFocusLostAction {
-            if (tryParse<Expression>(insert.text)) {
-                doAddArgummentCommand(StaticJavaParser.parseExpression(insert.text))
-                insert.delete()
-            } else {
-                insert.clear()
-                insert.widget.layoutData =  ROW_DATA_STRING
-            }
-        }
+//        insert.addFocusLostAction {
+//            if (tryParse<Expression>(insert.text)) {
+//                doAddArgummentCommand(StaticJavaParser.parseExpression(insert.text))
+//                insert.delete()
+//            } else {
+//                insert.clear()
+//                insert.widget.layoutData =  ROW_DATA_STRING
+//            }
+//        }
 
         val keyListener = object : KeyAdapter() {
             override fun keyPressed(e: KeyEvent) {
+                e.doit = false
                 if (insert.widget.isDisposed)
                     return
 
-                if (insert.isAtBeginning || insert.isEmpty) {
+                else if(insert.widget.text.isBlank() && e.character.isLetter())
+                    doAddArgummentCommand(NameExpr(e.character.toString()))
+
+                else if(insert.widget.text.isBlank() && e.character.isDigit())
+                    doAddArgummentCommand(IntegerLiteralExpr(e.character.toString()))
+
+                else if(insert.widget.text.isBlank() && e.character == '\'')
+                    doAddArgummentCommand(CharLiteralExpr(" "))
+
+                else if(insert.widget.text.isBlank() && e.character == '"')
+                    doAddArgummentCommand(StringLiteralExpr(""))
+
+                else if (insert.isAtBeginning || insert.isEmpty) {
 
                     val unop = unaryOperators.filter { it.isPrefix }
                         .find { it.asString().startsWith(e.character) }
@@ -314,7 +334,7 @@ class ExpressionListWidget<T : Expression, N : Node>(
                     }
                 }
 
-                if(e.character == ',') {
+                else if(e.character == ',') {
                     if(tryParse<Expression>(insert.text)) {
                         val insertExp =
                             StaticJavaParser.parseExpression<Expression>(insert.text)
@@ -330,8 +350,10 @@ class ExpressionListWidget<T : Expression, N : Node>(
         }
         insert.addKeyListenerInternal(keyListener)
 
+        insert.addDeleteEmptyListener(deleteEmptyEvent)
+
         val listener = insert.addFocusLostAction {
-            insert.text = " "
+            insert.text = ""
         }
 
         insert.widget.addDisposeListener {

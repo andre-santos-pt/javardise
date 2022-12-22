@@ -33,7 +33,10 @@ class SimpleExpressionWidget(
             c.toString()
                 .matches(Regex("\\w")) ||
                     c == SWT.BS ||
-                    c == SWT.SPACE && !s.endsWith(" ")
+                    c == SWT.SPACE && !s.endsWith(" ") ||
+                    c == '.' && s.toIntOrNull() != null ||
+                    c == '.' && s.isEmpty()
+
         }
         if (node.isNoParse)
             expression.widget.background = configuration.errorColor
@@ -125,16 +128,14 @@ class SimpleExpressionWidget(
             editEvent(StringLiteralExpr(expression.text))
         }
         expression.addKeyEvent('\'', precondition = { it.isEmpty() || it.length == 1 }) {
-            editEvent(CharLiteralExpr(if(expression.text.isEmpty()) 'a' else expression.text[0]))
+            editEvent(CharLiteralExpr(if(expression.text.isEmpty()) ' ' else expression.text[0]))
         }
-        expression.addKeyEvent(
-            '(',
+        expression.addKeyEvent('(',
             precondition = { expression.isAtEnd && isValidSimpleName(it) }) {
             editEvent(MethodCallExpr(expression.text))
         }
 
-        expression.addKeyEvent(
-            '.',
+        expression.addKeyEvent('.',
             precondition = { expression.isAtEnd && tryParse<NameExpr>(it) }) {
             editEvent(FieldAccessExpr(StaticJavaParser.parseExpression(expression.text), NodeList(), Configuration.idHole()))
         }

@@ -43,16 +43,25 @@ class FieldAccessExpressionWidget(
             nameWidget.text = it.asString()
         }
 
+        fun nameText() =
+            if(nameWidget.text.isBlank()) Configuration.fillInToken
+            else
+                nameWidget.text
+
         nameWidget.addFocusLostAction({ isValidSimpleName(it) }) {
-            node.modifyCommand(node.name, SimpleName(nameWidget.text), node::setName)
+            node.modifyCommand(node.name, SimpleName(nameText()), node::setName)
         }
 
         nameWidget.addKeyEvent('.') {
-            editEvent(FieldAccessExpr(FieldAccessExpr(node.scope.clone(), nameWidget.text), Configuration.fillInToken))
+            editEvent(FieldAccessExpr(FieldAccessExpr(node.scope.clone(), nameText()), Configuration.fillInToken))
         }
 
         nameWidget.addKeyEvent('(') {
-            editEvent(MethodCallExpr(node.scope.clone(), nameWidget.text))
+            editEvent(MethodCallExpr(node.scope.clone(), nameText()))
+        }
+
+        nameWidget.addDeleteEmptyListener {
+            editEvent(node.scope.clone())
         }
     }
 

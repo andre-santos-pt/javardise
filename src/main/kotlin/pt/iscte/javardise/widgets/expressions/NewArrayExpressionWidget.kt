@@ -15,10 +15,8 @@ import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
 import pt.iscte.javardise.external.ListObserver
 import pt.iscte.javardise.external.isValidType
-import pt.iscte.javardise.external.observeList
-import pt.iscte.javardise.external.observeProperty
 
-// TODO multi level arrays
+// TODO multi level arrays, bugs
 class NewArrayExpressionWidget(
     parent: Composite,
     override val node: ArrayCreationExpr,
@@ -122,7 +120,7 @@ class NewArrayExpressionWidget(
                     levelWidgets[index].expression.dispose()
                     levelWidgets[index].expression = createExpLevel(
                         index,
-                        new.dimension.get()
+                        new.dimension.get() // TODO BUG  No value present
                     )
                     levelWidgets[index].moveExpression()
                     levelWidgets[index].expression.requestLayout()
@@ -137,7 +135,7 @@ class NewArrayExpressionWidget(
         expression: Expression
     ): ExpressionWidget<*> {
         val w = createExpressionWidget(this, expression) {
-            node.levels.changeCommand(node, ArrayCreationLevel(it), index )
+            node.levels.setCommand(node, ArrayCreationLevel(it), index )
         }
         return w
     }

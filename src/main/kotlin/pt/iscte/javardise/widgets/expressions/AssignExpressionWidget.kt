@@ -10,6 +10,7 @@ import com.github.javaparser.ast.stmt.Statement
 import org.eclipse.swt.widgets.Composite
 import pt.iscte.javardise.CommandStack
 import pt.iscte.javardise.Configuration
+import pt.iscte.javardise.Configuration.Companion.hole
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
 import pt.iscte.javardise.external.*
@@ -109,7 +110,7 @@ class AssignExpressionWidget(
     private fun Composite.createValueWidget(expression: Expression) =
         createExpressionWidget(this, expression) {
             if(it == null)
-                editEvent(null)
+                editEvent(hole())
             else
                 node.modifyCommand(node.value, it, node::setValue)
         }

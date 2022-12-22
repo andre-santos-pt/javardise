@@ -14,7 +14,9 @@ class NewArrayInitExpressionWidget(
 ) : ExpressionWidget<ArrayInitializerExpr>(parent) {
 
     val args: ExpressionListWidget<Expression, ArrayInitializerExpr> =
-        ExpressionListWidget(this, "{", "}", this, node.values)
+        ExpressionListWidget(this, "{", "}", this, node.values) {
+            editEvent(Configuration.hole())
+        }
 
     init {
         args.openBracket.addDeleteListener {

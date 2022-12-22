@@ -21,6 +21,7 @@ interface SequenceContainer<T : Node> : NodeWidget<T> {
 
     val body: BlockStmt?
     val bodyWidget: SequenceWidget?
+    val closingBracket: TextWidget
     fun setFocus(): Boolean
 
     fun focusFirst() {
@@ -41,7 +42,7 @@ interface SequenceContainer<T : Node> : NodeWidget<T> {
             setFocus()
     }
 
-    val closingBracket: TextWidget
+
 
 
     fun addMoveBracket(precondition: () -> Boolean = { true }) {

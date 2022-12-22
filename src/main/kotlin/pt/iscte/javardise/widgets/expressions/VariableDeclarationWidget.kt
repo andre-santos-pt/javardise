@@ -9,8 +9,10 @@ import com.github.javaparser.ast.stmt.BlockStmt
 import com.github.javaparser.ast.stmt.ExpressionStmt
 import com.github.javaparser.ast.stmt.Statement
 import com.github.javaparser.ast.type.Type
+import org.eclipse.swt.SWT
 import org.eclipse.swt.widgets.Composite
 import pt.iscte.javardise.*
+import pt.iscte.javardise.Configuration.Companion.hole
 import pt.iscte.javardise.basewidgets.FixedToken
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.external.*
@@ -96,9 +98,6 @@ class VariableDeclarationWidget(
         variable: VariableDeclarator,
         expression: Expression
     ) = createExpressionWidget(this, expression) {
-        if(it == null)
-            editEvent(Configuration.hole())
-        else
             variable.modifyCommand(variable.initializer.getOrNull, it, variable::setInitializer)
         }
 
@@ -129,39 +128,43 @@ object VariableDeclarationFeature : StatementFeature<ExpressionStmt, ExpressionS
         output: (Statement) -> Unit
     ) {
 
-        insert.addKeyEvent(';', precondition = {
-            insert.isAtEnd && it.split(Regex("\\s+")).size == 2 && isValidType(
-                it.split(
-                    Regex("\\s+")
-                )[0]
-            ) && tryParse<NameExpr>(
-                it.split(Regex("\\s+"))[1]
-            )
-        }) {
-            val split = insert.text.split(Regex("\\s+"))
-            val stmt = ExpressionStmt(
-                VariableDeclarationExpr(
-                    StaticJavaParser.parseType(split[0]), split[1]
-                )
-            )
+        insert.addKeyEvent(SWT.SPACE, precondition = { insert.isAtEnd && isValidType(it) }) {
+            val stmt = ExpressionStmt(VariableDeclarationExpr(StaticJavaParser.parseType(insert.text), Configuration.fillInToken))
             output(stmt)
         }
-
-
-        insert.addKeyEvent('=', precondition = {
-            val parts = it.trim().split(Regex("\\s+"))
-            insert.isAtEnd && parts.size == 2 && isValidType(parts[0]) && tryParse<NameExpr>(
-                parts[1]
-            )
-        }) {
-            val split = insert.text.split(Regex("\\s+"))
-            val dec = VariableDeclarator(
-                StaticJavaParser.parseType(split[0]),
-                split[1],
-                NameExpr(Configuration.fillInToken)
-            )
-            val stmt = ExpressionStmt(VariableDeclarationExpr(dec))
-            output(stmt)
-        }
+//        insert.addKeyEvent(';', precondition = {
+//            insert.isAtEnd && it.split(Regex("\\s+")).size == 2 && isValidType(
+//                it.split(
+//                    Regex("\\s+")
+//                )[0]
+//            ) && tryParse<NameExpr>(
+//                it.split(Regex("\\s+"))[1]
+//            )
+//        }) {
+//            val split = insert.text.split(Regex("\\s+"))
+//            val stmt = ExpressionStmt(
+//                VariableDeclarationExpr(
+//                    StaticJavaParser.parseType(split[0]), split[1]
+//                )
+//            )
+//            output(stmt)
+//        }
+//
+//
+//        insert.addKeyEvent('=', precondition = {
+//            val parts = it.trim().split(Regex("\\s+"))
+//            insert.isAtEnd && parts.size == 2 && isValidType(parts[0]) && tryParse<NameExpr>(
+//                parts[1]
+//            )
+//        }) {
+//            val split = insert.text.split(Regex("\\s+"))
+//            val dec = VariableDeclarator(
+//                StaticJavaParser.parseType(split[0]),
+//                split[1],
+//                NameExpr(Configuration.fillInToken)
+//            )
+//            val stmt = ExpressionStmt(VariableDeclarationExpr(dec))
+//            output(stmt)
+//        }
     }
 }

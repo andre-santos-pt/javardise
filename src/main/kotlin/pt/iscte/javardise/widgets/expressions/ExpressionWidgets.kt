@@ -140,7 +140,7 @@ fun <E : Expression> createExpressionWidget(
                                 }
 //                                }
                             } else if (isAtEnd || !isModifiable) {
-                                if(e.character == '.') {
+                                if(e.character == '.' && isValidMethodCallScope(expression) ) {
                                     editEvent(MethodCallExpr(expression, Configuration.fillInToken))
                                 }
                                 else {

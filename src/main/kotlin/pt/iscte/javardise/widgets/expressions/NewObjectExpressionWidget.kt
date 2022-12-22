@@ -5,6 +5,7 @@ import com.github.javaparser.ast.expr.ObjectCreationExpr
 import com.github.javaparser.ast.observer.ObservableProperty
 import com.github.javaparser.ast.type.ClassOrInterfaceType
 import org.eclipse.swt.widgets.Composite
+import pt.iscte.javardise.Configuration
 import pt.iscte.javardise.SimpleTypeWidget
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
@@ -33,7 +34,9 @@ class NewObjectExpressionWidget(
             node.modifyCommand(node.typeAsString, it, node::setType)
         }
 
-        args = ExpressionListWidget(this, "(", ")", this, node.arguments)
+        args = ExpressionListWidget(this, "(", ")", this, node.arguments) {
+            editEvent(Configuration.hole())
+        }
 
         observeNotNullProperty<ClassOrInterfaceType>(ObservableProperty.TYPE) {
             id.text = it.nameAsString

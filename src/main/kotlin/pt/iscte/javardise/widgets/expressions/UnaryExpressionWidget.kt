@@ -111,7 +111,7 @@ object UnaryExpressionStatementFeature :
         commandStack: CommandStack,
         output: (Statement) -> Unit
     ) {
-        insert.addKeyEvent(';', precondition = {
+        insert.addKeyEvent(';', SWT.SPACE, precondition = {
             tryParse<UnaryExpr>(insert.text) &&
                     (StaticJavaParser.parseExpression(insert.text) as UnaryExpr).operator in unaryOperatorsStatement
 
