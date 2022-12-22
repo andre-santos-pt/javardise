@@ -45,7 +45,7 @@ class ExpressionListWidget<T : Expression, N : Node>(
 
 
     init {
-        layout = ROW_LAYOUT_H_SHRINK
+        layout = ROW_LAYOUT_H_STRING
         background = parent.background
         foreground = parent.foreground
         font = parent.font
@@ -160,7 +160,7 @@ class ExpressionListWidget<T : Expression, N : Node>(
                 argumentWidgets[index].arg.dispose()
                 argumentWidgets[index].arg = arg
             } else {
-                val comma = FixedToken(this, ",")
+                val comma = FixedToken(this, ", ")
                 if (index == argumentWidgets.size) {
                     comma.label.moveAbove(closeBracket.widget)
                     arg.moveBelow(comma.label)
@@ -243,9 +243,15 @@ class ExpressionListWidget<T : Expression, N : Node>(
             })
         }
 
-        insert = TextWidget.create(parent, " ") { c, _ ->
+        insert = TextWidget.create(parent, "") { c, _ ->
             c.toString().matches(TYPE_CHARS) || c == SWT.BS
         }
+
+        insert.widget.layoutData = ROW_DATA_STRING
+        insert.widget.addModifyListener {
+            insert.widget.layoutData =  if(insert.text.isEmpty()) ROW_DATA_STRING else null
+        }
+
 
         insert.moveAboveInternal(closeBracket.widget)
 
@@ -253,8 +259,10 @@ class ExpressionListWidget<T : Expression, N : Node>(
             if (tryParse<Expression>(insert.text)) {
                 doAddArgummentCommand(StaticJavaParser.parseExpression(insert.text))
                 insert.delete()
-            } else
+            } else {
                 insert.clear()
+                insert.widget.layoutData =  ROW_DATA_STRING
+            }
         }
 
         val keyListener = object : KeyAdapter() {

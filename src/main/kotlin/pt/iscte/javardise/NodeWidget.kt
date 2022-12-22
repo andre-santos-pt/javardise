@@ -16,6 +16,7 @@ import org.eclipse.swt.events.FocusListener
 import org.eclipse.swt.events.KeyListener
 import org.eclipse.swt.widgets.Composite
 import org.eclipse.swt.widgets.Control
+import org.eclipse.swt.widgets.Menu
 import org.eclipse.swt.widgets.Text
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
@@ -106,9 +107,8 @@ interface NodeWidget<T> {
     fun <N: Node> NodeList<in N>.addCommand(owner: Node, e: N, index: Int = size) =
         commandStack.addCommand(this, owner, e, index)
 
-    // TODO change and replace are the same?
-    fun <N: Node> NodeList<in N>.changeCommand(owner: Node, e: N, index: Int) =
-        commandStack.changeCommand(this, owner, e, index)
+    fun <N: Node> NodeList<in N>.setCommand(owner: Node, e: N, index: Int) =
+        commandStack.setCommand(this, owner, e, index)
 
     fun <N: Node> NodeList<in N>.replaceCommand(owner: Node, e: N, newElement: N) =
         commandStack.replaceCommand(this, owner, e, newElement)
@@ -206,16 +206,25 @@ open class Id(parent: Composite, id: NodeWithSimpleName<*>, allowedChars: Regex,
     internal val textWidget: Text
     private var skip = false
 
+
+
     init {
+        fun nodeText(): String {
+            return if (id.nameAsString == Configuration.fillInToken)
+                ""
+            else
+                id.nameAsString
+        }
+
         readOnly = false
-        textWidget = TextWidget.createText(parent, id.nameAsString) { c, s ->
+        textWidget = TextWidget.createText(parent, nodeText()) { c, s ->
             skip ||
                     !readOnly && (
                     c.toString().matches(allowedChars)
                             || c == SWT.BS
                             || c == SWT.CR)
         }
-       // textWidget.menu = Menu(textWidget) // prevent system menu
+        textWidget.menu = Menu(textWidget) // prevent system menu
 //        updateColor(textWidget)
 //
 //        textWidget.addModifyListener {

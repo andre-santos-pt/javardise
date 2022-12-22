@@ -29,8 +29,10 @@ class CallExpressionWidget(
     private var methodName: Id
     private val args: ExpressionListWidget<Expression, MethodCallExpr>
 
+
+
     init {
-        layout = ROW_LAYOUT_H_CALL
+        layout = ROW_LAYOUT_H_STRING
         methodName = SimpleNameWidget(this, node)
         methodName.addFocusLostAction(::isValidSimpleName) {
             node.modifyCommand(
@@ -112,7 +114,10 @@ class CallExpressionWidget(
     }
 
     override fun setFocusOnCreation(firstFlag: Boolean) {
-        args.setFocus()
+        if(node.name.isFillIn)
+            methodName.setFocus()
+        else
+            args.setFocus()
     }
 }
 

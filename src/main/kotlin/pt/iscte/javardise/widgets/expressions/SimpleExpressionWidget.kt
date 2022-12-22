@@ -9,7 +9,7 @@ import org.eclipse.swt.events.KeyAdapter
 import org.eclipse.swt.events.KeyEvent
 import org.eclipse.swt.events.KeyListener
 import org.eclipse.swt.widgets.Composite
-import pt.iscte.javardise.Configuration
+import pt.iscte.javardise.*
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.external.*
 import pt.iscte.javardise.parseFillIn
@@ -26,29 +26,18 @@ class SimpleExpressionWidget(
     var expression: TextWidget
     val keyListener: KeyListener
 
+
+
     init {
-        val noparse =
-            node is NameExpr && (node as NameExpr).name.asString() == Configuration.noParseToken
-
-        val fillin =
-            node is NameExpr && (node as NameExpr).name.asString() == Configuration.fillInToken
-
-        val text = if (noparse) {
-            if (node.comment.isPresent) node.comment.get().content else ""
-        } else if (fillin)
-            ""
-        else
-            node.toString()
-
-        expression = TextWidget.create(this, text) { c, s ->
+        expression = TextWidget.create(this, nodeText(node)) { c, s ->
             c.toString()
-                .matches(Regex("[a-zA-Z\\d_.]")) ||
+                .matches(Regex("\\w")) ||
                     c == SWT.BS ||
                     c == SWT.SPACE && !s.endsWith(" ")
         }
-        if (noparse)
+        if (node.isNoParse)
             expression.widget.background = configuration.errorColor
-        else if (fillin)
+        else if (node.isFillIn)
             expression.widget.background = configuration.fillInColor
 
         expression.widget.data = node
@@ -135,13 +124,19 @@ class SimpleExpressionWidget(
         expression.addKeyEvent('"') {
             editEvent(StringLiteralExpr(expression.text))
         }
-        expression.addKeyEvent('\'', precondition = { it.isEmpty() }) {
-            editEvent(CharLiteralExpr('a'))
+        expression.addKeyEvent('\'', precondition = { it.isEmpty() || it.length == 1 }) {
+            editEvent(CharLiteralExpr(if(expression.text.isEmpty()) 'a' else expression.text[0]))
         }
         expression.addKeyEvent(
             '(',
             precondition = { expression.isAtEnd && isValidSimpleName(it) }) {
             editEvent(MethodCallExpr(expression.text))
+        }
+
+        expression.addKeyEvent(
+            '.',
+            precondition = { expression.isAtEnd && tryParse<NameExpr>(it) }) {
+            editEvent(FieldAccessExpr(StaticJavaParser.parseExpression(expression.text), NodeList(), Configuration.idHole()))
         }
 
         expression.addKeyEvent('[', precondition = {

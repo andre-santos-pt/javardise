@@ -40,7 +40,7 @@ open class ExpressionStatementWidget(
             expression = createExpression(it)
             expression.moveAbove(tail.widget)
             expression.requestLayout()
-            expression.setFocus()
+            expression.setFocusOnCreation()
         }
     }
 

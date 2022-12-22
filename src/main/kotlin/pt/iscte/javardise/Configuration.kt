@@ -7,6 +7,7 @@ import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.comments.LineComment
 import com.github.javaparser.ast.expr.Expression
 import com.github.javaparser.ast.expr.NameExpr
+import com.github.javaparser.ast.expr.SimpleName
 import com.github.javaparser.ast.stmt.Statement
 import org.eclipse.swt.SWT
 import org.eclipse.swt.events.KeyEvent
@@ -49,6 +50,8 @@ interface Configuration {
 
         fun hole() = NameExpr(fillInToken)
 
+        fun idHole() = SimpleName(fillInToken)
+
         fun typo(text: String): NameExpr {
             val t = NameExpr(noParseToken)
             t.setComment(LineComment(text))
@@ -56,6 +59,30 @@ interface Configuration {
         }
     }
 }
+
+val Node.isNoParse get() = (this is NameExpr || this is SimpleName) && toString() == Configuration.noParseToken
+
+val Node.isFillIn get() = (this is NameExpr || this is SimpleName) && toString() == Configuration.fillInToken
+
+//fun expressionText(exp: Expression): String {
+//    return if (exp.isNoParse) {
+//        if (exp.comment.isPresent) exp.comment.get().content else ""
+//    } else if (exp.isFillIn)
+//        ""
+//    else
+//        exp.toString()
+//}
+
+fun nodeText(node: Node): String {
+    return if (node.isNoParse) {
+        if (node.comment.isPresent) node.comment.get().content else ""
+    } else if (node.isFillIn)
+        ""
+    else
+        node.toString()
+}
+
+
 
 internal inline fun parseFillIn(exp: String): Expression =
     try {

@@ -73,6 +73,7 @@ fun <E : Expression> createExpressionWidget(
             expression,
             editEvent
         )
+        is FieldAccessExpr -> FieldAccessExpressionWidget(parent, expression, editEvent)
         is MethodCallExpr -> CallExpressionWidget(parent, expression, editEvent)
         is ArrayCreationExpr -> NewArrayExpressionWidget(
             parent,
@@ -139,17 +140,23 @@ fun <E : Expression> createExpressionWidget(
                                 }
 //                                }
                             } else if (isAtEnd || !isModifiable) {
-                                val op = binaryOperators.find {
-                                    it.asString().startsWith(e.character)
+                                if(e.character == '.') {
+                                    editEvent(MethodCallExpr(expression, Configuration.fillInToken))
                                 }
-                                op?.let {
+                                else {
+                                    val op = binaryOperators.find {
+                                        it.asString().startsWith(e.character)
+                                    }
+                                    op?.let {
                                         editEvent(
                                             BinaryExpr(
-                                                parseFillIn(tail.text),
+                                                expression, // TODO BUG? missing update hole
+                                                //parseFillIn(tail.text),
                                                 Configuration.hole(),
                                                 it
                                             )
                                         )
+                                    }
                                 }
                             }
                         }

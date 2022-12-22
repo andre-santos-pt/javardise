@@ -128,7 +128,7 @@ class ForWidget(
             if (it == null)
                 parentBlock.statements.removeCommand(parentBlock.parentNode.get(), node)
             else
-                node.initialization.changeCommand(node, it, 0)
+                node.initialization.setCommand(node, it, 0)
         }
 
     private fun Composite.createCompareExp(exp: Expression) =
@@ -142,7 +142,7 @@ class ForWidget(
                 if(node.update.isEmpty())
                     node.update.addCommand(node, it)
                 else
-                    node.update.changeCommand(node, it, 0)
+                    node.update.setCommand(node, it, 0)
             else
                 node.update.clear()
         }

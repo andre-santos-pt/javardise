@@ -36,7 +36,7 @@ class AssignExpressionWidget(
             val find = AssignExpr.Operator.values()
                 .find { op -> op.asString() == it }!!
 
-            node.modifyCommand(node.operator, find, node::setOperator) // TODO BUG node is not same instance on undo
+            node.modifyCommand(node.operator, find, node::setOperator)
         }
 
         value = createValueWidget(node.value)

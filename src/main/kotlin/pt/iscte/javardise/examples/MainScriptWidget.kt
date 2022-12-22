@@ -40,7 +40,12 @@ public class Script {
 
     shell.layout = FillLayout()
     shell.scrollable {
-        MainScriptWidget(it, clazz)
+        val w = MainScriptWidget(it, clazz)
+        w.commandStack.addObserver { _,_ ->
+            println(clazz)
+        }
+        w
+
     }//.setAutoScroll()
     shell.pack()
     shell.open()

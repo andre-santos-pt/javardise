@@ -142,7 +142,7 @@ interface ListObserver<T : Node> {
     fun elementReplace(list: NodeList<T>, index: Int, old: T, new: T) {}
 }
 
-fun <T : Node> NodeList<T>.observeList(observer: ListObserver<T>): ListAddRemoveObserver<T> {
+internal fun <T : Node> NodeList<T>.observeList(observer: ListObserver<T>): AstObserver {
     val obs = object : ListAddRemoveObserver<T>() {
         override fun elementAdd(list: NodeList<T>, index: Int, node: T) {
             observer.elementAdd(list, index, node)
@@ -179,7 +179,7 @@ fun <T : Node> NodeList<T>.swap(a: T, b: T) {
     set(indexOfIdentity(b), tmp)
 }
 
-abstract class ListAddRemoveObserver<T : Node> : AstObserverAdapter() {
+private abstract class ListAddRemoveObserver<T : Node> : AstObserverAdapter() {
     override fun listChange(
         observedNode: NodeList<*>,
         type: AstObserver.ListChangeType,
