@@ -16,6 +16,7 @@ import pt.iscte.javardise.*
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
 import pt.iscte.javardise.external.*
+import kotlin.math.min
 
 // TODO filter incompatible
 abstract class MemberWidget<N : Node>(
@@ -87,7 +88,7 @@ abstract class MemberWidget<N : Node>(
         }
     }
 
-    protected fun configureInsert(insertModifier: TextWidget) {
+    protected fun configureInsert(insertModifier: TextWidget, filter: (Modifier.Keyword) -> Boolean = {true}) {
         insertModifier.addKeyEvent(SWT.BS, precondition = {insertModifier.isAtBeginning}) {
             if (member.modifiers.isNotEmpty())
                 member.modifiers.removeCommand(
@@ -100,6 +101,7 @@ abstract class MemberWidget<N : Node>(
                 if (e.character == SWT.SPACE) {
                     addMenu(insertModifier.widget,
                         validModifiers.flatten()
+                            .filter { filter(it) }
                             .filter { !member.modifiers.contains(Modifier(it)) }
                             .map { it.asString() })
                     insertModifier.widget.menu.setLocation(
@@ -123,9 +125,20 @@ abstract class MemberWidget<N : Node>(
             item.text = t
             item.addSelectionListener(object : SelectionAdapter() {
                 override fun widgetSelected(e: SelectionEvent) {
-                    val mod = Modifier(Modifier.Keyword.valueOf(item.text.uppercase()))
-                    // TODO replace instead of add if incompatible
-                    member.modifiers.addCommand(node, mod)
+                    val kw = Modifier.Keyword.valueOf(item.text.uppercase())
+                    val mod = Modifier(kw)
+                    val sameCat = validModifiers
+                        .find { it.contains(kw) }
+                        ?.map { Modifier(it) }
+                        ?: emptyList()
+                    val existing = member.modifiers.find { sameCat.contains(it)}
+
+                    if(existing == null) {
+                        val i = min(member.modifiers.size, validModifiers.indexOfFirst { it.contains(kw) })
+                        member.modifiers.addCommand(node, mod, i)
+                    }
+                    else
+                        member.modifiers.replaceCommand(node, existing, mod)
                 }
             })
         }

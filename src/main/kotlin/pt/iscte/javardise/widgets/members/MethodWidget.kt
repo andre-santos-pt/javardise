@@ -25,7 +25,6 @@ import pt.iscte.javardise.external.*
 import pt.iscte.javardise.widgets.statements.SequenceContainer
 import pt.iscte.javardise.widgets.statements.addEmptyStatement
 
-// TODO arrow down/up navigation in abstract methods
 class MethodWidget(
     parent: Composite,
     val dec: CallableDeclaration<*>,
@@ -313,6 +312,10 @@ class MethodWidget(
         }
     }
 
+
+    override fun setFocus(): Boolean {
+        return name.setFocus()
+    }
 
     override fun setFocusOnCreation(firstFlag: Boolean) {
         name.setFocus()

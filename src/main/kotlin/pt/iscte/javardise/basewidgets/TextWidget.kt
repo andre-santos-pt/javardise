@@ -130,14 +130,6 @@ interface TextWidget {
 //    }
 
     companion object {
-//        fun updateColor(text: Text) {
-//            if (SourceVersion.isKeyword(text.text))
-//                text.foreground = Configuration.KEYWORD_COLOR
-//            else if (text.isNumeric)
-//                text.foreground = Configuration.NUMBER_COLOR
-//            else
-//                text.foreground = Configuration.FOREGROUND_COLOR
-//        }
 
         fun createText(
             parent: Composite,
@@ -314,7 +306,9 @@ interface TextWidget {
                                         else
                                             sw.elseWidget!!.bodyWidget.focusFirst()
                                     } else if (sw is SequenceContainer<*> && text != sw.closingBracket.widget) {
-                                        if (sw.bodyWidget?.isEmpty() == true)
+                                        if(sw.bodyWidget == null && index + 1 < sw.parent.children.size)
+                                            sw.parent.children[index + 1].setFocus()
+                                        else if (sw.bodyWidget?.isEmpty() == true)
                                             sw.closingBracket.setFocus()
                                         else
                                             sw.bodyWidget?.setFocus()

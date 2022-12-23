@@ -45,8 +45,6 @@ fun matchModifier(keyword: String) =
 
 
 // TODO require compliant model
-// TODO arrow down
-// TODO incompatible interface modifiers
 open class ClassWidget(
     parent: Composite,
     dec: ClassOrInterfaceDeclaration,
@@ -129,7 +127,10 @@ open class ClassWidget(
         fun apply(type: ClassOrInterfaceDeclaration) =
             when (this) {
                 CLASS -> type.isInterface = false
-                INTERFACE -> type.isInterface = true
+                INTERFACE -> {
+                    type.modifiers.removeIf { it.keyword == Modifier.Keyword.FINAL }
+                    type.isInterface = true
+                }
                 //ENUM -> type.setE
             }
 
@@ -150,7 +151,12 @@ open class ClassWidget(
 
         val insertModifier = TextWidget.create(firstRow)
         insertModifier.widget.layoutData = ROW_DATA_STRING
-        configureInsert(insertModifier)
+        configureInsert(insertModifier) {
+            if(node.isInterface)
+                it != Modifier.Keyword.FINAL
+            else
+                true
+        }
 
         keyword = newKeywordWidget(firstRow, if(node.isInterface) "interface" else "class",
             alternatives = { TypeTypes.values().map { it.name.lowercase() } }) {
