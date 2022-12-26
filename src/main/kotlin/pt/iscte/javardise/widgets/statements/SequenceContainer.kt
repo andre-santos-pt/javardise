@@ -3,6 +3,7 @@ package pt.iscte.javardise.widgets.statements
 import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.NodeList
 import com.github.javaparser.ast.stmt.BlockStmt
+import com.github.javaparser.ast.stmt.EmptyStmt
 import com.github.javaparser.ast.stmt.Statement
 import org.eclipse.swt.SWT
 import org.eclipse.swt.events.KeyAdapter
@@ -136,7 +137,7 @@ interface SequenceContainer<T : Node> : NodeWidget<T> {
                             inner.forEach {
                                 parentBlock.statements.addAfter(it, element)
                             }
-                            element.remove()
+                            parentBlock.statements.replace(element, EmptyStmt())
                         }
 
                         override fun undo() {

@@ -36,7 +36,7 @@ abstract class StatementWidget<T : Statement>(
 
     fun TokenWidget.addDelete(node: Statement, block: BlockStmt) =
         addKeyEvent(SWT.BS) {
-            block.statements.removeCommand(block, node)
+            block.statements.replaceCommand(block,node,EmptyStmt())
         }
 }
 
