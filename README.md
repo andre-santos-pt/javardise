@@ -3,7 +3,7 @@
 Javardise is a research prototype consisting of a [Projectional Editor](https://en.wikipedia.org/wiki/Structure_editor) 
 for Java, built using:
 - [JavaParser](http://javaparser.org): abstract representation of the code (model)
-- [Standard Widget Toolkit (SWT)](https://www.eclipse.org/swt): GUI technology
+- [Standard Widget Toolkit (SWT)](https://www.eclipse.org/swt): GUI Toolkit
 
 The editor enforces the structure of code, ensuring that:
 - the code is always well-formed and well-formatted
@@ -17,33 +17,42 @@ while allowing:
 - performing editing commands programmatically through the model
 
 
-# Setup using IntelliJ projects
+# Setup (Gradle)
 
-## Javardise build (Gradle)
+## Setup
 1. Download SWT library JAR from the [official website](https://download.eclipse.org/eclipse/downloads/drops4/R-4.25-202208311800/)
-for your Operating System. Place the **swt.jar** file in the directory **/libs** of the project.
-2. Run Gradle task **build jar**, which will output the **javardiseJP-VERSION.jar** to the directory **/build/libs**.
+for your Operating System. 
+- Windows: place the JAR renamed as **swt-windows.jar** in the directory **libs** of the project.
+- MacOS: place the JAR renamed as **swt-macos.jar** in the directory **libs** of the project. 
+2. Run **jar** task to obtain a JAR named **javardise-VERSION.jar**. (does not contain dependencies)
+
+## Standalone application
+Run either **winJar** and **macJar** task (*other* category) to produce a standalone executable JARs for the respective platform. This will output a JAR file like **javardise-VERSION-OS.jar**, which can be executed.
+- Windows: ``java -jar javardise-VERSION-windows.jar``
+- MacOS: ``java -XstartOnFirstThread -jar javardise-VERSION-windows.jar``
 
 
 ## Integration in other projects
-The Javardise base editor may run standalone.  However, this project has also the following goals:
-- Provide reusable widgets to manipulate the code elements that may be used by other applications as a library
-- Enable the integration of extensions to the base editor.
 
 ### Dependencies (Gradle)
-Include the following dependencies in the **build.gradle.kts**, replacing *%PATH* and *%VERSION* with appropriate values.
+Include the  dependencies in the **build.gradle.kts**, replacing *%VERSION* and *%OS* with appropriate values.
 
 ```kotlin
 dependencies {
-    implementation("com.github.javaparser:javaparser-symbol-solver-core:3.24.4")
-    implementation (files("%PATH/swt.jar"))
-    implementation (files("%PATH/javardiseJP-%VERSION".jar"))
+    implementation("com.github.javaparser:javaparser-symbol-solver-core:3.24.8")
+    implementation(files("libs/swt-%OS.jar"))
+    implementation(files("libs/javardise-%VERSION.jar"))
+}
+
+application {
+    mainClass.set("pt.iscte.javardise.editor.MainKt")
+    applicationDefaultJvmArgs = listOf("-XstartOnFirstThread") // if MacOS
+}
 }
 ```
 
-
-## Examples
-In this repo there are few examples of using Javardise components.
+## Using widgets as a library
+The Javardise base editor may run standalone.  However, one may use Javardise widgets to manipulate the code elements in applications developed in SWT. In this repo there are few examples of using Javardise widgets.
 
 ### ClassWidget
 An example of using an widget to edit a whole class.
@@ -60,5 +69,16 @@ An example of using a widget to edit a method in isolation. This example also il
 
 An example of using the class documentation view, editing code and documentation in parallel over the same model.
 
-[pt.iscte.javardise.examples.DemoClassDocumentationView](https://github.com/andre-santos-pt/JavardiseJP/blob/master/src/main/kotlin/pt/iscte/javardise/examples/DemoClassDocumentationView.kt)
+[pt.iscte.javardise.documentation.DemoClassDocumentationView](https://github.com/andre-santos-pt/JavardiseJP/blob/master/src/main/kotlin/pt/iscte/javardise/documentation/DemoClassDocumentationView.kt)
 
+
+## Developing plugins
+Another integration possibility is by developing plugins to the main editor. This can be achieved through the Java *services* infrastructure. We need to create a **META-INF** folder, containing a **services** folder.
+
+### Actions
+In order to plug-in an action (toolbar), we need to write a class that provide the behavior and configure it as a service.
+
+1. Implement a class that implements *pt.iscte.javardise.editor.Action*
+2. Create a file named **pt.iscte.javardise.editor.Action** in the **services** containing one line with the class name of (1)
+
+When running the editor, this contribution will be detected and a button will appear in the toolbar.

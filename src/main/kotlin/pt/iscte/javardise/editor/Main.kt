@@ -1,11 +1,10 @@
-package pt.iscte.javardise.examples
+package pt.iscte.javardise.editor
 
 import com.github.javaparser.ParseProblemException
 import com.github.javaparser.StaticJavaParser
 import com.github.javaparser.ast.NodeList
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration
 import org.eclipse.swt.SWT
-import org.eclipse.swt.custom.ScrolledComposite
 import org.eclipse.swt.custom.StackLayout
 import org.eclipse.swt.events.SelectionAdapter
 import org.eclipse.swt.events.SelectionEvent
@@ -16,8 +15,9 @@ import org.eclipse.swt.layout.GridLayout
 import org.eclipse.swt.widgets.*
 import org.eclipse.swt.widgets.List
 import pt.iscte.javardise.DefaultConfiguration
+import pt.iscte.javardise.examples.StaticClassWidget
 import pt.iscte.javardise.external.*
-import pt.iscte.javardise.views.ClassDocumentationView
+import pt.iscte.javardise.documentation.ClassDocumentationView
 import pt.iscte.javardise.widgets.expressions.CallFeature
 import pt.iscte.javardise.widgets.expressions.VariableDeclarationFeature
 import pt.iscte.javardise.widgets.members.ClassWidget
@@ -48,8 +48,8 @@ fun main(args: Array<String>) {
         folder
     }
 
-    val window = JavardiseClassicEditor(display, root)
-    window.open()
+    if(root.exists())
+        CodeEditor(display, root).open()
 }
 
 
@@ -60,7 +60,7 @@ data class TabData(
 )
 
 
-class JavardiseClassicEditor(val display: Display, val folder: File) {
+class CodeEditor(val display: Display, val folder: File) {
 
     private val shell = Shell(display)
 
@@ -74,8 +74,6 @@ class JavardiseClassicEditor(val display: Display, val folder: File) {
         else
             (stacklayout.topControl.data as TabData).classWidget
 
-    val compileErrors: CompileErrors = mutableMapOf()
-
     init {
         require(folder.exists() && folder.isDirectory)
 
@@ -86,7 +84,26 @@ class JavardiseClassicEditor(val display: Display, val folder: File) {
         val gdata = GridData(GridData.VERTICAL_ALIGN_FILL)
         gdata.minimumWidth = 150
         fileList.layoutData = gdata
-        val editorArea = Composite(shell, SWT.NONE)
+
+        val comp = Composite(shell, SWT.NONE)
+        comp.layout = GridLayout()
+        comp.layoutData = GridData(GridData.FILL_BOTH)
+        val bar = ToolBar(comp, SWT.NONE)
+        ServiceLoader.load(Action::class.java).forEach {
+            val item = ToolItem(bar, if (it.toggle) SWT.TOGGLE else SWT.PUSH)
+            item.text = it.name
+            it.init(this@CodeEditor)
+            item.addSelectionListener(object : SelectionAdapter() {
+                override fun widgetSelected(e: SelectionEvent?) {
+                    it.run(
+                        (stacklayout.topControl?.data as? TabData)?.model,
+                        item.selection
+                    )
+                }
+            })
+        }
+
+        val editorArea = Composite(comp, SWT.NONE)
         editorArea.layoutData = GridData(GridData.FILL_BOTH)
         editorArea.layout = stacklayout
 
@@ -139,20 +156,26 @@ class JavardiseClassicEditor(val display: Display, val folder: File) {
                     fileList.select(fileList.itemCount)
                 }
             }
-            item("Compile") {
-                if (stacklayout.topControl != null) {
-                    val model = (stacklayout.topControl.data as TabData).model
-                    model?.let {
-                        compile(it)
-                    }
+            item("Delete") {
+                shell.prompt("Heads up!", "Are you sure you want to permanently delete this file?") {
+                    val f = File(folder, fileList.selection[0])
+                    f.delete()
                 }
             }
-            item("Documentation") {
-                val model = (stacklayout.topControl.data as TabData).model
-                shell {
-                    ClassDocumentationView(this, model!!)
-                }.open()
-            }
+//            item("Compile") {
+//                if (stacklayout.topControl != null) {
+//                    val model = (stacklayout.topControl.data as TabData).model
+//                    model?.let {
+//                        compile(it)
+//                    }
+//                }
+//            }
+//            item("Documentation") {
+//                val model = (stacklayout.topControl.data as TabData).model
+//                shell {
+//                    ClassDocumentationView(this, model!!)
+//                }.open()
+//            }
 
         }
 
@@ -190,45 +213,6 @@ class JavardiseClassicEditor(val display: Display, val folder: File) {
         }
     }
 
-    private fun compile(model: ClassOrInterfaceDeclaration) {
-        compileErrors.forEach {
-            it.value.forEach { it.delete() }
-        }
-
-        compileErrors.clear()
-        // FileFilter { it.name.endsWith(".java") }
-
-        val files = folder.listFiles()
-            .map {
-                Triple(
-                    it.absolutePath,
-                    StaticJavaParser.parse(it).findMainClass(),
-                    null
-                )
-            }
-
-            .filter { it.second != null }
-            .map {
-                Pair(
-                    it.second!!,
-                    openTabs.find { w -> (w.data as TabData).file.absolutePath == it.first }?.data as? TabData
-                )
-            }
-            .filter { it.second != null }
-            .map {
-                Pair(
-                    it.first,
-                    it.second!!.classWidget!!
-                )
-            }
-            .map { println(it); it }
-        val errors = checkCompileErrors(files)
-        compileErrors.putAll(errors)
-
-        compileErrors[model]?.forEach {
-            it.show()
-        }
-    }
 
     val File.extension
         get() = if (name.contains('.'))
@@ -280,14 +264,15 @@ class JavardiseClassicEditor(val display: Display, val folder: File) {
             }
             w.setAutoScroll()
 
-            val scroll = w.parent as ScrolledComposite
-            scroll.verticalBar.addListener(SWT.Selection, object : Listener {
-                override fun handleEvent(p0: Event?) {
-                    compileErrors[model]?.forEach {
-                        it.show()
-                    }
-                }
-            })
+            // TODO move to action
+//            val scroll = w.parent as ScrolledComposite
+//            scroll.verticalBar.addListener(SWT.Selection, object : Listener {
+//                override fun handleEvent(p0: Event?) {
+//                    compileErrors[model]?.forEach {
+//                        it.show()
+//                    }
+//                }
+//            })
 
             w.commandStack.addObserver { _, _ ->
                 val writer = PrintWriter(file)
@@ -317,9 +302,9 @@ class JavardiseClassicEditor(val display: Display, val folder: File) {
 
         scale.addSelectionListener(object : SelectionAdapter() {
             override fun widgetSelected(e: SelectionEvent?) {
-                while (scale.selection  < w.commandStack.stackTop)
+                while (scale.selection < w.commandStack.stackTop)
                     w.commandStack.undo()
-                while (scale.selection  > w.commandStack.stackTop) {
+                while (scale.selection > w.commandStack.stackTop) {
                     w.commandStack.redo()
                 }
             }
@@ -327,7 +312,7 @@ class JavardiseClassicEditor(val display: Display, val folder: File) {
         w.commandStack.addObserver { command, exec ->
             if (w.commandStack.stackTop >= 0) {
                 scale.enabled = true
-                scale.maximum = w.commandStack.stackSize-1
+                scale.maximum = w.commandStack.stackSize - 1
                 scale.selection = w.commandStack.stackTop
             } else {
                 scale.enabled = false
@@ -409,9 +394,8 @@ class JavardiseClassicEditor(val display: Display, val folder: File) {
 //        shell.requestLayout()
 //        return model
 //    }
+
+
+
 }
-
-
-
-
 

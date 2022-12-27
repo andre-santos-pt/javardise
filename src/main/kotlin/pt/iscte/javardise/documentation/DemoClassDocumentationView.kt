@@ -1,18 +1,11 @@
 package pt.iscte.javardise.examples
 
-import com.github.javaparser.ast.Node
-import com.github.javaparser.ast.body.BodyDeclaration
 import org.eclipse.swt.SWT
-import org.eclipse.swt.custom.SashForm
-import org.eclipse.swt.custom.ScrolledComposite
-import org.eclipse.swt.graphics.Point
-import org.eclipse.swt.layout.FillLayout
 import org.eclipse.swt.layout.GridData
 import org.eclipse.swt.widgets.*
 import pt.iscte.javardise.external.*
-import pt.iscte.javardise.views.ClassDocumentationView
+import pt.iscte.javardise.documentation.ClassDocumentationView
 import pt.iscte.javardise.widgets.members.ClassWidget
-import kotlin.check
 
 /**
  * Demonstrates the Class Documentation View. The code editor and the documentation view work over the same model.

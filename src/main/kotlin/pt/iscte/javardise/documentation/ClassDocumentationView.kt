@@ -1,4 +1,4 @@
-package pt.iscte.javardise.views
+package pt.iscte.javardise.documentation
 
 import com.github.javaparser.ast.Modifier
 import com.github.javaparser.ast.NodeList

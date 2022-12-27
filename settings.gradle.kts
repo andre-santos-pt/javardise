@@ -1,3 +1,2 @@
 
-rootProject.name = "javardiseJP"
-
+rootProject.name = "javardise"
