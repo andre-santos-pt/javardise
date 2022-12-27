@@ -42,6 +42,9 @@ class LineCommentWidget(
             node.comment.get().content.trim()
         ) { _, _ -> true }
         tail.addEmptyStatement(this@LineCommentWidget, parentBlock, node)
+        tail.addDeleteEmptyListener {
+            parentBlock.statements.replaceCommand(parentBlock, node, EmptyStmt())
+        }
         tail.addFocusLostAction {
             node.modifyCommand(
                 node.comment.getOrNull,

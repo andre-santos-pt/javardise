@@ -3,6 +3,7 @@ package pt.iscte.javardise.widgets.expressions
 import com.github.javaparser.StaticJavaParser
 import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.NodeList
+import com.github.javaparser.ast.expr.ArrayInitializerExpr
 import com.github.javaparser.ast.expr.BinaryExpr
 import com.github.javaparser.ast.expr.CharLiteralExpr
 import com.github.javaparser.ast.expr.Expression
@@ -109,7 +110,7 @@ class ExpressionListWidget<T : Expression, N : Node>(
     }
 
     override fun setFocus(): Boolean {
-        return if(argumentWidgets.isEmpty()) insert.setFocus() else argumentWidgets.first().arg.setFocus()
+        return if (argumentWidgets.isEmpty()) insert.setFocus() else argumentWidgets.first().arg.setFocus()
     }
 
     private fun createArgument(exp: T, index: Int, replace: Boolean):
@@ -139,7 +140,8 @@ class ExpressionListWidget<T : Expression, N : Node>(
 
                     var i: Int = -1
                     override fun run() {
-                        i = expressionList.indexOfIdentity(exp) // BUG illegal index
+                        i =
+                            expressionList.indexOfIdentity(exp) // BUG illegal index
                         expressionList[i] = it as T
                     }
 
@@ -235,11 +237,17 @@ class ExpressionListWidget<T : Expression, N : Node>(
                 override val element = expression
 
                 override fun run() {
-                    target as NodeWithArguments<*>  // TODO BUG invalid cast for ArrayInit { }
+                    val list: NodeList<Expression> =
+                        if (target is ArrayInitializerExpr)
+                            target.values
+                        else
+                            (target as NodeWithArguments<*>).arguments
+
+                    //target as NodeWithArguments<*>  // TODO BUG invalid cast for ArrayInit { }
                     if (after != null)
-                        target.arguments.addAfter(element, after)
+                        list.addAfter(element, after)
                     else
-                        target.arguments.add(element)
+                        list.add(element)
                 }
 
                 override fun undo() {
@@ -256,7 +264,8 @@ class ExpressionListWidget<T : Expression, N : Node>(
 
         insert.widget.layoutData = ROW_DATA_STRING
         insert.widget.addModifyListener {
-            insert.widget.layoutData =  if(insert.text.isEmpty()) ROW_DATA_STRING else null
+            insert.widget.layoutData =
+                if (insert.text.isEmpty()) ROW_DATA_STRING else null
         }
 
 
@@ -277,19 +286,14 @@ class ExpressionListWidget<T : Expression, N : Node>(
                 e.doit = false
                 if (insert.widget.isDisposed)
                     return
-
-                else if(insert.widget.text.isBlank() && e.character.isLetter())
+                else if (insert.widget.text.isBlank() && e.character.isLetter())
                     doAddArgummentCommand(NameExpr(e.character.toString()))
-
-                else if(insert.widget.text.isBlank() && e.character.isDigit())
+                else if (insert.widget.text.isBlank() && e.character.isDigit())
                     doAddArgummentCommand(IntegerLiteralExpr(e.character.toString()))
-
-                else if(insert.widget.text.isBlank() && e.character == '\'')
+                else if (insert.widget.text.isBlank() && e.character == '\'')
                     doAddArgummentCommand(CharLiteralExpr(" "))
-
-                else if(insert.widget.text.isBlank() && e.character == '"')
+                else if (insert.widget.text.isBlank() && e.character == '"')
                     doAddArgummentCommand(StringLiteralExpr(""))
-
                 else if (insert.isAtBeginning || insert.isEmpty) {
 
                     val unop = unaryOperators.filter { it.isPrefix }
@@ -316,12 +320,11 @@ class ExpressionListWidget<T : Expression, N : Node>(
 
                         }
                     }
-                }
-                else if (insert.isAtEnd) {
+                } else if (insert.isAtEnd) {
                     val biop = binaryOperators.find {
                         it.asString().startsWith(e.character)
                     }
-                    if (biop != null  && tryParse<Expression>(insert.text)
+                    if (biop != null && tryParse<Expression>(insert.text)
                     ) {
                         val exp = insert.text
                         insert.delete()
@@ -332,10 +335,8 @@ class ExpressionListWidget<T : Expression, N : Node>(
                             )
                         )
                     }
-                }
-
-                else if(e.character == ',') {
-                    if(tryParse<Expression>(insert.text)) {
+                } else if (e.character == ',') {
+                    if (tryParse<Expression>(insert.text)) {
                         val insertExp =
                             StaticJavaParser.parseExpression<Expression>(insert.text)
                         insert.delete()

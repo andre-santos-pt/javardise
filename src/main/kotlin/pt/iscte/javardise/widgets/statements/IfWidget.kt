@@ -35,7 +35,8 @@ class IfWidget(
     override val closingBracket: TokenWidget
 
     override val tail: TextWidget
-        get() = closingBracket
+        get() = if(elseWidget != null) elseWidget!!.closeBracketElse else closingBracket
+
     init {
         column = column {
             firstRow = row {
@@ -101,6 +102,7 @@ class IfWidget(
         observeProperty<Statement>(ObservableProperty.ELSE_STMT) {
             if (it == null) {
                 elseWidget?.dispose()
+                elseWidget = null
                 requestLayout()
                 keyword.setFocus()
             } else {

@@ -28,10 +28,11 @@ class EmptyStatementWidget(
 
         tail = TextWidget.create(this, "") { c, s ->
             c.toString().matches(Regex("\\w|\\[|]|\\.|\\+|-|\\*|/|%"))
-                    //|| c == SWT.SPACE && !s.endsWith(SWT.SPACE)
+                    || c == SWT.SPACE && s.startsWith("//")
                     || c == SWT.BS
         }
-        tail.addKeyEvent(SWT.BS, precondition = {it.isEmpty()}) {
+
+        tail.addKeyEvent(SWT.BS, precondition = {it.isEmpty() && parentBlock.statements.size > 1}) {
             parentBlock.statements.removeCommand(parentBlock, node)
         }
 

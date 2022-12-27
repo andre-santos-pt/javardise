@@ -286,7 +286,10 @@ interface TextWidget {
                                     else if (index > 0) {
                                         val prev = sw.parent.children[index - 1]
                                         if (prev is SequenceContainer<*>)
-                                            prev.closingBracket.setFocus()
+                                            if(prev is IfWidget)
+                                                prev.tail.setFocus()
+                                            else
+                                                prev.closingBracket.setFocus()
                                         else
                                             prev.setFocus()
                                     } else {

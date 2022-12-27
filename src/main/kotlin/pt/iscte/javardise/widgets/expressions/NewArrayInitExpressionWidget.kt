@@ -6,7 +6,7 @@ import org.eclipse.swt.widgets.Composite
 import pt.iscte.javardise.Configuration
 import pt.iscte.javardise.basewidgets.TextWidget
 
-// TODO BUG in ExpressionList cast
+// TODO BUG unparsable when not in declaration
 class NewArrayInitExpressionWidget(
     parent: Composite,
     override val node: ArrayInitializerExpr,

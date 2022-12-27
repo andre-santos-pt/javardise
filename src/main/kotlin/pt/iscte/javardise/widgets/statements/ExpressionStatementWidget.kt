@@ -34,7 +34,7 @@ open class ExpressionStatementWidget(
         tail = TokenWidget(this, ";")
         tail.addEmptyStatement(this, parentBlock, node)
         tail.addDeleteListener {
-            parentBlock.statements.removeCommand(parentBlock, node)
+            parentBlock.statements.replaceCommand(parentBlock, node, EmptyStmt())
         }
 
         observeNotNullProperty<Expression>(ObservableProperty.EXPRESSION) {
@@ -49,7 +49,7 @@ open class ExpressionStatementWidget(
     private fun createExpression(e: Expression): ExpressionWidget<*> =
         createExpressionWidget(this, e) {
             if (it == null)
-                parentBlock.statements.removeCommand(parentBlock, node)
+                parentBlock.statements.replaceCommand(parentBlock, node, EmptyStmt())
             else if (
                 it.isVariableDeclarationExpr ||
                 it.isAssignExpr ||
