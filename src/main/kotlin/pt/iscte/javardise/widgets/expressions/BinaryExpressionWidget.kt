@@ -18,6 +18,7 @@ import pt.iscte.javardise.external.binaryOperators
 import pt.iscte.javardise.external.observeNotNullProperty
 import pt.iscte.javardise.external.observeProperty
 
+// TODO __ + + to incrementor etc
 class BinaryExpressionWidget(
     parent: Composite,
     override val node: BinaryExpr,

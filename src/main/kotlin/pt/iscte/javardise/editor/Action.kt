@@ -1,6 +1,7 @@
 package pt.iscte.javardise.editor
 
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration
+import pt.iscte.javardise.widgets.members.ClassWidget
 
 interface Action {
     val name: String
@@ -9,10 +10,16 @@ interface Action {
     val toggle: Boolean
         get() = false
 
+    fun isEnabled(facade: Facade): Boolean = true
+
     fun init(editor: CodeEditor) {}
-    fun run(model: ClassOrInterfaceDeclaration?, toggle: Boolean)
+    fun run(facade: Facade, toggle: Boolean)
 }
 
+interface Facade {
+    val model: ClassOrInterfaceDeclaration?
+    val classWidget: ClassWidget?
+}
 
 //interface Plugin {
 //    val actions: kotlin.collections.List<Action>

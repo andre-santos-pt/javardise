@@ -64,8 +64,6 @@ interface Configuration {
 }
 
 
-
-
 val Node.isNoParse get() = (this is NameExpr || this is SimpleName) && toString() == Configuration.noParseToken
 
 val Node.isFillIn get() = (this is NameExpr || this is SimpleName) && toString() == Configuration.fillInToken
@@ -126,7 +124,7 @@ open class DefaultConfiguration : Configuration {
     override val fontFace = "Menlo"
 
     override val darkMode: Boolean
-        get() = backgroundColor.luminance() < 128
+        get() = Display.getDefault().getSystemColor(SWT.COLOR_WIDGET_BACKGROUND).luminance() < 128
 
     override val errorColor by lazy {
         Display.getDefault().getSystemColor(SWT.COLOR_RED)
@@ -145,7 +143,10 @@ open class DefaultConfiguration : Configuration {
     }
 
     override val backgroundColor by lazy {
-        Display.getDefault().getSystemColor(SWT.COLOR_WIDGET_BACKGROUND)
+        if (darkMode)
+            Display.getDefault().getSystemColor(SWT.COLOR_WIDGET_BACKGROUND)
+        else
+            Display.getDefault().getSystemColor(SWT.COLOR_WHITE)
     }
 
     override val numberColor by lazy {

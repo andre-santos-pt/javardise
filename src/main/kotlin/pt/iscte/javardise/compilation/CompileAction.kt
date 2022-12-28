@@ -4,6 +4,7 @@ import com.github.javaparser.StaticJavaParser
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration
 import pt.iscte.javardise.editor.Action
 import pt.iscte.javardise.editor.CodeEditor
+import pt.iscte.javardise.editor.Facade
 import pt.iscte.javardise.editor.TabData
 import pt.iscte.javardise.external.CompileErrors
 import pt.iscte.javardise.external.checkCompileErrors
@@ -16,12 +17,14 @@ class CompileAction : Action {
     override val name: String
         get() = "Compile"
 
+    override val iconPath: String?
+        get() = "java.png"
     override fun init(editor: CodeEditor) {
         this.editor = editor
     }
 
-    override fun run(model: ClassOrInterfaceDeclaration?, toggle: Boolean) {
-        model?.let {
+    override fun run(facade: Facade, toggle: Boolean) {
+        facade.model?.let {
             compile(it)
         }
     }

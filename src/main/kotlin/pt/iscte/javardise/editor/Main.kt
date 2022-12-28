@@ -8,6 +8,7 @@ import org.eclipse.swt.SWT
 import org.eclipse.swt.custom.StackLayout
 import org.eclipse.swt.events.SelectionAdapter
 import org.eclipse.swt.events.SelectionEvent
+import org.eclipse.swt.graphics.Image
 import org.eclipse.swt.graphics.Point
 import org.eclipse.swt.layout.FillLayout
 import org.eclipse.swt.layout.GridData
@@ -24,6 +25,7 @@ import pt.iscte.javardise.widgets.members.ClassWidget
 import pt.iscte.javardise.widgets.statements.EmptyStatementFeature
 import pt.iscte.javardise.widgets.statements.IfFeature
 import pt.iscte.javardise.widgets.statements.ReturnFeature
+import java.awt.Desktop
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.PrintWriter
@@ -48,7 +50,7 @@ fun main(args: Array<String>) {
         folder
     }
 
-    if(root.exists())
+    if (root.exists())
         CodeEditor(display, root).open()
 }
 
@@ -74,6 +76,8 @@ class CodeEditor(val display: Display, val folder: File) {
         else
             (stacklayout.topControl.data as TabData).classWidget
 
+    val actions = ServiceLoader.load(Action::class.java)
+
     init {
         require(folder.exists() && folder.isDirectory)
 
@@ -89,16 +93,28 @@ class CodeEditor(val display: Display, val folder: File) {
         comp.layout = GridLayout()
         comp.layoutData = GridData(GridData.FILL_BOTH)
         val bar = ToolBar(comp, SWT.NONE)
-        ServiceLoader.load(Action::class.java).forEach {
+        actions.forEach {
             val item = ToolItem(bar, if (it.toggle) SWT.TOGGLE else SWT.PUSH)
-            item.text = it.name
+            if(it.iconPath == null)
+                item.text = it.name
+            it.iconPath?.let {path->
+                val icon = Image(Display.getDefault(), this::class.java.classLoader.getResourceAsStream(path))
+                item.image = icon
+                item.toolTipText = it.name
+            }
+
             it.init(this@CodeEditor)
             item.addSelectionListener(object : SelectionAdapter() {
                 override fun widgetSelected(e: SelectionEvent?) {
-                    it.run(
-                        (stacklayout.topControl?.data as? TabData)?.model,
-                        item.selection
-                    )
+                    val facade = object : Facade {
+                        override val model: ClassOrInterfaceDeclaration?
+                            get() = (stacklayout.topControl?.data as? TabData)?.model
+                        override val classWidget: ClassWidget?
+                            get() = (stacklayout.topControl?.data as? TabData)?.classWidget
+
+                    }
+                    if (it.isEnabled(facade))
+                        it.run(facade, item.selection)
                 }
             })
         }
@@ -157,10 +173,16 @@ class CodeEditor(val display: Display, val folder: File) {
                 }
             }
             item("Delete") {
-                shell.prompt("Heads up!", "Are you sure you want to permanently delete this file?") {
+                shell.prompt(
+                    "Heads up!",
+                    "Are you sure you want to permanently delete this file?"
+                ) {
                     val f = File(folder, fileList.selection[0])
                     f.delete()
                 }
+            }
+            item("Open in file system") {
+                Desktop.getDesktop().browseFileDirectory(folder);
             }
 //            item("Compile") {
 //                if (stacklayout.topControl != null) {
@@ -394,7 +416,6 @@ class CodeEditor(val display: Display, val folder: File) {
 //        shell.requestLayout()
 //        return model
 //    }
-
 
 
 }
