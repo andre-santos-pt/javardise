@@ -69,7 +69,7 @@ An example of using a widget to edit a method in isolation. This example also il
 
 An example of using the class documentation view, editing code and documentation in parallel over the same model.
 
-[pt.iscte.javardise.documentation.DemoClassDocumentationView](https://github.com/andre-santos-pt/JavardiseJP/blob/master/src/main/kotlin/pt/iscte/javardise/documentation/DemoClassDocumentationView.kt)
+[pt.iscte.javardise.documentation.DemoClassDocumentationView](https://github.com/andre-santos-pt/JavardiseJP/blob/master/documentation/src/main/kotlin/pt/iscte/javardise/documentation/DemoClassDocumentationView.kt)
 
 
 ## Developing plugins
@@ -79,6 +79,14 @@ Another integration possibility is by developing plugins to the main editor. Thi
 In order to plug-in an action (toolbar), we need to write a class that provide the behavior and configure it as a service.
 
 1. Implement a class that implements *pt.iscte.javardise.editor.Action*
-2. Create a file named **pt.iscte.javardise.editor.Action** in the **services** containing one line with the class name of (1)
+2. Create a file named **pt.iscte.javardise.editor.Action** in the **META-INF** folder, containing one line with the class name of (1)
 
-When running the editor, this contribution will be detected and a button will appear in the toolbar.
+When running the editor, this contribution will be detected and a button will appear in the toolbar. See subprojects as examples of plugins.
+
+## Subprojects
+
+There are currently 3 subprojects that work as plugins to the base editor of Javardise:
+
+- [Compilation](https://github.com/andre-santos-pt/javardise/tree/master/compilation): support for compiling using the standard Java compiler API
+- [Debugger](https://github.com/andre-santos-pt/javardise/tree/master/debugger): execution and debugging using [Strudel](https://github.com/andre-santos-pt/strudel)
+- [Documentation](https://github.com/andre-santos-pt/javardise/tree/master/documentation): alternative views to edit documentation in isolation
