@@ -6,7 +6,7 @@ plugins {
     application
 }
 
-group = "pt.iscte"
+group = "pt.iscte.javardise"
 version = "0.1"
 
 
@@ -14,23 +14,20 @@ repositories {
     mavenCentral()
 }
 
-dependencies {
-    testImplementation("org.junit.jupiter:junit-jupiter-api:5.9.0")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.9.0")
-    implementation("org.junit.platform:junit-platform-suite:1.9.1")
+    dependencies {
+        testImplementation("org.junit.jupiter:junit-jupiter-api:5.9.0")
+        testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.9.0")
+        implementation("org.junit.platform:junit-platform-suite:1.9.1")
 
-    implementation("com.github.javaparser:javaparser-symbol-solver-core:3.24.8")
+        implementation("com.github.javaparser:javaparser-symbol-solver-core:3.24.8")
 
-    val os = System.getProperty("os.name").toLowerCase()
-    if(os.contains("mac")) {
-        implementation(files("libs/swt-macos.jar"))
+        val os = System.getProperty("os.name").toLowerCase()
+        if (os.contains("mac")) {
+            implementation(files("libs/swt-macos.jar"))
+        } else if (os.contains("windows")) {
+            implementation(files("libs/swt-windows.jar"))
+        }
     }
-    else if(os.contains("windows")) {
-        implementation(files("libs/swt-windows.jar"))
-    }
-    //implementation (files("libs/javaparser-core-3.24.7.jar"))
-
-}
 
 //configurations.all {
 //    resolutionStrategy {
