@@ -278,15 +278,29 @@ fun shell(
     content: Shell.() -> Unit
 ): Shell {
     val s = if (parent == null)
-        Shell(Display.getDefault())
+        Shell(Display.getDefault(), style)
     else
-        Shell(parent)
+        Shell(parent, style)
     s.text = title
     s.layout = FillLayout()
     content(s)
     return s
 }
 
+
+fun message(
+    title: String = "",
+    text: String = ""
+) = shell(style =  SWT.DIALOG_TRIM or SWT.APPLICATION_MODAL) {
+    layout = RowLayout(SWT.VERTICAL)
+    this.text = title
+    label(text)
+    button("OK") {
+        this@shell.close()
+    }
+    pack()
+
+}.open()
 
 fun Shell.center() {
     val primary: Monitor = Display.getDefault().primaryMonitor

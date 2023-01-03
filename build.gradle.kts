@@ -112,7 +112,11 @@ tasks.withType<Jar> {
         attributes["Main-Class"] = application.mainClass
         //attributes["Automatic-Module-Name"] = "pt.iscte.javardise"
     }
+
+    from(configurations.runtimeClasspath)
 }
+
+
 
 tasks {
     test {

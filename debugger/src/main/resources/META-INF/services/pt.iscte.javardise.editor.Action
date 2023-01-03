@@ -1,0 +1,5 @@
+pt.iscte.javardise.debugger.RunAction
+pt.iscte.javardise.debugger.DebugAction
+pt.iscte.javardise.debugger.StartAction
+pt.iscte.javardise.debugger.StepAction
+pt.iscte.javardise.debugger.StopAction
