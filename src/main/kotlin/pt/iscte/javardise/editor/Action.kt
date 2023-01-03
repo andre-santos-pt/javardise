@@ -19,6 +19,7 @@ interface Action {
 interface Facade {
     val model: ClassOrInterfaceDeclaration?
     val classWidget: ClassWidget?
+
 }
 
 //interface Plugin {

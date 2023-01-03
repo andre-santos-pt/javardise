@@ -35,6 +35,23 @@ fun Control.addNote(
     return dec
 }
 
+fun Control.addTextbox(
+    text: String,
+    loc: BiFunction<Point, Point, Point>
+): ICodeDecoration<Text> {
+    val dec = addDecoration({ p: Composite, c: Control ->
+        val t = Text(p, SWT.BORDER)
+        t.text = text
+        t.background =
+            Display.getDefault().getSystemColor(SWT.COLOR_INFO_BACKGROUND)
+        t.foreground =
+            Display.getDefault().getSystemColor(SWT.COLOR_INFO_FOREGROUND)
+        t
+    }, loc)
+    dec as Decoration<Text>
+    return dec
+}
+
 fun Control.addMark(color: Color, text: String = ""): ICodeDecoration<Canvas> {
     class Rec(
         parent: Composite,

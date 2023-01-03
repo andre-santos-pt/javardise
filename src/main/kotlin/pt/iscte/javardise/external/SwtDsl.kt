@@ -1,5 +1,6 @@
 package pt.iscte.javardise.external
 
+import com.github.javaparser.ast.Node
 import org.eclipse.swt.SWT
 import org.eclipse.swt.custom.SashForm
 import org.eclipse.swt.custom.ScrolledComposite
@@ -12,6 +13,7 @@ import org.eclipse.swt.graphics.Rectangle
 import org.eclipse.swt.layout.*
 import org.eclipse.swt.widgets.*
 import pt.iscte.javardise.Configuration
+import pt.iscte.javardise.NodeWidget
 import pt.iscte.javardise.basewidgets.TextWidget
 import java.io.File
 import java.util.*
@@ -420,4 +422,16 @@ fun <T:Control> T.focusLost(action: T.() -> Unit) {
             action(c)
         }
     })
+}
+
+fun Composite.findChild(accept: (Control) -> Boolean): Control? {
+    var n: Control? = null
+    traverse {
+        if (accept(it)) {
+            n = it
+            return@traverse false
+        }
+        return@traverse true
+    }
+    return n
 }

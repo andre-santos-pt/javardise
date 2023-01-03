@@ -6,6 +6,9 @@ import com.github.javaparser.ast.NodeList
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration
 import org.eclipse.swt.SWT
 import org.eclipse.swt.custom.StackLayout
+import org.eclipse.swt.dnd.Clipboard
+import org.eclipse.swt.dnd.RTFTransfer
+import org.eclipse.swt.dnd.TextTransfer
 import org.eclipse.swt.events.SelectionAdapter
 import org.eclipse.swt.events.SelectionEvent
 import org.eclipse.swt.graphics.Image
@@ -18,7 +21,6 @@ import org.eclipse.swt.widgets.List
 import pt.iscte.javardise.DefaultConfiguration
 import pt.iscte.javardise.examples.StaticClassWidget
 import pt.iscte.javardise.external.*
-import pt.iscte.javardise.documentation.ClassDocumentationView
 import pt.iscte.javardise.widgets.expressions.CallFeature
 import pt.iscte.javardise.widgets.expressions.VariableDeclarationFeature
 import pt.iscte.javardise.widgets.members.ClassWidget
@@ -30,6 +32,14 @@ import java.io.File
 import java.io.FileNotFoundException
 import java.io.PrintWriter
 import java.util.*
+import kotlin.collections.find
+import kotlin.collections.first
+import kotlin.collections.forEach
+import kotlin.collections.isEmpty
+import kotlin.collections.isNotEmpty
+import kotlin.collections.joinToString
+import kotlin.collections.listOf
+import kotlin.collections.mutableListOf
 import kotlin.collections.set
 
 
@@ -76,7 +86,15 @@ class CodeEditor(val display: Display, val folder: File) {
         else
             (stacklayout.topControl.data as TabData).classWidget
 
-    val actions = ServiceLoader.load(Action::class.java)
+    val actions: Map<Action, ToolItem>
+
+    val facade = object : Facade {
+        override val model: ClassOrInterfaceDeclaration?
+            get() = (stacklayout.topControl?.data as? TabData)?.model
+        override val classWidget: ClassWidget?
+            get() = (stacklayout.topControl?.data as? TabData)?.classWidget
+
+    }
 
     init {
         require(folder.exists() && folder.isDirectory)
@@ -93,7 +111,8 @@ class CodeEditor(val display: Display, val folder: File) {
         comp.layout = GridLayout()
         comp.layoutData = GridData(GridData.FILL_BOTH)
         val bar = ToolBar(comp, SWT.NONE)
-        actions.forEach {
+
+        actions = ServiceLoader.load(Action::class.java).associateWith {
             val item = ToolItem(bar, if (it.toggle) SWT.TOGGLE else SWT.PUSH)
             if(it.iconPath == null)
                 item.text = it.name
@@ -106,18 +125,15 @@ class CodeEditor(val display: Display, val folder: File) {
             it.init(this@CodeEditor)
             item.addSelectionListener(object : SelectionAdapter() {
                 override fun widgetSelected(e: SelectionEvent?) {
-                    val facade = object : Facade {
-                        override val model: ClassOrInterfaceDeclaration?
-                            get() = (stacklayout.topControl?.data as? TabData)?.model
-                        override val classWidget: ClassWidget?
-                            get() = (stacklayout.topControl?.data as? TabData)?.classWidget
-
-                    }
-                    if (it.isEnabled(facade))
+                    if (it.isEnabled(facade)) {
                         it.run(facade, item.selection)
+                        setActionsEnabled()
+                    }
                 }
             })
+            item
         }
+        setActionsEnabled()
 
         val editorArea = Composite(comp, SWT.NONE)
         editorArea.layoutData = GridData(GridData.FILL_BOTH)
@@ -181,8 +197,22 @@ class CodeEditor(val display: Display, val folder: File) {
                     f.delete()
                 }
             }
+
+
             item("Open in file system") {
                 Desktop.getDesktop().browseFileDirectory(folder);
+            }
+            item("Copy source as text") {
+                val f = File(folder, fileList.selection[0])
+                val parse = StaticJavaParser.parse(f)
+                val clipboard = Clipboard(display)
+                val plainText = parse.toString()
+                val textTransfer = TextTransfer.getInstance()
+                clipboard.setContents(
+                    arrayOf(plainText),
+                    arrayOf(textTransfer)
+                )
+                clipboard.dispose()
             }
 //            item("Compile") {
 //                if (stacklayout.topControl != null) {
@@ -202,6 +232,15 @@ class CodeEditor(val display: Display, val folder: File) {
         }
 
         handleShortcuts()
+        display.addFilter(SWT.FocusIn) {
+            setActionsEnabled()
+        }
+    }
+
+    private fun setActionsEnabled() {
+        actions.forEach {
+            it.value.enabled = it.key.isEnabled(facade)
+        }
     }
 
     private fun handleShortcuts() {
@@ -231,7 +270,6 @@ class CodeEditor(val display: Display, val folder: File) {
                 }
                 it.doit = false
             }
-
         }
     }
 
