@@ -1,4 +1,4 @@
-package pt.iscte.javardise.external
+package pt.iscte.javardise.compilation
 
 import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration
@@ -15,12 +15,10 @@ import com.github.javaparser.printer.configuration.DefaultPrinterConfiguration
 import com.github.javaparser.printer.configuration.PrinterConfiguration
 import pt.iscte.javardise.basewidgets.ICodeDecoration
 import pt.iscte.javardise.basewidgets.addMark
-import pt.iscte.javardise.basewidgets.addNote
 import pt.iscte.javardise.findChild
 import pt.iscte.javardise.widgets.members.ClassWidget
 import java.io.File
 import java.io.FileFilter
-import java.io.FilenameFilter
 import java.io.PrintWriter
 import java.io.StringWriter
 import java.net.URI

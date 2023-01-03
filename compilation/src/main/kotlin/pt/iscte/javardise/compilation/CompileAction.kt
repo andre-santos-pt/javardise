@@ -6,8 +6,6 @@ import pt.iscte.javardise.editor.Action
 import pt.iscte.javardise.editor.CodeEditor
 import pt.iscte.javardise.editor.Facade
 import pt.iscte.javardise.editor.TabData
-import pt.iscte.javardise.external.CompileErrors
-import pt.iscte.javardise.external.checkCompileErrors
 import pt.iscte.javardise.external.findMainClass
 
 class CompileAction : Action {
