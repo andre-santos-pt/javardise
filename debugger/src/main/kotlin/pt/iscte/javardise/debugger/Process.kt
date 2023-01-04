@@ -1,6 +1,10 @@
 package pt.iscte.javardise.debugger
 
 import org.eclipse.swt.SWT
+import org.eclipse.swt.events.KeyAdapter
+import org.eclipse.swt.events.KeyEvent
+import org.eclipse.swt.widgets.Composite
+import org.eclipse.swt.widgets.Control
 import org.eclipse.swt.widgets.Display
 import org.eclipse.swt.widgets.Text
 import pt.iscte.javardise.NodeWidget
@@ -10,6 +14,7 @@ import pt.iscte.javardise.basewidgets.addTextbox
 import pt.iscte.javardise.editor.Facade
 import pt.iscte.javardise.external.findChild
 import pt.iscte.javardise.external.message
+import pt.iscte.javardise.widgets.members.MethodWidget
 import pt.iscte.strudel.model.IModule
 import pt.iscte.strudel.model.IProcedure
 import pt.iscte.strudel.model.IStatement
@@ -19,19 +24,39 @@ import pt.iscte.strudel.vm.IVirtualMachine
 import pt.iscte.strudel.vm.impl.ProcedureExecution
 import pt.iscte.strudel.vm.impl.VirtualMachine
 
-object Process {
+object State {
+    var process: Process? = null
+}
 
+class Process(module: IModule) {
+
+    val vm = VirtualMachine(module, 5, 1000, 40)
     var current: ProcedureExecution? = null
 
     var ipMark: ICodeDecoration<*>? = null
     val paramBoxes: MutableList<ICodeDecoration<Text>> = mutableListOf()
 
-    private fun updateMark(facade: Facade) {
+    init {
+        vm.addListener(object : IVirtualMachine.IListener {
+            override fun statementExecution(s: IStatement) {
+                println(s.getProperty("JP"))
+            }
+
+            override fun variableAssignment(
+                a: IVariableAssignment,
+                value: IValue
+            ) {
+                println("${a.target.id} = $value")
+            }
+        })
+    }
+
+    private fun updateMark(control: Composite) {
         ipMark?.delete()
-        val next = current?.ip?.element
+        val next = current?.instructionPointer
         next?.let {
 
-            val w = facade.classWidget?.findChild {
+            val w = control.findChild {
                 it is NodeWidget<*> && it.node === next.getProperty("JP")
             }
             ipMark = w?.addMark(
@@ -48,11 +73,9 @@ object Process {
         paramBoxes.clear()
     }
 
-    var module: IModule? = null
     var procedure: IProcedure? = null
 
-    fun setup(facade: Facade, module: IModule, procedure: IProcedure) {
-        this.module = module
+    fun setup(facade: Facade, procedure: IProcedure) {
         this.procedure = procedure
 
         clearParams()
@@ -65,54 +88,61 @@ object Process {
             mark?.show()
             paramBoxes.add(mark!!)
         }
+        if(paramBoxes.isNotEmpty())
+            paramBoxes.last().control.addKeyListener(object : KeyAdapter() {
+                override fun keyPressed(e: KeyEvent) {
+                    if(e.character == SWT.CR)
+                        message("Result: " + run(facade))
+                }
+            })
     }
 
-    fun start(facade: Facade) {
-        check(module != null)
+
+    fun setup2(methodWidget: MethodWidget, procedure: IProcedure) {
+        this.procedure = procedure
+
+        clearParams()
+
+        procedure.parameters.forEach { p ->
+            methodWidget.findChild {
+                it is NodeWidget<*> && it.node === p.getProperty("JP")
+            }?.let {
+                val mark = it.addTextbox("   ", ICodeDecoration.Location.TOP)
+                mark.show()
+                paramBoxes.add(mark)
+            }
+        }
+    }
+
+    fun start(control: Composite) {
         check(procedure != null)
-
-        val vm = VirtualMachine(module!!, 5, 1000, 40)
-        vm.addListener(object : IVirtualMachine.IListener {
-            override fun statementExecution(s: IStatement) {
-                println(s.getProperty("JP"))
-            }
-
-            override fun variableAssignment(
-                a: IVariableAssignment,
-                value: IValue
-            ) {
-                println("${a.target.id} = $value")
-            }
-        })
         val args = paramBoxes.map { vm.getValue(it.control.text.trim()) }
         current = vm.debug(procedure!!, *args.toTypedArray())
-        updateMark(facade)
+        updateMark(control)
     }
 
     fun run(facade: Facade): IValue? {
-        check(module != null)
         check(procedure != null)
-
-        val vm = VirtualMachine(module!!, 5, 1000, 40)
         val args = paramBoxes.map { vm.getValue(it.control.text.trim()) }
         return vm.execute(procedure!!, *args.toTypedArray())
     }
 
-    fun step(facade: Facade) {
+    fun step(control: Composite) {
         current?.let { exec ->
-            println(exec.ip)
+            println(exec.instructionPointer)
             exec.step()
-            updateMark(facade)
-            if (exec.isOver())
-                message("Result","${exec.returnValue}")
+            updateMark(control)
+            if (exec.isOver()) {
+                message("Result", "${exec.returnValue}")
+                stop()
+            }
         }
     }
 
     fun stop() {
         ipMark?.delete()
-       clearParams()
+       //clearParams()
         current = null
-        module = null
         procedure = null
     }
 

@@ -12,10 +12,10 @@ class StartAction : Action {
 
     override fun run(facade: Facade, toggle: Boolean) {
         check(isEnabled(facade))
-        Process.start(facade)
+        State.process?.start(facade.classWidget!!)
     }
 
     override fun isEnabled(facade: Facade): Boolean {
-        return Process.module != null
+        return State.process != null
     }
 }

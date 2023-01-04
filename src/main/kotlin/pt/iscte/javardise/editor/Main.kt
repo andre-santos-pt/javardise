@@ -100,7 +100,7 @@ class CodeEditor(val display: Display, val folder: File) {
         require(folder.exists() && folder.isDirectory)
 
         shell.layout = GridLayout(2, false)
-        shell.text = folder.absolutePath
+        shell.text = "Javardise: ${folder.absolutePath}"
 
         val fileList = List(shell, SWT.BORDER or SWT.MULTI or SWT.V_SCROLL)
         val gdata = GridData(GridData.VERTICAL_ALIGN_FILL)
@@ -112,6 +112,7 @@ class CodeEditor(val display: Display, val folder: File) {
         comp.layoutData = GridData(GridData.FILL_BOTH)
         val bar = ToolBar(comp, SWT.NONE)
 
+        // TODO ToolItem SEPARATOR
         actions = ServiceLoader.load(Action::class.java).associateWith {
             val item = ToolItem(bar, if (it.toggle) SWT.TOGGLE else SWT.PUSH)
             if(it.iconPath == null)

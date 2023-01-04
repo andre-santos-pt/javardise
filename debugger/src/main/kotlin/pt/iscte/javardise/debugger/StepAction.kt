@@ -12,10 +12,10 @@ class StepAction : Action {
 
     override fun run(facade: Facade, toggle: Boolean) {
         check(isEnabled(facade))
-        Process.step(facade)
+        State.process?.step(facade.classWidget!!)
     }
 
     override fun isEnabled(facade: Facade): Boolean {
-        return Process.current?.isOver() == false
+        return State.process?.current?.isOver() == false
     }
 }

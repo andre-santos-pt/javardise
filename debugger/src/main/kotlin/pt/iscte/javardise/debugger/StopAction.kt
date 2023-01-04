@@ -13,11 +13,10 @@ class StopAction : Action {
 
     override fun run(facade: Facade, toggle: Boolean) {
         check(isEnabled(facade))
-
-        Process.stop()
+        State.process?.stop()
     }
 
     override fun isEnabled(facade: Facade): Boolean {
-        return Process.current?.isOver() == false
+        return State.process?.current?.isOver() == false
     }
 }

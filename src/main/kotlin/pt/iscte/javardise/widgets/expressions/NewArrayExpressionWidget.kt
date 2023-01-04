@@ -44,7 +44,7 @@ class NewArrayExpressionWidget(
         }
 
         fun setFocus() {
-            expression.setFocus()
+            expression.setFocus() // TODO bug Widget is disposed
         }
     }
     init {
