@@ -5,8 +5,12 @@ import com.github.javaparser.StaticJavaParser
 import com.github.javaparser.ast.Modifier
 import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.comments.LineComment
+import com.github.javaparser.ast.expr.BooleanLiteralExpr
 import com.github.javaparser.ast.expr.Expression
+import com.github.javaparser.ast.expr.LiteralExpr
+import com.github.javaparser.ast.expr.LiteralStringValueExpr
 import com.github.javaparser.ast.expr.NameExpr
+import com.github.javaparser.ast.expr.NullLiteralExpr
 import com.github.javaparser.ast.expr.SimpleName
 import com.github.javaparser.ast.stmt.Statement
 import org.eclipse.swt.SWT
@@ -64,17 +68,30 @@ interface Configuration {
 }
 
 
-val Node.isNoParse get() = (this is NameExpr || this is SimpleName) && toString() == Configuration.noParseToken
+val Node.isNoParse get() = (this is NameExpr && this.name.identifier == Configuration.noParseToken) ||
+        (this is SimpleName && this.identifier == Configuration.noParseToken)
 
 val Node.isFillIn get() = (this is NameExpr || this is SimpleName) && toString() == Configuration.fillInToken
 
 fun nodeText(node: Node): String {
     return if (node.isNoParse) {
-        if (node.comment.isPresent) node.comment.get().content else ""
+        if (node.comment.isPresent) node.comment.get().content.trim() else ""
     } else if (node.isFillIn)
         ""
+    else if(node is NameExpr)
+        node.nameAsString
+    else if(node is SimpleName)
+        node.identifier
+    else if(node is LiteralStringValueExpr)
+        node.value
+    else if(node is BooleanLiteralExpr)
+        node.value.toString()
+    else if(node is NullLiteralExpr)
+        "null"
     else
         node.toString()
+
+
 }
 
 
