@@ -20,7 +20,7 @@ class FocusTest : SWTTest(
     """
 ) {
     init {
-        classWidget.addFocusObserver { member, node ->
+        classWidget.addFocusObserver { member, statement, node ->
             println("${member!!::class.java.simpleName} $node")
         }
         classWidget.setFocus()

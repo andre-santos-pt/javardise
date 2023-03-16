@@ -23,6 +23,7 @@ import pt.iscte.javardise.*
 import pt.iscte.javardise.basewidgets.*
 import pt.iscte.javardise.external.*
 import pt.iscte.javardise.widgets.statements.SequenceContainer
+import pt.iscte.javardise.widgets.statements.StatementWidget
 import pt.iscte.javardise.widgets.statements.addEmptyStatement
 
 class MethodWidget(
@@ -59,15 +60,14 @@ class MethodWidget(
     }
 
     val focusListener = { event: Event ->
-        if ((event.widget as Control).isChildOf(this@MethodWidget)) {
-            val w = (event.widget as Control).findAncestor<NodeWidget<*>>()
-            observers.forEach {
-                var n = w?.node as? Node
-                if (n is ExpressionStmt)
-                    n = n.expression
-                it(n, event.widget.data)
+            if ((event.widget as Control).isChildOf(this@MethodWidget)) {
+                val w = (event.widget as Control).findAncestor<NodeWidget<*>>()
+                val s = (w as Control).findAncestor<StatementWidget<*>>()
+                observers.forEach {
+                    val n = w?.node as? Node
+                    it(n, s?.node)
+                }
             }
-        }
     }
 
     init {

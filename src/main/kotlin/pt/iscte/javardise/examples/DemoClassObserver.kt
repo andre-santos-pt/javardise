@@ -47,32 +47,38 @@ public class Student {
     val classWidget = shell.scrollable {
         ClassWidget(it, clazz)
     }
+
     shell.grid(2) {
-        label("node class")
-        val nodeClass = text("") {
+        label("member node")
+        val memberNode = text("") {
             enabled = false
             fillGridHorizontal()
         }
 
-        label("widget class")
-        val widgetClass = text("") {
+        label("statement node")
+        val statementNode = text("") {
             enabled = false
             fillGridHorizontal()
         }
-        label("detail from widget")
-        val detailWidget = text("") {
-            enabled = false
-            fillGridHorizontal()
-        }
-        var dec : ICodeDecoration<*>? = null
-        classWidget.addFocusObserver { node, widget ->
-            nodeClass.text = if(node == null) "" else node::class.simpleName
-            widgetClass.text = if(widget == null) "" else widget::class.simpleName
-           // detailWidget.text = widget?.getNodeOnFocus()?.toString() ?: ""
-            dec?.hide()
-            //dec = widget?.addMark(Display.getDefault().getSystemColor(SWT.COLOR_GREEN))
-            dec?.show()
 
+        label("focus node")
+        val focusNode = text("") {
+            enabled = false
+            fillGridHorizontal()
+        }
+
+        classWidget.addFocusObserver { member, statement, node ->
+            memberNode.text =
+                if (member == null) "" else member::class.simpleName
+            statementNode.text =
+                if (statement == null) "" else statement::class.simpleName
+            focusNode.text =
+                if (node == null) "" else node::class.simpleName
+
+        }
+
+        text("click to loose editor focus") {
+            fillGridHorizontal()
         }
     }
 

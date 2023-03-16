@@ -10,6 +10,7 @@ import com.github.javaparser.ast.expr.SimpleName
 import com.github.javaparser.ast.observer.ObservableProperty
 import com.github.javaparser.ast.stmt.BlockStmt
 import com.github.javaparser.ast.stmt.EmptyStmt
+import com.github.javaparser.ast.stmt.Statement
 import org.eclipse.swt.SWT
 import org.eclipse.swt.custom.ScrolledComposite
 import org.eclipse.swt.layout.RowLayout
@@ -22,10 +23,7 @@ import pt.iscte.javardise.basewidgets.SequenceWidget
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
 import pt.iscte.javardise.external.*
-import pt.iscte.javardise.widgets.statements.SequenceContainer
-import pt.iscte.javardise.widgets.statements.find
-import pt.iscte.javardise.widgets.statements.findByModelIndex
-import pt.iscte.javardise.widgets.statements.findIndexByModel
+import pt.iscte.javardise.widgets.statements.*
 
 
 // TODO implements, extends
@@ -69,7 +67,7 @@ open class ClassWidget(
     override val body: BlockStmt? = null
 
     private val modelFocusObservers =
-        mutableListOf<(BodyDeclaration<*>?, Node?) -> Unit>()
+        mutableListOf<(BodyDeclaration<*>?, Statement?, Node?) -> Unit>()
 
     private val widgetFocusObservers = mutableListOf<(Control) -> Unit>()
 
@@ -79,10 +77,15 @@ open class ClassWidget(
             widgetFocusObservers.forEach {
                 it(control)
             }
-            val memberWidget = control.findNode<BodyDeclaration<*>>()
-            val nodeWidget = control.findNode<Node>()
+            val member = control.findNode<BodyDeclaration<*>>()
+            val statement = control.findNode<Statement>()
+            val node = control.findNode<Node>()
             modelFocusObservers.forEach {
-                it(memberWidget, nodeWidget)
+                it(member, statement, node)
+            }
+        }else {
+            modelFocusObservers.forEach {
+                it(null, null, null)
             }
         }
     }
@@ -284,16 +287,17 @@ open class ClassWidget(
         })
 
         Display.getDefault().addFilter(SWT.FocusIn, focusListenerGlobal)
+        Display.getDefault().addFilter(SWT.FocusOut, focusListenerGlobal)
         addDisposeListener {
             Display.getDefault().removeFilter(SWT.FocusIn, focusListenerGlobal)
+            Display.getDefault().removeFilter(SWT.FocusOut, focusListenerGlobal)
         }
     }
 
     /**
-     * Adds an observer whenever a class member (field, constructor, method) gains focus.
-     * Changes of focus within a member do not trigger an event.
+     * Adds an observer whenever an element gains focus.
      */
-    fun addFocusObserver(action: (BodyDeclaration<*>?, Node?) -> Unit) {
+    fun addFocusObserver(action: (BodyDeclaration<*>?, Statement?, Node?) -> Unit) {
         modelFocusObservers.add(action)
     }
 
@@ -304,7 +308,7 @@ open class ClassWidget(
     /**
      * Removes a previously registered an observer.
      */
-    fun removeFocusObserver(action: (BodyDeclaration<*>?, Node?) -> Unit) {
+    fun removeFocusObserver(action: (BodyDeclaration<*>?, Statement?, Node?) -> Unit) {
         modelFocusObservers.remove(action)
     }
 
