@@ -1,12 +1,12 @@
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     kotlin("jvm") version "1.8.10"
     application
+    id("org.panteleyev.jpackageplugin") version "1.5.1"
 }
 
 group = "pt.iscte.javardise"
-//version = "0.2"
+version = "1.0.2"
 
 
 repositories {
@@ -109,6 +109,34 @@ tasks.test {
     jvmArgs = listOf("-XstartOnFirstThread")
 }
 
-tasks.withType<KotlinCompile> {
-    kotlinOptions.jvmTarget = "1.8"
+task("copyDependencies", Copy::class) {
+    from(configurations.runtimeClasspath).into("$buildDir/jars")
+}
+
+task("copyJar", Copy::class) {
+    from(tasks.jar).into("$buildDir/jars")
+}
+
+tasks.jpackage {
+    dependsOn("copyDependencies", "copyJar")
+
+    input  = "$buildDir/jars"
+    destination = "$buildDir/dist"
+
+    appName = "Paddle"
+    vendor = "pt.iscte"
+
+    mainJar = tasks.jar.get().archiveFileName.get()
+    mainClass = application.mainClass.get()
+
+    javaOptions = listOf("-Dfile.encoding=UTF-8","-XstartOnFirstThread")
+
+    mac {
+        // Generic parameter value for OS X build
+        //icon = "icon.icns"
+    }
+
+    windows {
+        winConsole = true
+    }
 }
