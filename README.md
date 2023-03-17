@@ -27,9 +27,9 @@ for your Operating System.
 2. Run **jar** task to obtain a JAR named **javardise-VERSION.jar**. (does not contain dependencies)
 
 ## Standalone application
-Run either **winJar** and **macJar** task (*other* category) to produce a standalone executable JARs for the respective platform. This will output a JAR file like **javardise-VERSION-OS.jar**, which can be executed.
-- Windows: ``java -jar javardise-VERSION-windows.jar``
-- MacOS: ``java -XstartOnFirstThread -jar javardise-VERSION-windows.jar``
+Run either **winJar** and **macJar** task (*other* category) to produce a standalone executable JARs for the respective platform. This will output a JAR file like **javardise-OS.jar**, which can be executed.
+- Windows: ``java -jar javardise-windows.jar``
+- MacOS: ``java -XstartOnFirstThread -jar javardise-macos.jar``
 
 
 ## Integration in other projects
@@ -41,7 +41,7 @@ Include the  dependencies in the **build.gradle.kts**, replacing *%VERSION* and 
 dependencies {
     implementation("com.github.javaparser:javaparser-symbol-solver-core:3.24.8")
     implementation(files("libs/swt-%OS.jar"))
-    implementation(files("libs/javardise-%VERSION.jar"))
+    implementation(files("libs/javardise.jar"))
 }
 
 application {
@@ -73,7 +73,7 @@ An example of using the class documentation view, editing code and documentation
 
 
 ## Developing plugins
-Another integration possibility is by developing plugins to the main editor. This can be achieved through the Java *services* infrastructure. We need to create a **META-INF** folder, containing a **services** folder.
+Another integration possibility is developing plugins to the main editor. This can be achieved through the Java *services* infrastructure. Modules will need to create a **META-INF** folder, containing a **services** folder.
 
 ### Actions
 In order to plug-in an action (toolbar), we need to write a class that provide the behavior and configure it as a service.
