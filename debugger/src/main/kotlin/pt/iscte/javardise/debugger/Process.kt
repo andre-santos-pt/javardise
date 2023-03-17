@@ -4,7 +4,6 @@ import org.eclipse.swt.SWT
 import org.eclipse.swt.events.KeyAdapter
 import org.eclipse.swt.events.KeyEvent
 import org.eclipse.swt.widgets.Composite
-import org.eclipse.swt.widgets.Control
 import org.eclipse.swt.widgets.Display
 import org.eclipse.swt.widgets.Text
 import pt.iscte.javardise.NodeWidget
@@ -17,7 +16,6 @@ import pt.iscte.javardise.external.message
 import pt.iscte.javardise.widgets.members.MethodWidget
 import pt.iscte.strudel.model.IModule
 import pt.iscte.strudel.model.IProcedure
-import pt.iscte.strudel.model.IStatement
 import pt.iscte.strudel.model.IVariableAssignment
 import pt.iscte.strudel.vm.IValue
 import pt.iscte.strudel.vm.IVirtualMachine
@@ -30,7 +28,7 @@ object State {
 
 class Process(module: IModule) {
 
-    val vm = VirtualMachine(module, 5, 1000, 40)
+    val vm = VirtualMachine(50, 1000, 40)
     var current: ProcedureExecution? = null
 
     var ipMark: ICodeDecoration<*>? = null
@@ -38,10 +36,6 @@ class Process(module: IModule) {
 
     init {
         vm.addListener(object : IVirtualMachine.IListener {
-            override fun statementExecution(s: IStatement) {
-                println(s.getProperty("JP"))
-            }
-
             override fun variableAssignment(
                 a: IVariableAssignment,
                 value: IValue

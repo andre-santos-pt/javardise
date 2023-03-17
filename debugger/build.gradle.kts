@@ -1,5 +1,6 @@
 plugins {
     kotlin("jvm")
+    application
 }
 
 group = "pt.iscte.javardise"
@@ -22,12 +23,18 @@ dependencies {
         implementation(files("../libs/swt-windows.jar"))
     }
 
-    implementation(files("../libs/Strudel.jar"))
+    implementation(files("libs/Strudel.jar"))
 }
 
 tasks.getByName<Test>("test") {
     useJUnitPlatform()
 }
+
+application {
+    mainClass.set("pt.iscte.javardise.editor.MainKt")
+    applicationDefaultJvmArgs = listOf("-XstartOnFirstThread")
+}
+
 
 val compileKotlin: org.jetbrains.kotlin.gradle.tasks.KotlinCompile by tasks
 compileKotlin.kotlinOptions {

@@ -1,8 +1,7 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    kotlin("jvm") version "1.6.21"
-    id("project-report")
+    kotlin("jvm") version "1.8.10"
     application
 }
 
@@ -28,27 +27,6 @@ dependencies {
         implementation(files("libs/swt-windows.jar"))
     }
 }
-
-//configurations.all {
-//    resolutionStrategy {
-//        dependencySubstitution {
-//            val os = System.getProperty("os.name").toLowerCase()
-//            val osgi = "org.eclipse.platform:org.eclipse.swt.\${osgi.platform}"
-//            if (os.contains("windows")) {
-//                substitute(module(osgi))
-//                    .using(module("org.eclipse.platform:org.eclipse.swt.win32.win32.x86_64:3.114.0"))
-//            }
-//            else if (os.contains("linux")) {
-//                substitute(module(osgi))
-//                    .using(module("org.eclipse.platform:org.eclipse.swt.gtk.linux.x86_64:3.114.0"))
-//            }
-//            else if (os.contains("mac")) {
-//                substitute(module(osgi))
-//                    .using(module("org.eclipse.platform:org.eclipse.swt.cocoa.macosx.x86_64:4.6.1"))
-//            }
-//        }
-//    }
-//}
 
 application {
     mainClass.set("pt.iscte.javardise.editor.MainKt")
@@ -95,32 +73,16 @@ tasks {
             .map { File(it.absolutePath.replace("macos", "windows")) }
             .map { if (it.isDirectory) it else zipTree(it) } +
                 sourcesMain.output
+//        contents.forEach {
+//            project.logger.lifecycle(it.toString())
+//        }
         from(contents)
     }
-    val kotlinJar = register<Jar>("kotlinJar") {
-        dependsOn.addAll(
-            listOf(
-                "compileJava",
-                "compileKotlin",
-                "processResources"
-            )
-        ) // We need this for Gradle optimization to work
-        archiveClassifier.set("kotlin") // Naming the jar
-        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 
-        //  manifest { attributes(mapOf("Main-Class" to application.mainClass)) } // Provided we set it up in the application plugin configuration
-        val sourcesMain = sourceSets.main.get()
-        val contents = configurations.runtimeClasspath.get()
-            .filter { it.name != "swt-macos.jar" }
-            .map { if (it.isDirectory) it else zipTree(it) } +
-                sourcesMain.output
-        from(contents)
-    }
 
     build {
-        //dependsOn(macJar) // Trigger fat jar creation during build
-        //dependsOn(kotlinJar)
-        //dependsOn(winJar)
+        dependsOn(macJar) // Trigger fat jar creation during build
+        dependsOn(winJar)
     }
 }
 
@@ -129,8 +91,8 @@ tasks.withType<Jar> {
         attributes["Main-Class"] = application.mainClass
         //attributes["Automatic-Module-Name"] = "pt.iscte.javardise"
     }
-
-    from(configurations.runtimeClasspath)
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    //from(configurations.runtimeClasspath)
 }
 
 

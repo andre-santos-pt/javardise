@@ -1,5 +1,6 @@
 plugins {
     kotlin("jvm")
+    application
 }
 
 group = "pt.iscte.javardise"
@@ -26,6 +27,11 @@ dependencies {
 
 tasks.getByName<Test>("test") {
     useJUnitPlatform()
+}
+
+application {
+    mainClass.set("pt.iscte.javardise.editor.MainKt")
+    applicationDefaultJvmArgs = listOf("-XstartOnFirstThread")
 }
 
 val compileKotlin: org.jetbrains.kotlin.gradle.tasks.KotlinCompile by tasks

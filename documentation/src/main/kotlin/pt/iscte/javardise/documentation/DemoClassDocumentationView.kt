@@ -61,7 +61,7 @@ public class Student {
     val display = Display()
     var code: Text? = null
     val shell = shell {
-        text = "Demonstrates Documentation View"
+        //text = "Demonstrates Documentation View"
         grid {
             grid(2) {
                 grid {

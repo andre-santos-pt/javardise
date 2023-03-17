@@ -17,10 +17,7 @@ import pt.iscte.javardise.basewidgets.ICodeDecoration
 import pt.iscte.javardise.basewidgets.addMark
 import pt.iscte.javardise.findChild
 import pt.iscte.javardise.widgets.members.ClassWidget
-import java.io.File
-import java.io.FileFilter
-import java.io.PrintWriter
-import java.io.StringWriter
+import java.io.*
 import java.net.URI
 import javax.tools.*
 import javax.tools.JavaCompiler.CompilationTask
@@ -52,6 +49,8 @@ fun compile(items: List<ClassOrInterfaceDeclaration>): List<Diagnostic<*>> {
     println("Success: $success")
     return diagnostics.diagnostics
 }
+
+
 
 
 internal class JavaSourceFromString(val filename: String, val code: String) :

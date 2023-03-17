@@ -3,7 +3,6 @@ package pt.iscte.javardise.examples
 import org.eclipse.swt.layout.FillLayout
 import org.eclipse.swt.widgets.Display
 import org.eclipse.swt.widgets.Shell
-import pt.iscte.javardise.basewidgets.ICodeDecoration
 import pt.iscte.javardise.external.*
 import pt.iscte.javardise.widgets.members.ClassWidget
 
@@ -74,7 +73,6 @@ public class Student {
                 if (statement == null) "" else statement::class.simpleName
             focusNode.text =
                 if (node == null) "" else node::class.simpleName
-
         }
 
         text("click to loose editor focus") {
@@ -90,3 +88,5 @@ public class Student {
     }
     display.dispose()
 }
+
+

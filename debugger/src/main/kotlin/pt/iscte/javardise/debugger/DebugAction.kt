@@ -6,21 +6,15 @@ import org.eclipse.swt.events.SelectionAdapter
 import org.eclipse.swt.events.SelectionEvent
 import org.eclipse.swt.graphics.Image
 import org.eclipse.swt.layout.FillLayout
-import org.eclipse.swt.layout.GridLayout
 import org.eclipse.swt.widgets.Display
 import org.eclipse.swt.widgets.Shell
 import org.eclipse.swt.widgets.ToolBar
 import org.eclipse.swt.widgets.ToolItem
-import pt.iscte.javardise.NodeWidget
-import pt.iscte.javardise.basewidgets.ICodeDecoration
-import pt.iscte.javardise.basewidgets.addNote
 import pt.iscte.javardise.editor.Action
 import pt.iscte.javardise.editor.Facade
 import pt.iscte.javardise.external.*
 import pt.iscte.javardise.widgets.members.MethodWidget
-import pt.iscte.strudel.java.Strudel2Java
-import pt.iscte.strudel.javaparser.translate
-import pt.iscte.strudel.model.ILoop
+import pt.iscte.strudel.javaparser.Java2Strudel
 import pt.iscte.strudel.model.IModule
 import pt.iscte.strudel.model.IProcedure
 import pt.iscte.strudel.vm.IReference
@@ -44,12 +38,11 @@ class DebugAction : Action {
     ) {
         check(isEnabled(facade))
         val module: IModule = try {
-            translate(listOf(facade.model!!))
+            Java2Strudel().translate(listOf(facade.model!!))
         } catch (e: AssertionError) {
             System.err.println(e.message)
             return
         }
-        println(Strudel2Java().translate(module))
         val member = facade.classWidget?.getMemberOnFocus()
         member?.let {
             module.procedures.find {
@@ -81,8 +74,7 @@ private fun methodShell(module: IModule, model: MethodDeclaration, procedure: IP
         fill {
             process.vm.addListener(object : IVirtualMachine.IListener {
                 override fun arrayAllocated(
-                    ref: IReference,
-                    dimensions: IntArray
+                    ref: IReference
                 ) {
                     label(ref.target.toString())
                     requestLayout()

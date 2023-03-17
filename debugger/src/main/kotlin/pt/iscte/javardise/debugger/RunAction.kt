@@ -8,9 +8,7 @@ import pt.iscte.javardise.editor.Action
 import pt.iscte.javardise.editor.Facade
 import pt.iscte.javardise.external.findChild
 import pt.iscte.javardise.external.message
-import pt.iscte.javardise.external.shell
-import pt.iscte.strudel.java.Strudel2Java
-import pt.iscte.strudel.javaparser.translate
+import pt.iscte.strudel.javaparser.Java2Strudel
 import pt.iscte.strudel.model.ILoop
 import pt.iscte.strudel.model.IModule
 import pt.iscte.strudel.vm.IVirtualMachine
@@ -33,12 +31,11 @@ class RunAction : Action {
     ) {
         check(isEnabled(facade))
         val module: IModule = try {
-            translate(listOf(facade.model!!))
+            Java2Strudel().translate(listOf(facade.model!!))
         } catch (e: AssertionError) {
            message("Error", e.message.toString())
             return
         }
-        println(Strudel2Java().translate(module))
 
         val member = facade.classWidget?.getMemberOnFocus()
         member?.let {

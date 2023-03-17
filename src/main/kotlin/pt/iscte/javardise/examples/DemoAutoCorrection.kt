@@ -104,7 +104,7 @@ private fun setOnlineCorrection(display: Display) {
 
             // contexto de statement
             if (parent is EmptyStatementWidget) {
-                println("${it.character}")
+                println("!" + text.text)
 
                 if (it.character == 'a') {
                     it.doit = false // cancela o evento
