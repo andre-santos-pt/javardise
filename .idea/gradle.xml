@@ -10,6 +10,9 @@
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$" />
+            <option value="$PROJECT_DIR$/compilation" />
+            <option value="$PROJECT_DIR$/debugger" />
+            <option value="$PROJECT_DIR$/documentation" />
           </set>
         </option>
       </GradleProjectSettings>
