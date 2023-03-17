@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "pt.iscte.javardise"
-version = "0.2"
+//version = "0.2"
 
 
 repositories {
@@ -73,18 +73,15 @@ tasks {
             .map { File(it.absolutePath.replace("macos", "windows")) }
             .map { if (it.isDirectory) it else zipTree(it) } +
                 sourcesMain.output
-//        contents.forEach {
-//            project.logger.lifecycle(it.toString())
-//        }
         from(contents)
     }
 
-
     build {
-        dependsOn(macJar) // Trigger fat jar creation during build
-        dependsOn(winJar)
+       // dependsOn(macJar) // Trigger fat jar creation during build
+       // dependsOn(winJar)
     }
 }
+
 
 tasks.withType<Jar> {
     manifest {
@@ -93,6 +90,10 @@ tasks.withType<Jar> {
     }
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     //from(configurations.runtimeClasspath)
+    from(sourceSets.main.get().output) {
+        include("resources/**")
+        into("resources")
+    }
 }
 
 
