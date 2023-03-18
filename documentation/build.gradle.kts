@@ -11,18 +11,20 @@ repositories {
 }
 
 dependencies {
-    testImplementation("org.junit.jupiter:junit-jupiter-api:5.8.1")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.8.1")
+    //testImplementation("org.junit.jupiter:junit-jupiter-api:5.8.1")
+    //testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.8.1")
     implementation(project(":"))
-    implementation("com.github.javaparser:javaparser-symbol-solver-core:3.24.8")
-
-    val os = System.getProperty("os.name").toLowerCase()
-    if (os.contains("mac")) {
-        implementation(files("../libs/swt-macos.jar"))
-    } else if (os.contains("windows")) {
-        implementation(files("../libs/swt-windows.jar"))
-    }
+//    implementation("com.github.javaparser:javaparser-symbol-solver-core:3.24.8")
+//
+//    val os = System.getProperty("os.name").toLowerCase()
+//    if (os.contains("mac")) {
+//        implementation(files("../libs/swt-macos.jar"))
+//    } else if (os.contains("windows")) {
+//        implementation(files("../libs/swt-windows.jar"))
+//    }
 }
+
+//configurations.addAll(project(":").configurations)
 
 tasks.getByName<Test>("test") {
     useJUnitPlatform()

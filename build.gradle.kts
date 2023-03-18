@@ -1,4 +1,3 @@
-
 plugins {
     kotlin("jvm") version "1.8.10"
     application
@@ -8,23 +7,59 @@ plugins {
 group = "pt.iscte.javardise"
 version = "1.0.2"
 
+val mac = System.getProperty("os.name").toLowerCase().contains("mac")
+val win = System.getProperty("os.name").toLowerCase().contains("windows")
+
+fun resolutionSwt(
+    dependencyResolveDetails: DependencyResolveDetails,
+    buildGradle: Build_gradle
+) {
+    if (dependencyResolveDetails.requested.name.contains("\${osgi.platform}")) {
+        val platform = if (buildGradle.mac) "cocoa.macosx.x86_64"
+        else if (buildGradle.win) "win32.win32.x86_64"
+        else "TODO"
+        dependencyResolveDetails.useTarget(
+            dependencyResolveDetails.requested.toString()
+                .replace("\${osgi.platform}", platform)
+        )
+    }
+}
+
+configurations.all {
+    resolutionStrategy {
+        eachDependency {
+            resolutionSwt(this, this@Build_gradle)
+        }
+    }
+}
+
+subprojects {
+    configurations.all {
+        resolutionStrategy {
+            eachDependency {
+                resolutionSwt(this, this@Build_gradle)
+            }
+        }
+    }
+}
 
 repositories {
     mavenCentral()
 }
 
 dependencies {
-    testImplementation("org.junit.jupiter:junit-jupiter-api:5.9.0")
+    testApi("org.junit.jupiter:junit-jupiter-api:5.9.0")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.9.0")
-    implementation("org.junit.platform:junit-platform-suite:1.9.1")
+    api("org.junit.platform:junit-platform-suite:1.9.1")
 
-    implementation("com.github.javaparser:javaparser-symbol-solver-core:3.24.8")
+    api("com.github.javaparser:javaparser-symbol-solver-core:3.24.8")
 
-    val os = System.getProperty("os.name").toLowerCase()
-    if (os.contains("mac")) {
-        implementation(files("libs/swt-macos.jar"))
-    } else if (os.contains("windows")) {
-        implementation(files("libs/swt-windows.jar"))
+    if (mac) {
+        //api(files("libs/swt-macos.jar"))
+        api("org.eclipse.platform:org.eclipse.swt.cocoa.macosx.x86_64:3.123.0")
+    } else if (win) {
+        //api(files("libs/swt-windows.jar"))
+        api("org.eclipse.platform:org.eclipse.swt.win32.win32.x86_64:3.123.0")
     }
 }
 
@@ -77,11 +112,10 @@ tasks {
     }
 
     build {
-       // dependsOn(macJar) // Trigger fat jar creation during build
-       // dependsOn(winJar)
+        //dependsOn(macJar) // Trigger fat jar creation during build
+        // dependsOn(winJar)
     }
 }
-
 
 tasks.withType<Jar> {
     manifest {
@@ -95,8 +129,6 @@ tasks.withType<Jar> {
         into("resources")
     }
 }
-
-
 
 tasks {
     test {
@@ -117,10 +149,25 @@ task("copyJar", Copy::class) {
     from(tasks.jar).into("$buildDir/jars")
 }
 
-tasks.jpackage {
-    dependsOn("copyDependencies", "copyJar")
+task("copyPlugins", Copy::class) {
+    from(
+        File(
+            project.project("documentation").buildDir,
+            "libs/documentation.jar"
+        )
+    ).into("$buildDir/jars")
+    from(
+        File(
+            project.project("compilation").buildDir,
+            "libs/compilation.jar"
+        )
+    ).into("$buildDir/jars")
+}
 
-    input  = "$buildDir/jars"
+tasks.jpackage {
+    dependsOn("copyDependencies", "copyJar", "copyPlugins")
+
+    input = "$buildDir/jars"
     destination = "$buildDir/dist"
 
     appName = "Paddle"
@@ -129,7 +176,7 @@ tasks.jpackage {
     mainJar = tasks.jar.get().archiveFileName.get()
     mainClass = application.mainClass.get()
 
-    javaOptions = listOf("-Dfile.encoding=UTF-8","-XstartOnFirstThread")
+    javaOptions = listOf("-Dfile.encoding=UTF-8", "-XstartOnFirstThread")
 
     mac {
         // Generic parameter value for OS X build
@@ -140,3 +187,4 @@ tasks.jpackage {
         winConsole = true
     }
 }
+
