@@ -1,0 +1,1 @@
+zip -d build/dist/javardise-macos.jar 'META-INF/*.SF' 'META-INF/*.RSA' 'META-INF/*.DSA'

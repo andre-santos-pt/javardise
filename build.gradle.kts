@@ -10,6 +10,13 @@ version = "1.0.2"
 val mac = System.getProperty("os.name").toLowerCase().contains("mac")
 val win = System.getProperty("os.name").toLowerCase().contains("windows")
 
+val os = if (mac)
+    "macos"
+else if (win)
+    "windows"
+else
+    "TODO"
+
 fun resolutionSwt(
     dependencyResolveDetails: DependencyResolveDetails,
     buildGradle: Build_gradle
@@ -51,16 +58,11 @@ dependencies {
     testApi("org.junit.jupiter:junit-jupiter-api:5.9.0")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.9.0")
     api("org.junit.platform:junit-platform-suite:1.9.1")
-
     api("com.github.javaparser:javaparser-symbol-solver-core:3.24.8")
-
-    if (mac) {
-        //api(files("libs/swt-macos.jar"))
+    if (mac)
         api("org.eclipse.platform:org.eclipse.swt.cocoa.macosx.x86_64:3.123.0")
-    } else if (win) {
-        //api(files("libs/swt-windows.jar"))
+    else if (win)
         api("org.eclipse.platform:org.eclipse.swt.win32.win32.x86_64:3.123.0")
-    }
 }
 
 application {
@@ -74,15 +76,19 @@ tasks.compileJava {
 }
 
 tasks {
-    val macJar = register<Jar>("macJar") {
+    val macJar = register<Jar>("fatJar") {
+        group = "distribution"
+        archiveFileName.set("javardise-$os.jar")
+        destinationDirectory.set(File("$buildDir/dist"))
         dependsOn.addAll(
             listOf(
                 "compileJava",
                 "compileKotlin",
                 "processResources"
             )
-        ) // We need this for Gradle optimization to work
-        archiveClassifier.set("macos") // Naming the jar
+        )
+        archiveClassifier.set(os)
+
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
         // manifest { attributes(mapOf("Main-Class" to application.mainClass)) } // Provided we set it up in the application plugin configuration
         val sourcesMain = sourceSets.main.get()
@@ -92,24 +98,7 @@ tasks {
                 sourcesMain.output
         from(contents)
     }
-    val winJar = register<Jar>("winJar") {
-        dependsOn.addAll(
-            listOf(
-                "compileJava",
-                "compileKotlin",
-                "processResources"
-            )
-        ) // We need this for Gradle optimization to work
-        archiveClassifier.set("windows") // Naming the jar
-        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-        // manifest { attributes(mapOf("Main-Class" to application.mainClass)) } // Provided we set it up in the application plugin configuration
-        val sourcesMain = sourceSets.main.get()
-        val contents = configurations.runtimeClasspath.get()
-            .map { File(it.absolutePath.replace("macos", "windows")) }
-            .map { if (it.isDirectory) it else zipTree(it) } +
-                sourcesMain.output
-        from(contents)
-    }
+
 
     build {
         //dependsOn(macJar) // Trigger fat jar creation during build

@@ -17,38 +17,43 @@ while allowing:
 - performing editing commands programmatically through the model
 
 
-# Setup (Gradle)
+# Builds (Gradle)
 
-## Setup
-1. Download SWT library JAR from the [official website](https://download.eclipse.org/eclipse/downloads/drops4/R-4.25-202208311800/)
-for your Operating System. 
-- Windows: place the JAR renamed as **swt-windows.jar** in the directory **libs** of the project.
-- MacOS: place the JAR renamed as **swt-macos.jar** in the directory **libs** of the project. 
-2. Run **jar** task to obtain a JAR named **javardise-VERSION.jar**. (does not contain dependencies)
+## Standalone application (without JRE)
+Run the task **fatJar** (*distribution* category) to produce a standalone executable JARs for the respective platform. This will output a JAR file like **javardise-OS.jar**, which can be executed. This option requires a JRE installed.
 
-## Standalone application
-Run either **winJar** and **macJar** task (*other* category) to produce a standalone executable JARs for the respective platform. This will output a JAR file like **javardise-OS.jar**, which can be executed.
 - Windows: ``java -jar javardise-windows.jar``
 - MacOS: ``java -XstartOnFirstThread -jar javardise-macos.jar``
+
+## Standalone application (with JRE)
+Run the task **jpackage** (*distribution* category) to produce an installable bundle for your operating system. The output file will be stored in *build/dist*.
 
 
 ## Integration in other projects
 
 ### Dependencies (Gradle)
-Include the  dependencies in the **build.gradle.kts**, replacing *%VERSION* and *%OS* with appropriate values.
+Include the JAR resulting from **jar** (*build* category) as a dependency in the **build.gradle.kts**, replacing *%OS* with appropriate values. Because of SWT dependencies resolution, we need to tweak the process as well. Below is an example Gradle configuration for Windows.
 
 ```kotlin
 dependencies {
     implementation("com.github.javaparser:javaparser-symbol-solver-core:3.24.8")
-    implementation(files("libs/swt-%OS.jar"))
-    implementation(files("libs/javardise.jar"))
+    implementation("org.eclipse.platform:org.eclipse.swt.win32.win32.x86_64:3.123.0")
+    implementation(files("javardise-1.0.2.jar"))
 }
 
-application {
-    mainClass.set("pt.iscte.javardise.editor.MainKt")
-    applicationDefaultJvmArgs = listOf("-XstartOnFirstThread") // if MacOS
+configurations.all {
+    resolutionStrategy {
+        eachDependency {
+            if (this.requested.name.contains("\${osgi.platform}")) {
+                this.useTarget(
+                    this.requested.toString()
+                        .replace("\${osgi.platform}", "win32.win32.x86_64")
+                )
+            }
+        }
+    }
 }
-}
+
 ```
 
 ## Using widgets as a library
