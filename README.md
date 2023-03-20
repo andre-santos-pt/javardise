@@ -20,7 +20,7 @@ while allowing:
 # Builds (Gradle)
 
 ## Standalone application (without JRE)
-Run the task **fatJar** (*distribution* category) to produce a standalone executable JARs for the respective platform. This will output a JAR file like **javardise-OS.jar**, which can be executed. This option requires a JRE installed.
+Run the task **fatJar** (*distribution* category) to produce a standalone executable JARs for the respective platform. This will output a JAR file like **javardise-OS.jar** stored in *build/dist*, which can be executed. This option requires a JRE installed.
 
 - Windows: ``java -jar javardise-windows.jar``
 - MacOS: ``java -XstartOnFirstThread -jar javardise-macos.jar``
@@ -32,7 +32,7 @@ Run the task **jpackage** (*distribution* category) to produce an installable bu
 ## Integration in other projects
 
 ### Dependencies (Gradle)
-Include the JAR resulting from **jar** (*build* category) as a dependency in the **build.gradle.kts**, replacing *%OS* with appropriate values. Because of SWT dependencies resolution, we need to tweak the process as well. Below is an example Gradle configuration for Windows.
+Include the JAR resulting from **jar** (*build* category) as a dependency, replacing *%OS* with appropriate values. Because of SWT dependencies resolution, we also need to tweak the process (resolution strategy). Below is an example Gradle configuration for Windows.
 
 ```kotlin
 dependencies {
