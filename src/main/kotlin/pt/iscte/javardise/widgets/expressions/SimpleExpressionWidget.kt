@@ -83,7 +83,7 @@ class SimpleExpressionWidget(
 //                        at java.base/java.util.Optional.get(Optional.java:143)
 //                        at pt.iscte.javardise.widgets.expressions.SimpleExpressionWidget$2.keyPressed(SimpleExpressionWidget.kt:92)
 //                        at org.eclipse.swt.widgets.TypedListener.handleEvent(TypedListener.java:171)
-                        if(node.parentNode.getOrNull is BinaryExpr) {
+                        if(node.parentNode.getOrNull is BinaryExpr && (node.parentNode.getOrNull as BinaryExpr).right === node) {
                             val parentExp = node.parentNode.get().clone() as BinaryExpr
                             parentExp.right = parseFillIn(expression.text)
                             val newnode = BinaryExpr(parentExp,
