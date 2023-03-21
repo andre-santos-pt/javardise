@@ -8,15 +8,27 @@ import pt.iscte.javardise.editor.Facade
 import pt.iscte.javardise.editor.TabData
 import pt.iscte.javardise.external.findMainClass
 
-class CompileAction : Action {
+object Compilation {
     val compileErrors: CompileErrors = mutableMapOf()
+
+    fun clear() {
+        compileErrors.forEach {
+            it.value.forEach {
+                it.delete()
+            }
+        }
+        compileErrors.clear()
+    }
+
+}
+class CompileAction : Action {
+
     lateinit var editor: CodeEditor
 
-    override val name: String
-        get() = "Compile"
+    override val name: String = "Compile"
 
-    override val iconPath: String?
-        get() = "java.png"
+    override val iconPath: String = "java.png"
+
     override fun init(editor: CodeEditor) {
         this.editor = editor
     }
@@ -28,11 +40,7 @@ class CompileAction : Action {
     }
 
     fun compile(model: ClassOrInterfaceDeclaration) {
-        compileErrors.forEach {
-            it.value.forEach { it.delete() }
-        }
-
-        compileErrors.clear()
+        Compilation.clear()
         // FileFilter { it.name.endsWith(".java") }
 
         val files = editor.folder.listFiles()
@@ -60,10 +68,10 @@ class CompileAction : Action {
             }
             .map { println(it); it }
             .toList()
-        val errors = checkCompileErrors(files)
-        compileErrors.putAll(errors)
 
-        compileErrors[model]?.forEach {
+        val errors = checkCompileErrors(files)
+        Compilation.compileErrors.putAll(errors)
+        Compilation.compileErrors[model]?.forEach {
             it.show()
         }
     }

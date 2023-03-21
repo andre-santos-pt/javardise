@@ -35,6 +35,8 @@ fun compile(items: List<ClassOrInterfaceDeclaration>): List<Diagnostic<*>> {
     val compiler: JavaCompiler = ToolProvider.getSystemJavaCompiler()
     val diagnostics = DiagnosticCollector<JavaFileObject>()
     val compilationUnits: MutableList<JavaFileObject> = mutableListOf()
+    val standardFileManager = compiler.getStandardFileManager(null, null, null)
+    val fileManager = MemoryFileManager(standardFileManager)
 
     for (i in items) {
         val writer = StringWriter()
@@ -44,13 +46,11 @@ fun compile(items: List<ClassOrInterfaceDeclaration>): List<Diagnostic<*>> {
         compilationUnits.add(JavaSource(i))
     }
     val task: CompilationTask =
-        compiler.getTask(null, null, diagnostics, null, null, compilationUnits)
+        compiler.getTask(null, fileManager, diagnostics, null, null, compilationUnits)
     val success = task.call()
     println("Success: $success")
     return diagnostics.diagnostics
 }
-
-
 
 
 internal class JavaSourceFromString(val filename: String, val code: String) :
@@ -86,9 +86,10 @@ internal class JavaSource(val model: ClassOrInterfaceDeclaration) :
 fun compile(vararg files: File): List<Diagnostic<*>> {
     val compiler = ToolProvider.getSystemJavaCompiler()
     val diagnostics = DiagnosticCollector<JavaFileObject>()
-    val fileManager = compiler.getStandardFileManager(diagnostics, null, null)
-    val compilationUnits =
-        fileManager.getJavaFileObjectsFromFiles(listOf(*files))
+    val standardFileManager = compiler.getStandardFileManager(null, null, null)
+    val fileManager = MemoryFileManager(standardFileManager)
+
+    val compilationUnits = standardFileManager.getJavaFileObjectsFromFiles(listOf(*files))
     val task = compiler.getTask(
         null, fileManager, diagnostics, null,
         null, compilationUnits
@@ -239,3 +240,56 @@ fun checkCompileErrors(models: List<Pair<ClassOrInterfaceDeclaration, ClassWidge
 
 }
 
+internal class MemoryFileManager(fileManager: JavaFileManager?) :
+    ForwardingJavaFileManager<JavaFileManager?>(fileManager) {
+    private val classBytes: MutableMap<String, ByteArrayOutputStream> =
+        HashMap()
+
+    @Throws(IOException::class)
+    override fun getJavaFileForOutput(
+        location: JavaFileManager.Location,
+        className: String,
+        kind: JavaFileObject.Kind,
+        sibling: FileObject
+    ): JavaFileObject {
+
+        return MemoryJavaFileObject(className, kind)
+    }
+
+    val classes: Map<String, ByteArray>
+        get() {
+            val classMap: MutableMap<String, ByteArray> = HashMap()
+            for (className in classBytes.keys) {
+                classMap[className] = classBytes[className]!!.toByteArray()
+            }
+            return classMap
+        }
+
+    private inner class MemoryJavaFileObject  constructor(
+        private val name: String, kind: JavaFileObject.Kind
+    ) :
+        SimpleJavaFileObject(
+            URI.create(
+                "string:///" +
+                name.replace(
+                    "\\.".toRegex(),
+                    "/"
+                ) + kind.extension
+            ), kind
+        ) {
+        private val byteCode: ByteArrayOutputStream = ByteArrayOutputStream()
+
+        @Throws(IOException::class)
+        override fun openOutputStream(): ByteArrayOutputStream {
+            return byteCode
+        }
+
+        override fun delete(): Boolean {
+            classBytes.remove(name)
+            return true
+        }
+
+        val bytes: ByteArray
+            get() = byteCode.toByteArray()
+    }
+}
