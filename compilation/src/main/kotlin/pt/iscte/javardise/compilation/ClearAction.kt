@@ -16,6 +16,6 @@ class ClearAction : Action {
     }
 
     override fun run(facade: Facade, toggle: Boolean) {
-       Compilation.clear()
+       CompilationProcess.clear()
     }
 }

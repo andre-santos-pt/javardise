@@ -2,6 +2,7 @@ package pt.iscte.javardise.editor
 
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration
 import pt.iscte.javardise.widgets.members.ClassWidget
+import java.io.File
 
 interface Action {
     val name: String
@@ -17,6 +18,7 @@ interface Action {
 }
 
 interface Facade {
+    val file: File?
     val model: ClassOrInterfaceDeclaration?
     val classWidget: ClassWidget?
 

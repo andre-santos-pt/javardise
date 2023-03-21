@@ -2,25 +2,15 @@ package pt.iscte.javardise.compilation
 
 import com.github.javaparser.StaticJavaParser
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration
+import org.eclipse.swt.SWT
+import org.eclipse.swt.widgets.Display
+import pt.iscte.javardise.basewidgets.ICodeDecoration
 import pt.iscte.javardise.editor.Action
 import pt.iscte.javardise.editor.CodeEditor
 import pt.iscte.javardise.editor.Facade
 import pt.iscte.javardise.editor.TabData
 import pt.iscte.javardise.external.findMainClass
 
-object Compilation {
-    val compileErrors: CompileErrors = mutableMapOf()
-
-    fun clear() {
-        compileErrors.forEach {
-            it.value.forEach {
-                it.delete()
-            }
-        }
-        compileErrors.clear()
-    }
-
-}
 class CompileAction : Action {
 
     lateinit var editor: CodeEditor
@@ -34,15 +24,16 @@ class CompileAction : Action {
     }
 
     override fun run(facade: Facade, toggle: Boolean) {
+        Display.getDefault().focusControl?.traverse(SWT.TRAVERSE_TAB_NEXT)
+        Display.getDefault().focusControl?.traverse(SWT.TRAVERSE_TAB_PREVIOUS)
+        CompilationProcess.clear()
         facade.model?.let {
-            compile(it)
+            compile()
+            CompilationProcess.showErrors(it)
         }
     }
 
-    fun compile(model: ClassOrInterfaceDeclaration) {
-        Compilation.clear()
-        // FileFilter { it.name.endsWith(".java") }
-
+    private fun compile() {
         val files = editor.folder.listFiles()
             .map {
                 Triple(
@@ -69,11 +60,6 @@ class CompileAction : Action {
             .map { println(it); it }
             .toList()
 
-        val errors = checkCompileErrors(files)
-        Compilation.compileErrors.putAll(errors)
-        Compilation.compileErrors[model]?.forEach {
-            it.show()
-        }
+        CompilationProcess.compile(files)
     }
-
 }

@@ -5,17 +5,14 @@ import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration
 import com.github.javaparser.ast.body.FieldDeclaration
 import com.github.javaparser.ast.body.MethodDeclaration
 import com.github.javaparser.ast.body.Parameter
-import com.github.javaparser.ast.expr.ArrayAccessExpr
-import com.github.javaparser.ast.expr.DoubleLiteralExpr
-import com.github.javaparser.ast.expr.NameExpr
-import com.github.javaparser.ast.expr.SimpleName
+import com.github.javaparser.ast.expr.*
+import com.github.javaparser.ast.stmt.EmptyStmt
 import com.github.javaparser.printer.DefaultPrettyPrinter
 import com.github.javaparser.printer.DefaultPrettyPrinterVisitor
 import com.github.javaparser.printer.configuration.DefaultPrinterConfiguration
 import com.github.javaparser.printer.configuration.PrinterConfiguration
-import pt.iscte.javardise.basewidgets.ICodeDecoration
-import pt.iscte.javardise.basewidgets.addMark
-import pt.iscte.javardise.findChild
+import org.eclipse.swt.widgets.Text
+import pt.iscte.javardise.external.traverse
 import pt.iscte.javardise.widgets.members.ClassWidget
 import java.io.*
 import java.net.URI
@@ -23,7 +20,7 @@ import javax.tools.*
 import javax.tools.JavaCompiler.CompilationTask
 
 
-data class CompilationItem(val name: String, val src: String)
+
 
 fun compile(folder: File) {
     require(folder.exists() && folder.isDirectory)
@@ -46,10 +43,43 @@ fun compile(items: List<ClassOrInterfaceDeclaration>): List<Diagnostic<*>> {
         compilationUnits.add(JavaSource(i))
     }
     val task: CompilationTask =
-        compiler.getTask(null, fileManager, diagnostics, null, null, compilationUnits)
+        compiler.getTask(
+            null,
+            fileManager,
+            diagnostics,
+            null,
+            null,
+            compilationUnits
+        )
     val success = task.call()
+
     println("Success: $success")
     return diagnostics.diagnostics
+}
+
+
+data class CompilationItem(val file: File, val src: String) {
+    constructor(file: File) : this(file, file.readText())
+}
+fun compileNoOutput(files: List<CompilationItem>) : Pair<List<Diagnostic<*>>, Map<String, ByteArray>> {
+    val compiler: JavaCompiler = ToolProvider.getSystemJavaCompiler()
+    val diagnostics = DiagnosticCollector<JavaFileObject>()
+    val compilationUnits: MutableList<JavaFileObject> = mutableListOf()
+    val standardFileManager = compiler.getStandardFileManager(null, null, null)
+    val fileManager = MemoryFileManager(standardFileManager)
+    val task: CompilationTask =
+        compiler.getTask(
+            null,
+            fileManager,
+            diagnostics,
+            null,
+            null,
+            files.map { JavaSourceFromString(it.file.nameWithoutExtension, it.src) }
+        )
+    val success = task.call()
+
+    println("Success: $success")
+    return diagnostics.diagnostics to fileManager.classes
 }
 
 
@@ -89,7 +119,8 @@ fun compile(vararg files: File): List<Diagnostic<*>> {
     val standardFileManager = compiler.getStandardFileManager(null, null, null)
     val fileManager = MemoryFileManager(standardFileManager)
 
-    val compilationUnits = standardFileManager.getJavaFileObjectsFromFiles(listOf(*files))
+    val compilationUnits =
+        standardFileManager.getJavaFileObjectsFromFiles(listOf(*files))
     val task = compiler.getTask(
         null, fileManager, diagnostics, null,
         null, compilationUnits
@@ -100,7 +131,9 @@ fun compile(vararg files: File): List<Diagnostic<*>> {
     return diagnostics.diagnostics
 }
 
+
 data class Token(val line: Long, val col: Long, val offset: Int, val node: Node)
+
 
 class TokenVisitor(val list: MutableList<Token>, conf: PrinterConfiguration) :
     DefaultPrettyPrinterVisitor(conf) {
@@ -111,7 +144,7 @@ class TokenVisitor(val list: MutableList<Token>, conf: PrinterConfiguration) :
 
     override fun visit(n: SimpleName, arg: Void?) {
         super.visit(n, arg)
-        addToken(n.parentNode.get())
+        addToken(n)
         //println("V $n ${n.parentNode}")
     }
 
@@ -134,7 +167,17 @@ class TokenVisitor(val list: MutableList<Token>, conf: PrinterConfiguration) :
         super.visit(m, arg)
         // addToken(m.type)
         // addToken(m.name)
-        addToken(m)
+        val t = addToken(m.type)
+        m.parameters.forEach {
+            println(addToken(it.type))
+        //    println(addToken(it.name))
+        }
+        println(t)
+    }
+
+    override fun visit(n: IntegerLiteralExpr, arg: Void?) {
+        super.visit(n, arg)
+        addToken(n)
     }
 
     override fun visit(n: DoubleLiteralExpr, arg: Void?) {
@@ -142,10 +185,25 @@ class TokenVisitor(val list: MutableList<Token>, conf: PrinterConfiguration) :
         addToken(n)
     }
 
-    private fun addToken(n: Node) {
+    override fun visit(n: BooleanLiteralExpr, arg: Void?) {
+        super.visit(n, arg)
+        addToken(n)
+    }
+
+    override fun visit(n: CharLiteralExpr, arg: Void?) {
+        super.visit(n, arg)
+        addToken(n)
+    }
+
+    override fun visit(n: StringLiteralExpr, arg: Void?) {
+        super.visit(n, arg)
+        addToken(n)
+    }
+
+
+    private fun addToken(n: Node): Token {
         val offset = n.toString().length
-        val init =
-            printer.cursor.column - offset + 1 // because cursor.column is zero-based
+        val init = printer.cursor.column - offset + 1 // because cursor.column is zero-based
         val pos = Token(
             printer.cursor.line.toLong(),
             init.toLong(),
@@ -153,7 +211,8 @@ class TokenVisitor(val list: MutableList<Token>, conf: PrinterConfiguration) :
             n
         )
         list.add(pos)
-        println("$pos - ${pos.node.hashCode()}")
+        return pos
+        //println("$pos - ${pos.node.hashCode()}")
     }
 }
 
@@ -175,73 +234,10 @@ fun buildNodeSourceMap(model: ClassOrInterfaceDeclaration): MutableList<Token> {
     return tokenList
 }
 
-typealias CompileErrors = MutableMap<ClassOrInterfaceDeclaration, MutableList<ICodeDecoration<*>>>
-
-fun checkCompileErrors(models: List<Pair<ClassOrInterfaceDeclaration, ClassWidget>>): CompileErrors {
-    if (models.isEmpty())
-        return mutableMapOf()
-
-    val errorDecs =
-        mutableMapOf<ClassOrInterfaceDeclaration, MutableList<ICodeDecoration<*>>>()
-    val nodeMap =
-        mutableMapOf<ClassOrInterfaceDeclaration, MutableList<Token>>()
-    for (i in models) {
-        val model = i.first
-        nodeMap[model] = buildNodeSourceMap(model)
-    }
-    val errors = compile(models.map { it.first })
-    for (e in errors) {
-
-        println(
-            "${(e.source as JavaSource).name} ERROR line ${e.lineNumber} ${e.columnNumber} ${e.kind} ${e.code} ${
-                e.getMessage(
-                    null
-                ) 
-            }"
-        )
-        // zero-based in java compiler
-        val m = (e.source as JavaSource).model
-        val t =
-            nodeMap[m]?.find { it.line == e.lineNumber && it.col == e.columnNumber }
-        val widget = models.find { it.first == m }?.second
-        if (t != null) {
-            val child = widget?.findChild(t.node)
-            if (child != null) {
-                errorDecs.putPair(
-                    m,
-                    child.addMark(
-                        widget.configuration.errorColor,
-                        e.getMessage(null)
-                    )
-                )
-                //child.addNote(e.getMessage(null), ICodeDecoration.Location.TOP).show()
-            } else {
-                errorDecs.putPair(
-                    m,
-                    widget!!.addMark(
-                        widget.configuration.errorColor,
-                        e.getMessage(null)
-                    )
-                )
-            }
-        } else {
-            errorDecs.putPair(
-                m,
-                widget!!.addMark(
-                    widget.configuration.errorColor,
-                    e.getMessage(null)
-                )
-            )
-        }
-
-
-    }
-    return errorDecs
-
-}
 
 internal class MemoryFileManager(fileManager: JavaFileManager?) :
     ForwardingJavaFileManager<JavaFileManager?>(fileManager) {
+
     private val classBytes: MutableMap<String, ByteArrayOutputStream> =
         HashMap()
 
@@ -252,7 +248,6 @@ internal class MemoryFileManager(fileManager: JavaFileManager?) :
         kind: JavaFileObject.Kind,
         sibling: FileObject
     ): JavaFileObject {
-
         return MemoryJavaFileObject(className, kind)
     }
 
@@ -265,22 +260,23 @@ internal class MemoryFileManager(fileManager: JavaFileManager?) :
             return classMap
         }
 
-    private inner class MemoryJavaFileObject  constructor(
+    private inner class MemoryJavaFileObject(
         private val name: String, kind: JavaFileObject.Kind
     ) :
         SimpleJavaFileObject(
             URI.create(
                 "string:///" +
-                name.replace(
-                    "\\.".toRegex(),
-                    "/"
-                ) + kind.extension
+                        name.replace(
+                            "\\.".toRegex(),
+                            "/"
+                        ) + kind.extension
             ), kind
         ) {
         private val byteCode: ByteArrayOutputStream = ByteArrayOutputStream()
 
         @Throws(IOException::class)
         override fun openOutputStream(): ByteArrayOutputStream {
+            classBytes[name] = byteCode
             return byteCode
         }
 

@@ -89,6 +89,8 @@ class CodeEditor(val display: Display, val folder: File) {
     val actions: Map<Action, ToolItem>
 
     val facade = object : Facade {
+        override val file: File?
+            get() = (stacklayout.topControl?.data as? TabData)?.file
         override val model: ClassOrInterfaceDeclaration?
             get() = (stacklayout.topControl?.data as? TabData)?.model
         override val classWidget: ClassWidget?

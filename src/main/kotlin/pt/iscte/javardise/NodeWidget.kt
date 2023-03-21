@@ -140,12 +140,14 @@ inline fun <reified T : Node> Control.findNode(): T? {
 fun Composite.findChild(model: Node): Control? {
     var n: Control? = null
     traverse {
-        if (it is NodeWidget<*> && it.node === model) {
+//        if(it is Text)
+//            println("** " + it.data)
+
+        if (it is NodeWidget<*> && it.node == model) {
             n = it
             return@traverse false
         }
-
-        if (it is Text && it.data === model) {
+        if (it is Text && it.data == model) {
             n = it
             return@traverse false
         }
