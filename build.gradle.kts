@@ -151,6 +151,12 @@ task("copyPlugins", Copy::class) {
             "libs/compilation.jar"
         )
     ).into("$buildDir/jars")
+    from(
+        File(
+            project.project("debugger").buildDir,
+            "libs/debugger.jar"
+        )
+    ).into("$buildDir/jars")
 }
 
 tasks.jpackage {

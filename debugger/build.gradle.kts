@@ -11,19 +11,8 @@ repositories {
 }
 
 dependencies {
-    testImplementation("org.junit.jupiter:junit-jupiter-api:5.8.1")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.8.1")
     implementation(project(":"))
-
-    implementation("com.github.javaparser:javaparser-symbol-solver-core:3.24.8")
-    val os = System.getProperty("os.name").toLowerCase()
-    if (os.contains("mac")) {
-        implementation(files("../libs/swt-macos.jar"))
-    } else if (os.contains("windows")) {
-        implementation(files("../libs/swt-windows.jar"))
-    }
-
-    implementation(files("libs/Strudel.jar"))
+    implementation(files("libs/strudel-0.8.jar"))
 }
 
 tasks.getByName<Test>("test") {
