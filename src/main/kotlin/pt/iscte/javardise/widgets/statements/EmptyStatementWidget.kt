@@ -20,9 +20,10 @@ class EmptyStatementWidget(
     node: EmptyStmt,
     override val parentBlock: BlockStmt
 ) :
-    StatementWidget<EmptyStmt>(parent, node), TextWidget   {
+    StatementWidget<EmptyStmt>(parent, node), TextWidget {
 
     override val tail: TextWidget
+
     init {
         require(!node.comment.isPresent)
 
@@ -32,50 +33,55 @@ class EmptyStatementWidget(
                     || c == SWT.BS
         }
 
-        tail.addKeyEvent(SWT.BS, precondition = {it.isEmpty() && parentBlock.statements.size > 1}) {
+        tail.addKeyEvent(
+            SWT.BS,
+            precondition = { it.isEmpty() && parentBlock.statements.size > 1 }) {
             parentBlock.statements.removeCommand(parentBlock, node)
         }
 
         tail.addKeyEvent(SWT.CR) {
-            parentBlock.statements.addCommand(parentBlock, EmptyStmt(), parentBlock.statements.indexOfIdentity(node)+1)
+            parentBlock.statements.addCommand(
+                parentBlock,
+                EmptyStmt(),
+                parentBlock.statements.indexOfIdentity(node) + 1
+            )
         }
 
         tail.addFocusLostAction {
-            if(tail.text.startsWith("//")) {
+            if (tail.text.startsWith("//")) {
                 val stmt = EmptyStmt()
                 stmt.setComment(LineComment(tail.text.substring(2)))
                 parentBlock.statements.replaceCommand(parentBlock, node, stmt)
-            }
-            else
+            } else
                 tail.clear()
         }
         tail.setPasteTarget {
-            commandStack.execute(object : Command {
-                override val target: Node = parentBlock
-                override val kind: CommandKind = CommandKind.MODIFY
-                override val element: Statement = it
+            if (it is Statement)
+                commandStack.execute(object : Command {
+                    override val target: Node = parentBlock
+                    override val kind: CommandKind = CommandKind.MODIFY
+                    override val element: Statement = it
 
-                val added = mutableListOf<Statement>()
+                    val added = mutableListOf<Statement>()
 
-                override fun run() {
-                    if(element is BlockStmt) {
-                        added.addAll(element.statements)
-                        added.reversed().forEach {
-                            parentBlock.statements.addAfter(it, node)
+                    override fun run() {
+                        if (element is BlockStmt) {
+                            added.addAll(element.statements)
+                            added.reversed().forEach {
+                                parentBlock.statements.addAfter(it, node)
+                            }
+                        } else {
+                            added.add(element)
+                            parentBlock.statements.addAfter(element, node)
                         }
                     }
-                    else {
-                        added.add(element)
-                        parentBlock.statements.addAfter(element, node)
-                    }
-                }
 
-                override fun undo() {
-                    added.forEach {
-                        it.remove()
+                    override fun undo() {
+                        added.forEach {
+                            it.remove()
+                        }
                     }
-                }
-            })
+                })
         }
 
         configuration.statementFeatures.forEach {
@@ -101,14 +107,19 @@ class EmptyStatementWidget(
     }
 }
 
-object EmptyStatementFeature : StatementFeature<EmptyStmt, EmptyStatementWidget>(EmptyStmt::class.java, EmptyStatementWidget::class.java) {
+object EmptyStatementFeature :
+    StatementFeature<EmptyStmt, EmptyStatementWidget>(
+        EmptyStmt::class.java,
+        EmptyStatementWidget::class.java
+    ) {
     override fun configureInsert(
         insert: TextWidget,
         block: BlockStmt,
         node: Statement,
         commandStack: CommandStack,
         output: (Statement) -> Unit
-    ) { }
+    ) {
+    }
 
     override fun targets(stmt: Statement): Boolean {
         return super.targets(stmt) && !stmt.comment.isPresent
