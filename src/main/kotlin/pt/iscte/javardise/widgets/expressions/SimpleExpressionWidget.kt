@@ -136,7 +136,7 @@ class SimpleExpressionWidget(
         }
 
         expression.addKeyEvent('.',
-            precondition = { expression.isAtEnd && tryParse<NameExpr>(it) }) {
+            precondition = { expression.isAtEnd && (tryParse<NameExpr>(it) || tryParse<ThisExpr>(it)) }) {
             editEvent(FieldAccessExpr(StaticJavaParser.parseExpression(expression.text), NodeList(), Configuration.idHole()))
         }
 
