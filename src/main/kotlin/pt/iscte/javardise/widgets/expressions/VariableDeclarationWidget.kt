@@ -68,9 +68,11 @@ class VariableDeclarationWidget(
         }
         name.addKeyEvent('=') {
             val setter: KFunction1<Expression?, Node> = dec::setInitializer
+            val hole = NameExpr(Configuration.fillInToken)
+            hole.setParentNode(dec)
             dec.modifyCommand(
                 dec.initializer.getOrNull,
-                NameExpr(Configuration.fillInToken),
+                hole,
                 setter
             )
         }
