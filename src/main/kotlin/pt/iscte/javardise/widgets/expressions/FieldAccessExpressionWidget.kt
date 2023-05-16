@@ -1,19 +1,16 @@
 package pt.iscte.javardise.widgets.expressions
 
-import com.github.javaparser.ast.expr.ArrayAccessExpr
-import com.github.javaparser.ast.expr.Expression
-import com.github.javaparser.ast.expr.FieldAccessExpr
-import com.github.javaparser.ast.expr.MethodCallExpr
-import com.github.javaparser.ast.expr.NameExpr
-import com.github.javaparser.ast.expr.SimpleName
+import com.github.javaparser.ast.expr.*
 import com.github.javaparser.ast.observer.ObservableProperty
 import org.eclipse.swt.SWT
 import org.eclipse.swt.widgets.Composite
-import pt.iscte.javardise.*
+import pt.iscte.javardise.Configuration
+import pt.iscte.javardise.ID
+import pt.iscte.javardise.basewidgets.FixedToken
 import pt.iscte.javardise.basewidgets.TextWidget
-import pt.iscte.javardise.basewidgets.TokenWidget
 import pt.iscte.javardise.external.ROW_LAYOUT_H_STRING
 import pt.iscte.javardise.external.isValidSimpleName
+import pt.iscte.javardise.nodeText
 
 class FieldAccessExpressionWidget(
     parent: Composite,
@@ -22,13 +19,13 @@ class FieldAccessExpressionWidget(
 ) : ExpressionWidget<FieldAccessExpr>(parent) {
 
     var scopeWidget: ExpressionWidget<*>?
-    val dot: TokenWidget
+    val dot: FixedToken
     val nameWidget: TextWidget
 
     init {
         layout = ROW_LAYOUT_H_STRING
 
-        dot = TokenWidget(this, ".")
+        dot = FixedToken(this, ".")
         nameWidget = TextWidget.create(this, nodeText(node.name)) { c, s ->
             c.toString().matches(ID) || c == SWT.BS
         }
@@ -74,7 +71,7 @@ class FieldAccessExpressionWidget(
             else if(it is NameExpr || it is MethodCallExpr || it is ArrayAccessExpr)
                 node.modifyCommand(node.scope, it, node::setScope)
         }
-        scopeWidget!!.moveAbove(dot.widget)
+        scopeWidget!!.moveAbove(dot.label)
         scopeWidget!!.requestLayout()
         scopeWidget!!.setFocusOnCreation()
         return scopeWidget as ExpressionWidget<*>
