@@ -35,15 +35,19 @@ class TokenWidget(
         widget.editable = false
         widget.addKeyListener(object : KeyAdapter() {
             override fun keyPressed(e: KeyEvent) {
+                val alternatives = alternatives()
                 if (e.character == SWT.SPACE) {
-                    addMenu(alternatives())
+                    addMenu(alternatives)
                     menu.setLocation(widget.toDisplay(0, 20))
                     menu.isVisible = true
-                } else if (map.containsKey(e.character)) {
-                    val list = ArrayList(map[e.character])
+                }
+                else if (alternatives.any { it.startsWith(e.character) }) {
+                    val list = alternatives.filter { it.startsWith(e.character) }
                     val i = list.indexOf(widget.text)
-                    val item = list[(i + 1) % list.size]
-                    editAction(item)
+                    if(i == -1)
+                        editAction(list.first())
+                    else
+                       editAction(list[(i + 1) % list.size])
                     e.doit = false
                 }
             }

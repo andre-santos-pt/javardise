@@ -1,22 +1,12 @@
 package pt.iscte.javardise.widgets.expressions
 
-import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.expr.BinaryExpr
 import com.github.javaparser.ast.expr.Expression
-import com.github.javaparser.ast.observer.AstObserver
 import com.github.javaparser.ast.observer.ObservableProperty
-import org.eclipse.swt.SWT
-import org.eclipse.swt.events.KeyAdapter
-import org.eclipse.swt.events.KeyEvent
 import org.eclipse.swt.widgets.Composite
-import pt.iscte.javardise.Command
-import pt.iscte.javardise.CommandKind
-import pt.iscte.javardise.Configuration
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
 import pt.iscte.javardise.external.binaryOperators
-import pt.iscte.javardise.external.observeNotNullProperty
-import pt.iscte.javardise.external.observeProperty
 
 // TODO __ + + to incrementor etc
 class BinaryExpressionWidget(
@@ -40,23 +30,22 @@ class BinaryExpressionWidget(
                 binaryOperators.find { op -> op.asString() == it },
                 node::setOperator
             )
-            rightExp.setFocus()
         }
         left = drawLeft(this, node.left)
         right = drawRight(this, node.right)
         observeNotNullProperty<Expression>(ObservableProperty.LEFT) {
-                left.dispose()
-                drawLeft(this, it)
-            }
-       observeNotNullProperty<Expression>(ObservableProperty.RIGHT) {
-                right.dispose()
-                drawRight(this, it)
-                tailChanged()
-            }
+            left.dispose()
+            drawLeft(this, it)
+        }
+        observeNotNullProperty<Expression>(ObservableProperty.RIGHT) {
+            right.dispose()
+            drawRight(this, it)
+            tailChanged()
+        }
         observeNotNullProperty<BinaryExpr.Operator>(ObservableProperty.OPERATOR) {
-                operator.set(it.asString())
-                operator.setFocus()
-            }
+            operator.set(it.asString())
+            operator.widget.selectAll()
+        }
     }
 
     private fun drawLeft(
@@ -105,7 +94,7 @@ class BinaryExpressionWidget(
         expression: Expression
     ): ExpressionWidget<*> {
         right = createExpressionWidget(parent, expression) {
-            if(it != null)
+            if (it != null)
                 node.modifyCommand(node.right, it, node::setRight)
             else
                 editEvent(node.left)
@@ -149,8 +138,6 @@ class BinaryExpressionWidget(
     override fun toString(): String {
         return "BiExp $node"
     }
-
-
 
     override val tail: TextWidget
         get() = right.tail
