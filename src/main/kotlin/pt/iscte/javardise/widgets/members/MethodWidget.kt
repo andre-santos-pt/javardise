@@ -90,6 +90,7 @@ class MethodWidget(
 
         name = SimpleNameWidget(firstRow, node)
 
+        name.setCopySource(node)
         name.addFocusLostAction(::isValidSimpleName) {
             node.modifyCommand(node.nameAsString, it, node::setName)
         }

@@ -2,14 +2,19 @@ package pt.iscte.javardise
 
 import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.stmt.BlockStmt
-import com.github.javaparser.ast.stmt.EmptyStmt
 import com.github.javaparser.ast.stmt.Statement
 import org.eclipse.swt.SWT
+import org.eclipse.swt.dnd.TextTransfer
+import org.eclipse.swt.dnd.Transfer
 import org.eclipse.swt.events.KeyAdapter
 import org.eclipse.swt.events.KeyEvent
+import org.eclipse.swt.widgets.Display
 import pt.iscte.javardise.basewidgets.TextWidget
 
+
 object Clipboard {
+    val swtClipboard = org.eclipse.swt.dnd.Clipboard(Display.getDefault())
+
     var onCopy: Pair<Node, (Node, Node, Int?) -> Unit>? = null
     // var cut: Boolean = false
 
@@ -39,10 +44,10 @@ object Clipboard {
 //        Commands.execute(AddStatementCommand(onCopy!!.first.clone() as Statement, block, index))
 //    }
 
-    var copyStatement: Statement? = null
+    var copyStatement: Node? = null
 }
 
-fun TextWidget.setCopySource(node: Statement) {
+fun TextWidget.setCopySource(node: Node) {
     addKeyListenerInternal(object : KeyAdapter() {
         override fun keyPressed(e: KeyEvent) {
             if ((e.stateMask == SWT.MOD1) && (e.character == 'c')) {
@@ -55,12 +60,18 @@ fun TextWidget.setCopySource(node: Statement) {
                     Clipboard.copyStatement = node.clone()
                 println("copy ${Clipboard.copyStatement}")
 
+                val textTransfer = TextTransfer.getInstance()
+                Clipboard.swtClipboard.setContents(
+                    arrayOf<Any>(node.toString()),
+                    arrayOf<Transfer>(textTransfer)
+                )
+                e.doit = false
             }
         }
     })
 }
 
-fun TextWidget.setPasteTarget(clipboard: (Statement) -> Unit) {
+fun TextWidget.setPasteTarget(clipboard: (Node) -> Unit) {
     addKeyListenerInternal(object : KeyAdapter() {
         override fun keyPressed(e: KeyEvent) {
             if ((e.stateMask == SWT.MOD1) && (e.character == 'v')) {

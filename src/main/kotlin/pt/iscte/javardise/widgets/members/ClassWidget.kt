@@ -83,7 +83,7 @@ open class ClassWidget(
             modelFocusObservers.forEach {
                 it(member, statement, node)
             }
-        }else {
+        } else {
             modelFocusObservers.forEach {
                 it(null, null, null)
             }
@@ -155,13 +155,14 @@ open class ClassWidget(
         val insertModifier = TextWidget.create(firstRow)
         insertModifier.widget.layoutData = ROW_DATA_STRING
         configureInsert(insertModifier) {
-            if(node.isInterface)
+            if (node.isInterface)
                 it != Modifier.Keyword.FINAL
             else
                 true
         }
 
-        keyword = newKeywordWidget(firstRow, if(node.isInterface) "interface" else "class",
+        keyword = newKeywordWidget(firstRow,
+            if (node.isInterface) "interface" else "class",
             alternatives = { TypeTypes.values().map { it.name.lowercase() } }) {
             commandStack.execute(object : Command {
                 override val target = node
@@ -178,6 +179,8 @@ open class ClassWidget(
                 }
             })
         }
+        keyword.setCopySource(node)
+
 //        keyword.addKeyEvent(SWT.SPACE) {
 //            commandStack.execute(object : Command {
 //                override val target = node
@@ -241,50 +244,52 @@ open class ClassWidget(
         }
 
         observeNotNullProperty<Boolean>(ObservableProperty.INTERFACE) {
-            keyword.set(if(it) "interface" else "class")
+            keyword.set(if (it) "interface" else "class")
             name.setFocus()
         }
         observeNotNullProperty<SimpleName>(ObservableProperty.NAME) {
             name.set("$it")
             name.textWidget.data = it
         }
-        observeListUntilDispose(node.members, object : ListObserver<BodyDeclaration<*>> {
-            override fun elementAdd(
-                list: NodeList<BodyDeclaration<*>>,
-                index: Int,
-                member: BodyDeclaration<*>
-            ) {
-                val tail = index == node.members.size
-                val w = createMember(member)
-                if (!tail)
-                    w.moveAbove(bodyWidget.findByModelIndex(index) as Control)
+        observeListUntilDispose(
+            node.members,
+            object : ListObserver<BodyDeclaration<*>> {
+                override fun elementAdd(
+                    list: NodeList<BodyDeclaration<*>>,
+                    index: Int,
+                    member: BodyDeclaration<*>
+                ) {
+                    val tail = index == node.members.size
+                    val w = createMember(member)
+                    if (!tail)
+                        w.moveAbove(bodyWidget.findByModelIndex(index) as Control)
 
-                if (w is MethodWidget)
-                    w.focusParameters()
-                else
-                    (w as FieldWidget).focusExpressionOrSemiColon()
-                bodyWidget.requestLayout()
-            }
+                    if (w is MethodWidget)
+                        w.focusParameters()
+                    else
+                        (w as FieldWidget).focusExpressionOrSemiColon()
+                    bodyWidget.requestLayout()
+                }
 
-            override fun elementRemove(
-                list: NodeList<BodyDeclaration<*>>,
-                index: Int,
-                member: BodyDeclaration<*>
-            ) {
-                (bodyWidget.find(member) as? Control)?.dispose()
-                bodyWidget.focusAt(index)
-                bodyWidget.requestLayout()
-            }
+                override fun elementRemove(
+                    list: NodeList<BodyDeclaration<*>>,
+                    index: Int,
+                    member: BodyDeclaration<*>
+                ) {
+                    (bodyWidget.find(member) as? Control)?.dispose()
+                    bodyWidget.focusAt(index)
+                    bodyWidget.requestLayout()
+                }
 
-            override fun elementReplace(
-                list: NodeList<BodyDeclaration<*>>,
-                index: Int,
-                old: BodyDeclaration<*>,
-                new: BodyDeclaration<*>
-            ) {
-                TODO("member replace")
-            }
-        })
+                override fun elementReplace(
+                    list: NodeList<BodyDeclaration<*>>,
+                    index: Int,
+                    old: BodyDeclaration<*>,
+                    new: BodyDeclaration<*>
+                ) {
+                    TODO("member replace")
+                }
+            })
 
         Display.getDefault().addFilter(SWT.FocusIn, focusListenerGlobal)
         Display.getDefault().addFilter(SWT.FocusOut, focusListenerGlobal)
@@ -360,7 +365,9 @@ open class ClassWidget(
                         dec
                     )
                 }
-                name.addKeyEvent(SWT.BS, precondition = { it.isEmpty() || this.node.isConstructorDeclaration}) {
+                name.addKeyEvent(
+                    SWT.BS,
+                    precondition = { it.isEmpty() || this.node.isConstructorDeclaration }) {
                     this@ClassWidget.node.members.removeCommand(
                         node as Node,
                         dec
@@ -377,6 +384,13 @@ open class ClassWidget(
         val insert = TextWidget.create(seq) { c, s ->
             c.toString()
                 .matches(Regex("[\\w\\d\\[\\]<>]")) || c == SWT.SPACE && s.isNotEmpty() || c == SWT.BS
+        }
+
+        insert.setPasteTarget {
+            if (it is BodyDeclaration<*>) {
+                val insertIndex = seq.findIndexByModel(insert.widget)
+                node.members.addCommand(node, it, insertIndex)
+            }
         }
 
         fun modifiers(tail: Int): NodeList<Modifier> {
@@ -470,21 +484,21 @@ open class ClassWidget(
         body: SequenceWidget,
         after: Boolean
     ) {
-        fun TextWidget.addInsert(
-            member: Control?,
-            body: SequenceWidget,
-            after: Boolean
-        ) {
-            addKeyEvent(SWT.CR) {
-                val w = if (member == null)
-                    body.insertBeginning()
-                else if (after)
-                    body.insertLineAfter(member)
-                else
-                    body.insertLineAt(member)
-                w.addInsert(w.widget, body, true)
-            }
-        }
+//        fun TextWidget.addInsert(
+//            member: Control?,
+//            body: SequenceWidget,
+//            after: Boolean
+//        ) {
+//            addKeyEvent(SWT.CR) {
+//                val w = if (member == null)
+//                    body.insertBeginning()
+//                else if (after)
+//                    body.insertLineAfter(member)
+//                else
+//                    body.insertLineAt(member)
+//                w.addInsert(w.widget, body, true)
+//            }
+//        }
 
         addKeyEvent(SWT.CR) {
             val w = if (member == null) {

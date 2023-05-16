@@ -64,6 +64,8 @@ class FieldWidget(
             )
         }
 
+        name.setCopySource(node)
+
         semiColon = TokenWidget(firstRow, ";")
         semiColon.addKeyEvent('=', precondition = { initializer == null }) {
             node.modifyCommand(
@@ -75,9 +77,6 @@ class FieldWidget(
 
         if (dec.variable.initializer.isPresent)
             addInitializer(dec.variable.initializer.get())
-
-
-
 
 
         observeNotNullProperty<SimpleName>(
