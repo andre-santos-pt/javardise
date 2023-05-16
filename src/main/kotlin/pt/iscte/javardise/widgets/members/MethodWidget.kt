@@ -11,7 +11,6 @@ import com.github.javaparser.ast.body.Parameter
 import com.github.javaparser.ast.expr.SimpleName
 import com.github.javaparser.ast.observer.ObservableProperty
 import com.github.javaparser.ast.stmt.BlockStmt
-import com.github.javaparser.ast.stmt.ExpressionStmt
 import com.github.javaparser.ast.type.Type
 import org.eclipse.swt.SWT
 import org.eclipse.swt.layout.RowLayout
@@ -20,7 +19,10 @@ import org.eclipse.swt.widgets.Control
 import org.eclipse.swt.widgets.Display
 import org.eclipse.swt.widgets.Event
 import pt.iscte.javardise.*
-import pt.iscte.javardise.basewidgets.*
+import pt.iscte.javardise.basewidgets.FixedToken
+import pt.iscte.javardise.basewidgets.SequenceWidget
+import pt.iscte.javardise.basewidgets.TextWidget
+import pt.iscte.javardise.basewidgets.TokenWidget
 import pt.iscte.javardise.external.*
 import pt.iscte.javardise.widgets.statements.SequenceContainer
 import pt.iscte.javardise.widgets.statements.StatementWidget
@@ -103,6 +105,7 @@ class MethodWidget(
             name.set(it?.asString())
         }
 
+
         if (node.isConstructorDeclaration) {
             name.setReadOnly()
             name.setToolTip("Constructor name is not editable. Renaming the class modifies constructors accordingly.")
@@ -118,6 +121,15 @@ class MethodWidget(
             closingBracket = TokenWidget(column, "}")
         } else
             closingBracket = TokenWidget(firstRow, ";")
+
+        observeProperty<BlockStmt>(ObservableProperty.BODY) {
+            bodyWidget?.dispose()
+            if(it != null) {
+                bodyWidget = createBlockSequence(column, it)
+                bodyWidget?.moveAbove(closingBracket)
+                this@MethodWidget.requestLayout()
+            }
+        }
 
         if(freezeSignature)
             firstRow.enabled = false
