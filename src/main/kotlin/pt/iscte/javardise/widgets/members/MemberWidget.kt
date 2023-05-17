@@ -88,8 +88,13 @@ abstract class MemberWidget<N : Node>(
         }
     }
 
-    protected fun configureInsert(insertModifier: TextWidget, filter: (Modifier.Keyword) -> Boolean = {true}) {
-        insertModifier.addKeyEvent(SWT.BS, precondition = {insertModifier.isAtBeginning}) {
+    protected fun configureInsert(
+        insertModifier: TextWidget,
+        filter: (Modifier.Keyword) -> Boolean = { true }
+    ) {
+        insertModifier.addKeyEvent(
+            SWT.BS,
+            precondition = { insertModifier.isAtBeginning }) {
             if (member.modifiers.isNotEmpty())
                 member.modifiers.removeCommand(
                     node,
@@ -103,7 +108,8 @@ abstract class MemberWidget<N : Node>(
                         validModifiers.flatten()
                             .filter { filter(it) }
                             .filter { !member.modifiers.contains(Modifier(it)) }
-                            .map { it.asString() })
+                            .map { it.asString() }
+                            .distinct())
                     insertModifier.widget.menu.setLocation(
                         insertModifier.widget.toDisplay(
                             0,
@@ -118,7 +124,7 @@ abstract class MemberWidget<N : Node>(
     }
 
 
-    private fun addMenu(widget: Control, alternatives: List<String>)  {
+    private fun addMenu(widget: Control, alternatives: List<String>) {
         val menu = Menu(widget)
         for (t in alternatives) {
             val item = MenuItem(menu, SWT.NONE)
@@ -127,23 +133,41 @@ abstract class MemberWidget<N : Node>(
                 override fun widgetSelected(e: SelectionEvent) {
                     val kw = Modifier.Keyword.valueOf(item.text.uppercase())
                     val mod = Modifier(kw)
-                    val sameCat = validModifiers
-                        .find { it.contains(kw) }
-                        ?.map { Modifier(it) }
-                        ?: emptyList()
-                    val existing = member.modifiers.find { sameCat.contains(it)}
+                    commandStack.execute(object : Command {
+                        override val target: Node = node
+                        override val kind: CommandKind = CommandKind.MODIFY
+                        override val element: Any? = null
 
-                    if(existing == null) {
-                        val i = min(member.modifiers.size, validModifiers.indexOfFirst { it.contains(kw) })
-                        member.modifiers.addCommand(node, mod, i)
-                    }
-                    else
-                        member.modifiers.replaceCommand(node, existing, mod)
+                        lateinit var toRemove: List<Modifier>
+
+                        override fun run() {
+                            toRemove = validModifiers
+                                .filter { it.contains(kw) }
+                                .map { it.filter { it != kw } }
+                                .flatten()
+                                .distinct()
+                                .map { Modifier(it) }
+
+                            toRemove.forEach {
+                                member.modifiers.remove(it)
+                            }
+                            val i = min(
+                                member.modifiers.size,
+                                validModifiers.indexOfFirst { it.contains(kw) })
+                            member.modifiers.add(i, mod)
+                        }
+
+                        override fun undo() {
+                            member.modifiers.remove(mod)
+                            member.modifiers.addAll(toRemove)
+                        }
+                    })
                 }
             })
         }
         widget.menu = menu
     }
+
     private fun List<List<Modifier.Keyword>>.findCompatible(existing: List<Modifier>) =
         find { it.none { k -> existing.contains(Modifier(k)) } }?.first()
 
@@ -160,9 +184,11 @@ abstract class MemberWidget<N : Node>(
         val mod = newKeywordWidget(
             parent,
             modifier.keyword.asString(),
-            { validModifiers.findMutuallyExclusive(modifier)
+            {
+                validModifiers.findMutuallyExclusive(modifier)
 
-                .map { it.asString() } }
+                    .map { it.asString() }
+            }
         ) { token ->
             member.modifiers.setCommand(
                 member as Node,

@@ -181,24 +181,6 @@ open class ClassWidget(
         }
         keyword.setCopySource(node)
 
-//        keyword.addKeyEvent(SWT.SPACE) {
-//            commandStack.execute(object : Command {
-//                override val target = node
-//                override val kind = CommandKind.ADD
-//                override val element = Modifier(PUBLIC)
-//
-//                val index = node.modifiers.size
-//
-//                override fun run() {
-//                    node.modifiers.add(index, element)
-//                }
-//
-//                override fun undo() {
-//                    node.modifiers.remove(element)
-//                }
-//            })
-//        }
-
         name = SimpleNameWidget(firstRow, dec)
         name.addFocusLostAction(::isValidClassType) {
             commandStack.execute(object : Command {
@@ -277,8 +259,8 @@ open class ClassWidget(
                     member: BodyDeclaration<*>
                 ) {
                     (bodyWidget.find(member) as? Control)?.dispose()
-                    bodyWidget.focusAt(index)
                     bodyWidget.requestLayout()
+                    bodyWidget.focusAt(index)
                 }
 
                 override fun elementReplace(
@@ -479,27 +461,11 @@ open class ClassWidget(
         name.setFocus()
     }
 
-    internal fun TokenWidget.addInsert(
+    private fun TokenWidget.addInsert(
         member: Control?,
         body: SequenceWidget,
         after: Boolean
     ) {
-//        fun TextWidget.addInsert(
-//            member: Control?,
-//            body: SequenceWidget,
-//            after: Boolean
-//        ) {
-//            addKeyEvent(SWT.CR) {
-//                val w = if (member == null)
-//                    body.insertBeginning()
-//                else if (after)
-//                    body.insertLineAfter(member)
-//                else
-//                    body.insertLineAt(member)
-//                w.addInsert(w.widget, body, true)
-//            }
-//        }
-
         addKeyEvent(SWT.CR) {
             val w = if (member == null) {
                 body.insertBeginning()
@@ -507,10 +473,7 @@ open class ClassWidget(
                 body.insertLineAfter(member)
             } else
                 body.insertLineAt(member)
-            //w.addInsert(w.widget, body, true)
         }
     }
-
-
 }
 

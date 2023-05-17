@@ -81,9 +81,7 @@ class MethodWidget(
                 firstRow,
                 (node as MethodDeclaration).type
             )
-//            type!!.addKeyEvent(SWT.SPACE, precondition = { Modifier.Keyword.values().any { k -> k.asString() == it.substring(0, type!!.caretPosition)} }) {
-//                node.modifiers.addCommand(node, Modifier.publicModifier())
-//            }
+
             type!!.addFocusLostAction(::isValidType) {
                 node.modifyCommand(node.typeAsString, it, node::setType)
             }

@@ -84,9 +84,16 @@ open class SequenceWidget(
 
     fun isFirst(c: Control) = children.first() === c
 
-    fun focusFirst() = if(children.isNotEmpty()) children.first().setFocus() else { parent.setFocus() }
+    fun focusFirst() = if(children.isNotEmpty())
+        children.first().setFocus()
+    else
+        parent.setFocus()
 
-    fun focusLast() = if(children.isNotEmpty())  children.last().setFocus() else { parent.setFocus()}
+    fun focusLast() = if(children.isNotEmpty())
+        children.last().setFocus()
+    else
+        parent.setFocus()
+
 
     fun focusAt(index: Int) = if(index <= 0)
         focusFirst()
