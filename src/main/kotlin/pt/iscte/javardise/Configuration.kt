@@ -236,7 +236,7 @@ open class DefaultConfiguration : Configuration {
             Modifier.Keyword.PROTECTED,
             Modifier.Keyword.PRIVATE
         ),
-        listOf(Modifier.Keyword.STATIC),
+        listOf(Modifier.Keyword.STATIC, Modifier.Keyword.ABSTRACT),
         listOf(Modifier.Keyword.FINAL, Modifier.Keyword.ABSTRACT),
         listOf(Modifier.Keyword.SYNCHRONIZED)
     )
