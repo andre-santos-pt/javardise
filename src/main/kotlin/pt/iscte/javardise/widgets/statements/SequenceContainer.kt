@@ -235,7 +235,7 @@ interface SequenceContainer<T : Node> : NodeWidget<T> {
         block: BlockStmt
     ): TextWidget {
         require(node is Statement)
-        val insert = TextWidget.create(seq) { c, s ->
+        val insert = TextWidget.create(seq) { c, s, _ ->
             c.toString().matches(Regex("\\w|\\[|]|\\.|\\+|-|\\*|/|%"))
                     || c == SWT.SPACE && !s.endsWith(SWT.SPACE)
                     || c == SWT.BS

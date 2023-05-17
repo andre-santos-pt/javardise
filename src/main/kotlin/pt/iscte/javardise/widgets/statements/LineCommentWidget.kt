@@ -40,7 +40,7 @@ class LineCommentWidget(
         tail = TextWidget.create(
             this,
             node.comment.get().content.trim()
-        ) { _, _ -> true }
+        ) { _, _, _ -> true }
         tail.addEmptyStatement(this@LineCommentWidget, parentBlock, node)
         tail.addDeleteEmptyListener {
             parentBlock.statements.replaceCommand(parentBlock, node, EmptyStmt())

@@ -27,7 +27,7 @@ class EmptyStatementWidget(
     init {
         require(!node.comment.isPresent)
 
-        tail = TextWidget.create(this, "") { c, s ->
+        tail = TextWidget.create(this, "") { c, s, _ ->
             c.toString().matches(Regex("\\w|\\[|]|\\.|\\+|-|\\*|/|%"))
                     || c == SWT.SPACE && s.startsWith("//")
                     || c == SWT.BS

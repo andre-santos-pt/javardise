@@ -134,7 +134,7 @@ interface TextWidget {
         fun createText(
             parent: Composite,
             text: String,
-            accept: ((Char, String) -> Boolean)? = null
+            accept: ((Char, String, Int) -> Boolean)? = null
         ): Text {
             val t = Text(parent, SWT.NONE)
             t.background = parent.background
@@ -147,7 +147,7 @@ interface TextWidget {
 
             accept?.let {
                 t.addVerifyListener {
-                    it.doit = accept(it.character, t.text)
+                    it.doit = accept(it.character, t.text, t.caretPosition)
                 }
             }
 
@@ -170,14 +170,14 @@ interface TextWidget {
         fun create(
             parent: Composite,
             text: String = "",
-            accept: ((Char, String) -> Boolean) = { _: Char, _: String -> false }
+            accept: ((Char, String, Int) -> Boolean) = { _: Char, _: String, _:Int -> false }
         ): TextWidget {
             val w = object : TextWidget {
 
                 var acceptFlag = false
 
-                val w: Text = createText(parent, text) { c, s ->
-                    acceptFlag || accept(c, s)
+                val w: Text = createText(parent, text) { c, s, i ->
+                    acceptFlag || accept(c, s, i)
                 }.apply {
                     background = parent.background
                     foreground = parent.foreground

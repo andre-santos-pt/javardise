@@ -226,7 +226,7 @@ class MethodWidget(
         }
 
         private fun createInsert() {
-            val newInsert = TextWidget.create(this, " ") { c, s ->
+            val newInsert = TextWidget.create(this, " ") { c, s, _ ->
                 c.toString().matches(TYPE_CHARS) || c == SWT.BS
             }
             newInsert.addKeyEvent(

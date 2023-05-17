@@ -381,7 +381,7 @@ open class ClassWidget(
         val CONSTRUCTOR_REGEX =
             { Regex("($MODIFIERS\\s+)*${node.nameAsString}") }
 
-        val insert = TextWidget.create(seq) { c, s ->
+        val insert = TextWidget.create(seq) { c, s, _ ->
             c.toString()
                 .matches(Regex("[\\w\\d\\[\\]<>]")) || c == SWT.SPACE && s.isNotEmpty() || c == SWT.BS
         }

@@ -3,22 +3,13 @@ package pt.iscte.javardise.widgets.expressions
 import com.github.javaparser.StaticJavaParser
 import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.NodeList
-import com.github.javaparser.ast.expr.ArrayInitializerExpr
-import com.github.javaparser.ast.expr.BinaryExpr
-import com.github.javaparser.ast.expr.CharLiteralExpr
-import com.github.javaparser.ast.expr.Expression
-import com.github.javaparser.ast.expr.IntegerLiteralExpr
-import com.github.javaparser.ast.expr.NameExpr
-import com.github.javaparser.ast.expr.StringLiteralExpr
-import com.github.javaparser.ast.expr.UnaryExpr
+import com.github.javaparser.ast.expr.*
 import com.github.javaparser.ast.nodeTypes.NodeWithArguments
-import com.github.javaparser.ast.observer.AstObserver
 import org.eclipse.swt.SWT
 import org.eclipse.swt.events.KeyAdapter
 import org.eclipse.swt.events.KeyEvent
 import org.eclipse.swt.widgets.Composite
 import pt.iscte.javardise.*
-import pt.iscte.javardise.Configuration.Companion.hole
 import pt.iscte.javardise.basewidgets.FixedToken
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
@@ -257,7 +248,7 @@ class ExpressionListWidget<T : Expression, N : Node>(
             })
         }
 
-        insert = TextWidget.create(parent, "") { c, _ ->
+        insert = TextWidget.create(parent, "") { _, _, _ ->
             //c.toString().matches(TYPE_CHARS) || c == SWT.BS
             false
         }

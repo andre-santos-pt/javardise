@@ -219,7 +219,7 @@ open class Id(parent: Composite, id: NodeWithSimpleName<*>, allowedChars: Regex,
         }
 
         readOnly = false
-        textWidget = TextWidget.createText(parent, nodeText()) { c, s ->
+        textWidget = TextWidget.createText(parent, nodeText()) { c, _, _ ->
             skip ||
                     !readOnly && (
                     c.toString().matches(allowedChars)

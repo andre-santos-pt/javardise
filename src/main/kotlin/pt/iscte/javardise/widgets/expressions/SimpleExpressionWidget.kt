@@ -29,7 +29,7 @@ class SimpleExpressionWidget(
 
 
     init {
-        expression = TextWidget.create(this, nodeText(node)) { c, s ->
+        expression = TextWidget.create(this, nodeText(node)) { c, s, _ ->
             c.toString()
                 .matches(Regex("\\w")) ||
                     c == SWT.BS ||

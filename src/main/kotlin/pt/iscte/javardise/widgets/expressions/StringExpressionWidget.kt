@@ -29,9 +29,11 @@ class StringExpressionWidget(
 
     private val delListener = object : KeyAdapter() {
         override fun keyPressed(e: KeyEvent) {
-            if(e.character == SWT.BS)
-                if(node.value.any { it.toString().matches(ID) })
-                    editEvent(NameExpr(node.value.filter { it.toString().matches(ID) }))
+            if (e.character == SWT.BS)
+                if (node.value.any { it.toString().matches(ID) })
+                    editEvent(NameExpr(node.value.filter {
+                        it.toString().matches(ID)
+                    }))
                 else
                     editEvent(Configuration.hole())
         }
@@ -42,12 +44,16 @@ class StringExpressionWidget(
         open = TokenWidget(this, "\"")
         open.widget.foreground = configuration.commentColor
         open.addKeyListenerInternal(delListener)
-        text = TextWidget.create(this, node.value) { _, _ -> true }
+        text = TextWidget.create(this, node.value) { c, s, i ->
+            c != '"' || s.substring(0, i).endsWith('\\') && !s.substring(i)
+                .startsWith("\"")
+        }
         text.widget.foreground = configuration.commentColor
-        if(node.value.isEmpty())
+        if (node.value.isEmpty())
             text.widget.layoutData = ROW_DATA_STRING
         text.widget.addModifyListener {
-            text.widget.layoutData =  if(text.text.isEmpty()) ROW_DATA_STRING else null
+            text.widget.layoutData =
+                if (text.text.isEmpty()) ROW_DATA_STRING else null
         }
         text.addDeleteEmptyListener {
             editEvent(Configuration.hole())
@@ -62,19 +68,22 @@ class StringExpressionWidget(
         }
 
         text.addFocusLostAction {
-            commandStack.execute(object : Command {
-                override val target = node
-                override val kind = CommandKind.MODIFY
-                override val element = node.value
+            if (text.text.matches(Regex("([^\\\\]|(\\\\[tbnrf'\"\\\\]))*")))
+                commandStack.execute(object : Command {
+                    override val target = node
+                    override val kind = CommandKind.MODIFY
+                    override val element = node.value
 
-                override fun run() {
-                    node.setEscapedValue(text.text.replace("\"","\\\""))
-                }
+                    override fun run() {
+                        node.value = text.text
+                    }
 
-                override fun undo() {
-                    node.value = element
-                }
-            })
+                    override fun undo() {
+                        node.value = element
+                    }
+                })
+            else
+                text.text = node.value
         }
     }
 
