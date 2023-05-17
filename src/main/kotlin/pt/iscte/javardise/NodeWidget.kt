@@ -157,7 +157,6 @@ fun Composite.findChild(model: Node): Control? {
 }
 
 
-
 abstract class ObserverWidget<T : Node>(parent: Composite)
     : Composite(parent, SWT.NONE), NodeWidget<T> {
     private val registeredObservers = mutableListOf<Pair<Node,AstObserver>>()

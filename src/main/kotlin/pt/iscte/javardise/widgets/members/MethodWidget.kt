@@ -4,13 +4,11 @@ import com.github.javaparser.StaticJavaParser
 import com.github.javaparser.ast.Modifier
 import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.NodeList
-import com.github.javaparser.ast.body.CallableDeclaration
-import com.github.javaparser.ast.body.ConstructorDeclaration
-import com.github.javaparser.ast.body.MethodDeclaration
-import com.github.javaparser.ast.body.Parameter
+import com.github.javaparser.ast.body.*
 import com.github.javaparser.ast.expr.SimpleName
 import com.github.javaparser.ast.observer.ObservableProperty
 import com.github.javaparser.ast.stmt.BlockStmt
+import com.github.javaparser.ast.stmt.Statement
 import com.github.javaparser.ast.type.Type
 import org.eclipse.swt.SWT
 import org.eclipse.swt.layout.RowLayout
@@ -139,6 +137,10 @@ class MethodWidget(
         }
     }
 
+    fun focus(member: Statement) {
+        findChild(member)?.setFocus()
+    }
+
     inner class ParamListWidget(
         parent: Composite,
         val parameters: NodeList<Parameter>
@@ -253,6 +255,7 @@ class MethodWidget(
                 ParamWidget(this, index, parameter)
             }
         }
+
 
         inner class ParamWidget(
             parent: Composite,

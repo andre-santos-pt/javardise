@@ -12,7 +12,10 @@ import org.eclipse.swt.widgets.Text
 import pt.iscte.javardise.*
 import pt.iscte.javardise.basewidgets.SequenceWidget
 import pt.iscte.javardise.basewidgets.TextWidget
+import pt.iscte.javardise.basewidgets.TextWidget.Companion.findAncestorOfType
 import pt.iscte.javardise.external.indexOfIdentity
+import pt.iscte.javardise.widgets.members.ClassWidget
+import pt.iscte.javardise.widgets.members.MethodWidget
 import java.util.concurrent.ThreadPoolExecutor.DiscardOldestPolicy
 
 class EmptyStatementWidget(
@@ -56,15 +59,18 @@ class EmptyStatementWidget(
                 tail.clear()
         }
         tail.setPasteTarget {
-            if (it is Statement)
+            if (it is Statement) {
+                val parentMethod = findAncestorOfType<MethodWidget>()
                 commandStack.execute(object : Command {
                     override val target: Node = parentBlock
                     override val kind: CommandKind = CommandKind.MODIFY
                     override val element: Statement = it
 
                     val added = mutableListOf<Statement>()
+                    var emptyIndex: Int = 0
 
                     override fun run() {
+                        emptyIndex = parentBlock.statements.indexOf(node)
                         if (element is BlockStmt) {
                             added.addAll(element.statements)
                             added.reversed().forEach {
@@ -74,14 +80,18 @@ class EmptyStatementWidget(
                             added.add(element)
                             parentBlock.statements.addAfter(element, node)
                         }
+                        parentBlock.statements.remove(node)
                     }
 
                     override fun undo() {
                         added.forEach {
                             it.remove()
                         }
+                        parentBlock.statements.add(emptyIndex, EmptyStmt())
                     }
                 })
+                parentMethod?.focus(it)
+            }
         }
 
         configuration.statementFeatures.forEach {

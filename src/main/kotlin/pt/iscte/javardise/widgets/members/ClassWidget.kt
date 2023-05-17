@@ -372,6 +372,8 @@ open class ClassWidget(
             if (it is BodyDeclaration<*>) {
                 val insertIndex = seq.findIndexByModel(insert.widget)
                 node.members.addCommand(node, it, insertIndex)
+                insert.delete()
+                focus(it)
             }
         }
 
@@ -467,7 +469,7 @@ open class ClassWidget(
         after: Boolean
     ) {
         addKeyEvent(SWT.CR) {
-            val w = if (member == null) {
+            if (member == null) {
                 body.insertBeginning()
             } else if (after) {
                 body.insertLineAfter(member)
