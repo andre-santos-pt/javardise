@@ -55,10 +55,10 @@ repositories {
 }
 
 dependencies {
-    testApi("org.junit.jupiter:junit-jupiter-api:5.9.0")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.9.0")
-    api("org.junit.platform:junit-platform-suite:1.9.1")
-    api("com.github.javaparser:javaparser-symbol-solver-core:3.24.8")
+    testApi("org.junit.jupiter:junit-jupiter-api:5.9.2")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.9.2")
+    api("org.junit.platform:junit-platform-suite:1.9.2")
+    api("com.github.javaparser:javaparser-symbol-solver-core:3.25.1")
     if (mac)
         api("org.eclipse.platform:org.eclipse.swt.cocoa.macosx.x86_64:3.123.0")
     else if (win)
@@ -94,9 +94,10 @@ tasks {
         val sourcesMain = sourceSets.main.get()
         val contents = configurations.runtimeClasspath.get()
             .filter { !it.name.contains("junit") && !it.name.contains("opentest") }
-            .map { if (it.isDirectory) it else zipTree(it) } +
-                sourcesMain.output
-        from(contents)
+            .map { if (it.isDirectory) it else zipTree(it) } + sourcesMain.output
+        from(contents) {
+            exclude("**/*.RSA","**/*.SF","**/*.DSA")
+        }
     }
 
 
@@ -165,7 +166,7 @@ tasks.jpackage {
     input = "$buildDir/jars"
     destination = "$buildDir/dist"
 
-    appName = "Paddle"
+    appName = "Javardise"
     vendor = "pt.iscte"
 
     mainJar = tasks.jar.get().archiveFileName.get()
