@@ -230,10 +230,11 @@ class ExpressionListWidget<T : Expression, N : Node>(
                     val list: NodeList<Expression> =
                         if (target is ArrayInitializerExpr)
                             target.values
-                        else
+                        else if(target is ArrayCreationExpr)
+                            target.initializer.get().values
+                       else
                             (target as NodeWithArguments<*>).arguments
 
-                    //target as NodeWithArguments<*>  // TODO BUG invalid cast for ArrayInit { }
                     if (after != null)
                         list.addAfter(element, after)
                     else
@@ -260,16 +261,6 @@ class ExpressionListWidget<T : Expression, N : Node>(
 
 
         insert.moveAboveInternal(closeBracket.widget)
-
-//        insert.addFocusLostAction {
-//            if (tryParse<Expression>(insert.text)) {
-//                doAddArgummentCommand(StaticJavaParser.parseExpression(insert.text))
-//                insert.delete()
-//            } else {
-//                insert.clear()
-//                insert.widget.layoutData =  ROW_DATA_STRING
-//            }
-//        }
 
         val keyListener = object : KeyAdapter() {
             override fun keyPressed(e: KeyEvent) {
