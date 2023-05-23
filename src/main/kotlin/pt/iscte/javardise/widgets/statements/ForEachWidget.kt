@@ -13,6 +13,7 @@ import org.eclipse.swt.widgets.Composite
 import pt.iscte.javardise.CommandStack
 import pt.iscte.javardise.basewidgets.*
 import pt.iscte.javardise.external.column
+import pt.iscte.javardise.external.empty
 import pt.iscte.javardise.external.row
 import pt.iscte.javardise.setCopySource
 import pt.iscte.javardise.widgets.expressions.ExpressionWidget
@@ -74,7 +75,7 @@ class ForEachWidget(parent: SequenceWidget, node: ForEachStmt,
     private fun createVarExp(parent: Composite, exp: VariableDeclarationExpr) =
         createExpressionWidget(parent, exp) {
             if (it == null)
-                parentBlock.statements.replaceCommand(parentBlock, node, EmptyStmt())
+                parentBlock.statements.replaceCommand(parentBlock, node, parentBlock.empty())
             else
                 node.modifyCommand(node.variable, it as VariableDeclarationExpr, node::setVariable)
         }
@@ -82,7 +83,7 @@ class ForEachWidget(parent: SequenceWidget, node: ForEachStmt,
     private fun createIterableExp(parent: Composite, exp: Expression) =
         createExpressionWidget(parent, exp) {
             if (it == null)
-                parentBlock.statements.replaceCommand(parentBlock, node, EmptyStmt())
+                parentBlock.statements.replaceCommand(parentBlock, node, parentBlock.empty())
             else
                 node.modifyCommand(node.iterable, it, node::setIterable)
         }

@@ -13,6 +13,7 @@ import pt.iscte.javardise.*
 import pt.iscte.javardise.basewidgets.SequenceWidget
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.basewidgets.TextWidget.Companion.findAncestorOfType
+import pt.iscte.javardise.external.empty
 import pt.iscte.javardise.external.indexOfIdentity
 import pt.iscte.javardise.widgets.members.ClassWidget
 import pt.iscte.javardise.widgets.members.MethodWidget
@@ -45,15 +46,16 @@ class EmptyStatementWidget(
         tail.addKeyEvent(SWT.CR) {
             parentBlock.statements.addCommand(
                 parentBlock,
-                EmptyStmt(),
+                parentBlock.empty(),
                 parentBlock.statements.indexOfIdentity(node) + 1
             )
         }
 
         tail.addFocusLostAction {
             if (tail.text.startsWith("//")) {
-                val stmt = EmptyStmt()
-                stmt.setComment(LineComment(tail.text.substring(2)))
+                val stmt = parentBlock.empty().apply {
+                    setComment(LineComment(tail.text.substring(2)))
+                }
                 parentBlock.statements.replaceCommand(parentBlock, node, stmt)
             } else
                 tail.clear()
@@ -87,7 +89,7 @@ class EmptyStatementWidget(
                         added.forEach {
                             it.remove()
                         }
-                        parentBlock.statements.add(emptyIndex, EmptyStmt())
+                        parentBlock.statements.add(emptyIndex, parentBlock.empty())
                     }
                 })
                 parentMethod?.focus(it)
@@ -95,8 +97,9 @@ class EmptyStatementWidget(
         }
 
         configuration.statementFeatures.forEach {
-            it.configureInsert(tail, parentBlock, node, commandStack) {
-                parentBlock.statements.replaceCommand(parentBlock, node, it)
+            it.configureInsert(tail, parentBlock, node, commandStack) {stmt ->
+                stmt.setParentNode(parentBlock)
+                parentBlock.statements.replaceCommand(parentBlock, node, stmt)
             }
         }
     }

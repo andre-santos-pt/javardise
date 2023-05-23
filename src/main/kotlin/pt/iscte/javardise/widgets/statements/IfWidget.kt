@@ -119,7 +119,7 @@ class IfWidget(
                 parentBlock.statements.replaceCommand(
                     parentBlock.parentNode.get(),
                     node,
-                    EmptyStmt()
+                    parentBlock.empty()
                 )
             else
                 node.modifyCommand(node.condition, it, node::setCondition)

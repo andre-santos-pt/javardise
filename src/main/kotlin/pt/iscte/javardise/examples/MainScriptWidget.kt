@@ -84,7 +84,7 @@ ConfigurationRoot {
                 node: Statement
             ) {
                 if(list.size == 1)
-                    list.add(EmptyStmt())
+                    list.add(body.empty())
             }
         })
     }

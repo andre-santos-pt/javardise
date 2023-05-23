@@ -274,6 +274,10 @@ fun <T : Node> NodeList<T>.indexOfIdentity(e: T): Int {
     return -1
 }
 
+fun BlockStmt.empty() = EmptyStmt().apply {
+    setParentNode(this@empty)
+}
+
 inline fun <reified E : Expression> tryParse(exp: String): Boolean {
     try {
         val e = StaticJavaParser.parseExpression<E>(exp)

@@ -13,6 +13,7 @@ import pt.iscte.javardise.basewidgets.SequenceWidget
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
 import pt.iscte.javardise.external.ROW_LAYOUT_H_SHRINK
+import pt.iscte.javardise.external.empty
 import pt.iscte.javardise.external.indexOfIdentity
 
 abstract class StatementWidget<T : Statement>(
@@ -36,7 +37,7 @@ abstract class StatementWidget<T : Statement>(
 
     fun TokenWidget.addDelete(node: Statement, block: BlockStmt) =
         addKeyEvent(SWT.BS) {
-            block.statements.replaceCommand(block,node,EmptyStmt())
+            block.statements.replaceCommand(block,node,block.empty())
         }
 }
 
@@ -50,11 +51,11 @@ internal fun TextWidget.addEmptyStatement(
     addKeyEvent(SWT.CR) {
         with(nodeWidget) {
             if (location == null)
-                block.statements.addCommand(block, EmptyStmt(), 0)
+                block.statements.addCommand(block, block.empty(), 0)
             else
                 block.statements.addCommand(
                     block,
-                    EmptyStmt(),
+                    block.empty(),
                     block.statements.indexOfIdentity(location) + if(after) 1 else 0
                 )
         }

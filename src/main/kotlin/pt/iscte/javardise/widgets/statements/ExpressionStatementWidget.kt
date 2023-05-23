@@ -9,6 +9,7 @@ import pt.iscte.javardise.basewidgets.SequenceWidget
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
 import pt.iscte.javardise.external.ROW_LAYOUT_H_SHRINK
+import pt.iscte.javardise.external.empty
 import pt.iscte.javardise.external.isIncrementorOrDecrementor
 import pt.iscte.javardise.isFillIn
 import pt.iscte.javardise.setCopySource
@@ -23,7 +24,7 @@ open class ExpressionStatementWidget(
     StatementWidget<ExpressionStmt>(parent, node) {
     var expression: ExpressionWidget<*>
 
-    override val tail: TextWidget
+    override val tail: TokenWidget
 
 
     init {
@@ -33,9 +34,7 @@ open class ExpressionStatementWidget(
         expression.head.setCopySource(node)
         tail = TokenWidget(this, ";")
         tail.addEmptyStatement(this, parentBlock, node)
-        tail.addDeleteListener {
-            parentBlock.statements.replaceCommand(parentBlock, node, EmptyStmt())
-        }
+        tail.addDelete(node, parentBlock)
 
         observeNotNullProperty<Expression>(ObservableProperty.EXPRESSION) {
             expression.dispose()
@@ -48,8 +47,13 @@ open class ExpressionStatementWidget(
 
     private fun createExpression(e: Expression): ExpressionWidget<*> =
         createExpressionWidget(this, e) {
-            if (it == null)
-                parentBlock.statements.replaceCommand(parentBlock, node, EmptyStmt())
+            if (it == null) {
+                parentBlock.statements.replaceCommand(
+                    parentBlock,
+                    node,
+                   parentBlock.empty()
+                )
+            }
             else if (
                 it.isVariableDeclarationExpr ||
                 it.isAssignExpr ||
@@ -57,8 +61,9 @@ open class ExpressionStatementWidget(
                 it.isIncrementorOrDecrementor
             )
                 node.modifyCommand(node.expression, it, node::setExpression)
-            else if(it.isFillIn)
-                parentBlock.statements.replace(node, EmptyStmt())
+            else if(it.isFillIn) {
+                parentBlock.statements.replace(node, parentBlock.empty())
+            }
         }
 
     override fun setFocus(): Boolean {

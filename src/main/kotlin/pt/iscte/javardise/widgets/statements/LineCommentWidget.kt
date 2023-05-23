@@ -13,6 +13,7 @@ import pt.iscte.javardise.NodeWidget
 import pt.iscte.javardise.basewidgets.SequenceWidget
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
+import pt.iscte.javardise.external.empty
 import pt.iscte.javardise.external.getOrNull
 import pt.iscte.javardise.external.row
 import pt.iscte.javardise.setCopySource
@@ -43,7 +44,7 @@ class LineCommentWidget(
         ) { _, _, _ -> true }
         tail.addEmptyStatement(this@LineCommentWidget, parentBlock, node)
         tail.addDeleteEmptyListener {
-            parentBlock.statements.replaceCommand(parentBlock, node, EmptyStmt())
+            parentBlock.statements.replaceCommand(parentBlock, node, parentBlock.empty())
         }
         tail.addFocusLostAction {
             node.modifyCommand(
@@ -77,8 +78,9 @@ object LineCommentFeature : StatementFeature<EmptyStmt, LineCommentWidget>(
         output: (Statement) -> Unit
     ) {
         insert.addKeyEvent(SWT.CR, precondition = { it.startsWith("//") }) {
-            val stmt = EmptyStmt()
-            stmt.setComment(LineComment(insert.text.substring(2)))
+            val stmt = block.empty().apply {
+                setComment(LineComment(insert.text.substring(2)))
+            }
             output(stmt)
         }
     }

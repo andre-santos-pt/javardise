@@ -11,6 +11,7 @@ import pt.iscte.javardise.*
 import pt.iscte.javardise.basewidgets.*
 import pt.iscte.javardise.external.block
 import pt.iscte.javardise.external.column
+import pt.iscte.javardise.external.empty
 import pt.iscte.javardise.external.row
 import pt.iscte.javardise.widgets.expressions.ExpressionWidget
 import pt.iscte.javardise.widgets.expressions.createExpressionWidget
@@ -94,7 +95,7 @@ class WhileWidget(
                 parentBlock.statements.replaceCommand(
                     parentBlock.parentNode.get(),
                     node,
-                    EmptyStmt()
+                    parentBlock.empty()
                 )
             else
                 node.modifyCommand(node.condition, it, node::setCondition)
