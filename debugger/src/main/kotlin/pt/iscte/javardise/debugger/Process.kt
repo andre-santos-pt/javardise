@@ -20,7 +20,6 @@ import pt.iscte.strudel.model.IVariableAssignment
 import pt.iscte.strudel.vm.IValue
 import pt.iscte.strudel.vm.IVirtualMachine
 import pt.iscte.strudel.vm.impl.ProcedureExecution
-import pt.iscte.strudel.vm.impl.VirtualMachine
 
 object State {
     var process: Process? = null
@@ -28,7 +27,7 @@ object State {
 
 class Process(module: IModule) {
 
-    val vm = VirtualMachine(50, 1000, 40)
+    val vm = IVirtualMachine.create()
     var current: ProcedureExecution? = null
 
     var ipMark: ICodeDecoration<*>? = null

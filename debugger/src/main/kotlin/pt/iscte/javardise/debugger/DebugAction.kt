@@ -17,6 +17,7 @@ import pt.iscte.javardise.widgets.members.MethodWidget
 import pt.iscte.strudel.javaparser.Java2Strudel
 import pt.iscte.strudel.model.IModule
 import pt.iscte.strudel.model.IProcedure
+import pt.iscte.strudel.vm.IArray
 import pt.iscte.strudel.vm.IReference
 import pt.iscte.strudel.vm.IVirtualMachine
 
@@ -74,7 +75,7 @@ private fun methodShell(module: IModule, model: MethodDeclaration, procedure: IP
         fill {
             process.vm.addListener(object : IVirtualMachine.IListener {
                 override fun arrayAllocated(
-                    ref: IReference
+                    ref: IReference<IArray>
                 ) {
                     label(ref.target.toString())
                     requestLayout()
