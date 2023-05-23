@@ -18,6 +18,7 @@ import org.eclipse.swt.widgets.Composite
 import org.eclipse.swt.widgets.Control
 import org.eclipse.swt.widgets.Display
 import org.eclipse.swt.widgets.Event
+import org.eclipse.swt.widgets.Listener
 import pt.iscte.javardise.*
 import pt.iscte.javardise.basewidgets.SequenceWidget
 import pt.iscte.javardise.basewidgets.TextWidget
@@ -71,21 +72,27 @@ open class ClassWidget(
 
     private val widgetFocusObservers = mutableListOf<(Control) -> Unit>()
 
-    private val focusListenerGlobal = { event: Event ->
-        val control = event.widget as Control
-        if (control.isChildOf(this@ClassWidget)) {
-            widgetFocusObservers.forEach {
-                it(control)
-            }
-            val member = control.findNode<BodyDeclaration<*>>()
-            val statement = control.findNode<Statement>()
-            val node = control.findNode<Node>()
-            modelFocusObservers.forEach {
-                it(member, statement, node)
-            }
-        } else {
-            modelFocusObservers.forEach {
-                it(null, null, null)
+    private val focusListenerGlobal = object : Listener {
+        var prev: Control? = null
+        override fun handleEvent(event: Event) {
+            val control = event.widget as Control
+            if(control != prev) {
+                if (control.isChildOf(this@ClassWidget)) {
+                    widgetFocusObservers.forEach {
+                        it(control)
+                    }
+                    val member = control.findNode<BodyDeclaration<*>>()
+                    val statement = control.findNode<Statement>()
+                    val node = control.findNode<Node>()
+                    modelFocusObservers.forEach {
+                        it(member, statement, node)
+                    }
+                } else {
+                    modelFocusObservers.forEach {
+                        it(null, null, null)
+                    }
+                }
+                prev = control
             }
         }
     }
