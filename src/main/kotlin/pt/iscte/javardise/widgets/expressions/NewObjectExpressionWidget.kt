@@ -39,7 +39,7 @@ class NewObjectExpressionWidget(
         }
 
         observeNotNullProperty<ClassOrInterfaceType>(ObservableProperty.TYPE) {
-            id.text = it.nameAsString
+            id.set(it.nameAsString)
         }
     }
 
