@@ -3,7 +3,6 @@ package pt.iscte.javardise.widgets.members
 import com.github.javaparser.ast.Modifier
 import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.NodeList
-import com.github.javaparser.ast.body.BodyDeclaration
 import com.github.javaparser.ast.nodeTypes.NodeWithModifiers
 import com.github.javaparser.ast.stmt.ExpressionStmt
 import org.eclipse.swt.SWT
@@ -18,7 +17,6 @@ import pt.iscte.javardise.basewidgets.TokenWidget
 import pt.iscte.javardise.external.*
 import kotlin.math.min
 
-// TODO filter incompatible
 abstract class MemberWidget<N : Node>(
     parent: Composite,
     final override val node: N,

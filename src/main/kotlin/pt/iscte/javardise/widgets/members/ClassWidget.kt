@@ -310,7 +310,7 @@ open class ClassWidget(
         when (dec) {
             is FieldDeclaration -> {
                 val w =
-                    FieldWidget(bodyWidget, dec, configuration = configuration)
+                    FieldWidget(bodyWidget, dec, configuration = configuration, commandStack = commandStack)
                 w.semiColon.addInsert(w, bodyWidget, true)
                 w.semiColon.addDeleteListener {
                     this@ClassWidget.node.members.removeCommand(

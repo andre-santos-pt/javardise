@@ -21,10 +21,11 @@ class FieldWidget(
     val dec: FieldDeclaration,
     configuration: Configuration = DefaultConfigurationSingleton,
     validModifiers: List<List<Modifier.Keyword>> = configuration.fieldModifiers,
+    override val commandStack: CommandStack = CommandStack.create(),
 ) :
     MemberWidget<FieldDeclaration>(
         parent, dec, configuration, validModifiers
-    ) {
+    ),  ConfigurationRoot {
 
     // multi var is transformed to list of singles on parse
     val FieldDeclaration.variable: VariableDeclarator get() = this.variables[0]

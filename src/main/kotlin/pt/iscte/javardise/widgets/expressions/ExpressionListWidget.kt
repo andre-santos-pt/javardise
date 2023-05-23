@@ -88,7 +88,7 @@ class ExpressionListWidget<T : Expression, N : Node>(
                 argumentWidgets.removeAt(index)
                 requestLayout()
                 if (index != argumentWidgets.size)
-                    argumentWidgets[index].arg.setFocus() // Cannot invoke "org.eclipse.swt.internal.cocoa.NSTextField.selectText(org.eclipse.swt.internal.cocoa.id)" because "this.view" is null
+                    argumentWidgets[index].arg.setFocus() // TODO BUG Cannot invoke "org.eclipse.swt.internal.cocoa.NSTextField.selectText(org.eclipse.swt.internal.cocoa.id)" because "this.view" is null
                 else if (index != 0)
                     argumentWidgets[index - 1].arg.setFocus()
                 else {
@@ -132,7 +132,7 @@ class ExpressionListWidget<T : Expression, N : Node>(
                     var i: Int = -1
                     override fun run() {
                         i =
-                            expressionList.indexOfIdentity(exp) // BUG illegal index
+                            expressionList.indexOfIdentity(exp) // TODO BUG illegal index
                         expressionList[i] = it as T
                     }
 
@@ -149,13 +149,12 @@ class ExpressionListWidget<T : Expression, N : Node>(
         addTailListener(arg)
 
 
-
         if (argumentWidgets.isEmpty()) {
             arg.moveBelow(openBracket.widget)
             argumentWidgets.add(index, ArgWidget(null, arg))
         } else {
             if (replace) {
-                arg.moveAbove(argumentWidgets[index].arg)
+                arg.moveAbove(argumentWidgets[index].arg) // TODO BUG  Index 1 out of bounds for length 1; multiple views
                 argumentWidgets[index].arg.dispose()
                 argumentWidgets[index].arg = arg
             } else {
