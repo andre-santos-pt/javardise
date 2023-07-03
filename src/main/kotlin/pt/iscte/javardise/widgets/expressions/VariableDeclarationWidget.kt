@@ -1,7 +1,6 @@
 package pt.iscte.javardise.widgets.expressions
 
 import com.github.javaparser.StaticJavaParser
-import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.body.VariableDeclarator
 import com.github.javaparser.ast.expr.*
 import com.github.javaparser.ast.observer.ObservableProperty
@@ -12,13 +11,13 @@ import com.github.javaparser.ast.type.Type
 import org.eclipse.swt.SWT
 import org.eclipse.swt.widgets.Composite
 import pt.iscte.javardise.*
-import pt.iscte.javardise.Configuration.Companion.hole
 import pt.iscte.javardise.basewidgets.FixedToken
 import pt.iscte.javardise.basewidgets.TextWidget
-import pt.iscte.javardise.external.*
+import pt.iscte.javardise.external.getOrNull
+import pt.iscte.javardise.external.isValidSimpleName
+import pt.iscte.javardise.external.isValidType
 import pt.iscte.javardise.widgets.statements.ExpressionStatementWidget
 import pt.iscte.javardise.widgets.statements.StatementFeature
-import kotlin.reflect.KFunction1
 
 class VariableDeclarationWidget(
     parent: Composite,
@@ -67,14 +66,22 @@ class VariableDeclarationWidget(
             node.modifyCommand(dec.name, SimpleName(name.text), dec::setName)
         }
         name.addKeyEvent('=') {
-            val setter: KFunction1<Expression?, Node> = dec::setInitializer
-            val hole = NameExpr(Configuration.fillInToken)
-            hole.setParentNode(dec)
-            dec.modifyCommand(
-                dec.initializer.getOrNull,
-                hole,
-                setter
-            )
+            if(name.isEmpty) {
+                editEvent(AssignExpr(
+                    NameExpr(dec.typeAsString),
+                    Configuration.hole(),
+                    AssignExpr.Operator.ASSIGN
+                ))
+            }
+            else {
+                val hole = NameExpr(Configuration.fillInToken)
+                hole.setParentNode(dec)
+                dec.modifyCommand(
+                    dec.initializer.getOrNull,
+                    hole,
+                    dec::setInitializer
+                )
+            }
         }
         name.addDeleteEmptyListener {
             if (dec.initializer.isPresent)
