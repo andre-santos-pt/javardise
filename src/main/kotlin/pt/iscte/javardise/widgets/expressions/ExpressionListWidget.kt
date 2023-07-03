@@ -63,7 +63,10 @@ class ExpressionListWidget<T : Expression, N : Node>(
                 index: Int,
                 node: T
             ) {
-                createArgument(node, index, false).setFocusOnCreation()
+                insert.delete()
+                val a = createArgument(node, index, false)
+                a.setFocus()
+                a.tail.setAtRight()
             }
 
             override fun elementReplace(
