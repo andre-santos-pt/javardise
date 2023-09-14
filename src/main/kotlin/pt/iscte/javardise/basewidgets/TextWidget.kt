@@ -131,7 +131,7 @@ interface TextWidget {
 
     companion object {
 
-        fun createText(
+        fun  createText(
             parent: Composite,
             text: String,
             accept: ((Char, String, Int) -> Boolean)? = null
@@ -335,6 +335,10 @@ interface TextWidget {
             ModifyListener { e ->
                 (e.widget as Control).pack()
                 (e.widget as Control).requestLayout()
+                // to avoid layout bug in Windows
+                val pos = (e.widget as Text).caretPosition
+                (e.widget as Text).setSelection(0)
+                (e.widget as Text).setSelection(pos)
             }
 
         private val FOCUS_SELECTALL: FocusListener = object : FocusAdapter() {
