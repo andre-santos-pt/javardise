@@ -5,13 +5,7 @@ import com.github.javaparser.StaticJavaParser
 import com.github.javaparser.ast.Modifier
 import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.comments.LineComment
-import com.github.javaparser.ast.expr.BooleanLiteralExpr
-import com.github.javaparser.ast.expr.Expression
-import com.github.javaparser.ast.expr.LiteralExpr
-import com.github.javaparser.ast.expr.LiteralStringValueExpr
-import com.github.javaparser.ast.expr.NameExpr
-import com.github.javaparser.ast.expr.NullLiteralExpr
-import com.github.javaparser.ast.expr.SimpleName
+import com.github.javaparser.ast.expr.*
 import com.github.javaparser.ast.stmt.Statement
 import org.eclipse.swt.SWT
 import org.eclipse.swt.events.KeyEvent
@@ -27,8 +21,11 @@ import pt.iscte.javardise.widgets.expressions.CallFeature
 import pt.iscte.javardise.widgets.expressions.UnaryExpressionStatementFeature
 import pt.iscte.javardise.widgets.expressions.VariableDeclarationFeature
 import pt.iscte.javardise.widgets.statements.*
+import java.util.*
 import kotlin.math.roundToInt
 
+
+val isWindows: Boolean = System.getProperty("os.name").lowercase(Locale.getDefault()).contains("win")
 
 interface Configuration {
     val tabLength: Int
@@ -137,8 +134,8 @@ fun Color.luminance(): Int =
 
 open class DefaultConfiguration : Configuration {
     override val tabLength = 4
-    override val fontSize = 14
-    override val fontFace = "Menlo"
+    override val fontSize = 12
+    override val fontFace = if(isWindows) "Consolas" else "Menlo"
 
     override val darkMode: Boolean
         get() = Display.getDefault().getSystemColor(SWT.COLOR_WIDGET_BACKGROUND).luminance() < 128
