@@ -26,17 +26,15 @@ class SimpleExpressionWidget(
     var expression: TextWidget
     val keyListener: KeyListener
 
-
-
     init {
-        expression = TextWidget.create(this, nodeText(node)) { c, s, _ ->
+        expression = TextWidget.create(this, nodeText(node)) { c, s, i ->
             c.toString()
                 .matches(Regex("\\w")) ||
                     c == SWT.BS ||
                     c == SWT.SPACE && !s.endsWith(" ") ||
                     c == '.' && s.toIntOrNull() != null ||
-                    c == '.' && s.isEmpty()
-
+                    c == '.' && s.isEmpty() ||
+                    (c == '=' && i == 0 && node.parentNode.getOrNull is BinaryExpr )
         }
         if (node.isNoParse)
             expression.widget.background = configuration.errorColor

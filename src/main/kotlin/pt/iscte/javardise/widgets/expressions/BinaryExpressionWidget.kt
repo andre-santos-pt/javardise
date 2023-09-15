@@ -3,6 +3,8 @@ package pt.iscte.javardise.widgets.expressions
 import com.github.javaparser.ast.expr.BinaryExpr
 import com.github.javaparser.ast.expr.Expression
 import com.github.javaparser.ast.observer.ObservableProperty
+import org.eclipse.swt.events.KeyAdapter
+import org.eclipse.swt.events.KeyEvent
 import org.eclipse.swt.widgets.Composite
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
@@ -96,12 +98,41 @@ class BinaryExpressionWidget(
         right = createExpressionWidget(parent, expression) {
             if (it != null)
                 node.modifyCommand(node.right, it, node::setRight)
-            else
-                editEvent(node.left)
+            else {
+                if (node.operator == BinaryExpr.Operator.GREATER_EQUALS)
+                    node.modifyCommand(
+                        node.operator,
+                        BinaryExpr.Operator.GREATER,
+                        node::setOperator
+                    )
+                else if (node.operator == BinaryExpr.Operator.LESS_EQUALS)
+                    node.modifyCommand(
+                        node.operator,
+                        BinaryExpr.Operator.LESS,
+                        node::setOperator
+                    )
+                else
+                    editEvent(node.left)
+            }
+
         }
         right.moveBelow(operator.widget)
         right.requestLayout()
         right.setFocusOnCreation()
+        right.head.addKeyEvent('=') {
+            if (node.operator == BinaryExpr.Operator.GREATER)
+                node.modifyCommand(
+                    node.operator,
+                    BinaryExpr.Operator.GREATER_EQUALS,
+                    node::setOperator
+                )
+            else if (node.operator == BinaryExpr.Operator.LESS)
+                node.modifyCommand(
+                    node.operator,
+                    BinaryExpr.Operator.LESS_EQUALS,
+                    node::setOperator
+                )
+        }
 //        right.tail.addKeyListenerInternal(object : KeyAdapter() {
 //            override fun keyPressed(e: KeyEvent) {
 //                if(e.stateMask == Configuration.maskKey && e.keyCode == SWT.ARROW_LEFT) {
