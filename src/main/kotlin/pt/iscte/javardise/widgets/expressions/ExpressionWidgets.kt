@@ -1,5 +1,6 @@
 package pt.iscte.javardise.widgets.expressions
 
+import com.github.javaparser.StaticJavaParser
 import com.github.javaparser.ast.expr.*
 import org.eclipse.swt.SWT
 import org.eclipse.swt.events.KeyAdapter
@@ -21,8 +22,8 @@ import pt.iscte.javardise.parseFillIn
  * ArchRule: subclasses should register node observers using observeNotNullProperty(..)
  * defined here. In this way, those observers are unregistered when the widget is disposed.
  */
-abstract class ExpressionWidget<T : Expression>(parent: Composite)
-    : ObserverWidget<T>(parent) {
+abstract class ExpressionWidget<T : Expression>(parent: Composite) :
+    ObserverWidget<T>(parent) {
 
     init {
         layout = ROW_LAYOUT_H_SHRINK
@@ -69,7 +70,11 @@ fun <E : Expression> createExpressionWidget(
             expression,
             editEvent
         )
-        is FieldAccessExpr -> FieldAccessExpressionWidget(parent, expression, editEvent)
+        is FieldAccessExpr -> FieldAccessExpressionWidget(
+            parent,
+            expression,
+            editEvent
+        )
         is MethodCallExpr -> CallExpressionWidget(parent, expression, editEvent)
         is ArrayCreationExpr -> NewArrayExpressionWidget(
             parent,
@@ -102,6 +107,7 @@ fun <E : Expression> createExpressionWidget(
             expression,
             editEvent
         )
+        is CastExpr -> CastExpressionWidget(parent, expression, editEvent)
         else -> SimpleExpressionWidget(parent, expression, editEvent)
     }.apply {
         if (this !is SimpleExpressionWidget) {
@@ -136,10 +142,17 @@ fun <E : Expression> createExpressionWidget(
                                 }
 //                                }
                             } else if (isAtEnd || !isModifiable) {
-                                if(e.character == '.' && isValidMethodCallScope(expression) ) {
-                                    editEvent(MethodCallExpr(expression, Configuration.fillInToken))
-                                }
-                                else {
+                                if (e.character == '.' && isValidMethodCallScope(
+                                        expression
+                                    )
+                                ) {
+                                    editEvent(
+                                        MethodCallExpr(
+                                            expression,
+                                            Configuration.fillInToken
+                                        )
+                                    )
+                                } else {
                                     val op = binaryOperators.find {
                                         it.asString().startsWith(e.character)
                                     }

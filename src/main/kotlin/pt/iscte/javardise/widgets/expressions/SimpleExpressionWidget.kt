@@ -181,6 +181,10 @@ class SimpleExpressionWidget(
             editEvent(EnclosedExpr(parseFillIn(expression.text)))
         }
 
+        expression.addKeyEvent(')', precondition = {expression.isAtBeginning}) {
+            editEvent(CastExpr(StaticJavaParser.parseType("type"), node))
+        }
+
         expression.addKeyEvent('{', precondition={expression.isEmpty}) {
             editEvent(ArrayInitializerExpr())
         }

@@ -1,6 +1,8 @@
 package pt.iscte.javardise.widgets.expressions
 
+import com.github.javaparser.StaticJavaParser
 import com.github.javaparser.ast.expr.BinaryExpr
+import com.github.javaparser.ast.expr.CastExpr
 import com.github.javaparser.ast.expr.EnclosedExpr
 import com.github.javaparser.ast.expr.Expression
 import com.github.javaparser.ast.observer.AstObserver
@@ -12,9 +14,7 @@ import org.eclipse.swt.widgets.Composite
 import pt.iscte.javardise.Configuration
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
-import pt.iscte.javardise.external.moveAbove
-import pt.iscte.javardise.external.observeNotNullProperty
-import pt.iscte.javardise.external.observeProperty
+import pt.iscte.javardise.external.*
 
 class BracketsExpressionWidget(
     parent: Composite,
@@ -71,6 +71,9 @@ class BracketsExpressionWidget(
                             )
                         )
                     }
+                }
+                else if(e.character == SWT.SPACE && isValidType(expressionWidget.head.text)) {
+                    editEvent(CastExpr(StaticJavaParser.parseType(expressionWidget.head.text),Configuration.hole()))
                 }
             }
         })
