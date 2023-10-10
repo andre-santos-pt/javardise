@@ -40,11 +40,6 @@ class FieldAccessExpressionWidget(
             nameWidget.text = it.asString()
         }
 
-        fun nameText() =
-            if(nameWidget.text.isBlank()) Configuration.fillInToken
-            else
-                nameWidget.text
-
         nameWidget.addFocusLostAction({ isValidSimpleName(it) }) {
             node.modifyCommand(node.name, SimpleName(nameText()), node::setName)
         }
@@ -61,6 +56,8 @@ class FieldAccessExpressionWidget(
             editEvent(node.scope.clone())
         }
     }
+
+    private fun nameText() = nameWidget.text.ifBlank { Configuration.fillInToken }
 
     private fun drawScope(
         expression: Expression
@@ -86,4 +83,10 @@ class FieldAccessExpressionWidget(
 
     override val tail: TextWidget
         get() = nameWidget
+
+    override fun updateState() {
+        if(isValidSimpleName(nameText())) {
+            node.modifyCommand(node.name, SimpleName(nameText()), node::setName)
+        }
+    }
 }

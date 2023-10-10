@@ -1,6 +1,5 @@
 package pt.iscte.javardise.widgets.expressions
 
-import com.github.javaparser.StaticJavaParser
 import com.github.javaparser.ast.expr.*
 import org.eclipse.swt.SWT
 import org.eclipse.swt.events.KeyAdapter
@@ -42,6 +41,7 @@ abstract class ExpressionWidget<T : Expression>(parent: Composite) :
     abstract val head: TextWidget
     abstract val tail: TextWidget
 
+    open fun updateState() { }
 
     override fun toString(): String {
         return this::class.simpleName + ": $node"
@@ -133,9 +133,10 @@ fun <E : Expression> createExpressionWidget(
                                                 .startsWith(e.character)
                                         }
                                 op?.let {
+                                    updateState()
                                     editEvent(
                                         UnaryExpr(
-                                            parseFillIn(tail.text),
+                                            expression,
                                             it
                                         )
                                     )
@@ -157,6 +158,7 @@ fun <E : Expression> createExpressionWidget(
                                         it.asString().startsWith(e.character)
                                     }
                                     op?.let {
+                                        updateState()
                                         editEvent(
                                             BinaryExpr(
                                                 expression,
