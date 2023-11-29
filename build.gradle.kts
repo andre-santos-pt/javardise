@@ -1,3 +1,5 @@
+import org.panteleyev.jpackage.ImageType
+
 plugins {
     kotlin("jvm") version "1.8.10"
     application
@@ -172,14 +174,16 @@ tasks.jpackage {
     mainJar = tasks.jar.get().archiveFileName.get()
     mainClass = application.mainClass.get()
 
-    javaOptions = listOf("-Dfile.encoding=UTF-8", "-XstartOnFirstThread")
+    javaOptions = listOf("-Dfile.encoding=UTF-8")
 
     mac {
         // Generic parameter value for OS X build
         //icon = "icon.icns"
+        javaOptions.add("-XstartOnFirstThread")
     }
 
     windows {
+        type = ImageType.APP_IMAGE
         winConsole = true
     }
 }
