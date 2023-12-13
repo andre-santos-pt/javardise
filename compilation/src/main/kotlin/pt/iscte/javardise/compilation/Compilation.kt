@@ -6,20 +6,14 @@ import com.github.javaparser.ast.body.FieldDeclaration
 import com.github.javaparser.ast.body.MethodDeclaration
 import com.github.javaparser.ast.body.Parameter
 import com.github.javaparser.ast.expr.*
-import com.github.javaparser.ast.stmt.EmptyStmt
 import com.github.javaparser.printer.DefaultPrettyPrinter
 import com.github.javaparser.printer.DefaultPrettyPrinterVisitor
 import com.github.javaparser.printer.configuration.DefaultPrinterConfiguration
 import com.github.javaparser.printer.configuration.PrinterConfiguration
-import org.eclipse.swt.widgets.Text
-import pt.iscte.javardise.external.traverse
-import pt.iscte.javardise.widgets.members.ClassWidget
 import java.io.*
 import java.net.URI
 import javax.tools.*
 import javax.tools.JavaCompiler.CompilationTask
-
-
 
 
 fun compile(folder: File) {
@@ -61,6 +55,12 @@ fun compile(items: List<ClassOrInterfaceDeclaration>): List<Diagnostic<*>> {
 data class CompilationItem(val file: File, val src: String) {
     constructor(file: File) : this(file, file.readText())
 }
+
+fun compileNoOutput(folder: File) = compileNoOutput(folder.listFiles()
+    ?.filter { it.extension == "java" }
+    ?.map {CompilationItem(it) }
+    ?: emptyList())
+
 fun compileNoOutput(files: List<CompilationItem>) : Pair<List<Diagnostic<*>>, Map<String, ByteArray>> {
     val compiler: JavaCompiler = ToolProvider.getSystemJavaCompiler()
     val diagnostics = DiagnosticCollector<JavaFileObject>()
@@ -74,7 +74,7 @@ fun compileNoOutput(files: List<CompilationItem>) : Pair<List<Diagnostic<*>>, Ma
             diagnostics,
             null,
             null,
-            files.map { JavaSourceFromString(it.file.nameWithoutExtension, it.src) }
+            files.map { JavaSourceFromString(it.file, it.src) }
         )
     val success = task.call()
 
@@ -83,10 +83,10 @@ fun compileNoOutput(files: List<CompilationItem>) : Pair<List<Diagnostic<*>>, Ma
 }
 
 
-internal class JavaSourceFromString(val filename: String, val code: String) :
+internal class JavaSourceFromString(val file: File, val code: String) :
     SimpleJavaFileObject(
         URI.create(
-            "string:///" + filename.replace(
+            "string:///" + file.nameWithoutExtension.replace(
                 '.',
                 '/'
             ) + JavaFileObject.Kind.SOURCE.extension

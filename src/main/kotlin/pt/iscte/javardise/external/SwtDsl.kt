@@ -59,10 +59,14 @@ fun Composite.text(
     return t
 }
 
-fun Composite.multitext(text: String = "", style: Int = SWT.BORDER,  init: Text.() -> Unit = {}): Text {
+fun Composite.multitext(
+    text: String = "",
+    style: Int = SWT.BORDER,
+    init: Text.() -> Unit = {}
+): Text {
     val text = text(text, style or SWT.MULTI or SWT.WRAP or SWT.V_SCROLL, init)
     text.addVerifyListener {
-        if(it.character == SWT.TAB) {
+        if (it.character == SWT.TAB) {
             text.traverse(SWT.TRAVERSE_TAB_NEXT)
             it.doit = false
         }
@@ -231,8 +235,8 @@ fun Control.onClick(action: () -> Unit) {
     })
 }
 
-fun Control.message(init: Shell.() -> Unit) {
-    val s = shell(SWT.DIALOG_TRIM or SWT.APPLICATION_MODAL) {
+fun Shell.message(init: Shell.() -> Unit) {
+    val s = shell(SWT.SHEET, this) {
         layout = RowLayout(SWT.VERTICAL)
         init(this)
         button("OK") {
@@ -245,7 +249,7 @@ fun Control.message(init: Shell.() -> Unit) {
 }
 
 fun Shell.prompt(title: String, message: String, action: (String) -> Unit) {
-    val s = shell(SWT.DIALOG_TRIM or SWT.APPLICATION_MODAL, this, title) {
+    val s = shell(SWT.SHEET, this, title) {
         grid(3) {
             label(message)
             val t = text {
@@ -261,6 +265,31 @@ fun Shell.prompt(title: String, message: String, action: (String) -> Unit) {
             button("OK") {
                 if (t.text.isNotEmpty())
                     action(t.text)
+                this@shell.close()
+            }
+        }
+
+    }
+    s.pack()
+    s.location = location
+    s.open()
+}
+
+fun Shell.promptConfirmation(
+    title: String,
+    okMessage: String = "OK",
+    cancelMessage: String = "Cancel",
+    okAction: () -> Unit
+) {
+    val s = shell(SWT.DIALOG_TRIM or SWT.APPLICATION_MODAL, this, "Confirmation") {
+        text = title
+        grid(3) {
+            label(title)
+            button(okMessage) {
+                okAction()
+                this@shell.close()
+            }
+            button(cancelMessage) {
                 this@shell.close()
             }
         }
@@ -291,7 +320,7 @@ fun shell(
 fun message(
     title: String = "",
     text: String = ""
-) = shell(style =  SWT.DIALOG_TRIM or SWT.APPLICATION_MODAL) {
+) = shell(style = SWT.DIALOG_TRIM or SWT.APPLICATION_MODAL) {
     layout = RowLayout(SWT.VERTICAL)
     this.text = title
     label(text)
@@ -325,7 +354,10 @@ fun font(face: String, size: Int, style: Int = SWT.NONE) =
     Font(Display.getDefault(), FontData(face, size, style))
 
 // only works when parent has FillLayout
-fun <T : Composite> Composite.scrollable(style: Int = SWT.H_SCROLL or SWT.V_SCROLL, create: (Composite) -> T): T {
+fun <T : Composite> Composite.scrollable(
+    style: Int = SWT.H_SCROLL or SWT.V_SCROLL,
+    create: (Composite) -> T
+): T {
     val scroll = ScrolledComposite(this, style)
     val layout = GridLayout()
     layout.marginTop = 10
@@ -420,7 +452,7 @@ fun Menu.item(text: String, action: MenuItem.() -> Unit) {
     })
 }
 
-fun <T:Control> T.focusGained(action: T.() -> Unit) {
+fun <T : Control> T.focusGained(action: T.() -> Unit) {
     val c = this
     addFocusListener(object : FocusAdapter() {
         override fun focusGained(e: FocusEvent?) {
@@ -429,7 +461,7 @@ fun <T:Control> T.focusGained(action: T.() -> Unit) {
     })
 }
 
-fun <T:Control> T.focusLost(action: T.() -> Unit) {
+fun <T : Control> T.focusLost(action: T.() -> Unit) {
     val c = this
     addFocusListener(object : FocusAdapter() {
         override fun focusLost(e: FocusEvent?) {
@@ -449,4 +481,5 @@ fun Composite.findChild(accept: (Control) -> Boolean): Control? {
     }
     return n
 }
+
 

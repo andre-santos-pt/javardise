@@ -1,10 +1,9 @@
-package pt.iscte.javardise.examples
+package pt.iscte.javardise.documentation
 
 import org.eclipse.swt.SWT
 import org.eclipse.swt.layout.GridData
 import org.eclipse.swt.widgets.*
 import pt.iscte.javardise.external.*
-import pt.iscte.javardise.documentation.ClassDocumentationView
 import pt.iscte.javardise.widgets.members.ClassWidget
 
 /**

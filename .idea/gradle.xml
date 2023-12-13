@@ -11,7 +11,9 @@
           <set>
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/compilation" />
+            <option value="$PROJECT_DIR$/debugger" />
             <option value="$PROJECT_DIR$/documentation" />
+            <option value="$PROJECT_DIR$/testplug" />
           </set>
         </option>
       </GradleProjectSettings>

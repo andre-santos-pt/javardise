@@ -26,6 +26,8 @@ interface CommandStack {
     fun undo()
     fun redo()
     fun addObserver(o: (Command, Boolean) -> Unit)
+
+    fun removeObserver(o: (Command, Boolean) -> Unit)
     fun reset()
     fun <E : Any?> modifyCommand(
         target: Node,
@@ -104,6 +106,9 @@ interface CommandStack {
             observers.add(o)
         }
 
+        override fun removeObserver(o: (Command, Boolean) -> Unit) {
+            observers.remove(o)
+        }
         override fun reset() {
             stack.clear()
             observers.clear()

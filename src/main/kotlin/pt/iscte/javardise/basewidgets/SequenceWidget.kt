@@ -9,7 +9,7 @@ open class SequenceWidget(
     parent: Composite,
     tabLength: Int,
     spacing: Int = 0,
-    val insertWidgetCreator: (SequenceWidget, Boolean) -> TextWidget
+    private val insertWidgetCreator: (SequenceWidget, Boolean) -> TextWidget
 ) : Composite(parent, SWT.NONE) {
 
     init {

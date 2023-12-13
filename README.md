@@ -1,7 +1,7 @@
 # About
 
 Javardise is a research prototype consisting of a [Projectional Editor](https://en.wikipedia.org/wiki/Structure_editor) 
-for Java, built using:
+for a subset of Java, built using:
 - [JavaParser](http://javaparser.org): abstract representation of the code (model)
 - [Standard Widget Toolkit (SWT)](https://www.eclipse.org/swt): GUI Toolkit
 
@@ -19,13 +19,13 @@ while allowing:
 
 # Builds (Gradle)
 
-## Executable JAR (requires JRE)
+## Executable JAR (requires JRE 17+)
 Run the task **fatJar** (*distribution* category) to produce a standalone executable JARs for the respective platform. This will output a JAR file like **javardise-OS.jar** stored in *build/dist*, which can be executed. This option requires a JRE installed.
 
 - Windows: ``java -jar javardise-windows.jar``
 - MacOS: ``java -XstartOnFirstThread -jar javardise-macos.jar``
 
-## Standalone application (embedded JRE)
+## Standalone application (with embedded JRE)
 Run the task **jpackage** (*distribution* category) to produce an installable bundle for your operating system, without requiring Java previously installed. The output file will be stored in *build/dist*.
 
 

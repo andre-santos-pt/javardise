@@ -280,6 +280,10 @@ class MethodWidget(
                     ) // TODO BUG Index -1 out of bounds for length 1
                 }
 
+                type.addKeyEvent(SWT.SPACE, precondition = {it.isNotBlank()}) {
+                    type.textWidget.traverse(SWT.TRAVERSE_TAB_NEXT)
+                }
+
                 type.addFocusLostAction(::isValidType) {
                     node.modifyCommand(node.typeAsString, it, node::setType)
                 }

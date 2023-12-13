@@ -78,7 +78,7 @@ tasks.compileJava {
 }
 
 tasks {
-    val macJar = register<Jar>("fatJar") {
+    register<Jar>("fatJar") {
         group = "distribution"
         archiveFileName.set("javardise-$os.jar")
         destinationDirectory.set(File("$buildDir/dist"))
@@ -100,12 +100,6 @@ tasks {
         from(contents) {
             exclude("**/*.RSA","**/*.SF","**/*.DSA")
         }
-    }
-
-
-    build {
-        //dependsOn(macJar) // Trigger fat jar creation during build
-        // dependsOn(winJar)
     }
 }
 
@@ -144,22 +138,22 @@ task("copyJar", Copy::class) {
 task("copyPlugins", Copy::class) {
     from(
         File(
-            project.project("documentation").buildDir,
-            "libs/documentation.jar"
-        )
-    ).into("$buildDir/jars")
-    from(
-        File(
             project.project("compilation").buildDir,
             "libs/compilation.jar"
         )
     ).into("$buildDir/jars")
-    from(
-        File(
-            project.project("debugger").buildDir,
-            "libs/debugger.jar"
-        )
-    ).into("$buildDir/jars")
+//    from(
+//        File(
+//            project.project("documentation").buildDir,
+//            "libs/documentation.jar"
+//        )
+//    ).into("$buildDir/jars")
+//    from(
+//        File(
+//            project.project("debugger").buildDir,
+//            "libs/debugger.jar"
+//        )
+//    ).into("$buildDir/jars")
 }
 
 tasks.jpackage {

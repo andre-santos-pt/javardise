@@ -1,9 +1,5 @@
 package pt.iscte.javardise.editor
 
-import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration
-import pt.iscte.javardise.widgets.members.ClassWidget
-import java.io.File
-
 interface Action {
     val name: String
     val iconPath: String?
@@ -11,23 +7,9 @@ interface Action {
     val toggle: Boolean
         get() = false
 
-    fun isEnabled(facade: Facade): Boolean = true
-
-    fun init(editor: CodeEditor) {}
-    fun run(facade: Facade, toggle: Boolean)
+    val toggleDefault: Boolean
+        get() = false
+    fun init(editor: CodeEditor) { }
+    fun isEnabled(editor: CodeEditor): Boolean = true
+    fun run(editor: CodeEditor, toggle: Boolean)
 }
-
-interface Facade {
-    val file: File?
-    val model: ClassOrInterfaceDeclaration?
-    val classWidget: ClassWidget?
-
-}
-
-//interface Plugin {
-//    val actions: kotlin.collections.List<Action>
-//
-//    fun modelChange(model: ClassOrInterfaceDeclaration)
-//
-//    fun selectionChange(node: Node)
-//}

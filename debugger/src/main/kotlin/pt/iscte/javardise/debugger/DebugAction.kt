@@ -11,7 +11,7 @@ import org.eclipse.swt.widgets.Shell
 import org.eclipse.swt.widgets.ToolBar
 import org.eclipse.swt.widgets.ToolItem
 import pt.iscte.javardise.editor.Action
-import pt.iscte.javardise.editor.Facade
+import pt.iscte.javardise.editor.CodeEditor
 import pt.iscte.javardise.external.*
 import pt.iscte.javardise.widgets.members.MethodWidget
 import pt.iscte.strudel.javaparser.Java2Strudel
@@ -28,23 +28,22 @@ class DebugAction : Action {
     override val iconPath: String
         get() = "debug.png"
 
-    override fun isEnabled(facade: Facade): Boolean {
-        val member = facade.classWidget?.getMemberOnFocus()
+    override fun isEnabled(editor: CodeEditor): Boolean {
+        val member = editor.classOnFocus?.getMemberOnFocus()
         return member is MethodDeclaration && member.isStatic
     }
 
     override fun run(
-        facade: Facade,
+       editor: CodeEditor,
         toggle: Boolean
     ) {
-        check(isEnabled(facade))
         val module: IModule = try {
-            Java2Strudel().translate(listOf(facade.model!!))
+            Java2Strudel().translate(listOf(editor.classOnFocus?.node!!))
         } catch (e: AssertionError) {
             System.err.println(e.message)
             return
         }
-        val member = facade.classWidget?.getMemberOnFocus()
+        val member = editor.classOnFocus?.getMemberOnFocus()
         member?.let {
             module.procedures.find {
                 it.getProperty("JP") == member

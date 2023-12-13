@@ -1,7 +1,7 @@
 package pt.iscte.javardise.debugger
 
 import pt.iscte.javardise.editor.Action
-import pt.iscte.javardise.editor.Facade
+import pt.iscte.javardise.editor.CodeEditor
 
 
 class StopAction : Action {
@@ -11,12 +11,11 @@ class StopAction : Action {
     override val iconPath: String
         get() = "terminate.gif"
 
-    override fun run(facade: Facade, toggle: Boolean) {
-        check(isEnabled(facade))
+    override fun run(editor: CodeEditor, toggle: Boolean) {
         State.process?.stop()
     }
 
-    override fun isEnabled(facade: Facade): Boolean {
+    override fun isEnabled(editor: CodeEditor): Boolean {
         return State.process?.current?.isOver() == false
     }
 }
