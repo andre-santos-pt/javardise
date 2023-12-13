@@ -101,7 +101,7 @@ fun Control.fillGridHorizontal() {
 
 fun Composite.label(
     text: String,
-    style: Int = SWT.WRAP or SWT.BORDER,
+    style: Int = SWT.WRAP,
     font: Font? = null,
     init: Label.() -> Unit = {}
 ): Label {

@@ -60,11 +60,13 @@ fun main(args: Array<String>) {
 }
 
 object Settings {
-    var font = Font(Display.getDefault(), "Courier", 14, SWT.NONE)
+    val def =  DefaultConfiguration()
+    var font = Font(Display.getDefault(), def.fontFace, def.fontSize, SWT.NONE)
 
-    fun updateFont(name: String, size: Int) {
+    fun updateFontSize(size: Int) {
+        val newfont = Font(Display.getDefault(), font.fontData.first().name, size, SWT.NONE)
         font.dispose()
-        font = Font(Display.getDefault(), name, size, SWT.NONE)
+        font = newfont
     }
 }
 
@@ -109,13 +111,13 @@ class CodeEditor(val display: Display, val folder: File) {
             override val iconPath = "settings.png"
             override fun run(editor: CodeEditor, toggle: Boolean) {
                 editor.shell.message {
+                    text = "Settings"
                     grid(2) {
                         label("Font size")
                         text(Settings.font.fontData.first().getHeight().toString()) {
                             addModifyListener {
                                 try {
-                                    val h = text.toInt()
-                                    Settings.updateFont("Courier", h)
+                                    Settings.updateFontSize(text.toInt())
                                     allClassWidgets().forEach {
                                         it?.traverse {
                                             it.font = Settings.font
@@ -203,12 +205,13 @@ class CodeEditor(val display: Display, val folder: File) {
                     }
                 }
 
-                item("Open in file system") {
-                    val file = this@apply.selection.data as? File
-                    file?.let {
-                        Desktop.getDesktop().browseFileDirectory(it)
-                    } ?: Desktop.getDesktop().browseFileDirectory(folder)
-                }
+                // does not work in Windows
+//                item("Open in file system") {
+//                    val file = this@apply.selection.data as? File
+//                    file?.let {
+//                        Desktop.getDesktop().browseFileDirectory(it)
+//                    } ?: Desktop.getDesktop().browseFileDirectory(folder)
+//                }
             }
         }
 
@@ -223,16 +226,13 @@ class CodeEditor(val display: Display, val folder: File) {
     }
 
     private fun buildTabs() {
+        (folder.listFiles() ?: emptyArray<File>())
+            .filter { it.extension == "java" }
+            .sortedBy { it.name }
+            .forEach {
+                createFileTab(it)
+            }
 
-        val files = (folder.listFiles() ?: emptyArray<File>())
-        files.sortWith { a, b ->
-            if (a.extension == "java" && b.extension != "java") -1
-            else if (a.extension != "java" && b.extension == "java") 1
-            else a.nameWithoutExtension.compareTo(b.nameWithoutExtension)
-        }
-        for (f in files) {
-            createFileTab(f)
-        }
         tabs.addSelectionListener(object : SelectionAdapter() {
             override fun widgetSelected(e: SelectionEvent) {
                 setActionsEnabled()
@@ -381,7 +381,10 @@ class CodeEditor(val display: Display, val folder: File) {
         } catch (e: ParseProblemException) {
             System.err.println("Could not load: $file")
             null
+        } catch (e: FileNotFoundException) {
+            null
         }
+
 
         if (model == null) {
             tab.data = TabData(file, null, null)

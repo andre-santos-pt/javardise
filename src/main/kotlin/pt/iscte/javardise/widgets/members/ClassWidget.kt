@@ -23,6 +23,7 @@ import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
 import pt.iscte.javardise.external.*
 import pt.iscte.javardise.widgets.statements.*
+import java.lang.UnsupportedOperationException
 import java.util.*
 
 
@@ -158,18 +159,43 @@ open class ClassWidget(
         layout.marginLeft = 10
         this.layout = layout
 
-        val insertModifier = TextWidget.create(firstRow)
-        insertModifier.widget.layoutData = ROW_DATA_STRING
-        configureInsert(insertModifier) {
-            if (node.isInterface)
-                it != Modifier.Keyword.FINAL
-            else
-                true
-        }
+//        val insertModifier = TextWidget.create(firstRow)
+//        insertModifier.widget.layoutData = ROW_DATA_STRING
+//        configureInsert(insertModifier) {
+//            if (node.isInterface)
+//                it != Modifier.Keyword.FINAL
+//            else
+//                true
+//        }
 
+        fun toModifier(keyword: String) =
+            when(keyword) {
+                "public" -> Modifier.publicModifier()
+                "final"-> Modifier.finalModifier()
+                "abstract"-> Modifier.abstractModifier()
+                else -> throw UnsupportedOperationException()
+            }
+        val classModifiers = validModifiers.flatten().map { it.name.lowercase() }
         keyword = newKeywordWidget(firstRow,
             if (node.isInterface) "interface" else "class",
-            alternatives = { TypeTypes.values().map { it.name.lowercase() } }) {
+            alternatives = { TypeTypes.values().map { it.name.lowercase() } + classModifiers}) {
+            if(classModifiers.contains(it)) {
+                if (it == "public" && !member.modifiers.contains(Modifier.publicModifier()))
+                    member.modifiers.addCommand(node, toModifier(it))
+                else {
+                    if(it == "final" && !node.isInterface && !member.modifiers.contains(Modifier.finalModifier())) {
+                        member.modifiers.find { it.keyword == Keyword.ABSTRACT }?.let {
+                            member.modifiers.replaceCommand(node, it, Modifier.finalModifier())
+                        } ?: member.modifiers.addCommand(node, Modifier.finalModifier())
+                    }
+                    else if(it == "abstract"  && !member.modifiers.contains(Modifier.abstractModifier())) {
+                        member.modifiers.find { it.keyword == Keyword.FINAL }?.let {
+                            member.modifiers.replaceCommand(node, it, Modifier.abstractModifier())
+                        } ?: member.modifiers.addCommand(node, Modifier.abstractModifier())
+                    }
+                }
+            }
+            else
             commandStack.execute(object : Command {
                 override val target = node
                 override val kind = CommandKind.MODIFY
