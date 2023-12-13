@@ -2,6 +2,7 @@ package pt.iscte.javardise.widgets.members
 
 import com.github.javaparser.StaticJavaParser
 import com.github.javaparser.ast.Modifier
+import com.github.javaparser.ast.Modifier.Keyword
 import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.NodeList
 import com.github.javaparser.ast.body.*
@@ -13,18 +14,16 @@ import com.github.javaparser.ast.stmt.EmptyStmt
 import com.github.javaparser.ast.stmt.Statement
 import org.eclipse.swt.SWT
 import org.eclipse.swt.custom.ScrolledComposite
+import org.eclipse.swt.events.KeyListener
 import org.eclipse.swt.layout.RowLayout
-import org.eclipse.swt.widgets.Composite
-import org.eclipse.swt.widgets.Control
-import org.eclipse.swt.widgets.Display
-import org.eclipse.swt.widgets.Event
-import org.eclipse.swt.widgets.Listener
+import org.eclipse.swt.widgets.*
 import pt.iscte.javardise.*
 import pt.iscte.javardise.basewidgets.SequenceWidget
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
 import pt.iscte.javardise.external.*
 import pt.iscte.javardise.widgets.statements.*
+import java.util.*
 
 
 // TODO implements, extends
@@ -35,7 +34,7 @@ val MODIFIERS = "(${
 val TYPE = Regex("$ID(<$ID(,$ID)*>)?(\\[\\])*")
 
 val MEMBER_REGEX = Regex(
-    "($MODIFIERS\\s+)*$TYPE\\s+$ID"
+    "\\s*(($MODIFIERS\\s+)*|\\s+)$TYPE\\s+$ID\\s*"
 )
 
 
@@ -76,7 +75,7 @@ open class ClassWidget(
         var prev: Control? = null
         override fun handleEvent(event: Event) {
             val control = event.widget as Control
-            if(control != prev) {
+            if (control != prev) {
                 if (control.isChildOf(this@ClassWidget)) {
                     widgetFocusObservers.forEach {
                         it(control)
@@ -310,7 +309,12 @@ open class ClassWidget(
         when (dec) {
             is FieldDeclaration -> {
                 val w =
-                    FieldWidget(bodyWidget, dec, configuration = configuration, commandStack = commandStack)
+                    FieldWidget(
+                        bodyWidget,
+                        dec,
+                        configuration = configuration,
+                        commandStack = commandStack
+                    )
                 w.semiColon.addInsert(w, bodyWidget, true)
                 w.semiColon.addDeleteListener {
                     this@ClassWidget.node.members.removeCommand(
@@ -410,14 +414,14 @@ open class ClassWidget(
 
         insert.addKeyEvent(*memberChars.toCharArray(), precondition = {
             if (it.matches(MEMBER_REGEX)) {
-                val split = it.split(Regex("\\s+"))
+                val split = it.trim().split(Regex("\\s+"))
                 isValidType(split[split.lastIndex - 1]) && isValidSimpleName(
                     split[split.lastIndex]
                 )
             } else
                 false
         }) {
-            val split = insert.text.split(Regex("\\s+"))
+            val split = insert.text.trim().split(Regex("\\s+"))
             val modifiers =
                 NodeList(split.dropLast(2).map { matchModifier(it) })
             val dec = if (it.character == ';' || it.character == '=') {
@@ -451,6 +455,76 @@ open class ClassWidget(
             insert.clear()
         }
         return insert
+    }
+
+    private fun createInsert2(seq: SequenceWidget): TextWidget {
+        class MemberInsert : Composite(seq, SWT.NONE), TextWidget {
+            val cursor: TextWidget
+            val modifiers = mutableListOf<Modifier>()
+            var type: TextWidget? = null
+
+            init {
+                layout = ROW_LAYOUT_H
+                font = configuration.font
+                background = configuration.backgroundColor
+                foreground = configuration.foregroundColor
+                cursor = TextWidget.create(this) { _, _, _ -> true }
+                cursor.addKeyEvent(SWT.SPACE) {
+                    val token = cursor.text.trim()
+                    if (type == null && Keyword.values().map { it.name }
+                            .contains(token.uppercase(Locale.getDefault())
+                            )
+                    ) {
+                        modifiers.add(Modifier(Keyword.valueOf(token.uppercase(Locale.getDefault()))))
+                        val mod = newKeywordWidget(this, token)
+                        mod.moveAboveInternal(cursor.widget)
+                        cursor.clear()
+                        requestLayout()
+                    } else if (type == null && isValidType(token)) {
+                        type = TextWidget.create(this, token)
+                        type!!.moveAboveInternal(cursor.widget)
+                        cursor.clear()
+                        requestLayout()
+                    }
+                }
+                cursor.addKeyEvent(
+                    '(',
+                    precondition = { type != null && isValidSimpleName(cursor.text.trim()) }) {
+                    val newMethod = MethodDeclaration(
+                        NodeList(modifiers),
+                        cursor.text,
+                        StaticJavaParser.parseType(type!!.text),
+                        NodeList()
+                    )
+                    newMethod.body.get().statements.add(EmptyStmt())
+                    if (node.isInterface)
+                        newMethod.setBody(null)
+
+                    customizeNewMethodDeclaration(newMethod)
+                    val insertIndex = seq.findIndexByModel(this)
+                    this.dispose()
+                    node.members.addCommand(node, newMethod, insertIndex)
+                }
+                cursor.addFocusLostAction {
+                    if(!cursor.widget.isDisposed)
+                        children.forEach {
+                            if(it != cursor)
+                                it.dispose()
+                        }
+                }
+
+            }
+
+            override val widget: Text
+                get() = cursor.widget
+
+            override fun setFocus(): Boolean = cursor.setFocus()
+
+            override fun addKeyListenerInternal(listener: KeyListener) {
+                TODO("Not yet implemented")
+            }
+        }
+        return MemberInsert()
     }
 
     open fun customizeNewMethodDeclaration(dec: MethodDeclaration) {

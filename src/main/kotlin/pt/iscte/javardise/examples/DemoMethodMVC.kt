@@ -68,7 +68,7 @@ private fun createShell(display: Display, model: MethodDeclaration, editable: Bo
 
             button("on focus") {
                 val child = methodWidget.getChildNodeOnFocus()
-                message {
+                this.shell.message {
                     column {
                         child?.let {
                             label(child::class.simpleName!!)

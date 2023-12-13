@@ -10,7 +10,7 @@ import pt.iscte.javardise.NodeWidget
 import pt.iscte.javardise.basewidgets.ICodeDecoration
 import pt.iscte.javardise.basewidgets.addMark
 import pt.iscte.javardise.basewidgets.addTextbox
-import pt.iscte.javardise.editor.Facade
+import pt.iscte.javardise.editor.CodeEditor
 import pt.iscte.javardise.external.findChild
 import pt.iscte.javardise.external.message
 import pt.iscte.javardise.widgets.members.MethodWidget
@@ -68,14 +68,14 @@ class Process(module: IModule) {
 
     var procedure: IProcedure? = null
 
-    fun setup(facade: Facade, procedure: IProcedure) {
+    fun setup(editor: CodeEditor, procedure: IProcedure) {
         this.procedure = procedure
 
         clearParams()
 
         procedure.parameters.forEach { p ->
-            val w = facade.classWidget?.findChild {
-                it is NodeWidget<*> && it.node === p.getProperty("JP")
+            val w = editor.classOnFocus?.findChild {
+                it is NodeWidget<*> && it.node == p
             }
             val mark = w?.addTextbox("   ", ICodeDecoration.Location.TOP)
             mark?.show()
@@ -85,7 +85,7 @@ class Process(module: IModule) {
             paramBoxes.last().control.addKeyListener(object : KeyAdapter() {
                 override fun keyPressed(e: KeyEvent) {
                     if(e.character == SWT.CR)
-                        message("Result: " + run(facade))
+                        message("Result: " + run(editor))
                 }
             })
     }
@@ -114,11 +114,12 @@ class Process(module: IModule) {
         updateMark(control)
     }
 
-    fun run(facade: Facade): IValue? {
+    fun run(editor: CodeEditor): IValue? {
         check(procedure != null)
         val args = paramBoxes.map { vm.getValue(it.control.text.trim()) }
         return vm.execute(procedure!!, *args.toTypedArray())
     }
+
 
     fun step(control: Composite) {
         current?.let { exec ->

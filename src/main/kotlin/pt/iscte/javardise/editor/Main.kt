@@ -2,22 +2,26 @@ package pt.iscte.javardise.editor
 
 import com.github.javaparser.ParseProblemException
 import com.github.javaparser.StaticJavaParser
+import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.NodeList
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration
+import com.github.javaparser.ast.observer.AstObserverAdapter
+import com.github.javaparser.ast.observer.ObservableProperty
 import org.eclipse.swt.SWT
-import org.eclipse.swt.custom.StackLayout
-import org.eclipse.swt.dnd.Clipboard
-import org.eclipse.swt.dnd.RTFTransfer
-import org.eclipse.swt.dnd.TextTransfer
+import org.eclipse.swt.custom.CTabFolder
+import org.eclipse.swt.custom.CTabItem
+import org.eclipse.swt.custom.SashForm
 import org.eclipse.swt.events.SelectionAdapter
 import org.eclipse.swt.events.SelectionEvent
+import org.eclipse.swt.graphics.Font
+import org.eclipse.swt.graphics.FontData
 import org.eclipse.swt.graphics.Image
 import org.eclipse.swt.graphics.Point
 import org.eclipse.swt.layout.FillLayout
 import org.eclipse.swt.layout.GridData
 import org.eclipse.swt.layout.GridLayout
 import org.eclipse.swt.widgets.*
-import org.eclipse.swt.widgets.List
+import pt.iscte.javardise.Command
 import pt.iscte.javardise.DefaultConfiguration
 import pt.iscte.javardise.examples.StaticClassWidget
 import pt.iscte.javardise.external.*
@@ -32,15 +36,6 @@ import java.io.File
 import java.io.FileNotFoundException
 import java.io.PrintWriter
 import java.util.*
-import kotlin.collections.find
-import kotlin.collections.first
-import kotlin.collections.forEach
-import kotlin.collections.isEmpty
-import kotlin.collections.isNotEmpty
-import kotlin.collections.joinToString
-import kotlin.collections.listOf
-import kotlin.collections.mutableListOf
-import kotlin.collections.set
 
 
 fun main(args: Array<String>) {
@@ -64,6 +59,14 @@ fun main(args: Array<String>) {
         CodeEditor(display, root).open()
 }
 
+object Settings {
+    var font = Font(Display.getDefault(), "Courier", 14, SWT.NONE)
+
+    fun updateFont(name: String, size: Int) {
+        font.dispose()
+        font = Font(Display.getDefault(), name, size, SWT.NONE)
+    }
+}
 
 data class TabData(
     val file: File,
@@ -73,176 +76,241 @@ data class TabData(
 
 
 class CodeEditor(val display: Display, val folder: File) {
+    private val shell: Shell
+    private val toolbar: ToolBar
+    private val tabs: CTabFolder
+    private val console: Text
 
-    private val shell = Shell(display)
+    private val javaIcon = loadImage("java.png")
+    private val textIcon = loadImage( "text-format.png")
 
-    val openTabs = mutableListOf<Composite>()
-    val focusMap = WeakHashMap<Composite, Control>()
-    val stacklayout = StackLayout()
+    private val actions: MutableMap<Action, ToolItem> = mutableMapOf()
 
-    val classOnFocus: ClassWidget?
-        get() = if (stacklayout.topControl == null)
-            null
-        else
-            (stacklayout.topControl.data as TabData).classWidget
+    private val defaultActions = listOf(
+        object : Action {
+            override val name = "New file"
+            override val iconPath = "new-document.png"
+            override fun run(editor: CodeEditor, toggle: Boolean) {
+                editor.shell.prompt("New file", "name") {
+                    val f = File(folder, it)
+                    if(f.exists()) {
+                        editor.shell.message { label("File $f already exists.") }
+                    }
+                    else {
+                        f.createNewFile()
+                        val tab = createFileTab(f)
+                        tab.parent.selection = tab
+                    }
+                }
+            }
+        },
+        object : Action {
+            override val name = "Settings"
+            override val iconPath = "settings.png"
+            override fun run(editor: CodeEditor, toggle: Boolean) {
+                editor.shell.message {
+                    grid(2) {
+                        label("Font size")
+                        text(Settings.font.fontData.first().getHeight().toString()) {
+                            addModifyListener {
+                                try {
+                                    val h = text.toInt()
+                                    Settings.updateFont("Courier", h)
+                                    allClassWidgets().forEach {
+                                        it?.traverse {
+                                            it.font = Settings.font
+                                            true
+                                        }
+                                        it?.requestLayout()
+                                    }
+                                }
+                                catch (_:NumberFormatException) { }
+                            }
+                        }
+                    }
+                }
+            }
+        }
 
-    val actions: Map<Action, ToolItem>
-
-    val facade = object : Facade {
-        override val file: File?
-            get() = (stacklayout.topControl?.data as? TabData)?.file
-        override val model: ClassOrInterfaceDeclaration?
-            get() = (stacklayout.topControl?.data as? TabData)?.model
-        override val classWidget: ClassWidget?
-            get() = (stacklayout.topControl?.data as? TabData)?.classWidget
-
-    }
-
+    )
     init {
         require(folder.exists() && folder.isDirectory)
 
-        shell.layout = GridLayout(2, false)
+        shell = Shell(display)
+        shell.layout = GridLayout(1, false)
         shell.text = "Javardise: ${folder.absolutePath}"
 
-        val fileList = List(shell, SWT.BORDER or SWT.MULTI or SWT.V_SCROLL)
-        val gdata = GridData(GridData.VERTICAL_ALIGN_FILL)
-        gdata.minimumWidth = 150
-        fileList.layoutData = gdata
+        toolbar = ToolBar(shell, SWT.NONE)
 
         val comp = Composite(shell, SWT.NONE)
-        comp.layout = GridLayout()
+        comp.layout = GridLayout(2, false)
         comp.layoutData = GridData(GridData.FILL_BOTH)
-        val bar = ToolBar(comp, SWT.NONE)
 
-        // TODO ToolItem SEPARATOR
-        actions = ServiceLoader.load(Action::class.java).associateWith {
-            val item = ToolItem(bar, if (it.toggle) SWT.TOGGLE else SWT.PUSH)
-            if(it.iconPath == null)
-                item.text = it.name
-            it.iconPath?.let {path->
-                val icon = Image(Display.getDefault(), this::class.java.classLoader.getResourceAsStream(path))
-                item.image = icon
-                item.toolTipText = it.name
-            }
+        val gdata = GridData(GridData.VERTICAL_ALIGN_FILL)
+        gdata.minimumWidth = 150
 
-            it.init(this@CodeEditor)
-            item.addSelectionListener(object : SelectionAdapter() {
-                override fun widgetSelected(e: SelectionEvent?) {
-                    if (it.isEnabled(facade)) {
-                        it.run(facade, item.selection)
-                        setActionsEnabled()
-                    }
-                }
-            })
-            item
-        }
-        setActionsEnabled()
-
-        val editorArea = Composite(comp, SWT.NONE)
-        editorArea.layoutData = GridData(GridData.FILL_BOTH)
-        editorArea.layout = stacklayout
-
-        fileList.addSelectionListener(object : SelectionAdapter() {
-            var current = -1
-            override fun widgetSelected(e: SelectionEvent) {
-                if (fileList.selection.isNotEmpty() && current != fileList.selectionIndex) {
-                    current = fileList.selectionIndex
-                    val find =
-                        openTabs.find { (it.data as TabData).file.name == fileList.selection.first() }
-                    if (find != null) {
-                        stacklayout.topControl = find
-                        editorArea.layout()
-                        // TODO repor
-//                        if (focusMap.containsKey(find))
-//                            focusMap[find]?.setFocus()
-                    } else {
-                        val tab = createTab(
-                            File(
-                                folder.absoluteFile,
-                                fileList.selection.first()
-                            ), editorArea
-                        )
-                        openTabs.add(tab)
-                        stacklayout.topControl = tab
-
-                        editorArea.layout()
-
-                        val data = tab.data as TabData
-//                        if (data.model != null)
-//                            compile(data.model)
-                    }
-                }
-            }
-        })
-
-        // FileFilter { it.name.endsWith(".java") }
-        folder.listFiles()?.forEach {
-            fileList.add(it.name)
+        val sash = SashForm(comp, SWT.VERTICAL).apply {
+            layoutData = GridData(GridData.FILL_BOTH)
         }
 
+        tabs = createTabArea(sash)
 
-        fileList.menu {
-            item("New file") {
-                shell.prompt("New file", "name") {
-                    val f = File(folder, it)
-                    f.createNewFile()
-                    fileList.add(f.name)
-                    fileList.requestLayout()
-                    fileList.select(fileList.itemCount)
-                }
-            }
-            item("Delete") {
-                shell.prompt(
-                    "Heads up!",
-                    "Are you sure you want to permanently delete this file?"
-                ) {
-                    val f = File(folder, fileList.selection[0])
-                    f.delete()
-                }
+        buildTabs()
+
+        fun Iterable<Action>.buildToolBarItems() =
+            forEach {
+                actions[it] = toolBarItem(it)
             }
 
+        defaultActions.buildToolBarItems()
+        ToolItem(toolbar, SWT.SEPARATOR)
+        val pluginActions = ServiceLoader.load(Action::class.java)
+        pluginActions.buildToolBarItems()
 
-            item("Open in file system") {
-                Desktop.getDesktop().browseFileDirectory(folder);
-            }
-            item("Copy source as text") {
-                val f = File(folder, fileList.selection[0])
-                val parse = StaticJavaParser.parse(f)
-                val clipboard = Clipboard(display)
-                val plainText = parse.toString()
-                val textTransfer = TextTransfer.getInstance()
-                clipboard.setContents(
-                    arrayOf(plainText),
-                    arrayOf(textTransfer)
-                )
-                clipboard.dispose()
-            }
-//            item("Compile") {
-//                if (stacklayout.topControl != null) {
-//                    val model = (stacklayout.topControl.data as TabData).model
-//                    model?.let {
-//                        compile(it)
-//                    }
-//                }
-//            }
-//            item("Documentation") {
-//                val model = (stacklayout.topControl.data as TabData).model
-//                shell {
-//                    ClassDocumentationView(this, model!!)
-//                }.open()
-//            }
-
+        console = Text(sash, SWT.MULTI or SWT.BORDER).apply {
+            editable = false
+            font = Font(display, FontData("Courier", 14, SWT.NONE))
+            toolTipText = "Console (read-only)"
+            background = Display.getDefault().getSystemColor(SWT.COLOR_GRAY)
         }
+
+        sash.setWeights(90, 10)
 
         handleShortcuts()
-        display.addFilter(SWT.FocusIn) {
+        setActionsEnabled()
+        addCommandObserver { _, _ ->
             setActionsEnabled()
         }
     }
 
+    fun console(s: String?) {
+        console.text += s
+    }
+
+    private fun createTabArea(comp: Composite) =
+        CTabFolder(comp, SWT.BORDER).apply {
+            layoutData = GridData(GridData.FILL_BOTH)
+            menu {
+                item("Delete") {
+                    val file = this@apply.selection?.data as? File
+                    file?.let {
+                        shell.promptConfirmation(
+                            "Are you sure you want to permanently delete the file ${it.name}?"
+                        ) {
+                            it.delete()
+                            this@apply.selection.dispose()
+                        }
+                    }
+                }
+
+                item("Open in file system") {
+                    val file = this@apply.selection.data as? File
+                    file?.let {
+                        Desktop.getDesktop().browseFileDirectory(it)
+                    } ?: Desktop.getDesktop().browseFileDirectory(folder)
+                }
+            }
+        }
+
+
+    fun open() {
+        shell.size = Point(600, 800)
+        shell.open()
+        while (!shell.isDisposed) {
+            if (!display.readAndDispatch()) display.sleep()
+        }
+        display.dispose()
+    }
+
+    private fun buildTabs() {
+
+        val files = (folder.listFiles() ?: emptyArray<File>())
+        files.sortWith { a, b ->
+            if (a.extension == "java" && b.extension != "java") -1
+            else if (a.extension != "java" && b.extension == "java") 1
+            else a.nameWithoutExtension.compareTo(b.nameWithoutExtension)
+        }
+        for (f in files) {
+            createFileTab(f)
+        }
+        tabs.addSelectionListener(object : SelectionAdapter() {
+            override fun widgetSelected(e: SelectionEvent) {
+                setActionsEnabled()
+            }
+        })
+    }
+
+    private fun createFileTab(f: File): CTabItem {
+        val item = CTabItem(tabs, SWT.NONE)
+        item.text = if (f.extension == "java") f.nameWithoutExtension else f.name
+        item.image = if (f.extension == "java") javaIcon else textIcon
+        val tab = createTab(f, tabs, item)
+        item.setControl(tab)
+        item.data = f
+        return item
+    }
+
+    val classOnFocus: ClassWidget? get() = (tabs.selection?.control?.data as? TabData)?.classWidget
+    fun getClassWidget(file: File) = (tabs.items.find { it.data == file }
+        ?.control?.data as? TabData)?.classWidget
+
+    fun allClassWidgets() = tabs.items.filter { it.control?.data is TabData }.map { (it.control.data as TabData).classWidget }
+
+    fun setFileErrors(files: Set<File>) {
+        tabs.items.forEach {
+            val color = if (files.contains(it.data))
+                Display.getDefault().getSystemColor(SWT.COLOR_RED)
+            else
+                Display.getDefault().getSystemColor(SWT.COLOR_TITLE_FOREGROUND)
+            it.selectionForeground = color
+            it.foreground = color
+        }
+    }
+
+    fun addCommandObserver(o: (Command, Boolean) -> Unit) {
+        tabs.items.filter { (it.control.data is TabData) }
+            .forEach {
+                (it.control.data as TabData).classWidget?.commandStack?.addObserver(o)
+            }
+    }
+
+    fun removeCommandObserver(o: (Command, Boolean) -> Unit) {
+        tabs.items.filter { (it.control.data is TabData) }
+            .forEach {
+                (it.control.data as TabData).classWidget?.commandStack?.removeObserver(o)
+            }
+    }
+
+    private fun toolBarItem(action: Action) =
+        ToolItem(toolbar, if (action.toggle) SWT.CHECK else SWT.PUSH).apply {
+            if (action.iconPath == null)
+                text = action.name
+            action.iconPath?.let { path ->
+                val icon = Image(Display.getDefault(), this::class.java.classLoader.getResourceAsStream(path))
+                image = icon
+                toolTipText = action.name
+            }
+
+            action.init(this@CodeEditor)
+            if(action.toggle && action.toggleDefault) {
+                selection = true
+                action.run(this@CodeEditor, selection)
+                setActionsEnabled()
+            }
+
+            addSelectionListener(object : SelectionAdapter() {
+                override fun widgetSelected(e: SelectionEvent?) {
+                    if (action.isEnabled(this@CodeEditor)) {
+                        action.run(this@CodeEditor, selection)
+                        setActionsEnabled()
+                    }
+                }
+            })
+        }
+
     private fun setActionsEnabled() {
         actions.forEach {
-            it.value.enabled = it.key.isEnabled(facade)
+            it.value.enabled = it.key.isEnabled(this)
         }
     }
 
@@ -285,8 +353,10 @@ class CodeEditor(val display: Display, val folder: File) {
 
     private fun createTab(
         file: File,
-        comp: Composite
+        comp: Composite,
+        item: CTabItem
     ): Composite {
+        require(file.exists())
         val tab = Composite(comp, SWT.BORDER)
         val layout = FillLayout()
         tab.layout = layout
@@ -296,18 +366,21 @@ class CodeEditor(val display: Display, val folder: File) {
         else
             file.name
 
-        val model = if (file.exists()) {
-            try {
-                val cu = loadCompilationUnit(file)
-                cu.findMainClass() ?: ClassOrInterfaceDeclaration(
-                    NodeList(), false, typeName
-                )
-            } catch (e: ParseProblemException) {
-                System.err.println("Could not load: $file")
-                null
+        val model = try {
+            val cu = loadCompilationUnit(file)
+            val clazz = cu.findMainClass() ?: ClassOrInterfaceDeclaration(
+                NodeList(), false, typeName
+            )
+            if (cu.findMainClass() == null) {
+                val writer = PrintWriter(file, "UTF-8")
+                writer.println(clazz.toString())
+                writer.close()
             }
-        } else {
-            ClassOrInterfaceDeclaration(NodeList(), false, typeName)
+            clazz
+
+        } catch (e: ParseProblemException) {
+            System.err.println("Could not load: $file")
+            null
         }
 
         if (model == null) {
@@ -321,28 +394,13 @@ class CodeEditor(val display: Display, val folder: File) {
             val w = tab.scrollable {
                 createWidget(file.extension, it, model)
             }
-            // TODO not working
-            w.addFocusObserver { control ->
-                focusMap[tab] = control
-            }
+
             w.setAutoScroll()
 
-            // TODO move to action
-//            val scroll = w.parent as ScrolledComposite
-//            scroll.verticalBar.addListener(SWT.Selection, object : Listener {
-//                override fun handleEvent(p0: Event?) {
-//                    compileErrors[model]?.forEach {
-//                        it.show()
-//                    }
-//                }
-//            })
+            addAutoRenameFile(model, file, item)
 
-            w.commandStack.addObserver { _, _ ->
-                val writer = PrintWriter(file)
-                writer.println(model.toString())
-                writer.close()
-
-                // compile(model)
+            w.commandStack.addObserver { cmd, _ ->
+                saveAndSyncRanges(item.data as File, model)
             }
             tab.data = TabData(file, model, w)
 
@@ -351,6 +409,96 @@ class CodeEditor(val display: Display, val folder: File) {
 
         return tab
     }
+
+    private fun addAutoRenameFile(
+        model: ClassOrInterfaceDeclaration,
+        file: File,
+        item: CTabItem
+    ) {
+        model.register(object : AstObserverAdapter() {
+            override fun propertyChange(
+                observedNode: Node,
+                property: ObservableProperty,
+                oldValue: Any?,
+                newValue: Any?
+            ) {
+                if (property == ObservableProperty.NAME) {
+                    val newFile = File(folder, "$newValue.java")
+                    if (newFile != file) {
+                        newFile.createNewFile()
+                        file.delete()
+                        item.text = newValue.toString()
+                        item.data = newFile
+                    }
+                }
+            }
+        })
+    }
+
+    private fun saveAndSyncRanges(file: File, model: ClassOrInterfaceDeclaration) {
+        val writer = PrintWriter(file, "UTF-8")
+        writer.println((model.findCompilationUnit().getOrNull ?: model).toString())
+        writer.close()
+
+        val parse = StaticJavaParser.parse(file)
+
+        if (parse.types.first == model)
+            println("!! ASTs are different")
+
+        val srcNodeList = mutableListOf<Node>()
+        parse.types.first.get().accept(FlatASTVisitor(), srcNodeList)
+
+        val modelNodeList = mutableListOf<Node>()
+        model.accept(FlatASTVisitor(), modelNodeList)
+
+        srcNodeList.forEachIndexed { i, node ->
+            if (node != modelNodeList[i])
+                println("!" + node + "   " + modelNodeList[i])
+
+        }
+        srcNodeList.forEachIndexed { i, n ->
+            modelNodeList[i].setRange(n.range.get())
+        }
+    }
+
+
+
+    private fun createWidget(
+        ext: String,
+        parent: Composite,
+        model: ClassOrInterfaceDeclaration
+    ): ClassWidget =
+        when (ext) {
+            "sjava" -> StaticClassWidget(parent, model)
+            "fjava" -> StaticClassWidget(
+                parent,
+                model,
+                configuration = object : DefaultConfiguration() {
+                    override val fontSize: Int
+                        get() = Settings.font.fontData.first().getHeight()
+
+                    override val statementFeatures
+                        get() = listOf(
+                            EmptyStatementFeature,
+                            IfFeature,
+                            VariableDeclarationFeature,
+                            CallFeature,
+                            ReturnFeature
+                        )
+
+                })
+            //"mjava" -> MainScriptWidget(parent, model)
+            else -> ClassWidget(parent, model, configuration = object : DefaultConfiguration() {
+                override val fontSize: Int
+                    get() = Settings.font.fontData.first().getHeight()
+            })
+        }
+
+
+
+
+    private fun loadImage(filename: String) = Image(display, this.javaClass.classLoader.getResourceAsStream(filename))
+
 
     private fun addUndoScale(
         tab: Composite,
@@ -383,81 +531,5 @@ class CodeEditor(val display: Display, val folder: File) {
             scale.requestLayout()
         }
     }
-
-    fun createWidget(
-        ext: String,
-        parent: Composite,
-        model: ClassOrInterfaceDeclaration
-    ): ClassWidget =
-        when (ext) {
-            "sjava" -> StaticClassWidget(parent, model)
-            "fjava" -> StaticClassWidget(
-                parent,
-                model,
-                configuration = object : DefaultConfiguration() {
-                    override val fontSize: Int
-                        get() = 20
-
-                    override val statementFeatures
-                        get() = listOf(
-                            EmptyStatementFeature,
-                            IfFeature,
-                            VariableDeclarationFeature,
-                            CallFeature,
-                            ReturnFeature
-                        )
-
-                })
-            //"mjava" -> MainScriptWidget(parent, model)
-            else -> ClassWidget(parent, model)
-        }
-
-
-    fun notFoundLabel(p: Composite) = Composite(p, SWT.BORDER).apply {
-        layout = FillLayout()
-        Label(this, SWT.NONE).apply {
-            text = "No public class found"
-        }
-    }
-
-
-    fun open() {
-        shell.size = Point(600, 800)
-        shell.open()
-        while (!shell.isDisposed) {
-            if (!display.readAndDispatch()) display.sleep()
-        }
-        display.dispose()
-    }
-
-
-//    private fun load(file: File): ClassOrInterfaceDeclaration {
-//        require(file.name.endsWith(".java")) {
-//            "Java file must have '.java' extension"
-//        }
-//        val typeName = file.name.dropLast(".java".length)
-//
-//        require(SourceVersion.isIdentifier(typeName)) {
-//            "'$typeName' is not a valid identifier for a Java type"
-//        }
-//
-//        val model = if (file.exists()) {
-//            val cu = loadCompilationUnit(file)
-//            cu.findMainClass() ?: ClassOrInterfaceDeclaration(
-//                NodeList(), false, typeName
-//            )
-//        } else {
-//            val cu = CompilationUnit()
-//            cu.addClass(typeName)
-//        }
-//
-//        model.observeProperty<SimpleName>(ObservableProperty.NAME) {
-//            shell.text = it?.toString() ?: "No public class found"
-//        }
-//        shell.requestLayout()
-//        return model
-//    }
-
-
 }
 

@@ -54,7 +54,9 @@ interface TextWidget {
 
     fun setAtLeft() = widget.setSelection(0, 0)
     fun setAtRight() = widget.setSelection(widget.text.length)
-    fun setFocus() = widget.setFocus()
+    fun setFocus() : Boolean =
+        if (!widget.isDisposed) widget.setFocus()
+        else false
 
     fun moveBelowInternal(control: Control) = widget.moveBelow(control)
     fun moveAboveInternal(control: Control) = widget.moveAbove(control)
