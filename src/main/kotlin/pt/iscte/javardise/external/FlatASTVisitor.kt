@@ -2,6 +2,7 @@ package pt.iscte.javardise.external
 
 import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration
+import com.github.javaparser.ast.body.ConstructorDeclaration
 import com.github.javaparser.ast.body.MethodDeclaration
 import com.github.javaparser.ast.expr.AssignExpr
 import com.github.javaparser.ast.nodeTypes.NodeWithAnnotations
@@ -33,6 +34,11 @@ class FlatASTVisitor : VoidVisitorWithDefaults<MutableList<Node>>() {
                 n.body.getOrNull?.accept(this, list)
             }
 
+            is ConstructorDeclaration -> {
+                n.name.accept(this, list)
+                n.parameters.forEach { it.accept(this, list) }
+                n.body.accept(this, list)
+            }
             is WhileStmt -> {
                 n.condition.accept(this, list)
                 n.body.accept(this, list)

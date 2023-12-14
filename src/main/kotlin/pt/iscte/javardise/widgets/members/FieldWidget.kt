@@ -130,6 +130,10 @@ class FieldWidget(
         type.setFocus()
     }
 
+    override fun setFocus(): Boolean {
+        return firstRow.setFocus()
+    }
+
     fun focusExpressionOrSemiColon() {
         initializer?.setFocus() ?: semiColon.setFocus()
     }

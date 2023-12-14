@@ -215,6 +215,7 @@ open class ClassWidget(
 
         name = SimpleNameWidget(firstRow, dec)
         name.addFocusLostAction(::isValidClassType) {
+           if(node.nameAsString != it)
             commandStack.execute(object : Command {
                 override val target: Node
                     get() = node
@@ -324,6 +325,9 @@ open class ClassWidget(
         widgetFocusObservers.add(action)
     }
 
+    override fun setFocus(): Boolean {
+        return keyword.setFocus()
+    }
     /**
      * Removes a previously registered an observer.
      */

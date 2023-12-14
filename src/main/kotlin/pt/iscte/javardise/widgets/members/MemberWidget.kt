@@ -72,6 +72,13 @@ abstract class MemberWidget<N : Node>(
                 traverse(SWT.TRAVERSE_TAB_NEXT)
         }
 
+
+        override fun setFocus(): Boolean {
+            if(children.isEmpty())
+                return false
+            else
+                return children.first().setFocus()
+        }
     }
 
     init {

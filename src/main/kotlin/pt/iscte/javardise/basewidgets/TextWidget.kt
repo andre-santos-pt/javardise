@@ -254,9 +254,9 @@ interface TextWidget {
                     }
 
                     else if (e.keyCode == SWT.ARROW_LEFT && (!text.editable || text.isAtBeginning)) {
-                        if (text.parent.parent.parent is ClassWidget && text.parent.children.first() == text)
-                            text.parent.parent.children.last().setFocus()
-                        else
+//                        if (text.parent.parent.parent is ClassWidget && text.parent.children.first() == text)
+//                            text.parent.parent.children.last().setFocus()
+//                        else
                             text.traverse(SWT.TRAVERSE_TAB_PREVIOUS)
                         e.doit = false
                     }
