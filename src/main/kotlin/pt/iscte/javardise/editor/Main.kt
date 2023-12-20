@@ -13,10 +13,7 @@ import org.eclipse.swt.custom.CTabItem
 import org.eclipse.swt.custom.SashForm
 import org.eclipse.swt.events.SelectionAdapter
 import org.eclipse.swt.events.SelectionEvent
-import org.eclipse.swt.graphics.Font
-import org.eclipse.swt.graphics.FontData
-import org.eclipse.swt.graphics.Image
-import org.eclipse.swt.graphics.Point
+import org.eclipse.swt.graphics.*
 import org.eclipse.swt.layout.FillLayout
 import org.eclipse.swt.layout.GridData
 import org.eclipse.swt.layout.GridLayout
@@ -169,11 +166,11 @@ class CodeEditor(val display: Display, val folder: File) {
         val pluginActions = ServiceLoader.load(Action::class.java)
         pluginActions.buildToolBarItems()
 
-        console = Text(sash, SWT.MULTI or SWT.BORDER).apply {
+        console = Text(sash, SWT.MULTI or SWT.BORDER or SWT.V_SCROLL or SWT.H_SCROLL).apply {
             editable = false
             font = Font(display, FontData("Courier", 14, SWT.NONE))
             toolTipText = "Console (read-only)"
-            background = Display.getDefault().getSystemColor(SWT.COLOR_GRAY)
+            //background = Color(Display.getDefault(), 220, 220, 220)
         }
 
         sash.setWeights(90, 10)
@@ -438,7 +435,7 @@ class CodeEditor(val display: Display, val folder: File) {
         })
     }
 
-    private fun saveAndSyncRanges(file: File, model: ClassOrInterfaceDeclaration) {
+    private fun saveAndSyncRangesOld(file: File, model: ClassOrInterfaceDeclaration) {
         val writer = PrintWriter(file, "UTF-8")
         writer.println((model.findCompilationUnit().getOrNull ?: model).toString())
         writer.close()
@@ -459,6 +456,25 @@ class CodeEditor(val display: Display, val folder: File) {
                 println("!" + node + "   " + modelNodeList[i])
 
         }
+        srcNodeList.forEachIndexed { i, n ->
+            modelNodeList[i].setRange(n.range.get())
+        }
+    }
+
+    private fun saveAndSyncRanges(file: File, model: ClassOrInterfaceDeclaration) {
+        val writer = PrintWriter(file, "UTF-8")
+        writer.println((model.findCompilationUnit().getOrNull ?: model).toString())
+        writer.close()
+
+        val parse = StaticJavaParser.parse(file).types.first.get()
+        val srcNodeList = mutableListOf<Node>()
+        parse.accept(NodeCollectorVisitor(), srcNodeList)
+
+        val modelNodeList = mutableListOf<Node>()
+        model.accept(NodeCollectorVisitor(), modelNodeList)
+
+        check(modelNodeList.size == srcNodeList.size)
+
         srcNodeList.forEachIndexed { i, n ->
             modelNodeList[i].setRange(n.range.get())
         }
