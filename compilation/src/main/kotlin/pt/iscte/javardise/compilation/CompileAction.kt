@@ -123,6 +123,11 @@ class CompileAction : Action {
 
             is StringExpressionWidget -> c.text
 
+            is FieldAccessExpressionWidget -> if(c.node.scope.isThisExpr)
+                c.tail
+            else
+                c.head
+
             is ExpressionWidget<*> -> c.head
 
             else -> null
@@ -163,13 +168,13 @@ class CompileAction : Action {
         textWidget?.widget?.addDisposeListener(disposeListener)
 
         return {
-            if (!control.isDisposed) {
-                textWidget?.widget?.traverse { c ->
+            if (textWidget?.widget?.isDisposed == false) {
+                textWidget.widget.traverse { c ->
                     c.background = configuration.backgroundColor
                     true
                 }
                 tip?.dispose()
-                textWidget?.widget?.removeFocusListener(listener)
+                textWidget.widget.removeFocusListener(listener)
             }
         }
     }

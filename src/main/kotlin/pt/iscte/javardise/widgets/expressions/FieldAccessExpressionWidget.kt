@@ -52,6 +52,10 @@ class FieldAccessExpressionWidget(
             editEvent(MethodCallExpr(node.scope.clone(), nameText()))
         }
 
+        nameWidget.addDeleteListener {
+            editEvent(NameExpr(node.nameAsString))
+        }
+
         nameWidget.addDeleteEmptyListener {
             editEvent(node.scope.clone())
         }
@@ -65,7 +69,7 @@ class FieldAccessExpressionWidget(
         scopeWidget = createExpressionWidget(this, expression) {
             if (it == null)
                 editEvent(null)
-            else if(it is NameExpr || it is MethodCallExpr || it is ArrayAccessExpr)
+            else if(it is ThisExpr || it is NameExpr || it is MethodCallExpr || it is ArrayAccessExpr)
                 node.modifyCommand(node.scope, it, node::setScope)
         }
         scopeWidget!!.moveAbove(dot.label)

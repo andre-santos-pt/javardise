@@ -26,8 +26,6 @@ class AssignExpressionWidget(
     var target: ExpressionWidget<*>
     val operator: TokenWidget
     var value: ExpressionWidget<*>
-
-
     init {
         target = createTargetWidget(node.target)
 
@@ -102,7 +100,19 @@ class AssignExpressionWidget(
                     )
                 }
             }
-
+        }
+        w.head.addKeyEvent('.', precondition = { node.target is NameExpr}) {
+            if(!w.head.isAtBeginning && !w.tail.isAtBeginning) {
+                val left = w.head.textUntilCursor
+                val right = w.head.textAfterCursor
+                if((isValidSimpleName(left) || left == "this") && isValidSimpleName(right)) {
+                    val scope = if(left == "this") ThisExpr() else NameExpr(left)
+                    editEvent(
+                        AssignExpr(FieldAccessExpr(scope, right),
+                            node.value.clone(),node.operator)
+                    )
+                }
+            }
         }
         return w;
     }
