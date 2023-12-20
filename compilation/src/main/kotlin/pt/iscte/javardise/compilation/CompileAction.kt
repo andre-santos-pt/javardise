@@ -68,10 +68,11 @@ class CompileAction : Action {
         errorRemovers.clear()
 
         val result = compileNoOutput(editor.folder)
-        val filesWithErrors = result.first.map { (it.source as JavaSourceFromString).file }.toSet()
+        val diagnostics = result.first.filter { it.source is JavaSourceFromString }
+        val filesWithErrors = diagnostics.map { (it.source as JavaSourceFromString).file }.toSet()
         editor.setFileErrors(filesWithErrors)
 
-        result.first.forEach {
+        diagnostics.forEach {
             val srcFile = (it.source as JavaSourceFromString).file
             println("$srcFile ${it.startPosition}  ${it.endPosition} ${it.code}")
 
