@@ -9,8 +9,8 @@ plugins {
 group = "pt.iscte.javardise"
 version = "1.0.2"
 
-val mac = System.getProperty("os.name").toLowerCase().contains("mac")
-val win = System.getProperty("os.name").toLowerCase().contains("windows")
+val mac = System.getProperty("os.name").lowercase().contains("mac")
+val win = System.getProperty("os.name").lowercase().contains("windows")
 
 val os = if (mac)
     "macos"
@@ -69,7 +69,8 @@ dependencies {
 
 application {
     mainClass.set("pt.iscte.javardise.editor.MainKt")
-    applicationDefaultJvmArgs = listOf("-XstartOnFirstThread")
+    if(!win)
+        applicationDefaultJvmArgs = listOf("-XstartOnFirstThread")
 }
 
 tasks.compileJava {
@@ -124,7 +125,8 @@ tasks {
 
 tasks.test {
     useJUnitPlatform()
-    jvmArgs = listOf("-XstartOnFirstThread")
+    if(!win)
+        jvmArgs = listOf("-XstartOnFirstThread")
 }
 
 task("copyDependencies", Copy::class) {

@@ -77,11 +77,7 @@ class RunAction : Action {
                 })
 
                 p.vm.addListener(object : IVirtualMachine.IListener {
-                    override fun procedureEnd(
-                        p: IProcedureDeclaration,
-                        args: List<IValue>,
-                        result: IValue?
-                    ) {
+                    override fun procedureEnd(procedure: IProcedure, args: List<IValue>, result: IValue?) {
 
                         message("!Result", "$result")
                     }

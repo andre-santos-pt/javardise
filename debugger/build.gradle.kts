@@ -12,7 +12,7 @@ repositories {
 
 dependencies {
     implementation(project(":"))
-    implementation(files("libs/strudel-0.8.jar"))
+    implementation(files("../libs/strudel-0.8.2-standalone.jar"))
 }
 
 tasks.getByName<Test>("test") {
@@ -25,12 +25,12 @@ application {
 }
 
 
-val compileKotlin: org.jetbrains.kotlin.gradle.tasks.KotlinCompile by tasks
-compileKotlin.kotlinOptions {
-    jvmTarget = "1.8"
-}
-
-val compileTestKotlin: org.jetbrains.kotlin.gradle.tasks.KotlinCompile by tasks
-compileTestKotlin.kotlinOptions {
-    jvmTarget = "1.8"
-}
+//val compileKotlin: org.jetbrains.kotlin.gradle.tasks.KotlinCompile by tasks
+//compileKotlin.kotlinOptions {
+//    jvmTarget = "1.8"
+//}
+//
+//val compileTestKotlin: org.jetbrains.kotlin.gradle.tasks.KotlinCompile by tasks
+//compileTestKotlin.kotlinOptions {
+//    jvmTarget = "1.8"
+//}
