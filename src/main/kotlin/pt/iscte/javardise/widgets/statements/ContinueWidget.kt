@@ -17,7 +17,7 @@ class ContinueWidget(
     override val parentBlock: BlockStmt
 ) :
     StatementWidget<ContinueStmt>(parent, node) {
-    val keyword: TokenWidget
+    override val keyword: TokenWidget
     override val tail: TextWidget
 
     init {

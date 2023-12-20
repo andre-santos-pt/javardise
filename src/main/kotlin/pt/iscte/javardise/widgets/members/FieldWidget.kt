@@ -85,7 +85,7 @@ class FieldWidget(
             target = dec.variable
         ) {
             name.set(it.id)
-            name.textWidget.data = it
+            name.textWidget.widget.data = it
         }
 
         observeProperty<Expression>(

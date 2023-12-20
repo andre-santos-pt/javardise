@@ -24,7 +24,7 @@ class ReturnWidget(
     override val parentBlock: BlockStmt
 ) :
     StatementWidget<ReturnStmt>(parent, node) {
-    val keyword: TokenWidget
+    override val keyword: TokenWidget
     var expression: ExpressionWidget<*>? = null
     override val tail: TextWidget
 

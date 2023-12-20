@@ -27,7 +27,7 @@ class ForWidget(
 ) :
     StatementWidget<ForStmt>(parent, node), SequenceContainer<ForStmt> {
 
-    lateinit var keyword: TokenWidget
+    override lateinit var keyword: TokenWidget
     var init: ExpressionWidget<*>? = null
     lateinit var firstSemiColon: FixedToken
     lateinit var condition: ExpressionWidget<*>

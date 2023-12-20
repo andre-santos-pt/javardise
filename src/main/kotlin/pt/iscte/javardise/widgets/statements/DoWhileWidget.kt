@@ -25,7 +25,7 @@ class DoWhileWidget(
 ) :
     StatementWidget<DoStmt>(parent, node), SequenceContainer<DoStmt> {
 
-    lateinit var keyword: TokenWidget
+    override lateinit var keyword: TokenWidget
     lateinit var condition: ExpressionWidget<*>
     lateinit var lastRow: Composite
     override lateinit var bodyWidget: SequenceWidget

@@ -2,7 +2,6 @@ package pt.iscte.javardise.basewidgets
 
 import org.eclipse.swt.SWT
 import org.eclipse.swt.events.*
-import org.eclipse.swt.graphics.Point
 import org.eclipse.swt.widgets.*
 import pt.iscte.javardise.Configuration
 import pt.iscte.javardise.widgets.members.ClassWidget

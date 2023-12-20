@@ -25,7 +25,7 @@ class AssertWidget(
     override val parentBlock: BlockStmt
 ) :
     StatementWidget<AssertStmt>(parent, node) {
-    val keyword: TokenWidget
+    override val keyword: TokenWidget
     var expression: ExpressionWidget<*>? = null
     override val tail: TokenWidget
 

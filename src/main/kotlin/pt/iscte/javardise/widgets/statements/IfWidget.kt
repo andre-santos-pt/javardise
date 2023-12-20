@@ -23,7 +23,7 @@ class IfWidget(
 
     var column: Composite
     lateinit var firstRow: Composite
-    lateinit var keyword: TokenWidget
+    override lateinit var keyword: TokenWidget
     lateinit var condition: ExpressionWidget<*>
     override lateinit var bodyWidget: SequenceWidget
     override val body: BlockStmt = node.thenStmt.asBlockStmt()

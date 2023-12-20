@@ -9,6 +9,7 @@ import com.github.javaparser.ast.observer.AstObserverAdapter
 import com.github.javaparser.ast.observer.ObservableProperty
 import org.eclipse.swt.SWT
 import org.eclipse.swt.custom.CTabFolder
+import org.eclipse.swt.custom.CTabFolder2Listener
 import org.eclipse.swt.custom.CTabItem
 import org.eclipse.swt.custom.SashForm
 import org.eclipse.swt.events.SelectionAdapter
@@ -269,6 +270,8 @@ class CodeEditor(val display: Display, val folder: File) {
             .forEach {
                 (it.control.data as TabData).classWidget?.commandStack?.addObserver(o)
             }
+
+       // TODO add to files that are added meanwhile
     }
 
     fun removeCommandObserver(o: (Command, Boolean) -> Unit) {
@@ -473,7 +476,9 @@ class CodeEditor(val display: Display, val folder: File) {
         val modelNodeList = mutableListOf<Node>()
         model.accept(NodeCollectorVisitor(), modelNodeList)
 
-        check(modelNodeList.size == srcNodeList.size)
+        check(modelNodeList.size == srcNodeList.size) {
+            srcNodeList.toString()+ System.lineSeparator() + modelNodeList.toString()
+        }
 
         srcNodeList.forEachIndexed { i, n ->
             modelNodeList[i].setRange(n.range.get())

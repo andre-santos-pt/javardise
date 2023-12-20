@@ -23,7 +23,7 @@ class ForEachWidget(parent: SequenceWidget, node: ForEachStmt,
                     override val parentBlock: BlockStmt) :
     StatementWidget<ForEachStmt>(parent, node), SequenceContainer<ForEachStmt> {
 
-    lateinit var keyword: TokenWidget
+    override lateinit var keyword: TokenWidget
     lateinit var variable: ExpressionWidget<*>
     lateinit var iterable: ExpressionWidget<*>
     override lateinit var bodyWidget: SequenceWidget

@@ -23,6 +23,8 @@ abstract class StatementWidget<T : Statement>(
 
     abstract val parentBlock: BlockStmt
 
+    open val keyword: TextWidget? = null
+
     abstract val tail: TextWidget
 
     init {

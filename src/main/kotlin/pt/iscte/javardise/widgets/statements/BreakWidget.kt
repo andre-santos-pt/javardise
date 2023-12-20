@@ -16,7 +16,7 @@ class BreakWidget(
     override val parentBlock: BlockStmt
 ) :
     StatementWidget<BreakStmt>(parent, node) {
-    val keyword: TokenWidget
+    override val keyword: TokenWidget
     override val tail: TextWidget
     init {
         keyword = newKeywordWidget(this, "break")

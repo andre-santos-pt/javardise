@@ -281,7 +281,7 @@ class MethodWidget(
                 }
 
                 type.addKeyEvent(SWT.SPACE, precondition = {it.isNotBlank()}) {
-                    type.textWidget.traverse(SWT.TRAVERSE_TAB_NEXT)
+                    type.textWidget.widget.traverse(SWT.TRAVERSE_TAB_NEXT)
                 }
 
                 type.addFocusLostAction(::isValidType) {

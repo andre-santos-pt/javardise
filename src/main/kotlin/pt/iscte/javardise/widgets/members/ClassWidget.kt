@@ -264,7 +264,7 @@ open class ClassWidget(
         }
         observeNotNullProperty<SimpleName>(ObservableProperty.NAME) {
             name.set("$it")
-            name.textWidget.data = it
+            name.textWidget.widget.data = it
         }
         observeListUntilDispose(
             node.members,

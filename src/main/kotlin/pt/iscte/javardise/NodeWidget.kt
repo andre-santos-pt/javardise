@@ -72,15 +72,23 @@ interface NodeWidget<T> {
         action: (String) -> Unit
     ): FocusListener {
         val listener = object : FocusAdapter() {
-            override fun focusLost(e: FocusEvent?) {
+            var prev: String? = null
+            override fun focusGained(e: FocusEvent) {
+                prev = widget.text
+            }
+
+            override fun focusLost(e: FocusEvent) {
                 if (isValid(widget.text)) {
                     action(widget.text)
-                    if(!widget.isDisposed)
-                        widget.background = configuration.backgroundColor
+                   // widget.background = configuration.backgroundColor
                 } else if(widget.text.isBlank())
                     widget.background = configuration.fillInColor
-                else
-                    widget.background = configuration.errorColor
+                else if(prev != null)
+                    text = prev as String
+                else {
+                    text = ""
+                    widget.background = configuration.fillInColor
+                }
             }
         }
         widget.addFocusListener(listener)
@@ -206,7 +214,7 @@ open class Id(parent: Composite, id: NodeWithSimpleName<*>, allowedChars: Regex,
 ) :
     TextWidget {
     private var readOnly: Boolean
-    internal val textWidget: Text
+    internal val textWidget: TextWidget
     private var skip = false
 
     init {
@@ -218,54 +226,36 @@ open class Id(parent: Composite, id: NodeWithSimpleName<*>, allowedChars: Regex,
         }
 
         readOnly = false
-        textWidget = TextWidget.createText(parent, nodeText()) { c, _, _ ->
+
+        textWidget = TextWidget.create(parent, nodeText()) { c, _, _ ->
             skip ||
                     !readOnly && (
                     c.toString().matches(allowedChars)
                             || c == SWT.BS
                             || c == SWT.CR)
         }
-        textWidget.menu = Menu(textWidget) // prevent system menu
-//        updateColor(textWidget)
-//
-//        textWidget.addModifyListener {
-//            updateColor(textWidget)
-//        }
-//        textWidget.addModifyListener {
-//            val validate = validate(textWidget.text)
-//            if (validate.fail) {
-//                textWidget.background = ERROR_COLOR()
-//                textWidget.toolTipText = validate.msg
-//                //textWidget.toolTipText = "Valid identifiers cannot start with a number."
-//            } else if (SourceVersion.isKeyword(textWidget.text)) {
-//                textWidget.background = ERROR_COLOR()
-//                textWidget.toolTipText = "'${textWidget.text}' is a reserved keyword in Java." // BUG shown in types
-//            } else {
-//                textWidget.background = BACKGROUND_COLOR()
-//                textWidget.toolTipText = ""
-//            }
-//        }
+        textWidget.widget.menu = Menu(textWidget.widget) // prevent system menu
     }
 
 
     open fun isValid() = true
 
-    override val widget: Text get() = textWidget
+    override val widget: Text get() = textWidget.widget
 
     override fun setFocus(): Boolean {
         textWidget.setFocus()
-        textWidget.requestLayout()
+        textWidget.widget.requestLayout()
         return true
     }
 
 
     override fun addKeyListenerInternal(listener: KeyListener) {
-        textWidget.addKeyListener(listener)
+        textWidget.addKeyListenerInternal(listener)
     }
 
     fun setReadOnly() {
         readOnly = true
-        textWidget.editable = false
+        textWidget.widget.editable = false
     }
 
     fun set(text: String?) {
@@ -273,6 +263,12 @@ open class Id(parent: Composite, id: NodeWithSimpleName<*>, allowedChars: Regex,
         textWidget.text = text ?: ""
         skip = false
     }
+
+    override var text: String
+        get() = super.text
+        set(value) {
+            textWidget.text = value
+        }
 }
 
 class SimpleNameWidget<N : NodeWithSimpleName<*>>(
@@ -289,12 +285,12 @@ class SimpleNameWidget<N : NodeWithSimpleName<*>>(
     }
 }) {
     init {
-        textWidget.data = node
-        addUpdateColor(textWidget)
+        textWidget.widget.data = node
+        addUpdateColor(textWidget.widget)
     }
 
     override val control: Control
-        get() = textWidget
+        get() = textWidget.widget
 
     override fun setFocusOnCreation(firstFlag: Boolean) {
         textWidget.setFocus()
@@ -325,8 +321,8 @@ class SimpleTypeWidget<N : Type>(parent: Composite, override val node: N)
 
 }), NodeWidget<N> {
     init {
-        textWidget.data = node
-        addUpdateColor(textWidget)
+        textWidget.widget.data = node
+        addUpdateColor(textWidget.widget)
     }
 
     override fun isValid(): Boolean = isValidType(textWidget.text)
@@ -335,7 +331,7 @@ class SimpleTypeWidget<N : Type>(parent: Composite, override val node: N)
     }
 
     override val control: Control
-        get() = textWidget
+        get() = textWidget.widget
 }
 
 

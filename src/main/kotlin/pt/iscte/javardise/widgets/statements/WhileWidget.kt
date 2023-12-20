@@ -23,7 +23,7 @@ class WhileWidget(
 ) :
     StatementWidget<WhileStmt>(parent, node), SequenceContainer<WhileStmt> {
 
-    lateinit var keyword: TokenWidget
+    override lateinit var keyword: TokenWidget
     lateinit var condition: ExpressionWidget<*>
     lateinit var firstRow: Composite
     override lateinit var bodyWidget: SequenceWidget
