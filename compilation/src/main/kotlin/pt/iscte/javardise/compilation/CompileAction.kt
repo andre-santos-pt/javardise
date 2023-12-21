@@ -7,10 +7,7 @@ import org.eclipse.swt.events.*
 import org.eclipse.swt.graphics.Color
 import org.eclipse.swt.graphics.Point
 import org.eclipse.swt.graphics.Rectangle
-import org.eclipse.swt.widgets.Composite
-import org.eclipse.swt.widgets.Control
-import org.eclipse.swt.widgets.Display
-import org.eclipse.swt.widgets.ToolTip
+import org.eclipse.swt.widgets.*
 import pt.iscte.javardise.Command
 import pt.iscte.javardise.NodeWidget
 import pt.iscte.javardise.basewidgets.TextWidget
@@ -34,7 +31,11 @@ class CompileAction : Action {
 
     override val iconPath: String = "process.png"
 
-    val ERROR_COLOR = Color(Display.getDefault(), 255, 207, 204)
+    val ERROR_COLOR = if(Display.isSystemDarkTheme())
+        Color(Display.getDefault(), 150, 50, 50)
+    else
+        Color(Display.getDefault(), 255, 207, 204)
+
     override val toggle: Boolean
         get() = true
 
@@ -139,8 +140,9 @@ class CompileAction : Action {
                 c.background = ERROR_COLOR
                 true
             }
-            tip = ToolTip(control.shell, SWT.BALLOON).apply {
-                text = msg.getMessage(null)
+            if(!textWidget.isEmpty) {
+                val text = msg.getMessage(null).lines().first()
+                tip = createToolTip(control.shell, text)
             }
         }
 
@@ -181,6 +183,17 @@ class CompileAction : Action {
     }
 }
 
+fun createToolTip(shell: Shell, msg: String) = ToolTip(shell, SWT.BALLOON).apply {
+    text = msg
+    if(Display.isSystemDarkTheme()) {
+        val field = this::class.java.getDeclaredField("tip")
+        field.isAccessible = true
+        val tipInternal = field.get(this) as Shell
+        tipInternal.background = Display.getDefault().getSystemColor(SWT.COLOR_LIST_BACKGROUND)
+        tipInternal.foreground = Display.getDefault().getSystemColor(SWT.COLOR_TITLE_FOREGROUND)
+    }
+}
+
 fun Composite.findLastChild(accept: (Control) -> Boolean): Control? {
     var n: Control? = null
     traverse {
@@ -191,3 +204,4 @@ fun Composite.findLastChild(accept: (Control) -> Boolean): Control? {
     }
     return n
 }
+
