@@ -150,12 +150,6 @@ task("copyPlugins", Copy::class) {
 //            "libs/documentation.jar"
 //        )
 //    ).into("$buildDir/jars")
-//    from(
-//        File(
-//            project.project("debugger").buildDir,
-//            "libs/debugger.jar"
-//        )
-//    ).into("$buildDir/jars")
 }
 
 tasks.jpackage {
@@ -170,17 +164,16 @@ tasks.jpackage {
     mainJar = tasks.jar.get().archiveFileName.get()
     mainClass = application.mainClass.get()
 
-    javaOptions = listOf("-Dfile.encoding=UTF-8")
-
     mac {
         // Generic parameter value for OS X build
         //icon = "icon.icns"
-        javaOptions.add("-XstartOnFirstThread")
+        javaOptions = listOf("-Dfile.encoding=UTF-8","-XstartOnFirstThread")
     }
 
     windows {
         type = ImageType.APP_IMAGE
         winConsole = true
+        javaOptions = listOf("-Dfile.encoding=UTF-8")
     }
 }
 

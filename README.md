@@ -17,7 +17,7 @@ while allowing:
 - performing editing commands programmatically through the model
 
 
-# Builds (Gradle)
+# Builds (requires Gradle 8.4)
 
 ## Executable JAR (requires JRE 17+)
 Run the task **fatJar** (*distribution* category) to produce a standalone executable JARs for the respective platform. This will output a JAR file like **javardise-OS.jar** stored in *build/dist*, which can be executed. This option requires a JRE installed.

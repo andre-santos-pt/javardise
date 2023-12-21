@@ -6,6 +6,8 @@ plugins {
 group = "pt.iscte.javardise"
 //version = "0.1"
 
+val win = System.getProperty("os.name").lowercase().contains("windows")
+
 repositories {
     mavenCentral()
 }
@@ -22,7 +24,8 @@ tasks.getByName<Test>("test") {
 
 application {
     mainClass.set("pt.iscte.javardise.editor.MainKt")
-    applicationDefaultJvmArgs = listOf("-XstartOnFirstThread")
+    if(!win)
+        applicationDefaultJvmArgs = listOf("-XstartOnFirstThread")
 }
 
 //val compileKotlin: org.jetbrains.kotlin.gradle.tasks.KotlinCompile by tasks
