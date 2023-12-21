@@ -515,7 +515,7 @@ class CodeEditor(val display: Display, val folder: File) {
             else -> ClassWidget(parent, model, configuration = object : DefaultConfiguration() {
                 override val fontSize: Int
                     get() = Settings.font.fontData.first().getHeight()
-            })
+            }, workingDir = folder)
         }
 
 

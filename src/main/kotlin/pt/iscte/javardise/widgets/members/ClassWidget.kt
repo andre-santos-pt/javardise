@@ -23,6 +23,7 @@ import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
 import pt.iscte.javardise.external.*
 import pt.iscte.javardise.widgets.statements.*
+import java.io.File
 import java.lang.UnsupportedOperationException
 import java.util.*
 
@@ -49,7 +50,8 @@ open class ClassWidget(
     dec: ClassOrInterfaceDeclaration,
     configuration: Configuration = DefaultConfigurationSingleton,
     validModifiers: List<List<Modifier.Keyword>> = configuration.classModifiers,
-    override val commandStack: CommandStack = CommandStack.create(),
+    workingDir: File? = null,
+    override val commandStack: CommandStack = CommandStack.create(workingDir),
     val staticClass: Boolean = false,
 ) :
     MemberWidget<ClassOrInterfaceDeclaration>(

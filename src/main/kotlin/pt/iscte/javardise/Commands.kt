@@ -1,8 +1,12 @@
 package pt.iscte.javardise
 
+import com.github.javaparser.ast.CompilationUnit
 import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.NodeList
+import pt.iscte.javardise.external.getOrNull
 import pt.iscte.javardise.external.indexOfIdentity
+import java.io.File
+import java.io.PrintWriter
 import kotlin.reflect.KFunction1
 
 enum class CommandKind {
@@ -60,9 +64,7 @@ interface CommandStack {
     fun <N : Node> removeCommand(list: NodeList<in N>, owner: Node, e: N)
 
 
-
-
-    private open class CommandStackImpl : CommandStack {
+    private open class CommandStackImpl(val workingDir: File?) : CommandStack {
         override val stackSize: Int get() = stack.size
         override val stackElements: List<Command> get() = stack.toList()
         private val stack = ArrayDeque<Command>()
@@ -74,14 +76,48 @@ interface CommandStack {
             get() = top
 
         override fun execute(c: Command) {
-            c.run()
-            while (stack.lastIndex > top)
-                stack.removeLast()
-            stack.addLast(c)
-            top = stack.lastIndex
-            observers.forEach {
-                it(c, true)
+            try {
+                c.run()
+                while (stack.lastIndex > top)
+                    stack.removeLast()
+                stack.addLast(c)
+                top = stack.lastIndex
+                observers.forEach {
+                    it(c, true)
+                }
+            } catch (e: Exception) {
+                logError(e, c)
             }
+        }
+
+        private fun logError(e: Exception, c: Command) {
+            val cu = c.target.findCompilationUnit().getOrNull
+            workingDir?.let {
+                for (i in 1..10) {
+                    val f = File(workingDir,"ERROR$i.txt")
+                    if (!f.exists()) {
+                        val w = PrintWriter(f)
+                        cu?.let {
+                            val range = c.target.range.getOrNull
+                            var src = cu.toString()
+                            if(range != null) {
+                                val lines = src.lines().toMutableList()
+                                lines[range.begin.line-1] = ">>> " + lines[range.begin.line-1]
+                                src = lines.joinToString(System.lineSeparator())
+                            }
+                            w.println(src)
+                            w.println("----------------------------------")
+                            w.println(c.asString())
+                            w.println("----------------------------------")
+                        }
+                        e.printStackTrace(w)
+                        w.close()
+                        e.printStackTrace()
+                        return;
+                    }
+                }
+            }
+            e.printStackTrace()
         }
 
         override fun undo() {
@@ -109,6 +145,7 @@ interface CommandStack {
         override fun removeObserver(o: (Command, Boolean) -> Unit) {
             observers.remove(o)
         }
+
         override fun reset() {
             stack.clear()
             observers.clear()
@@ -138,8 +175,7 @@ interface CommandStack {
                     }
                 })
                 true
-            }
-            else
+            } else
                 false
 
 
@@ -161,7 +197,6 @@ interface CommandStack {
                 list.removeAt(index)
             }
         })
-
 
 
         override fun <N : Node> removeCommand(
@@ -232,16 +267,16 @@ interface CommandStack {
 
 
     companion object {
-        fun create(): CommandStack = CommandStackImpl()
+        fun create(workingDir: File? = null): CommandStack = CommandStackImpl(workingDir)
 
-        val nullStack: CommandStack = object : CommandStackImpl() {
+        val nullStack: CommandStack = object : CommandStackImpl(null) {
             override fun execute(c: Command) {
                 c.run()
             }
 
-            override fun undo() { }
+            override fun undo() {}
 
-            override fun redo() { }
+            override fun redo() {}
         }
     }
 }
