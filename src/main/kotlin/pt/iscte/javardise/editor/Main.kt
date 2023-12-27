@@ -281,13 +281,29 @@ class CodeEditor(val display: Display, val folder: File) {
             }
     }
 
+    private fun invert(img: Image): Image {
+        val data = img.imageData
+        for(y in 0 until data.height)
+            for(x in 0 until data.width) {
+                val rgb = data.palette.getRGB(data.getPixel(x, y))
+                rgb.red = 255 - rgb.red
+                rgb.green = 255 - rgb.green
+                rgb.blue = 255 - rgb.blue
+                data.setPixel(x, y, data.palette.getPixel(rgb))
+            }
+        return Image(Display.getDefault(), data)
+
+    }
     private fun toolBarItem(action: Action) =
         ToolItem(toolbar, if (action.toggle) SWT.CHECK else SWT.PUSH).apply {
             if (action.iconPath == null)
                 text = action.name
             action.iconPath?.let { path ->
                 val icon = Image(Display.getDefault(), this::class.java.classLoader.getResourceAsStream(path))
-                image = icon
+                image = if(Display.isSystemDarkTheme()) {
+                    invert(icon)
+                } else
+                    icon
                 toolTipText = action.name
             }
 
