@@ -9,7 +9,6 @@ import com.github.javaparser.ast.observer.AstObserverAdapter
 import com.github.javaparser.ast.observer.ObservableProperty
 import org.eclipse.swt.SWT
 import org.eclipse.swt.custom.CTabFolder
-import org.eclipse.swt.custom.CTabFolder2Listener
 import org.eclipse.swt.custom.CTabItem
 import org.eclipse.swt.custom.SashForm
 import org.eclipse.swt.events.SelectionAdapter
@@ -29,11 +28,11 @@ import pt.iscte.javardise.widgets.members.ClassWidget
 import pt.iscte.javardise.widgets.statements.EmptyStatementFeature
 import pt.iscte.javardise.widgets.statements.IfFeature
 import pt.iscte.javardise.widgets.statements.ReturnFeature
-import java.awt.Desktop
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.PrintWriter
 import java.util.*
+import kotlin.math.min
 
 
 fun main(args: Array<String>) {
@@ -57,16 +56,6 @@ fun main(args: Array<String>) {
         CodeEditor(display, root).open()
 }
 
-object Settings {
-    val def =  DefaultConfiguration()
-    var font = Font(Display.getDefault(), def.fontFace, def.fontSize, SWT.NONE)
-
-    fun updateFontSize(size: Int) {
-        val newfont = Font(Display.getDefault(), font.fontData.first().name, size, SWT.NONE)
-        font.dispose()
-        font = newfont
-    }
-}
 
 data class TabData(
     val file: File,
@@ -82,9 +71,13 @@ class CodeEditor(val display: Display, val folder: File) {
     private val console: Text
 
     private val javaIcon = loadImage("java.png")
-    private val textIcon = loadImage( "text-format.png")
+    private val textIcon = loadImage("text-format.png")
 
     private val actions: MutableMap<Action, ToolItem> = mutableMapOf()
+
+    private val commandObservers = mutableListOf<(Command, Boolean) -> Unit>()
+
+    private val settings = Settings(this)
 
     private val defaultActions = listOf(
         object : Action {
@@ -93,10 +86,9 @@ class CodeEditor(val display: Display, val folder: File) {
             override fun run(editor: CodeEditor, toggle: Boolean) {
                 editor.shell.prompt("New file", "name") {
                     val f = File(folder, it)
-                    if(f.exists()) {
+                    if (f.exists()) {
                         editor.shell.message { label("File $f already exists.") }
-                    }
-                    else {
+                    } else {
                         f.createNewFile()
                         val tab = createFileTab(f)
                         tab.parent.selection = tab
@@ -108,31 +100,19 @@ class CodeEditor(val display: Display, val folder: File) {
             override val name = "Settings"
             override val iconPath = "settings.png"
             override fun run(editor: CodeEditor, toggle: Boolean) {
-                editor.shell.message {
-                    text = "Settings"
-                    grid(2) {
-                        label("Font size")
-                        text(Settings.font.fontData.first().getHeight().toString()) {
-                            addModifyListener {
-                                try {
-                                    Settings.updateFontSize(text.toInt())
-                                    allClassWidgets().forEach {
-                                        it?.traverse {
-                                            it.font = Settings.font
-                                            true
-                                        }
-                                        it?.requestLayout()
-                                    }
-                                }
-                                catch (_:NumberFormatException) { }
-                            }
-                        }
-                    }
-                }
+                settings.openDialog(editor.shell)
             }
         }
-
     )
+
+    fun updateTabs() {
+        tabs.items.forEach {
+            val old = it.control
+            it.control = createTab(it.data as File, tabs, it)
+            old.dispose()
+        }
+    }
+
     init {
         require(folder.exists() && folder.isDirectory)
 
@@ -248,11 +228,13 @@ class CodeEditor(val display: Display, val folder: File) {
         return item
     }
 
+
     val classOnFocus: ClassWidget? get() = (tabs.selection?.control?.data as? TabData)?.classWidget
     fun getClassWidget(file: File) = (tabs.items.find { it.data == file }
         ?.control?.data as? TabData)?.classWidget
 
-    fun allClassWidgets() = tabs.items.filter { it.control?.data is TabData }.map { (it.control.data as TabData).classWidget }
+    fun allClassWidgets() =
+        tabs.items.filter { it.control?.data is TabData }.map { (it.control.data as TabData).classWidget }
 
     fun setFileErrors(files: Set<File>) {
         tabs.items.forEach {
@@ -266,15 +248,15 @@ class CodeEditor(val display: Display, val folder: File) {
     }
 
     fun addCommandObserver(o: (Command, Boolean) -> Unit) {
+        commandObservers.add(o)
         tabs.items.filter { (it.control.data is TabData) }
             .forEach {
                 (it.control.data as TabData).classWidget?.commandStack?.addObserver(o)
             }
-
-       // TODO add to files that are added meanwhile
     }
 
     fun removeCommandObserver(o: (Command, Boolean) -> Unit) {
+        commandObservers.remove(o)
         tabs.items.filter { (it.control.data is TabData) }
             .forEach {
                 (it.control.data as TabData).classWidget?.commandStack?.removeObserver(o)
@@ -283,8 +265,8 @@ class CodeEditor(val display: Display, val folder: File) {
 
     private fun invert(img: Image): Image {
         val data = img.imageData
-        for(y in 0 until data.height)
-            for(x in 0 until data.width) {
+        for (y in 0 until data.height)
+            for (x in 0 until data.width) {
                 val rgb = data.palette.getRGB(data.getPixel(x, y))
                 rgb.red = 255 - rgb.red
                 rgb.green = 255 - rgb.green
@@ -294,13 +276,14 @@ class CodeEditor(val display: Display, val folder: File) {
         return Image(Display.getDefault(), data)
 
     }
+
     private fun toolBarItem(action: Action) =
         ToolItem(toolbar, if (action.toggle) SWT.CHECK else SWT.PUSH).apply {
             if (action.iconPath == null)
                 text = action.name
             action.iconPath?.let { path ->
                 val icon = Image(Display.getDefault(), this::class.java.classLoader.getResourceAsStream(path))
-                image = if(Display.isSystemDarkTheme()) {
+                image = if (Display.isSystemDarkTheme()) {
                     invert(icon)
                 } else
                     icon
@@ -308,7 +291,7 @@ class CodeEditor(val display: Display, val folder: File) {
             }
 
             action.init(this@CodeEditor)
-            if(action.toggle && action.toggleDefault) {
+            if (action.toggle && action.toggleDefault) {
                 selection = true
                 action.run(this@CodeEditor, selection)
                 setActionsEnabled()
@@ -373,54 +356,68 @@ class CodeEditor(val display: Display, val folder: File) {
         item: CTabItem
     ): Composite {
         require(file.exists())
+
         val tab = Composite(comp, SWT.BORDER)
         val layout = FillLayout()
         tab.layout = layout
 
-        val typeName = if (file.name.contains('.'))
-            file.name.substring(0, file.name.lastIndexOf('.'))
-        else
-            file.name
+        val model = if (file.name.endsWith(".java")) {
+            val typeName = if (file.name.contains('.'))
+                file.name.substring(0, file.name.lastIndexOf('.'))
+            else
+                file.name
 
-        val model = try {
-            val cu = loadCompilationUnit(file)
-            val clazz = cu.findMainClass() ?: ClassOrInterfaceDeclaration(
-                NodeList(), false, typeName
-            )
-            if (cu.findMainClass() == null) {
-                val writer = PrintWriter(file, "UTF-8")
-                writer.println(clazz.toString())
-                writer.close()
+            try {
+                val cu = loadCompilationUnit(file)
+                val clazz = cu.findMainClass() ?: ClassOrInterfaceDeclaration(
+                    NodeList(), false, typeName
+                )
+                if (cu.findMainClass() == null) {
+                    val writer = PrintWriter(file, "UTF-8")
+                    writer.println(clazz.toString())
+                    writer.close()
+                }
+                clazz
+            } catch (e: ParseProblemException) {
+                //System.err.println("Could not load: $file")
+                System.err.println(e.problems)
+                null
+            } catch (e: FileNotFoundException) {
+                null
             }
-            clazz
-
-        } catch (e: ParseProblemException) {
-            System.err.println("Could not load: $file")
-            null
-        } catch (e: FileNotFoundException) {
-            null
-        }
-
+        } else null
 
         if (model == null) {
             tab.data = TabData(file, null, null)
-            tab.fill {
+            tab.grid {
                 val src = file.readLines().joinToString(separator = "\n")
-                label(src).foreground =
-                    Display.getDefault().getSystemColor(SWT.COLOR_RED)
+                val t = Text(this, SWT.BORDER or SWT.MULTI or SWT.V_SCROLL or SWT.H_SCROLL).apply {
+                    text = src
+                    fillGrid()
+                }
+                button("Reload") {
+                    val writer = PrintWriter(file, "UTF-8")
+                    writer.println(t.text)
+                    writer.close()
+                    val tabItem = tabs.items.find { it.control == tab }
+                    tabItem?.control = createTab(file, tabs, tabItem!!)
+                    tab.dispose()
+                }.moveAbove(t)
             }
         } else {
             val w = tab.scrollable {
                 createWidget(file.extension, it, model)
             }
-
             w.setAutoScroll()
 
             addAutoRenameFile(model, file, item)
-
             w.commandStack.addObserver { cmd, _ ->
                 saveAndSyncRanges(item.data as File, model)
             }
+            commandObservers.forEach {
+                w.commandStack.addObserver(it)
+            }
+
             tab.data = TabData(file, model, w)
 
             //addUndoScale(tab, w)
@@ -443,7 +440,7 @@ class CodeEditor(val display: Display, val folder: File) {
             ) {
                 if (property == ObservableProperty.NAME) {
                     val newFile = File(folder, "$newValue.java")
-                    if (newFile != file) {
+                    if (newFile != file && !newFile.exists()) {
                         newFile.createNewFile()
                         file.delete()
                         item.text = newValue.toString()
@@ -493,14 +490,20 @@ class CodeEditor(val display: Display, val folder: File) {
         model.accept(NodeCollectorVisitor(), modelNodeList)
 
         check(modelNodeList.size == srcNodeList.size) {
-            srcNodeList.toString()+ System.lineSeparator() + modelNodeList.toString()
+            var msg = "${modelNodeList.size} ${srcNodeList.size}"
+            for (i in 0 until min(modelNodeList.size, srcNodeList.size)) {
+                if (modelNodeList[i] != srcNodeList[i]) {
+                    msg = "${modelNodeList[i]} ${System.lineSeparator()} ${System.lineSeparator()} ${srcNodeList[i]}"
+                    break
+                }
+            }
+            msg
         }
 
         srcNodeList.forEachIndexed { i, n ->
             modelNodeList[i].setRange(n.range.get())
         }
     }
-
 
 
     private fun createWidget(
@@ -514,8 +517,8 @@ class CodeEditor(val display: Display, val folder: File) {
                 parent,
                 model,
                 configuration = object : DefaultConfiguration() {
-                    override val fontSize: Int
-                        get() = Settings.font.fontData.first().getHeight()
+                    override var fontSize: Int = super.fontSize
+                        get() = settings.editorConfiguration.fontSize
 
                     override val statementFeatures
                         get() = listOf(
@@ -528,13 +531,8 @@ class CodeEditor(val display: Display, val folder: File) {
 
                 })
             //"mjava" -> MainScriptWidget(parent, model)
-            else -> ClassWidget(parent, model, configuration = object : DefaultConfiguration() {
-                override val fontSize: Int
-                    get() = Settings.font.fontData.first().getHeight()
-            }, workingDir = folder)
+            else -> ClassWidget(parent, model, configuration = settings.editorConfiguration, workingDir = folder)
         }
-
-
 
 
     private fun loadImage(filename: String) = Image(display, this.javaClass.classLoader.getResourceAsStream(filename))

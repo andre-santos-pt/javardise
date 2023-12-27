@@ -94,9 +94,16 @@ fun Control.onFocus(action: () -> Unit): Control {
 
 val GRID_FILL_HORIZONTAL = GridData(SWT.FILL, SWT.FILL, true, false)
 
+
+
 fun Control.fillGridHorizontal() {
     require(parent.layout is GridLayout)
     layoutData = GRID_FILL_HORIZONTAL
+}
+
+fun Control.fillGrid() {
+    require(parent.layout is GridLayout)
+    layoutData = GridData(GridData.FILL_BOTH)
 }
 
 fun Composite.label(
@@ -235,8 +242,24 @@ fun Control.onClick(action: () -> Unit) {
     })
 }
 
+fun Shell.messageOkAction(init: Shell.() -> (() -> Unit)?) {
+    val s = shell(SWT.DIALOG_TRIM, this) {
+        layout = RowLayout(SWT.VERTICAL)
+        val okAction = init(this)
+        button("OK") {
+            if (okAction != null) {
+                okAction()
+            }
+            this@shell.close()
+        }
+    }
+    s.pack()
+    s.location = location
+    s.open()
+}
+
 fun Shell.message(init: Shell.() -> Unit) {
-    val s = shell(SWT.SHEET, this) {
+    val s = shell(SWT.DIALOG_TRIM, this) {
         layout = RowLayout(SWT.VERTICAL)
         init(this)
         button("OK") {
@@ -249,29 +272,30 @@ fun Shell.message(init: Shell.() -> Unit) {
 }
 
 fun Shell.prompt(title: String, message: String, action: (String) -> Unit) {
-    val s = shell(SWT.SHEET, this, title) {
+    val s = shell(SWT.DIALOG_TRIM, this, title) {
         grid(3) {
             label(message)
             val t = text {
+
             }
             t.addKeyListener(object : KeyAdapter() {
                 override fun keyPressed(e: KeyEvent) {
                     if (e.character == SWT.CR) {
-                        action(t.text)
+                        action(t.text ?: "?")
                         this@shell.close()
                     }
                 }
             })
             button("OK") {
-                if (t.text.isNotEmpty())
-                    action(t.text)
+                if (t.text?.isNotEmpty() == true)
+                    action(t.text ?: "?")
                 this@shell.close()
             }
         }
 
     }
     s.pack()
-    s.location = location
+    s.center()
     s.open()
 }
 

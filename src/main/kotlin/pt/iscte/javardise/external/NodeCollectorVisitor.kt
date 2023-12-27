@@ -37,7 +37,7 @@ fun main() {
 
 class NodeCollectorVisitor : VoidVisitorAdapter<MutableList<Node>>() {
     override fun visit(n: CompilationUnit, arg: MutableList<Node>) {
-        arg.add(n)
+       // arg.add(n)
         super.visit(n, arg)
     }
 

@@ -29,8 +29,8 @@ val isWindows: Boolean = System.getProperty("os.name").lowercase(Locale.getDefau
 
 interface Configuration {
     val tabLength: Int
-    val fontSize: Int
-    val fontFace: String
+    var fontSize: Int
+    var fontFace: String
     val darkMode: Boolean
     val errorColor: Color
     val fillInColor: Color
@@ -133,9 +133,9 @@ fun Color.luminance(): Int =
 
 
 open class DefaultConfiguration : Configuration {
-    override val tabLength = 4
-    override val fontSize = 12
-    override val fontFace = if(isWindows) "Consolas" else "Menlo"
+    override val tabLength = 2
+    override var fontSize = 12
+    override var fontFace = if(isWindows) "Consolas" else "Menlo"
 
     override val darkMode: Boolean
         get() = Display.getDefault().getSystemColor(SWT.COLOR_WIDGET_BACKGROUND).luminance() < 128
@@ -167,18 +167,21 @@ open class DefaultConfiguration : Configuration {
         if (darkMode)
             Display.getDefault().getSystemColor(SWT.COLOR_CYAN)
         else
-            Display.getDefault().getSystemColor(SWT.COLOR_BLUE)
+            Display.getDefault().getSystemColor(SWT.COLOR_DARK_GREEN)
     }
 
     override val commentColor by lazy {
         if (darkMode)
             Display.getDefault().getSystemColor(SWT.COLOR_GREEN)
         else
-            Display.getDefault().getSystemColor(SWT.COLOR_DARK_GREEN)
+            Display.getDefault().getSystemColor(SWT.COLOR_DARK_GRAY)
     }
 
     override val keywordColor by lazy {
-        Color(Display.getDefault(), 204, 120, 50)
+        if(darkMode)
+            Color(Display.getDefault(), 204, 120, 50)
+        else
+            Color(Display.getDefault(), 0, 0, 255)
     }
 
 

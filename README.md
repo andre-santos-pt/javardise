@@ -26,7 +26,7 @@ Run the task **fatJar** (*distribution* category) to produce a standalone execut
 - MacOS: ``java -XstartOnFirstThread -jar javardise-macos.jar``
 
 ## Standalone application (with embedded JRE)
-Run the task **jpackage** (*distribution* category) to produce an installable bundle for your operating system, without requiring Java previously installed. The output file will be stored in *build/dist*.
+Run the task **jpackage** (*distribution* category) to produce an installable bundle for your operating system, without requiring Java previously installed. The output file will be stored in *build/dist*. The plugin for compilation will be packaged.
 
 
 ## Integration in other projects
@@ -88,10 +88,8 @@ In order to plug-in an action (toolbar), we need to write a class that provide t
 
 When running the editor, this contribution will be detected and a button will appear in the toolbar. See subprojects as examples of plugins.
 
-## Subprojects
+## Compilation plugin
 
-There are currently 3 subprojects that work as plugins to the base editor of Javardise:
+There is one subproject for supporting compilation of Java that is implemented as a [plugin](https://github.com/andre-santos-pt/javardise/tree/master/compilation) to the base editor.
 
-- [Compilation](https://github.com/andre-santos-pt/javardise/tree/master/compilation): support for compiling using the standard Java compiler API
-- [Debugger](https://github.com/andre-santos-pt/javardise/tree/master/debugger): execution and debugging using [Strudel](https://github.com/andre-santos-pt/strudel)
-- [Documentation](https://github.com/andre-santos-pt/javardise/tree/master/documentation): alternative views to edit documentation in isolation
+This plugin provides compilation errors using the standard Java compiler API.

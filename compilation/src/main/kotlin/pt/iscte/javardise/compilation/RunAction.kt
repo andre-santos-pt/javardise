@@ -36,6 +36,7 @@ class RunAction : Action {
         val originalSystemOut = System.out
         System.setOut(customPrintStream)
         // TODO infinite loop
+        System.setProperty("user.dir", editor.folder.absolutePath)
         mainMethod?.invoke(null)
         System.setOut(originalSystemOut)
     }

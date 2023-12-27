@@ -42,13 +42,13 @@ class StringExpressionWidget(
     init {
         layout = ROW_LAYOUT_H_STRING
         open = TokenWidget(this, "\"")
-        open.widget.foreground = configuration.commentColor
+        open.widget.foreground = configuration.numberColor
         open.addKeyListenerInternal(delListener)
         text = TextWidget.create(this, node.value) { c, s, i ->
             c != '"' || s.substring(0, i).endsWith('\\') && !s.substring(i)
                 .startsWith("\"")
         }
-        text.widget.foreground = configuration.commentColor
+        text.widget.foreground = configuration.numberColor
         if (node.value.isEmpty())
             text.widget.layoutData = ROW_DATA_STRING
         text.widget.addModifyListener {
@@ -59,7 +59,7 @@ class StringExpressionWidget(
             editEvent(Configuration.hole())
         }
         close = TokenWidget(this, "\"")
-        close.widget.foreground = configuration.commentColor
+        close.widget.foreground = configuration.numberColor
         close.widget.addKeyListener(delListener)
 
         observeNotNullProperty<String>(ObservableProperty.VALUE) {
