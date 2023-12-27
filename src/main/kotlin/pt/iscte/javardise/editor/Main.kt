@@ -14,6 +14,8 @@ import org.eclipse.swt.custom.SashForm
 import org.eclipse.swt.events.SelectionAdapter
 import org.eclipse.swt.events.SelectionEvent
 import org.eclipse.swt.graphics.*
+import org.eclipse.swt.internal.Platform
+import org.eclipse.swt.internal.win32.OS
 import org.eclipse.swt.layout.FillLayout
 import org.eclipse.swt.layout.GridData
 import org.eclipse.swt.layout.GridLayout
@@ -22,6 +24,7 @@ import pt.iscte.javardise.Command
 import pt.iscte.javardise.DefaultConfiguration
 import pt.iscte.javardise.examples.StaticClassWidget
 import pt.iscte.javardise.external.*
+import pt.iscte.javardise.isWindows
 import pt.iscte.javardise.widgets.expressions.CallFeature
 import pt.iscte.javardise.widgets.expressions.VariableDeclarationFeature
 import pt.iscte.javardise.widgets.members.ClassWidget
@@ -283,7 +286,7 @@ class CodeEditor(val display: Display, val folder: File) {
                 text = action.name
             action.iconPath?.let { path ->
                 val icon = Image(Display.getDefault(), this::class.java.classLoader.getResourceAsStream(path))
-                image = if (Display.isSystemDarkTheme()) {
+                image = if (Display.isSystemDarkTheme() && !isWindows) {
                     invert(icon)
                 } else
                     icon

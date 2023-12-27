@@ -43,10 +43,9 @@ public class Figure {
 
     FieldWidget(shell, clazz.getFieldByName("location").get(),
         configuration = object : DefaultConfiguration() {
-            override val fontFace: String
-                get() = "Arial"
-            override val fontSize: Int
-                get() = 16
+            override var fontFace: String = "Arial"
+
+            override var fontSize: Int = 16
 
         })
 
@@ -57,10 +56,9 @@ public class Figure {
         })
 
     ClassWidget(shell, clazz, configuration = object : DefaultConfiguration() {
-        override val fontFace: String
-            get() = "Monospaced"
-        override val fontSize: Int
-            get() = 14
+        override var fontFace: String = "Monospaced"
+
+        override var fontSize: Int = 14
 
         override val keywordColor: Color
             get() = Display.getDefault().getSystemColor(SWT.COLOR_BLUE)

@@ -15,6 +15,7 @@ import pt.iscte.javardise.editor.Action
 import pt.iscte.javardise.editor.CodeEditor
 import pt.iscte.javardise.external.getOrNull
 import pt.iscte.javardise.external.traverse
+import pt.iscte.javardise.isWindows
 import pt.iscte.javardise.widgets.expressions.*
 import pt.iscte.javardise.widgets.members.ClassWidget
 import pt.iscte.javardise.widgets.members.MemberWidget
@@ -31,7 +32,7 @@ class CompileAction : Action {
 
     override val iconPath: String = "process.png"
 
-    val ERROR_COLOR = if(Display.isSystemDarkTheme())
+    val ERROR_COLOR = if(Display.isSystemDarkTheme() && !isWindows)
         Color(Display.getDefault(), 150, 50, 50)
     else
         Color(Display.getDefault(), 255, 207, 204)
@@ -185,13 +186,13 @@ class CompileAction : Action {
 
 fun createToolTip(shell: Shell, msg: String) = ToolTip(shell, SWT.BALLOON).apply {
     text = msg
-    if(Display.isSystemDarkTheme()) {
-        val field = this::class.java.getDeclaredField("tip")
-        field.isAccessible = true
-        val tipInternal = field.get(this) as Shell
-        tipInternal.background = Display.getDefault().getSystemColor(SWT.COLOR_LIST_BACKGROUND)
-        tipInternal.foreground = Display.getDefault().getSystemColor(SWT.COLOR_TITLE_FOREGROUND)
-    }
+//    if(Display.isSystemDarkTheme()) {
+//        val field = this::class.java.getDeclaredField("tip")
+//        field.isAccessible = true
+//        val tipInternal = field.get(this) as Shell
+//        tipInternal.background = Display.getDefault().getSystemColor(SWT.COLOR_LIST_BACKGROUND)
+//        tipInternal.foreground = Display.getDefault().getSystemColor(SWT.COLOR_TITLE_FOREGROUND)
+//    }
 }
 
 fun Composite.findLastChild(accept: (Control) -> Boolean): Control? {

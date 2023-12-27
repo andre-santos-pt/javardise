@@ -243,7 +243,7 @@ fun Control.onClick(action: () -> Unit) {
 }
 
 fun Shell.messageOkAction(init: Shell.() -> (() -> Unit)?) {
-    val s = shell(SWT.DIALOG_TRIM, this) {
+    val s = shell(SWT.DIALOG_TRIM or SWT.APPLICATION_MODAL, this) {
         layout = RowLayout(SWT.VERTICAL)
         val okAction = init(this)
         button("OK") {
@@ -254,12 +254,12 @@ fun Shell.messageOkAction(init: Shell.() -> (() -> Unit)?) {
         }
     }
     s.pack()
-    s.location = location
+    s.center()
     s.open()
 }
 
 fun Shell.message(init: Shell.() -> Unit) {
-    val s = shell(SWT.DIALOG_TRIM, this) {
+    val s = shell(SWT.DIALOG_TRIM or SWT.APPLICATION_MODAL, this) {
         layout = RowLayout(SWT.VERTICAL)
         init(this)
         button("OK") {
@@ -267,12 +267,12 @@ fun Shell.message(init: Shell.() -> Unit) {
         }
     }
     s.pack()
-    s.location = location
+    s.center()
     s.open()
 }
 
 fun Shell.prompt(title: String, message: String, action: (String) -> Unit) {
-    val s = shell(SWT.DIALOG_TRIM, this, title) {
+    val s = shell(SWT.DIALOG_TRIM or SWT.APPLICATION_MODAL, this, title) {
         grid(3) {
             label(message)
             val t = text {
@@ -306,7 +306,6 @@ fun Shell.promptConfirmation(
     okAction: () -> Unit
 ) {
     val s = shell(SWT.DIALOG_TRIM or SWT.APPLICATION_MODAL, this, "Confirmation") {
-        text = title
         grid(3) {
             label(title)
             button(okMessage) {
@@ -320,7 +319,7 @@ fun Shell.promptConfirmation(
 
     }
     s.pack()
-    s.location = location
+    s.center()
     s.open()
 }
 
@@ -341,26 +340,12 @@ fun shell(
 }
 
 
-fun message(
-    title: String = "",
-    text: String = ""
-) = shell(style = SWT.DIALOG_TRIM or SWT.APPLICATION_MODAL) {
-    layout = RowLayout(SWT.VERTICAL)
-    this.text = title
-    label(text)
-    button("OK") {
-        this@shell.close()
-    }
-    pack()
-
-}.open()
-
 fun Shell.center() {
     val primary: Monitor = Display.getDefault().primaryMonitor
-    val bounds: Rectangle = bounds
-    val rect: Rectangle = bounds
-    val x: Int = bounds.x + (bounds.width - rect.width) / 2
-    val y: Int = bounds.y + (bounds.height - rect.height) / 2
+    val bounds: Rectangle = parent.bounds
+    val dim: Point = computeSize(SWT.DEFAULT,SWT.DEFAULT)
+    val x: Int = bounds.x + bounds.width/2 - dim.x/2
+    val y: Int = bounds.y + bounds.height/2 - dim.y/2
     setLocation(x, y)
 }
 
