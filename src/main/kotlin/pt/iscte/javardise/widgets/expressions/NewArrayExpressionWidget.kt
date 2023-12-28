@@ -27,26 +27,26 @@ class NewArrayExpressionWidget(
     val keyword: TokenWidget
 
     data class LevelWidget(
-        val open: FixedToken, var expression: Control, val close: TokenWidget
+        val open: FixedToken, var expression: ExpressionWidget<*>?, val close: TokenWidget
     ) {
         fun dispose() {
             open.dispose()
-            expression.dispose()
+            expression?.dispose()
             close.dispose()
         }
 
         fun moveExpression() {
-            expression.moveAbove(close.widget)
+            expression?.moveAbove(close.widget)
         }
 
         fun moveAbove(c: Control) {
             open.moveAbove(c)
-            expression.moveBelow(open.label)
+            expression?.moveBelow(open.label)
             close.widget.moveBelow(expression)
         }
 
         fun setFocus() {
-            expression.setFocus() // TODO bug Widget is disposed
+            expression?.setFocus()
         }
     }
 
@@ -73,7 +73,7 @@ class NewArrayExpressionWidget(
                 i,
                 level.dimension.get()
             )
-            else TextWidget.create(this, " ").widget
+            else null
             val close = TokenWidget(this, "]")
             close.addDeleteListener {
                 if (node.levels.size > 1) node.levels.removeCommand(node, level)
@@ -107,8 +107,8 @@ class NewArrayExpressionWidget(
                     val level = LevelWidget(open, exp, close)
                     if (index != node.levels.size) level.moveAbove(levelWidgets[index].open.label)
                     levelWidgets.add(index, level)
-                    level.expression.requestLayout()
-                    level.expression.setFocus()
+                    level.expression?.requestLayout()
+                    level.expression?.setFocusOnCreation()
                 }
 
                 override fun elementRemove(
@@ -128,12 +128,14 @@ class NewArrayExpressionWidget(
                     old: ArrayCreationLevel,
                     new: ArrayCreationLevel
                 ) {
-                    levelWidgets[index].expression.dispose()
-                    levelWidgets[index].expression = createExpLevel(
-                        index, new.dimension.get() // TODO BUG  No value present
+                    levelWidgets[index].expression?.dispose()
+                    levelWidgets[index].expression = if(new.dimension.isPresent) createExpLevel(
+                        index, new.dimension.get()
                     )
+                    else null
                     levelWidgets[index].moveExpression()
-                    levelWidgets[index].expression.requestLayout()
+                    levelWidgets[index].expression?.requestLayout()
+                    levelWidgets[index].expression?.setFocusOnCreation()
                 }
             })
 
