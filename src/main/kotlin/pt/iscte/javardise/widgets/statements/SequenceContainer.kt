@@ -3,7 +3,6 @@ package pt.iscte.javardise.widgets.statements
 import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.NodeList
 import com.github.javaparser.ast.stmt.BlockStmt
-import com.github.javaparser.ast.stmt.EmptyStmt
 import com.github.javaparser.ast.stmt.Statement
 import org.eclipse.swt.SWT
 import org.eclipse.swt.events.KeyAdapter
@@ -165,7 +164,8 @@ interface SequenceContainer<T : Node> : NodeWidget<T> {
         if (statementFeature != null)
             return statementFeature.create(parent, stmt, block)
         else {
-            val w = UnsupportedWidget(parent, stmt)
+            val w = UnsupportedStatementWidget(parent, block, stmt)
+            w.widget.addEmptyStatement(w, block, stmt)
             w.widget.addDeleteListener {
                 block.statements.removeCommand(block, stmt)
             }

@@ -230,3 +230,29 @@ abstract class MemberWidget<N : Node>(
 }
 
 
+class UnsupportedMemberWidget<T : Node>(parent: Composite, node: T, configuration: Configuration) : MemberWidget<T>(parent, node, configuration) {
+    val widget: TokenWidget
+
+    init {
+        layout = ROW_LAYOUT_H_SHRINK
+        widget = TokenWidget(this, node.toString())
+        widget.widget.font = configuration.font
+        widget.widget.foreground = parent.foreground
+        widget.widget.background = configuration.fillInColor
+        widget.setToolTip("Unsupported")
+        widget
+    }
+
+    override fun setFocusOnCreation(firstFlag: Boolean) {
+        setFocus()
+    }
+
+    override val type: TextWidget? = null
+    override val name: TextWidget
+        get() = widget
+
+    override val control: Control
+        get() = this
+}
+
+

@@ -283,8 +283,10 @@ open class ClassWidget(
 
                     if (w is MethodWidget)
                         w.focusParameters()
+                    else if(w is FieldWidget)
+                       w.focusExpressionOrSemiColon()
                     else
-                        (w as FieldWidget).focusExpressionOrSemiColon()
+                        w.setFocus()
                     bodyWidget.requestLayout()
                 }
 
@@ -372,7 +374,7 @@ open class ClassWidget(
                 w
             }
             else -> {
-                val w = UnsupportedWidget(bodyWidget, dec)
+                val w = UnsupportedMemberWidget(bodyWidget, dec, configuration)
                 w.widget.addDeleteListener {
                     this@ClassWidget.node.members.removeCommand(
                         node as Node,

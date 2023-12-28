@@ -5,6 +5,7 @@ import com.github.javaparser.ast.stmt.BlockStmt
 import com.github.javaparser.ast.stmt.EmptyStmt
 import com.github.javaparser.ast.stmt.Statement
 import org.eclipse.swt.SWT
+import org.eclipse.swt.widgets.Composite
 import org.eclipse.swt.widgets.Control
 import pt.iscte.javardise.CommandStack
 import pt.iscte.javardise.NodeWidget
@@ -39,7 +40,7 @@ abstract class StatementWidget<T : Statement>(
 
     fun TokenWidget.addDelete(node: Statement, block: BlockStmt) =
         addKeyEvent(SWT.BS) {
-            block.statements.replaceCommand(block,node,block.empty())
+            block.statements.replaceCommand(block, node, block.empty())
         }
 }
 
@@ -58,14 +59,14 @@ internal fun TextWidget.addEmptyStatement(
                 block.statements.addCommand(
                     block,
                     block.empty(),
-                    block.statements.indexOfIdentity(location) + if(after) 1 else 0
+                    block.statements.indexOfIdentity(location) + if (after) 1 else 0
                 )
         }
     }
 }
 
 
-abstract class StatementFeature<M: Statement, W: NodeWidget<*>>(val modelClass: Class<M>, val widgetClass: Class<W>) {
+abstract class StatementFeature<M : Statement, W : NodeWidget<*>>(val modelClass: Class<M>, val widgetClass: Class<W>) {
     init {
         val paramTypes = widgetClass.constructors[0].parameterTypes
         require(paramTypes.size == 3)
@@ -73,6 +74,7 @@ abstract class StatementFeature<M: Statement, W: NodeWidget<*>>(val modelClass: 
         require(Statement::class.java.isAssignableFrom(paramTypes[1]))
         require(paramTypes[2] == BlockStmt::class.java)
     }
+
     fun create(parent: SequenceWidget, stmt: Statement, block: BlockStmt): NodeWidget<M> =
         widgetClass.constructors[0].newInstance(parent, stmt, block) as NodeWidget<M>
 
@@ -113,6 +115,32 @@ fun SequenceWidget.findByModelIndex(index: Int): NodeWidget<*>? {
 }
 
 
+class UnsupportedStatementWidget<T : Statement>(parent: SequenceWidget,
+                                       override val parentBlock: BlockStmt,
+                                       override val node: T) :
+    StatementWidget<T>(parent, node) {
+
+    val widget: TokenWidget
+
+    init {
+        layout = ROW_LAYOUT_H_SHRINK
+        widget = TokenWidget(this, node.toString())
+        widget.widget.font = configuration.font
+        widget.widget.foreground = parent.foreground
+        widget.widget.background = configuration.fillInColor
+        widget.setToolTip("Unsupported")
+        widget
+    }
+
+    override fun setFocusOnCreation(firstFlag: Boolean) {
+        setFocus()
+    }
+    override val tail: TextWidget
+        get() = widget
+
+    override val control: Control
+        get() = this
+}
 
 
 

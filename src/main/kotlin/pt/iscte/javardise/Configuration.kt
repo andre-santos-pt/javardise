@@ -241,30 +241,3 @@ open class DefaultConfiguration : Configuration {
         listOf(Modifier.Keyword.SYNCHRONIZED, Modifier.Keyword.ABSTRACT)
     )
 }
-
-
-// TODO arrow down
-class UnsupportedWidget<T : Node>(parent: Composite, override val node: T) :
-    Composite(
-        parent,
-        SWT.NONE
-    ), NodeWidget<T> {
-    val widget: TokenWidget
-
-    init {
-        layout = ROW_LAYOUT_H_SHRINK
-        widget = TokenWidget(this, node.toString())
-        widget.widget.font = configuration.font
-        widget.widget.foreground = parent.foreground
-        widget.widget.background = configuration.fillInColor
-        widget.setToolTip("Unsupported")
-        widget
-    }
-
-    override fun setFocusOnCreation(firstFlag: Boolean) {
-        setFocus()
-    }
-
-    override val control: Control
-        get() = this
-}
