@@ -26,7 +26,7 @@ class AssertWidget(
 ) :
     StatementWidget<AssertStmt>(parent, node) {
     override val keyword: TokenWidget
-    var expression: ExpressionWidget<*>? = null
+41    var expression: ExpressionWidget<*>
     override val tail: TokenWidget
 
 
@@ -44,13 +44,13 @@ class AssertWidget(
         tail.addEmptyStatement(this, parentBlock, node)
 
         observeNotNullProperty<Expression>(ObservableProperty.CHECK) {
-            expression?.dispose()
+            expression.dispose()
             expression = createExpressionWidget(this, it) { e ->
-                node.modifyCommand(node.check, it, node::setCheck)
+                node.modifyCommand(node.check, e, node::setCheck)
             }
-            expression!!.moveAbove(tail.widget)
-            expression!!.requestLayout()
-            expression!!.setFocusOnCreation()
+            expression.moveAbove(tail.widget)
+            expression.requestLayout()
+            expression.setFocusOnCreation()
         }
     }
 
