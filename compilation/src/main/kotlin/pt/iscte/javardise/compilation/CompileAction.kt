@@ -37,6 +37,11 @@ class CompileAction : Action {
     else
         Color(Display.getDefault(), 255, 207, 204)
 
+    val WARNING_COLOR = if(Display.isSystemDarkTheme() && !isWindows)
+        Color(Display.getDefault(), 212, 196, 53)
+    else
+        Color(Display.getDefault(), 255, 241, 117)
+
     override val toggle: Boolean
         get() = true
 
@@ -131,6 +136,8 @@ class CompileAction : Action {
             else
                 c.head
 
+            is NewObjectExpressionWidget -> c.id
+
             is ExpressionWidget<*> -> c.head
 
             else -> null
@@ -138,7 +145,10 @@ class CompileAction : Action {
 
         textWidget?.let {
             it.widget.traverse { c ->
-                c.background = ERROR_COLOR
+                c.background = if(msg.kind == Diagnostic.Kind.ERROR)
+                    ERROR_COLOR
+                else
+                    WARNING_COLOR
                 true
             }
             if(!textWidget.isEmpty) {
