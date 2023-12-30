@@ -17,7 +17,6 @@ import pt.iscte.javardise.setCopySource
 import pt.iscte.javardise.widgets.expressions.ExpressionWidget
 import pt.iscte.javardise.widgets.expressions.createExpressionWidget
 
-// TODO adapt to throw?
 class ReturnWidget(
     parent: SequenceWidget,
     node: ReturnStmt,

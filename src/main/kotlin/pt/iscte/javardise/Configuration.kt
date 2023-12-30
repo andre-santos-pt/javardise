@@ -212,7 +212,8 @@ open class DefaultConfiguration : Configuration {
         CallFeature,
         UnaryExpressionStatementFeature,
 
-        AssertFeature
+        AssertFeature,
+        ThrowFeature
     )
 
     override val classModifiers = listOf(
