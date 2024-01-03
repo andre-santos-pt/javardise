@@ -231,12 +231,15 @@ interface CommandStack {
                 override val kind: CommandKind = CommandKind.MODIFY
                 override val element: N = e
 
+                lateinit var prev: N
+
                 override fun run() {
+                    prev = list[index] as N
                     list[index] = e
                 }
 
                 override fun undo() {
-                    list[index] = element
+                    list[index] = prev
                 }
             })
         }

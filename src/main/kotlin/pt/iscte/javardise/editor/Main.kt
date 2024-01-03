@@ -490,20 +490,31 @@ class CodeEditor(val display: Display, val folder: File) {
         val modelNodeList = mutableListOf<Node>()
         model.accept(NodeCollectorVisitor(), modelNodeList)
 
-        check(modelNodeList.size == srcNodeList.size) {
-            var msg = "${modelNodeList.size} ${srcNodeList.size}"
-            for (i in 0 until min(modelNodeList.size, srcNodeList.size)) {
-                if (modelNodeList[i] != srcNodeList[i]) {
-                    msg = "${modelNodeList[i]} ${System.lineSeparator()} ${System.lineSeparator()} ${srcNodeList[i]}"
-                    break
-                }
+//        check(modelNodeList.size == srcNodeList.size) {
+//            var msg = "${modelNodeList.size} ${srcNodeList.size}"
+//            for (i in 0 until min(modelNodeList.size, srcNodeList.size)) {
+//                if (modelNodeList[i] != srcNodeList[i]) {
+//                    msg = "${modelNodeList[i]} ${System.lineSeparator()} ${System.lineSeparator()} ${srcNodeList[i]}"
+//                    break
+//                }
+//            }
+//            msg
+//        }
+
+        var i = 0
+        var j = 0
+        while (i < srcNodeList.size && j < modelNodeList.size) {
+            if (modelNodeList[j] == srcNodeList[i]) {
+                modelNodeList[j].setRange(srcNodeList[i].range.get())
+                j++
             }
-            msg
+            i++;
         }
 
-        srcNodeList.forEachIndexed { i, n ->
-            modelNodeList[i].setRange(n.range.get())
-        }
+//        srcNodeList.forEachIndexed { i, n ->
+//            if (i < modelNodeList.size && modelNodeList[i] == srcNodeList[i])
+//                modelNodeList[i].setRange(n.range.get())
+//        }
     }
 
 
