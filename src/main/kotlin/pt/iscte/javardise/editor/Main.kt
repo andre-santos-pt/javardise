@@ -76,7 +76,7 @@ class CodeEditor(val display: Display, val folder: File) {
 
     private val actions: MutableMap<Action, ToolItem> = mutableMapOf()
 
-    private val commandObservers = mutableListOf<(Command, Boolean) -> Unit>()
+    private val commandObservers = mutableListOf<(Command?, Boolean?) -> Unit>()
 
     private val settings = Settings(this)
 
@@ -180,6 +180,10 @@ class CodeEditor(val display: Display, val folder: File) {
                         ) {
                             it.delete()
                             this@apply.selection.dispose()
+                            // to trigger delete file event
+                            commandObservers.forEach {
+                                it(null, null)
+                            }
                         }
                     }
                 }
@@ -248,7 +252,7 @@ class CodeEditor(val display: Display, val folder: File) {
         }
     }
 
-    fun addCommandObserver(o: (Command, Boolean) -> Unit) {
+    fun addCommandObserver(o: (Command?, Boolean?) -> Unit) {
         commandObservers.add(o)
         tabs.items.filter { (it.control.data is TabData) }
             .forEach {
@@ -409,7 +413,7 @@ class CodeEditor(val display: Display, val folder: File) {
             val w = tab.scrollable {
                 createWidget(file.extension, it, model)
             }
-            w.setAutoScroll()
+            //w.setAutoScroll()
 
             addAutoRenameFile(model, file, item)
             w.commandStack.addObserver { cmd, _ ->
@@ -417,6 +421,10 @@ class CodeEditor(val display: Display, val folder: File) {
             }
             commandObservers.forEach {
                 w.commandStack.addObserver(it)
+            }
+            // to trigger new file event
+            commandObservers.forEach {
+                it(null, null)
             }
 
             tab.data = TabData(file, model, w)
@@ -452,32 +460,6 @@ class CodeEditor(val display: Display, val folder: File) {
         })
     }
 
-    private fun saveAndSyncRangesOld(file: File, model: ClassOrInterfaceDeclaration) {
-        val writer = PrintWriter(file, "UTF-8")
-        writer.println((model.findCompilationUnit().getOrNull ?: model).toString())
-        writer.close()
-
-        val parse = StaticJavaParser.parse(file)
-
-        if (parse.types.first == model)
-            println("!! ASTs are different")
-
-        val srcNodeList = mutableListOf<Node>()
-        parse.types.first.get().accept(FlatASTVisitor(), srcNodeList)
-
-        val modelNodeList = mutableListOf<Node>()
-        model.accept(FlatASTVisitor(), modelNodeList)
-
-        srcNodeList.forEachIndexed { i, node ->
-            if (node != modelNodeList[i])
-                println("!" + node + "   " + modelNodeList[i])
-
-        }
-        srcNodeList.forEachIndexed { i, n ->
-            modelNodeList[i].setRange(n.range.get())
-        }
-    }
-
     private fun saveAndSyncRanges(file: File, model: ClassOrInterfaceDeclaration) {
         val writer = PrintWriter(file, "UTF-8")
         writer.println((model.findCompilationUnit().getOrNull ?: model).toString())
@@ -501,6 +483,11 @@ class CodeEditor(val display: Display, val folder: File) {
 //            msg
 //        }
 
+//        srcNodeList.forEachIndexed { i, n ->
+//            if (i < modelNodeList.size && modelNodeList[i] == srcNodeList[i])
+//                modelNodeList[i].setRange(n.range.get())
+//        }
+
         var i = 0
         var j = 0
         while (i < srcNodeList.size && j < modelNodeList.size) {
@@ -510,11 +497,6 @@ class CodeEditor(val display: Display, val folder: File) {
             }
             i++;
         }
-
-//        srcNodeList.forEachIndexed { i, n ->
-//            if (i < modelNodeList.size && modelNodeList[i] == srcNodeList[i])
-//                modelNodeList[i].setRange(n.range.get())
-//        }
     }
 
 
@@ -522,29 +504,29 @@ class CodeEditor(val display: Display, val folder: File) {
         ext: String,
         parent: Composite,
         model: ClassOrInterfaceDeclaration
-    ): ClassWidget =
-        when (ext) {
-            "sjava" -> StaticClassWidget(parent, model)
-            "fjava" -> StaticClassWidget(
-                parent,
-                model,
-                configuration = object : DefaultConfiguration() {
-                    override var fontSize: Int = super.fontSize
-                        get() = settings.editorConfiguration.fontSize
-
-                    override val statementFeatures
-                        get() = listOf(
-                            EmptyStatementFeature,
-                            IfFeature,
-                            VariableDeclarationFeature,
-                            CallFeature,
-                            ReturnFeature
-                        )
-
-                })
+    ): ClassWidget = ClassWidget(parent, model, configuration = settings.editorConfiguration, workingDir = folder)
+//        when (ext) {
+//            "sjava" -> StaticClassWidget(parent, model)
+//            "fjava" -> StaticClassWidget(
+//                parent,
+//                model,
+//                configuration = object : DefaultConfiguration() {
+//                    override var fontSize: Int = super.fontSize
+//                        get() = settings.editorConfiguration.fontSize
+//
+//                    override val statementFeatures
+//                        get() = listOf(
+//                            EmptyStatementFeature,
+//                            IfFeature,
+//                            VariableDeclarationFeature,
+//                            CallFeature,
+//                            ReturnFeature
+//                        )
+//
+//                })
             //"mjava" -> MainScriptWidget(parent, model)
-            else -> ClassWidget(parent, model, configuration = settings.editorConfiguration, workingDir = folder)
-        }
+//            else -> ClassWidget(parent, model, configuration = settings.editorConfiguration, workingDir = folder)
+//        }
 
 
     private fun loadImage(filename: String) = Image(display, this.javaClass.classLoader.getResourceAsStream(filename))

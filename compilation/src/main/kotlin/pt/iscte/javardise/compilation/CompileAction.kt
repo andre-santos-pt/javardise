@@ -3,25 +3,26 @@ package pt.iscte.javardise.compilation
 import com.github.javaparser.Position
 import com.github.javaparser.ast.Node
 import org.eclipse.swt.SWT
-import org.eclipse.swt.events.*
+import org.eclipse.swt.events.DisposeListener
+import org.eclipse.swt.events.FocusEvent
+import org.eclipse.swt.events.FocusListener
 import org.eclipse.swt.graphics.Color
 import org.eclipse.swt.graphics.Point
 import org.eclipse.swt.graphics.Rectangle
 import org.eclipse.swt.widgets.*
 import pt.iscte.javardise.Command
 import pt.iscte.javardise.NodeWidget
-import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.editor.Action
 import pt.iscte.javardise.editor.CodeEditor
 import pt.iscte.javardise.external.getOrNull
 import pt.iscte.javardise.external.traverse
 import pt.iscte.javardise.isWindows
 import pt.iscte.javardise.widgets.expressions.*
-import pt.iscte.javardise.widgets.members.ClassWidget
 import pt.iscte.javardise.widgets.members.MemberWidget
 import pt.iscte.javardise.widgets.members.MethodWidget
 import pt.iscte.javardise.widgets.statements.StatementWidget
 import javax.tools.Diagnostic
+import kotlin.concurrent.thread
 
 const val SYMBOL_ERROR = "compiler.err.cant.resolve.location"
 const val DUPID_ERROR = "compiler.err.already.defined"
@@ -50,12 +51,12 @@ class CompileAction : Action {
 
     val errorRemovers = mutableListOf<() -> Unit>()
 
-    var commandObserver: ((Command, Boolean) -> Unit)? = null
+    var commandObserver: ((Command?, Boolean?) -> Unit)? = null
 
 
     override fun run(editor: CodeEditor, toggle: Boolean) {
         if (toggle) {
-            commandObserver = { _: Command, _: Boolean ->
+            commandObserver = { _: Command?, _: Boolean? ->
                 compile(editor)
             }
             editor.addCommandObserver(commandObserver!!)
@@ -71,38 +72,43 @@ class CompileAction : Action {
     }
 
     private fun compile(editor: CodeEditor) {
-        errorRemovers.forEach { it() }
-        errorRemovers.clear()
+        thread {
+            val result = compileNoOutput(editor.folder)
+            val diagnostics = result.first.filter { it.source is JavaSourceFromString }
+            val filesWithErrors = diagnostics.map { (it.source as JavaSourceFromString).file }.toSet()
 
-        val result = compileNoOutput(editor.folder)
-        val diagnostics = result.first.filter { it.source is JavaSourceFromString }
-        val filesWithErrors = diagnostics.map { (it.source as JavaSourceFromString).file }.toSet()
-        editor.setFileErrors(filesWithErrors)
-
-        diagnostics.forEach {
-            val srcFile = (it.source as JavaSourceFromString).file
-            println("$srcFile ${it.startPosition}  ${it.endPosition} ${it.code}")
-
-            val begin = Position(it.lineNumber.toInt(), it.columnNumber.toInt())
-            val end = Position(begin.line, begin.column + (it.endPosition - it.startPosition - 1).toInt())
-
-            val classWidget = editor.getClassWidget(srcFile)
-            var w = classWidget?.findLastChild { c ->
-                c is NodeWidget<*> && c.node is Node &&
-                        (c.node as Node).range.getOrNull?.begin == begin
-                // (c.node as Node).range.getOrNull?.end == begin)
+            Display.getDefault().asyncExec {
+                errorRemovers.forEach { it() }
+                errorRemovers.clear()
+                editor.setFileErrors(filesWithErrors)
             }
+            diagnostics.forEach {
+                val srcFile = (it.source as JavaSourceFromString).file
+                println("$srcFile ${it.startPosition}  ${it.endPosition} ${it.code}")
 
-            if (w == null)
-                w = classWidget?.findLastChild { c ->
-                    c is NodeWidget<*> && c.node is Node &&
-                            (c.node as Node).range.getOrNull?.contains(begin) ?: false
+                val begin = Position(it.lineNumber.toInt(), it.columnNumber.toInt())
+                //val end = Position(begin.line, begin.column + (it.endPosition - it.startPosition - 1).toInt())
+
+                Display.getDefault().asyncExec {
+                    val classWidget = editor.getClassWidget(srcFile)
+                    var w = classWidget?.findLastChild { c ->
+                        c is NodeWidget<*> && c.node is Node &&
+                                (c.node as Node).range.getOrNull?.begin == begin
+                        // (c.node as Node).range.getOrNull?.end == begin)
+                    }
+
+                    if (w == null)
+                        w = classWidget?.findLastChild { c ->
+                            c is NodeWidget<*> && c.node is Node &&
+                                    (c.node as Node).range.getOrNull?.contains(begin) ?: false
+                        }
+
+                    if (w is NodeWidget<*>)
+                        errorRemovers.add(w.markError(it))
+                    else
+                        println("widget not found")
                 }
-
-            if (w is NodeWidget<*>)
-                errorRemovers.add(w.markError(it))
-            else
-                println("widget not found")
+            }
         }
     }
 
