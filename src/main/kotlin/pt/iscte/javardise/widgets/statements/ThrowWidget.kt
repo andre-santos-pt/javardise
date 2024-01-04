@@ -27,7 +27,7 @@ class ThrowWidget(
     override val tail: TokenWidget
 
     init {
-        keyword = newKeywordWidget(this, "throw")
+        keyword = newKeywordWidget(this, "throw", node)
         keyword.addDelete(node, parentBlock)
         keyword.addEmptyStatement(this, parentBlock, node, false)
         keyword.setCopySource(node)

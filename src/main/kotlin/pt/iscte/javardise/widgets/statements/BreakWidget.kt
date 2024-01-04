@@ -19,7 +19,7 @@ class BreakWidget(
     override val keyword: TokenWidget
     override val tail: TextWidget
     init {
-        keyword = newKeywordWidget(this, "break")
+        keyword = newKeywordWidget(this, "break", node)
         keyword.addDelete(node, parentBlock)
         keyword.addEmptyStatement(this, parentBlock, node, false)
         keyword.setCopySource(node)

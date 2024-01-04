@@ -51,7 +51,7 @@ class NewArrayExpressionWidget(
     }
 
     init {
-        keyword = newKeywordWidget(this, "new")
+        keyword = newKeywordWidget(this, "new", node)
         keyword.addDeleteListener {
             editEvent(null)
         }

@@ -8,6 +8,7 @@ import com.github.javaparser.ast.expr.SimpleName
 import com.github.javaparser.ast.nodeTypes.NodeWithSimpleName
 import com.github.javaparser.ast.observer.AstObserver
 import com.github.javaparser.ast.observer.ObservableProperty
+import com.github.javaparser.ast.type.PrimitiveType
 import com.github.javaparser.ast.type.Type
 import org.eclipse.swt.SWT
 import org.eclipse.swt.events.FocusAdapter
@@ -25,15 +26,18 @@ import javax.lang.model.SourceVersion
 import kotlin.reflect.KFunction1
 
 val DefaultConfigurationSingleton = DefaultConfiguration()
+
 interface NodeWidget<T> {
-    val configuration: Configuration get() {
-        val conf by lazy { findConf(control) }
-        return conf
-    }
-    val commandStack: CommandStack get() {
-        val comm by lazy { findComm(control) }
-        return comm
-    }
+    val configuration: Configuration
+        get() {
+            val conf by lazy { findConf(control) }
+            return conf
+        }
+    val commandStack: CommandStack
+        get() {
+            val comm by lazy { findComm(control) }
+            return comm
+        }
 
     val node: T
     val control: Control
@@ -42,27 +46,28 @@ interface NodeWidget<T> {
     fun setFocusOnCreation(firstFlag: Boolean = false)
 
     private fun findConf(n: Control): Configuration =
-        if(n is ConfigurationRoot)
+        if (n is ConfigurationRoot)
             n.configuration
-        else if(n.parent != null)
+        else if (n.parent != null)
             findConf(n.parent)
         else
             DefaultConfigurationSingleton
 
     private fun findComm(n: Control): CommandStack =
-        if(n is ConfigurationRoot)
+        if (n is ConfigurationRoot)
             n.commandStack
-        else if(n.parent != null)
+        else if (n.parent != null)
             findComm(n.parent)
         else
             CommandStack.nullStack
 
     fun newKeywordWidget(
         parent: Composite, keyword: String,
+        node: Node? = null,
         alternatives: () -> List<String> = { emptyList() },
         editAction: (String) -> Unit = {}
     ): TokenWidget {
-        val w = TokenWidget(parent, keyword, alternatives, editAction)
+        val w = TokenWidget(parent, keyword, node, alternatives, editAction)
         w.widget.foreground = configuration.keywordColor
         return w
     }
@@ -80,10 +85,10 @@ interface NodeWidget<T> {
             override fun focusLost(e: FocusEvent) {
                 if (isValid(widget.text)) {
                     action(widget.text)
-                   // widget.background = configuration.backgroundColor
-                } else if(widget.text.isBlank())
+                    // widget.background = configuration.backgroundColor
+                } else if (widget.text.isBlank())
                     widget.background = configuration.fillInColor
-                else if(prev != null)
+                else if (prev != null)
                     text = prev as String
                 else {
                     text = ""
@@ -96,7 +101,7 @@ interface NodeWidget<T> {
     }
 
     fun updateColor(text: Text) {
-       if (SourceVersion.isKeyword(text.text))
+        if (SourceVersion.isKeyword(text.text))
             text.foreground = configuration.keywordColor
         else if (text.isNumeric)
             text.foreground = configuration.numberColor
@@ -111,38 +116,38 @@ interface NodeWidget<T> {
         }
     }
 
-    fun <E: Any?> Node.modifyCommand(old: E, new: E, setOperation: KFunction1<E, Node>): Boolean =
+    fun <E : Any?> Node.modifyCommand(old: E, new: E, setOperation: KFunction1<E, Node>): Boolean =
         commandStack.modifyCommand(this, old, new, setOperation)
 
-    fun <N: Node> NodeList<in N>.addCommand(owner: Node, e: N, index: Int = size) =
+    fun <N : Node> NodeList<in N>.addCommand(owner: Node, e: N, index: Int = size) =
         commandStack.addCommand(this, owner, e, index)
 
-    fun <N: Node> NodeList<in N>.setCommand(owner: Node, e: N, index: Int) =
+    fun <N : Node> NodeList<in N>.setCommand(owner: Node, e: N, index: Int) =
         commandStack.setCommand(this, owner, e, index)
 
-    fun <N: Node> NodeList<in N>.replaceCommand(owner: Node, e: N, newElement: N) =
+    fun <N : Node> NodeList<in N>.replaceCommand(owner: Node, e: N, newElement: N) =
         commandStack.replaceCommand(this, owner, e, newElement)
 
-    fun <N: Node> NodeList<in N>.removeCommand(owner: Node, e: N) {
+    fun <N : Node> NodeList<in N>.removeCommand(owner: Node, e: N) {
         commandStack.removeCommand(this, owner, e)
     }
 
 }
 
 inline fun <reified T : NodeWidget<*>> Control.findAncestor(): T? {
-    var w : Control? = this
-    while(w !is T && w != null && w.data !is T)
+    var w: Control? = this
+    while (w !is T && w != null && w.data !is T)
         w = w.parent
 
     return w as? T
 }
 
 inline fun <reified T : Node> Control.findNode(): T? {
-    var w : Control? = this
-    while(!(w is NodeWidget<*> && w.node is T) && w != null && w.data !is T)
+    var w: Control? = this
+    while (!(w is NodeWidget<*> && w.node is T) && w != null && w.data !is T)
         w = w.parent
 
-    return if(w is NodeWidget<*>) w.node as T else w?.data as? T
+    return if (w is NodeWidget<*>) w.node as T else w?.data as? T
 }
 
 fun Composite.findChild(model: Node): Control? {
@@ -165,9 +170,8 @@ fun Composite.findChild(model: Node): Control? {
 }
 
 
-abstract class ObserverWidget<T : Node>(parent: Composite)
-    : Composite(parent, SWT.NONE), NodeWidget<T> {
-    private val registeredObservers = mutableListOf<Pair<Node,AstObserver>>()
+abstract class ObserverWidget<T : Node>(parent: Composite) : Composite(parent, SWT.NONE), NodeWidget<T> {
+    private val registeredObservers = mutableListOf<Pair<Node, AstObserver>>()
 
     init {
         addDisposeListener {
@@ -194,7 +198,7 @@ abstract class ObserverWidget<T : Node>(parent: Composite)
 
 fun <T : Node> Control.observeListUntilDispose(list: NodeList<T>, observer: ListObserver<T>) {
     val obs = list.observeList(observer)
-    addDisposeListener{
+    addDisposeListener {
         list.unregister(obs)
     }
 }
@@ -209,8 +213,9 @@ data class Validation(val ok: Boolean, val msg: String) {
     val fail get() = !ok
 }
 
-open class Id(parent: Composite, id: NodeWithSimpleName<*>, allowedChars: Regex,
-              validate: (String) -> Validation
+open class Id(
+    parent: Composite, val id: Node, allowedChars: Regex,
+    validate: (String) -> Validation
 ) :
     TextWidget {
     private var readOnly: Boolean
@@ -219,15 +224,20 @@ open class Id(parent: Composite, id: NodeWithSimpleName<*>, allowedChars: Regex,
 
     init {
         fun nodeText(): String {
-            return if (id.nameAsString == Configuration.fillInToken)
+            val text = if(id is NodeWithSimpleName<*>)
+                id.nameAsString
+            else
+                id.toString()
+
+            return if (text == Configuration.fillInToken)
                 ""
             else
-                id.nameAsString
+                text
         }
 
         readOnly = false
 
-        textWidget = TextWidget.create(parent, nodeText()) { c, _, _ ->
+        textWidget = TextWidget.create(parent, nodeText(), id) { c, _, _ ->
             skip ||
                     !readOnly && (
                     c.toString().matches(allowedChars)
@@ -271,12 +281,10 @@ open class Id(parent: Composite, id: NodeWithSimpleName<*>, allowedChars: Regex,
         }
 }
 
-class SimpleNameWidget<N : NodeWithSimpleName<*>>(
+class SimpleNameWidget<N : Node>(
     parent: Composite,
     override val node: N
-)
-    : NodeWidget<N>, Id(parent, node, ID_CHARS, {
-        s ->
+) : NodeWidget<N>, Id(parent, node, ID_CHARS, { s ->
     try {
         StaticJavaParser.parseSimpleName(s)
         Validation(true, "")
@@ -296,12 +304,12 @@ class SimpleNameWidget<N : NodeWithSimpleName<*>>(
         textWidget.setFocus()
     }
 
-    override fun isValid(): Boolean = SourceVersion.isIdentifier(textWidget.text) && !SourceVersion.isKeyword(textWidget.text)
+    override fun isValid(): Boolean =
+        SourceVersion.isIdentifier(textWidget.text) && !SourceVersion.isKeyword(textWidget.text)
 
 }
 
-open class TypeId(parent: Composite, id: NodeWithSimpleName<*>) : Id(parent, id, TYPE_CHARS, {
-        s ->
+open class TypeId(parent: Composite, id: Node) : Id(parent, id, TYPE_CHARS, { s ->
     try {
         StaticJavaParser.parseType(s)
         Validation(true, "")
@@ -310,16 +318,16 @@ open class TypeId(parent: Composite, id: NodeWithSimpleName<*>) : Id(parent, id,
     }
 })
 
-class SimpleTypeWidget<N : Type>(parent: Composite, override val node: N)
-    : TypeId(parent, object : NodeWithSimpleName<N> {
-    override fun getName() = SimpleName(node.asString())
-
-    override fun setName(name: SimpleName?): N {
-        // do nothing, not applicable
-        return node
-    }
-
-}), NodeWidget<N> {
+class SimpleTypeWidget<N : Type>(parent: Composite, override val node: N) :
+//    TypeId(parent, object : NodeWithSimpleName<N> {
+//        override fun getName() = SimpleName(node.asString())
+//
+//        override fun setName(name: SimpleName?): N {
+//            // do nothing, not applicable
+//            return node
+//        }
+//    }
+    TypeId(parent, node), NodeWidget<N> {
     init {
         textWidget.widget.data = node
         addUpdateColor(textWidget.widget)

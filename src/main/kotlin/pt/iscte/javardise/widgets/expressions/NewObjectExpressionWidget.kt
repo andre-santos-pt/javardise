@@ -30,7 +30,7 @@ class NewObjectExpressionWidget(
             TODO("new Obj scope")
         }
 
-        keyword = newKeywordWidget(this, "new")
+        keyword = newKeywordWidget(this, "new", node)
         keyword.addKeyEvent(SWT.BS) {
             editEvent(null)
         }

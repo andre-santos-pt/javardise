@@ -27,7 +27,7 @@ class AssertWidget(
     override val tail: TokenWidget
 
     init {
-        keyword = newKeywordWidget(this, "assert")
+        keyword = newKeywordWidget(this, "assert", node)
         keyword.addDelete(node, parentBlock)
         keyword.addEmptyStatement(this, parentBlock, node, false)
         keyword.setCopySource(node)

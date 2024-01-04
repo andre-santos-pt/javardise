@@ -44,7 +44,7 @@ class StringExpressionWidget(
         open = TokenWidget(this, "\"")
         open.widget.foreground = configuration.numberColor
         open.addKeyListenerInternal(delListener)
-        text = TextWidget.create(this, node.value) { c, s, i ->
+        text = TextWidget.create(this, node.value, node) { c, s, i ->
             c != '"' || s.substring(0, i).endsWith('\\') && !s.substring(i)
                 .startsWith("\"")
         }

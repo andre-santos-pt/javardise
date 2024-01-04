@@ -29,7 +29,7 @@ class AssignExpressionWidget(
     init {
         target = createTargetWidget(node.target)
 
-        operator = TokenWidget(this, node.operator.asString(), {
+        operator = TokenWidget(this, node.operator.asString(), node, {
             AssignExpr.Operator.values().map { it.asString() }
         }) {
             val find = AssignExpr.Operator.values()

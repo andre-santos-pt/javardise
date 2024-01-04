@@ -189,6 +189,7 @@ abstract class MemberWidget<N : Node>(
         val mod = newKeywordWidget(
             parent,
             modifier.keyword.asString(),
+            modifier,
             {
                 validModifiers.findMutuallyExclusive(modifier)
 

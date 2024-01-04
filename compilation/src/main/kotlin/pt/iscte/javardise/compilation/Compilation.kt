@@ -77,8 +77,6 @@ fun compileNoOutput(files: List<CompilationItem>) : Pair<List<Diagnostic<*>>, Ma
             files.map { JavaSourceFromString(it.file, it.src) }
         )
     val success = task.call()
-
-    println("Success: $success")
     return diagnostics.diagnostics to fileManager.classes
 }
 

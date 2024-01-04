@@ -40,7 +40,8 @@ class LineCommentWidget(
         slashes.setCopySource(node)
         tail = TextWidget.create(
             this,
-            node.comment.get().content.trim()
+            node.comment.get().content.trim(),
+            node
         ) { _, _, _ -> true }
         tail.addEmptyStatement(this@LineCommentWidget, parentBlock, node)
         tail.addDeleteEmptyListener {

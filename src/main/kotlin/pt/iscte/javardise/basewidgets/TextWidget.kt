@@ -1,5 +1,6 @@
 package pt.iscte.javardise.basewidgets
 
+import com.github.javaparser.ast.Node
 import org.eclipse.swt.SWT
 import org.eclipse.swt.events.*
 import org.eclipse.swt.widgets.*
@@ -136,6 +137,7 @@ interface TextWidget {
         fun  createText(
             parent: Composite,
             text: String,
+            node: Node? = null,
             accept: ((Char, String, Int) -> Boolean)? = null
         ): Text {
             val t = Text(parent, SWT.NONE)
@@ -145,7 +147,7 @@ interface TextWidget {
             t.font = parent.font
          //   t.cursor = Display.getCurrent().getSystemCursor(SWT.CURSOR_HAND)
             t.menu = Menu(t) // to disable system menu
-
+            t.data = node
 
             accept?.let {
                 t.addVerifyListener {
@@ -172,13 +174,14 @@ interface TextWidget {
         fun create(
             parent: Composite,
             text: String = "",
+            node: Node? = null,
             accept: ((Char, String, Int) -> Boolean) = { _: Char, _: String, _:Int -> false }
         ): TextWidget {
             val w = object : TextWidget {
 
                 var acceptFlag = false
 
-                val w: Text = createText(parent, text) { c, s, i ->
+                val w: Text = createText(parent, text, node) { c, s, i ->
                     acceptFlag || accept(c, s, i)
                 }.apply {
                     background = parent.background

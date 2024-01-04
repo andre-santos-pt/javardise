@@ -39,7 +39,7 @@ class WhileWidget(
     init {
         val col = column {
             firstRow = row {
-                keyword = newKeywordWidget(this, "while",
+                keyword = newKeywordWidget(this, "while", node,
                     alternatives = { listOf("if") }) {
                     commandStack.execute(object : Command {
                         override val target: Node = parentBlock

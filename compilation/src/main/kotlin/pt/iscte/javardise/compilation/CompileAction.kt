@@ -10,14 +10,13 @@ import org.eclipse.swt.graphics.Color
 import org.eclipse.swt.graphics.Point
 import org.eclipse.swt.graphics.Rectangle
 import org.eclipse.swt.widgets.*
-import pt.iscte.javardise.Command
-import pt.iscte.javardise.NodeWidget
+import pt.iscte.javardise.*
 import pt.iscte.javardise.editor.Action
 import pt.iscte.javardise.editor.CodeEditor
 import pt.iscte.javardise.external.getOrNull
 import pt.iscte.javardise.external.traverse
-import pt.iscte.javardise.isWindows
 import pt.iscte.javardise.widgets.expressions.*
+import pt.iscte.javardise.widgets.members.ClassWidget
 import pt.iscte.javardise.widgets.members.MemberWidget
 import pt.iscte.javardise.widgets.members.MethodWidget
 import pt.iscte.javardise.widgets.statements.StatementWidget
@@ -33,12 +32,12 @@ class CompileAction : Action {
 
     override val iconPath: String = "process.png"
 
-    val ERROR_COLOR = if(Display.isSystemDarkTheme() && !isWindows)
+    val ERROR_COLOR = if (Display.isSystemDarkTheme() && !isWindows)
         Color(Display.getDefault(), 150, 50, 50)
     else
         Color(Display.getDefault(), 255, 207, 204)
 
-    val WARNING_COLOR = if(Display.isSystemDarkTheme() && !isWindows)
+    val WARNING_COLOR = if (Display.isSystemDarkTheme() && !isWindows)
         Color(Display.getDefault(), 212, 196, 53)
     else
         Color(Display.getDefault(), 255, 241, 117)
@@ -72,6 +71,7 @@ class CompileAction : Action {
     }
 
     private fun compile(editor: CodeEditor) {
+        editor.debugRanges()
         thread {
             val result = compileNoOutput(editor.folder)
             val diagnostics = result.first.filter { it.source is JavaSourceFromString }
@@ -84,29 +84,26 @@ class CompileAction : Action {
             }
             diagnostics.forEach {
                 val srcFile = (it.source as JavaSourceFromString).file
-                println("$srcFile ${it.startPosition}  ${it.endPosition} ${it.code}")
-
+                val token =
+                    (it.source as JavaSourceFromString).code.substring(it.startPosition.toInt() until it.endPosition.toInt())
                 val begin = Position(it.lineNumber.toInt(), it.columnNumber.toInt())
-                //val end = Position(begin.line, begin.column + (it.endPosition - it.startPosition - 1).toInt())
+                val end = Position(begin.line, begin.column + (it.endPosition - it.startPosition - 1).toInt())
+                println("$srcFile ${it.startPosition}  ${it.endPosition} ${it.code} \"$token\" $begin $end")
+
 
                 Display.getDefault().asyncExec {
                     val classWidget = editor.getClassWidget(srcFile)
-                    var w = classWidget?.findLastChild { c ->
-                        c is NodeWidget<*> && c.node is Node &&
-                                (c.node as Node).range.getOrNull?.begin == begin
-                        // (c.node as Node).range.getOrNull?.end == begin)
-                    }
+                    var w = classWidget?.findChild { c ->
+                        c is Text && c.data is Node && (c.data as Node).range.getOrNull?.begin == begin
+                    } as? Text ?:
+                    classWidget?.findLastChild { c ->
+                        c is Text && c.data is Node && (c.data as Node).range.getOrNull?.contains(begin) ?: false
+                    } as? Text
 
-                    if (w == null)
-                        w = classWidget?.findLastChild { c ->
-                            c is NodeWidget<*> && c.node is Node &&
-                                    (c.node as Node).range.getOrNull?.contains(begin) ?: false
-                        }
-
-                    if (w is NodeWidget<*>)
-                        errorRemovers.add(w.markError(it))
-                    else
-                        println("widget not found")
+                    if (w != null) {
+                        errorRemovers.add(w.markError2(it, classWidget?.configuration ?: DefaultConfigurationSingleton))
+                    } else
+                        println("widget not found - $begin - $it")
                 }
             }
         }
@@ -137,7 +134,7 @@ class CompileAction : Action {
 
             is StringExpressionWidget -> c.text
 
-            is FieldAccessExpressionWidget -> if(c.node.scope.isThisExpr)
+            is FieldAccessExpressionWidget -> if (c.node.scope.isThisExpr)
                 c.tail
             else
                 c.head
@@ -151,14 +148,14 @@ class CompileAction : Action {
 
         textWidget?.let {
             it.widget.traverse { c ->
-                c.background = if(msg.kind == Diagnostic.Kind.ERROR)
+                c.background = if (msg.kind == Diagnostic.Kind.ERROR)
                     ERROR_COLOR
                 else
                     WARNING_COLOR
                 true
             }
-            if(!textWidget.isEmpty) {
-                val text = msg.getMessage(null).lines().first()
+            if (!textWidget.isEmpty) {
+                val text = msg.getMessage(null)// msg.getMessage(null).lines().first()
                 tip = createToolTip(control.shell, text)
             }
         }
@@ -179,7 +176,7 @@ class CompileAction : Action {
 
         val disposeListener = textWidget?.let {
             DisposeListener {
-                if(tip?.isDisposed == false)
+                if (tip?.isDisposed == false)
                     tip?.visible = false
             }
         }
@@ -198,10 +195,59 @@ class CompileAction : Action {
             }
         }
     }
-}
 
-fun createToolTip(shell: Shell, msg: String) = ToolTip(shell, SWT.BALLOON).apply {
-    text = msg
+    fun Text.markError2(msg: Diagnostic<*>, configuration: Configuration): () -> Unit {
+        var tip: ToolTip? = null
+
+        traverse { c ->
+            c.background = if (msg.kind == Diagnostic.Kind.ERROR)
+                ERROR_COLOR
+            else
+                WARNING_COLOR
+            true
+        }
+        if (text.isNotEmpty()) {
+            val text = msg.getMessage(null)// msg.getMessage(null).lines().first()
+            tip = createToolTip(shell, text)
+        }
+
+
+        val listener = object : FocusListener {
+            override fun focusGained(e: FocusEvent) {
+                tip?.setLocation(toDisplay(bounds.dimension))
+                tip?.visible = true
+            }
+
+            override fun focusLost(e: FocusEvent) {
+                tip?.visible = false
+            }
+        }
+
+
+        val disposeListener = DisposeListener {
+            if (tip?.isDisposed == false)
+                tip.visible = false
+        }
+
+
+        addFocusListener(listener)
+        addDisposeListener(disposeListener)
+
+        return {
+            if (isDisposed == false) {
+                traverse { c ->
+                    c.background = configuration.backgroundColor
+                    true
+                }
+                tip?.dispose()
+                removeFocusListener(listener)
+            }
+        }
+    }
+
+
+    private fun createToolTip(shell: Shell, msg: String) = ToolTip(shell, SWT.BALLOON).apply {
+        text = msg
 //    if(Display.isSystemDarkTheme()) {
 //        val field = this::class.java.getDeclaredField("tip")
 //        field.isAccessible = true
@@ -209,16 +255,43 @@ fun createToolTip(shell: Shell, msg: String) = ToolTip(shell, SWT.BALLOON).apply
 //        tipInternal.background = Display.getDefault().getSystemColor(SWT.COLOR_LIST_BACKGROUND)
 //        tipInternal.foreground = Display.getDefault().getSystemColor(SWT.COLOR_TITLE_FOREGROUND)
 //    }
-}
-
-fun Composite.findLastChild(accept: (Control) -> Boolean): Control? {
-    var n: Control? = null
-    traverse {
-        if (accept(it)) {
-            n = it
-        }
-        return@traverse true
     }
-    return n
-}
 
+    fun Composite.findLastChild(accept: (Control) -> Boolean): Control? {
+        var n: Control? = null
+        traverse {
+            if (accept(it)) {
+                n = it
+            }
+            return@traverse true
+        }
+        return n
+    }
+
+    fun Composite.findChild(accept: (Control) -> Boolean): Control? {
+        var n: Control? = null
+        traverse {
+            if (accept(it) && n == null) {
+                n = it
+                return@traverse false
+            }
+            return@traverse true
+        }
+        return n
+    }
+
+    fun CodeEditor.debugRanges() {
+        allClassWidgets().forEach {
+            it?.traverse {
+//            if (it is ExpressionWidget<*>) {
+//                it.head.widget.toolTipText = (it.node as Node).range.getOrNull?.toString()
+//            }
+//            else
+                if (it is Text) {
+                    it.toolTipText = (it.data as? Node)?.toString() + "\n" + (it.data as? Node)?.range?.toString()
+                }
+                return@traverse true
+            }
+        }
+    }
+}

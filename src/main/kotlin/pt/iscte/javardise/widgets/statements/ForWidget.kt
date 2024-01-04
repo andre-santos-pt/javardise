@@ -45,7 +45,7 @@ class ForWidget(
     init {
         val col = column {
             firstRow = row {
-                keyword = newKeywordWidget(this, "for")
+                keyword = newKeywordWidget(this, "for", node)
                 keyword.addDelete(node, parentBlock)
                 keyword.addShallowDelete()
                 keyword.addEmptyStatement(this@ForWidget, parentBlock, node, false)

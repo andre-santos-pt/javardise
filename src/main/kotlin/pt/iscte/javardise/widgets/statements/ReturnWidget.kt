@@ -28,7 +28,7 @@ class ReturnWidget(
     override val tail: TextWidget
 
     init {
-        keyword = newKeywordWidget(this, "return")
+        keyword = newKeywordWidget(this, "return", node)
         keyword.addKeyEvent(
             SWT.SPACE,
             precondition = { !node.expression.isPresent }) {

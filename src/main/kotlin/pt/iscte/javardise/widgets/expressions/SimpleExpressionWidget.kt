@@ -27,7 +27,7 @@ class SimpleExpressionWidget(
     val keyListener: KeyListener
 
     init {
-        expression = TextWidget.create(this, nodeText(node)) { c, s, i ->
+        expression = TextWidget.create(this, nodeText(node), node) { c, s, i ->
             c.toString()
                 .matches(Regex("\\w")) ||
                     c == SWT.BS ||
@@ -41,7 +41,7 @@ class SimpleExpressionWidget(
         else if (node.isFillIn)
             expression.widget.background = configuration.fillInColor
 
-        expression.widget.data = node
+        //expression.widget.data = node
 
         addUpdateColor(expression.widget)
 

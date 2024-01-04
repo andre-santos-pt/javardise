@@ -26,7 +26,7 @@ class FieldAccessExpressionWidget(
         layout = ROW_LAYOUT_H_STRING
 
         dot = FixedToken(this, ".")
-        nameWidget = TextWidget.create(this, nodeText(node.name)) { c, _, _ ->
+        nameWidget = TextWidget.create(this, nodeText(node.name), node) { c, _, _ ->
             c.toString().matches(ID) || c == SWT.BS
         }
         scopeWidget = drawScope(node.scope)

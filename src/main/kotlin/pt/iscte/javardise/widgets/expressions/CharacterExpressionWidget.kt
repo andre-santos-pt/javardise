@@ -28,7 +28,7 @@ class CharacterExpressionWidget(
         layout = ROW_LAYOUT_H_STRING
         open = TokenWidget(this, "'")
         open.widget.foreground = configuration.commentColor
-        text = TextWidget.create(this, node.value)
+        text = TextWidget.create(this, node.value, node)
         text.addDeleteListener {
             editEvent(hole())
         }

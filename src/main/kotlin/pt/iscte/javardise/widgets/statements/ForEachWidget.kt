@@ -38,7 +38,7 @@ class ForEachWidget(parent: SequenceWidget, node: ForEachStmt,
     init {
         column {
             firstRow = row {
-                keyword = newKeywordWidget(this, "for")
+                keyword = newKeywordWidget(this, "for", node)
                 keyword.addDelete(node, parentBlock)
                 keyword.addShallowDelete()
                 keyword.addEmptyStatement(this@ForEachWidget, parentBlock, node, false)

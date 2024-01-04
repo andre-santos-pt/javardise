@@ -21,7 +21,7 @@ class ContinueWidget(
     override val tail: TextWidget
 
     init {
-        keyword = newKeywordWidget(this, "continue")
+        keyword = newKeywordWidget(this, "continue", node)
         keyword.addDelete(node, parentBlock)
         keyword.addEmptyStatement(this, parentBlock, node, false)
         keyword.setCopySource(node)

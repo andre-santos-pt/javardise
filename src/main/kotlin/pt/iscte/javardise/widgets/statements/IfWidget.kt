@@ -40,7 +40,7 @@ class IfWidget(
     init {
         column = column {
             firstRow = row {
-                keyword = newKeywordWidget(this, "if",
+                keyword = newKeywordWidget(this, "if", node,
                     alternatives = {
                         if (node.hasElseBranch()) listOf() else listOf(
                             "while"

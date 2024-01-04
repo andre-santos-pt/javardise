@@ -1,5 +1,6 @@
 package pt.iscte.javardise.basewidgets
 
+import com.github.javaparser.ast.Node
 import org.eclipse.swt.SWT
 import org.eclipse.swt.events.*
 import org.eclipse.swt.widgets.Composite
@@ -11,11 +12,12 @@ import pt.iscte.javardise.DefaultConfiguration
 class TokenWidget(
     parent: Composite,
     token: String,
+    node: Node? = null,
     val alternatives: () -> List<String> = { emptyList() },
     val editAction: (String) -> Unit = {}
 ) : TextWidget {
 
-    override val widget: Text = TextWidget.createText(parent, token)
+    override val widget: Text = TextWidget.createText(parent, token, node)
     private val map: MutableMap<Char, MutableList<String>> = mutableMapOf()
 
     fun MutableMap<Char, MutableList<String>>.putPair(c: Char, s: String) {
@@ -52,7 +54,8 @@ class TokenWidget(
                 }
             }
         })
-        widget.data = this
+        // TODO problem?
+        //widget.data = this
     }
 
     private fun addMenu(alternatives: List<String>) {

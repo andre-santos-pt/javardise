@@ -41,7 +41,7 @@ class DoWhileWidget(
     init {
         column {
             row {
-                keyword = newKeywordWidget(this, "do")
+                keyword = newKeywordWidget(this, "do", node)
                 keyword.addDelete(node, parentBlock)
                 keyword.addShallowDelete()
                 keyword.addEmptyStatement(this@DoWhileWidget, parentBlock, node, false)

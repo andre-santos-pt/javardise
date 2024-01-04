@@ -15,7 +15,6 @@ import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
 import pt.iscte.javardise.external.*
 
-// TODO first expression
 class ExpressionListWidget<T : Expression, N : Node>(
     parent: Composite,
     open: String,
@@ -26,7 +25,7 @@ class ExpressionListWidget<T : Expression, N : Node>(
 ) :
     Composite(parent, SWT.NONE) {
     val openBracket: TokenWidget
-    private lateinit var insert: TextWidget
+    private var insert: TextWidget? = null
     val closeBracket: TokenWidget
 
     private data class ArgWidget(
@@ -63,7 +62,7 @@ class ExpressionListWidget<T : Expression, N : Node>(
                 index: Int,
                 node: T
             ) {
-                insert.delete()
+                insert?.delete()
                 val a = createArgument(node, index, false)
                 a.setFocus()
                 a.tail.setAtRight()
@@ -96,7 +95,7 @@ class ExpressionListWidget<T : Expression, N : Node>(
                     argumentWidgets[index - 1].arg.setFocus()
                 else {
                     createInsert(this@ExpressionListWidget)
-                    insert.setFocus()
+                    insert?.setFocus()
                 }
             }
         }
@@ -104,7 +103,7 @@ class ExpressionListWidget<T : Expression, N : Node>(
     }
 
     override fun setFocus(): Boolean {
-        return if (argumentWidgets.isEmpty()) insert.setFocus() else argumentWidgets.first().arg.setFocus()
+        return if (argumentWidgets.isEmpty()) insert?.setFocus() == true else argumentWidgets.first().arg.setFocus()
     }
 
     private fun createArgument(exp: T, index: Int, replace: Boolean):
@@ -233,9 +232,9 @@ class ExpressionListWidget<T : Expression, N : Node>(
                     val list: NodeList<Expression> =
                         if (target is ArrayInitializerExpr)
                             target.values
-                        else if(target is ArrayCreationExpr)
+                        else if (target is ArrayCreationExpr)
                             target.initializer.get().values
-                       else
+                        else
                             (target as NodeWithArguments<*>).arguments
 
                     if (after != null)
@@ -254,95 +253,93 @@ class ExpressionListWidget<T : Expression, N : Node>(
         insert = TextWidget.create(parent, "") { _, _, _ ->
             //c.toString().matches(TYPE_CHARS) || c == SWT.BS
             false
-        }
+        }.apply {
+            widget.layoutData = ROW_DATA_STRING
+            widget.addModifyListener {
+                widget.layoutData = if (insert!!.text.isEmpty()) ROW_DATA_STRING else null
+            }
 
-        insert.widget.layoutData = ROW_DATA_STRING
-        insert.widget.addModifyListener {
-            insert.widget.layoutData =
-                if (insert.text.isEmpty()) ROW_DATA_STRING else null
-        }
+            moveAboveInternal(closeBracket.widget)
 
+            val keyListener = object : KeyAdapter() {
+                override fun keyPressed(e: KeyEvent) {
+                    e.doit = false
+                    if (widget.isDisposed)
+                        return
+                    else if (widget.text.isBlank() && e.character.isLetter())
+                        doAddArgummentCommand(NameExpr(e.character.toString()))
+                    else if (widget.text.isBlank() && e.character.isDigit())
+                        doAddArgummentCommand(IntegerLiteralExpr(e.character.toString()))
+                    else if (widget.text.isBlank() && e.character == '\'')
+                        doAddArgummentCommand(CharLiteralExpr(" "))
+                    else if (widget.text.isBlank() && e.character == '"')
+                        doAddArgummentCommand(StringLiteralExpr(""))
+                    else if (isAtBeginning || isEmpty) {
 
-        insert.moveAboveInternal(closeBracket.widget)
-
-        val keyListener = object : KeyAdapter() {
-            override fun keyPressed(e: KeyEvent) {
-                e.doit = false
-                if (insert.widget.isDisposed)
-                    return
-                else if (insert.widget.text.isBlank() && e.character.isLetter())
-                    doAddArgummentCommand(NameExpr(e.character.toString()))
-                else if (insert.widget.text.isBlank() && e.character.isDigit())
-                    doAddArgummentCommand(IntegerLiteralExpr(e.character.toString()))
-                else if (insert.widget.text.isBlank() && e.character == '\'')
-                    doAddArgummentCommand(CharLiteralExpr(" "))
-                else if (insert.widget.text.isBlank() && e.character == '"')
-                    doAddArgummentCommand(StringLiteralExpr(""))
-                else if (insert.isAtBeginning || insert.isEmpty) {
-
-                    val unop = unaryOperators.filter { it.isPrefix }
-                        .find { it.asString().startsWith(e.character) }
-                    if (unop != null) {
-                        if (tryParse<Expression>(insert.text)) {
-                            val exp = insert.text
-                            insert.delete()
-                            doAddArgummentCommand(
-                                UnaryExpr(
-                                    StaticJavaParser.parseExpression(exp),
-                                    unop
+                        val unop = unaryOperators.filter { it.isPrefix }
+                            .find { it.asString().startsWith(e.character) }
+                        if (unop != null) {
+                            if (tryParse<Expression>(text)) {
+                                val exp = text
+                                delete()
+                                doAddArgummentCommand(
+                                    UnaryExpr(
+                                        StaticJavaParser.parseExpression(exp),
+                                        unop
+                                    )
                                 )
-                            )
 
-                        } else if (insert.text.isBlank()) {
-                            insert.delete()
-                            doAddArgummentCommand(
-                                UnaryExpr(
-                                    NameExpr(Configuration.fillInToken),
-                                    unop
+                            } else if (text.isBlank()) {
+                                delete()
+                                doAddArgummentCommand(
+                                    UnaryExpr(
+                                        NameExpr(Configuration.fillInToken),
+                                        unop
+                                    )
                                 )
-                            )
 
+                            }
                         }
-                    }
-                } else if (insert.isAtEnd) {
-                    val biop = binaryOperators.find {
-                        it.asString().startsWith(e.character)
-                    }
-                    if (biop != null && tryParse<Expression>(insert.text)
-                    ) {
-                        val exp = insert.text
-                        insert.delete()
-                        doAddArgummentCommand(
-                            BinaryExpr(
-                                StaticJavaParser.parseExpression(exp),
-                                NameExpr(Configuration.fillInToken), biop
+                    } else if (isAtEnd) {
+                        val biop = binaryOperators.find {
+                            it.asString().startsWith(e.character)
+                        }
+                        if (biop != null && tryParse<Expression>(text)
+                        ) {
+                            val exp = text
+                            delete()
+                            doAddArgummentCommand(
+                                BinaryExpr(
+                                    StaticJavaParser.parseExpression(exp),
+                                    NameExpr(Configuration.fillInToken), biop
+                                )
                             )
-                        )
-                    }
-                } else if (e.character == ',') {
-                    if (tryParse<Expression>(insert.text)) {
-                        val insertExp =
-                            StaticJavaParser.parseExpression<Expression>(insert.text)
-                        insert.delete()
-                        doAddArgummentCommand(insertExp)
-                        doAddArgummentCommand(
-                            NameExpr(Configuration.fillInToken),
-                            insertExp
-                        )
+                        }
+                    } else if (e.character == ',') {
+                        if (tryParse<Expression>(text)) {
+                            val insertExp =
+                                StaticJavaParser.parseExpression<Expression>(text)
+                            delete()
+                            doAddArgummentCommand(insertExp)
+                            doAddArgummentCommand(
+                                NameExpr(Configuration.fillInToken),
+                                insertExp
+                            )
+                        }
                     }
                 }
             }
-        }
-        insert.addKeyListenerInternal(keyListener)
+           addKeyListenerInternal(keyListener)
 
-        insert.addDeleteEmptyListener(deleteEmptyEvent)
+            addDeleteEmptyListener(deleteEmptyEvent)
 
-        val listener = insert.addFocusLostAction {
-            insert.text = ""
-        }
+            val listener = addFocusLostAction {
+                text = ""
+            }
 
-        insert.widget.addDisposeListener {
-            insert.widget.removeFocusListener(listener)
+            widget.addDisposeListener {
+                widget.removeFocusListener(listener)
+            }
         }
     }
 }

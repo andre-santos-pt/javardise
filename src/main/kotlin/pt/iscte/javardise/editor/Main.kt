@@ -400,14 +400,15 @@ class CodeEditor(val display: Display, val folder: File) {
                     text = src
                     fillGrid()
                 }
-                button("Reload") {
-                    val writer = PrintWriter(file, "UTF-8")
-                    writer.println(t.text)
-                    writer.close()
-                    val tabItem = tabs.items.find { it.control == tab }
-                    tabItem?.control = createTab(file, tabs, tabItem!!)
-                    tab.dispose()
-                }.moveAbove(t)
+                if (file.extension == "java")
+                    button("Reload") {
+                        val writer = PrintWriter(file, "UTF-8")
+                        writer.println(t.text)
+                        writer.close()
+                        val tabItem = tabs.items.find { it.control == tab }
+                        tabItem?.control = createTab(file, tabs, tabItem!!)
+                        tab.dispose()
+                    }.moveAbove(t)
             }
         } else {
             val w = tab.scrollable {
@@ -524,7 +525,7 @@ class CodeEditor(val display: Display, val folder: File) {
 //                        )
 //
 //                })
-            //"mjava" -> MainScriptWidget(parent, model)
+    //"mjava" -> MainScriptWidget(parent, model)
 //            else -> ClassWidget(parent, model, configuration = settings.editorConfiguration, workingDir = folder)
 //        }
 
