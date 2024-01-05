@@ -109,22 +109,6 @@ open class ClassWidget(
         findChild(member)?.setFocus()
     }
 
-
-    fun setAutoScroll() {
-        require(parent is ScrolledComposite)
-        val scroll = parent as ScrolledComposite
-        addFocusObserver { control ->
-            val p = Display.getDefault().map(control, scroll, control.location)
-            p.x = 0
-            p.y += 10
-            if (p.y < scroll.origin.y) {
-                scroll.origin = p
-            } else if (p.y > scroll.origin.y + scroll.bounds.height) {
-                scroll.origin = p
-            }
-        }
-    }
-
     enum class TypeTypes {
         CLASS, INTERFACE;
         //, ENUM;

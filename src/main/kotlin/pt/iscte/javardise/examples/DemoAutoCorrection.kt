@@ -50,8 +50,6 @@ public class Student {
     val classWidget = shell.scrollable {
         ClassWidget(it, clazz)
     }
-    classWidget.setAutoScroll()
-
     setOfflineCorrection(model)
 
     setOnlineCorrection(display)

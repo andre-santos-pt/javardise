@@ -414,7 +414,6 @@ class CodeEditor(val display: Display, val folder: File) {
             val w = tab.scrollable {
                 createWidget(file.extension, it, model)
             }
-            //w.setAutoScroll()
 
             addAutoRenameFile(model, file, item)
             w.commandStack.addObserver { cmd, _ ->

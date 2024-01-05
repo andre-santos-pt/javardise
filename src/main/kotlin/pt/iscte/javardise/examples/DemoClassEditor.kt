@@ -46,7 +46,7 @@ public class Student {
     shell.layout = FillLayout()
     shell.scrollable {
         ClassWidget(it, clazz)
-    }.setAutoScroll()
+    }
     shell.pack()
     shell.open()
 

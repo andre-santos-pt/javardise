@@ -95,7 +95,6 @@ fun Control.onFocus(action: () -> Unit): Control {
 val GRID_FILL_HORIZONTAL = GridData(SWT.FILL, SWT.FILL, true, false)
 
 
-
 fun Control.fillGridHorizontal() {
     require(parent.layout is GridLayout)
     layoutData = GRID_FILL_HORIZONTAL
@@ -343,9 +342,9 @@ fun shell(
 fun Shell.center() {
     val primary: Monitor = Display.getDefault().primaryMonitor
     val bounds: Rectangle = parent.bounds
-    val dim: Point = computeSize(SWT.DEFAULT,SWT.DEFAULT)
-    val x: Int = bounds.x + bounds.width/2 - dim.x/2
-    val y: Int = bounds.y + bounds.height/2 - dim.y/2
+    val dim: Point = computeSize(SWT.DEFAULT, SWT.DEFAULT)
+    val x: Int = bounds.x + bounds.width / 2 - dim.x / 2
+    val y: Int = bounds.y + bounds.height / 2 - dim.y / 2
     setLocation(x, y)
 }
 
@@ -362,23 +361,26 @@ fun Shell.launch() {
 fun font(face: String, size: Int, style: Int = SWT.NONE) =
     Font(Display.getDefault(), FontData(face, size, style))
 
+private val marginLayout = GridLayout().apply {
+    marginTop = 10
+    marginLeft = 10
+}
+
 // only works when parent has FillLayout
 fun <T : Composite> Composite.scrollable(
     style: Int = SWT.H_SCROLL or SWT.V_SCROLL,
     create: (Composite) -> T
 ): T {
-    val scroll = ScrolledComposite(this, style)
-    val layout = GridLayout()
-    layout.marginTop = 10
-    layout.marginLeft = 10
-    scroll.layout = layout
 
-    scroll.setMinSize(100, 100)
-    scroll.expandHorizontal = true
-    scroll.expandVertical = true
-
-    scroll.background = this.background
-    scroll.foreground = this.foreground
+    val scroll = ScrolledComposite(this, style).apply {
+        layout = marginLayout
+        setMinSize(100, 100)
+        expandHorizontal = true
+        expandVertical = true
+        background = this.background
+        foreground = this.foreground
+        showFocusedControl = true
+    }
 
     val content = create(scroll)
     scroll.content = content
