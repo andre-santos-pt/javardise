@@ -38,7 +38,7 @@ class FieldWidget(
 
 
     init {
-        type = SimpleTypeWidget(firstRow, dec.elementType)
+        type = SimpleTypeWidget(firstRow, dec.commonType)
         type.addFocusLostAction(::isValidType) {
             dec.modifyCommand(
                 dec.elementType,

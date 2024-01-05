@@ -82,7 +82,7 @@ tasks {
     register<Jar>("fatJar") {
         group = "distribution"
         archiveFileName.set("javardise-$os.jar")
-        destinationDirectory.set(File("${layout.buildDirectory}/dist"))
+        destinationDirectory.set(layout.buildDirectory.dir("dist"))
         dependsOn.addAll(
             listOf(
                 "compileJava",
@@ -129,35 +129,26 @@ tasks.test {
 }
 
 task("copyDependencies", Copy::class) {
-    from(configurations.runtimeClasspath).into("${layout.buildDirectory}/jars")
+    from(configurations.runtimeClasspath).into(layout.buildDirectory.dir("jars"))
 }
 
 task("copyJar", Copy::class) {
-    from(tasks.jar).into("${layout.buildDirectory}/jars")
+    from(tasks.jar).into(layout.buildDirectory.dir("jars"))
 }
 
 task("copyPlugins", Copy::class) {
-    from(
-        File(
-            project.project("compilation").buildDir,
-            "libs/compilation.jar"
-        )
-    ).into("${layout.buildDirectory}/jars")
-//    from(
-//        File(
-//            project.project("documentation").buildDir,
-//            "libs/documentation.jar"
-//        )
-//    ).into("$buildDir/jars")
+    from(project.project("compilation").layout.buildDirectory.file("libs/compilation.jar"))
+        .into(layout.buildDirectory.dir("jars"))
 }
 
 tasks.jpackage {
     dependsOn("copyDependencies", "copyJar", "copyPlugins")
 
-    input = "${layout.buildDirectory}/jars"
-    destination = "${layout.buildDirectory}/dist"
+    input = layout.buildDirectory.dir("jars").get().asFile.absolutePath
+    destination = layout.buildDirectory.dir("dist").get().asFile.absolutePath
 
-    appName = "Javardise $version"
+    appName = "Javardise"
+
     vendor = "pt.iscte"
 
     mainJar = tasks.jar.get().archiveFileName.get()

@@ -19,21 +19,13 @@ import org.eclipse.swt.layout.GridData
 import org.eclipse.swt.layout.GridLayout
 import org.eclipse.swt.widgets.*
 import pt.iscte.javardise.Command
-import pt.iscte.javardise.DefaultConfiguration
-import pt.iscte.javardise.examples.StaticClassWidget
 import pt.iscte.javardise.external.*
 import pt.iscte.javardise.isWindows
-import pt.iscte.javardise.widgets.expressions.CallFeature
-import pt.iscte.javardise.widgets.expressions.VariableDeclarationFeature
 import pt.iscte.javardise.widgets.members.ClassWidget
-import pt.iscte.javardise.widgets.statements.EmptyStatementFeature
-import pt.iscte.javardise.widgets.statements.IfFeature
-import pt.iscte.javardise.widgets.statements.ReturnFeature
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.PrintWriter
 import java.util.*
-import kotlin.math.min
 
 
 fun main(args: Array<String>) {
@@ -164,8 +156,12 @@ class CodeEditor(val display: Display, val folder: File) {
         }
     }
 
-    fun console(s: String?) {
+    fun consoleAppend(s: String?) {
         console.text += s
+    }
+
+    fun consoleClear() {
+        console.text = ""
     }
 
     private fun createTabArea(comp: Composite) =

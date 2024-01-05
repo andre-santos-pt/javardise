@@ -23,7 +23,6 @@ class RunAction : Action {
 
     override fun run(editor: CodeEditor, toggle: Boolean) {
         val compilation = compileNoOutput(editor.folder)
-        println(compilation.second)
         val classLoader: ClassLoader = ByteArrayClassLoader(compilation.second)
 
         val mainClass = classLoader.loadClass(editor.classOnFocus?.node?.nameAsString)
@@ -37,6 +36,7 @@ class RunAction : Action {
         System.setOut(customPrintStream)
         // TODO infinite loop
         System.setProperty("user.dir", editor.folder.absolutePath)
+        editor.consoleClear()
         mainMethod?.invoke(null)
         System.setOut(originalSystemOut)
     }
@@ -58,18 +58,18 @@ private class Interceptor(out: OutputStream, val editor: CodeEditor) :
 
         // TODO other types
     override fun print(s: String?) {
-        editor.console(s.toString())
+        editor.consoleAppend(s.toString())
     }
 
     override fun print(i: Int) {
-        editor.console(i.toString())
+        editor.consoleAppend(i.toString())
     }
 
     override fun println(i: Int) {
-        editor.console(i.toString()+ System.lineSeparator())
+        editor.consoleAppend(i.toString()+ System.lineSeparator())
     }
 
     override fun println(s: String?) {
-        editor.console(s.toString() + System.lineSeparator())
+        editor.consoleAppend(s.toString() + System.lineSeparator())
     }
 }
