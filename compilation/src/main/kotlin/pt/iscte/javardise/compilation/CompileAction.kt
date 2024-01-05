@@ -70,7 +70,7 @@ class CompileAction : Action {
     }
 
     private fun compile(editor: CodeEditor) {
-        editor.debugRanges() // TODO tmp
+        //editor.debugRanges()
         thread {
             val result = compileNoOutput(editor.folder)
             val diagnostics = result.first.filter { it.source is JavaSourceFromString }
