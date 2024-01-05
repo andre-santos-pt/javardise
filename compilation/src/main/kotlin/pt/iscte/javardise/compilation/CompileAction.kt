@@ -16,7 +16,6 @@ import pt.iscte.javardise.editor.CodeEditor
 import pt.iscte.javardise.external.getOrNull
 import pt.iscte.javardise.external.traverse
 import pt.iscte.javardise.widgets.expressions.*
-import pt.iscte.javardise.widgets.members.ClassWidget
 import pt.iscte.javardise.widgets.members.MemberWidget
 import pt.iscte.javardise.widgets.members.MethodWidget
 import pt.iscte.javardise.widgets.statements.StatementWidget
@@ -128,7 +127,7 @@ class CompileAction : Action {
         }
 
         if (text.isNotEmpty()) {
-            val text = msg.getMessage(null)// msg.getMessage(null).lines().first()
+            val text = msg.getMessage(null).lines().first()
             tip = createToolTip(shell, text)
             setData("error", tip)
         }
@@ -168,13 +167,13 @@ class CompileAction : Action {
 
     private fun createToolTip(shell: Shell, msg: String) = ToolTip(shell, SWT.BALLOON).apply {
         text = msg
-//    if(Display.isSystemDarkTheme()) {
-//        val field = this::class.java.getDeclaredField("tip")
-//        field.isAccessible = true
-//        val tipInternal = field.get(this) as Shell
-//        tipInternal.background = Display.getDefault().getSystemColor(SWT.COLOR_LIST_BACKGROUND)
-//        tipInternal.foreground = Display.getDefault().getSystemColor(SWT.COLOR_TITLE_FOREGROUND)
-//    }
+    if(Display.isSystemDarkTheme() && !isWindows) {
+        val field = this::class.java.getDeclaredField("tip")
+        field.isAccessible = true
+        val tipInternal = field.get(this) as Shell
+        tipInternal.background = Display.getDefault().getSystemColor(SWT.COLOR_LIST_BACKGROUND)
+        tipInternal.foreground = Display.getDefault().getSystemColor(SWT.COLOR_TITLE_FOREGROUND)
+    }
     }
 
     fun Composite.findLastChild(accept: (Control) -> Boolean): Control? {
