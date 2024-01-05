@@ -4,6 +4,5 @@
 # .../jar
 
 java -XstartOnFirstThread -cp build/dist/javardise-macos.jar\
-:documentation/build/libs/documentation.jar\
-:debugger/build/libs/debugger.jar:debugger/libs/Strudel.jar\
+:compilation/build/libs/compilation.jar\
  pt.iscte.javardise.editor.MainKt

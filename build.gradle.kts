@@ -7,7 +7,7 @@ plugins {
 }
 
 group = "pt.iscte.javardise"
-version = "1.0.2"
+version = "1.1.0"
 
 val mac = System.getProperty("os.name").lowercase().contains("mac")
 val win = System.getProperty("os.name").lowercase().contains("windows")
@@ -82,7 +82,7 @@ tasks {
     register<Jar>("fatJar") {
         group = "distribution"
         archiveFileName.set("javardise-$os.jar")
-        destinationDirectory.set(File("$buildDir/dist"))
+        destinationDirectory.set(File("${layout.buildDirectory}/dist"))
         dependsOn.addAll(
             listOf(
                 "compileJava",
@@ -107,7 +107,6 @@ tasks {
 tasks.withType<Jar> {
     manifest {
         attributes["Main-Class"] = application.mainClass
-        //attributes["Automatic-Module-Name"] = "pt.iscte.javardise"
     }
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     //from(configurations.runtimeClasspath)
@@ -130,11 +129,11 @@ tasks.test {
 }
 
 task("copyDependencies", Copy::class) {
-    from(configurations.runtimeClasspath).into("$buildDir/jars")
+    from(configurations.runtimeClasspath).into("${layout.buildDirectory}/jars")
 }
 
 task("copyJar", Copy::class) {
-    from(tasks.jar).into("$buildDir/jars")
+    from(tasks.jar).into("${layout.buildDirectory}/jars")
 }
 
 task("copyPlugins", Copy::class) {
@@ -143,7 +142,7 @@ task("copyPlugins", Copy::class) {
             project.project("compilation").buildDir,
             "libs/compilation.jar"
         )
-    ).into("$buildDir/jars")
+    ).into("${layout.buildDirectory}/jars")
 //    from(
 //        File(
 //            project.project("documentation").buildDir,
@@ -155,10 +154,10 @@ task("copyPlugins", Copy::class) {
 tasks.jpackage {
     dependsOn("copyDependencies", "copyJar", "copyPlugins")
 
-    input = "$buildDir/jars"
-    destination = "$buildDir/dist"
+    input = "${layout.buildDirectory}/jars"
+    destination = "${layout.buildDirectory}/dist"
 
-    appName = "Javardise"
+    appName = "Javardise $version"
     vendor = "pt.iscte"
 
     mainJar = tasks.jar.get().archiveFileName.get()

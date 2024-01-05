@@ -1,11 +1,10 @@
 # About
 
-Javardise is a research prototype consisting of a [Projectional Editor](https://en.wikipedia.org/wiki/Structure_editor) 
-for a subset of Java, built using:
-- [JavaParser](http://javaparser.org): abstract representation of the code (model)
-- [Standard Widget Toolkit (SWT)](https://www.eclipse.org/swt): GUI Toolkit
+Javardise is a research prototype consisting of a [Projectional Editor](https://en.wikipedia.org/wiki/Structure_editor) for a mini-Java, a subset of the language primitives that roughly suffices for introductory programming in Java.
 
-The editor enforces the structure of code, ensuring that:
+> The editor is not meant to be a full-featured editor, but rather a base for experimentation and research on structured/projectional editors.
+
+The editor interaction enforces the structure of code, ensuring that:
 - the code is always well-formed and well-formatted
 - the Java language grammar *always* accepts the code (no lexical/parse errors)
 - every code modification is represented in a well-defined 
@@ -14,8 +13,53 @@ command (e.g., add parameter, delete statement, modify identifier)
 while allowing:
 - editing *views* of model elements (e.g., methods in isolation of their class)
 - editing multiple *views* of a same model elements
-- performing editing commands programmatically through the model
+- performing commands that programmatically transform the model
 
+# Download
+
+A standalone distribution (no JVM required) may be obtained through the following links. This distribution includes an extension to compile Java using the SDK Compiler API.
+
+- [Mac OS](http://home.iscte-iul.pt/~alssl/javardise/Javardise-1.0.2.dmg) - because the application is currently not signed, one has to trick the OS to be able to execute it. After extracting the application from the DMG, execute: ```xattr -d com.apple.quarantine Javardise.app``` On the first time, open the application with the popup menu action in order to force the OS to open it (you might have to do it twice).
+
+# Usage
+![Javardise](docimages/javardiseShot.png?raw=true)
+
+1. A dialog will ask for a folder, which will be used as a workspace. Currently, Javardise only reads the .java contained at the root, while subfolders are ignored. Any changes in Javardise settings will be stored in a **.javardise** file in the workspace folder.
+
+
+2. All the Java files contained in the workspace folder will be opened (there is no file explorer). As code is edited, it is automatically saved to disk. You may add new files or delete existing ones. However, note that external changes in the workspace folder will not be automatically reflected in the application without restart.
+
+
+3. Javardise expects syntactically well-formed Java files (that is, which are accepted by the grammar). If for some reason a file cannot be parsed, it will be opened as raw text, which can be edited, and in turn one may attempt to reload.
+
+# Implementation
+Javardise is built using:
+- [JavaParser](http://javaparser.org): abstract representation of the code (model)
+- [Standard Widget Toolkit (SWT)](https://www.eclipse.org/swt): GUI Toolkit
+
+There are some core Java primitives for which there is **no editing support**, but which might be supported in the future:
+
+**structural**:
+- package declaration
+- imports
+- method throws directive
+- generics
+- annotations
+- implements/extends
+- enums
+- records
+- multiple class declarations in a single file
+
+**statements**:
+- try-catch
+- concurrency primitives
+- this call in constructors
+
+Support for new statements can be implemented as a pluggable features (see an example with the [assert statement](https://github.com/andre-santos-pt/javardise/blob/master/src/main/kotlin/pt/iscte/javardise/widgets/statements/AssertWidget.kt)). The statement feature can be plugged in in the [configuration oject](https://github.com/andre-santos-pt/javardise/blob/master/src/main/kotlin/pt/iscte/javardise/Configuration.kt) (following up the exampe, look for *AssertFeature*).
+
+**expressions**:
+- lambda expressions
+- member references
 
 # Builds (requires Gradle 8.4)
 
@@ -65,7 +109,7 @@ An example of using an widget to edit a whole class.
 [pt.iscte.javardise.examples.DemoClassEditor](https://github.com/andre-santos-pt/JavardiseJP/blob/master/src/main/kotlin/pt/iscte/javardise/examples/DemoClassEditor.kt)
 
 ### MethodWidget (multiple views)
-An example of using a widget to edit a method in isolation. This example also ilustrates the possibility of multiple views of a same element of the model (method in this case).
+An example of using a widget to edit a method in isolation. This example also illustrates the possibility of multiple views of a same element of the model (method in this case).
 
 [pt.iscte.javardise.examples.DemoMethodMVC](https://github.com/andre-santos-pt/JavardiseJP/blob/master/src/main/kotlin/pt/iscte/javardise/examples/DemoMethodMVC.kt)
 
