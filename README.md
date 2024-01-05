@@ -19,6 +19,8 @@ while allowing:
 
 A standalone distribution (no JVM required) may be obtained through the following links. This distribution includes an extension to compile Java using the SDK Compiler API.
 
+- [Windows](http://home.iscte-iul.pt/~alssl/javardise/Javardise-1.1.0.zip)
+
 - [Mac OS](http://home.iscte-iul.pt/~alssl/javardise/Javardise-1.1.0.dmg) - because the application is currently not signed, one has to trick the OS to be able to execute it. After extracting the application from the DMG, execute: ```xattr -d com.apple.quarantine Javardise.app``` On the first time, open the application with the popup menu action in order to force the OS to open it (you might have to do it twice).
 
 # Usage
