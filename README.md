@@ -19,7 +19,9 @@ while allowing:
 
 A standalone distribution (no JVM required) may be obtained through the following links. This distribution includes an extension to compile Java using the SDK Compiler API.
 
-- [Mac OS](http://home.iscte-iul.pt/~alssl/javardise/Javardise-1.1.0.dmg) - because the application is currently not signed, one has to trick the OS to be able to execute it. After extracting the application from the DMG, execute: ```xattr -d com.apple.quarantine Javardise.app``` On the first time, open the application with the popup menu action in order to force the OS to open it (you might have to do it twice).
+- [Windows](https://home.iscte-iul.pt/~alssl/javardise/Javardise-1.1.0.zip)
+
+- [Mac OS](https://home.iscte-iul.pt/~alssl/javardise/Javardise-1.1.0.dmg) - because the application is currently not signed, one has to trick the OS to be able to execute it. After extracting the application from the DMG, execute: ```xattr -d com.apple.quarantine Javardise.app``` On the first time, open the application with the popup menu action in order to force the OS to open it (you might have to do it twice).
 
 # Usage
 ![Javardise](docimages/javardiseShot.png?raw=true)
@@ -34,7 +36,7 @@ A standalone distribution (no JVM required) may be obtained through the followin
 
 # Implementation
 Javardise is built using:
-- [JavaParser](http://javaparser.org): abstract representation of the code (model)
+- [JavaParser](https://javaparser.org): abstract representation of the code (model)
 - [Standard Widget Toolkit (SWT)](https://www.eclipse.org/swt): GUI Toolkit
 
 There are some core Java primitives for which there is **no editing support**, but which might be supported in the future:

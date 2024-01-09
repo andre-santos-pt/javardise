@@ -62,9 +62,9 @@ dependencies {
     api("org.junit.platform:junit-platform-suite:1.9.2")
     api("com.github.javaparser:javaparser-symbol-solver-core:3.25.1")
     if (mac)
-        api("org.eclipse.platform:org.eclipse.swt.cocoa.macosx.x86_64:3.123.0")
+        api("org.eclipse.platform:org.eclipse.swt.cocoa.macosx.x86_64:3.124.200")
     else if (win)
-        api("org.eclipse.platform:org.eclipse.swt.win32.win32.x86_64:3.123.0")
+        api("org.eclipse.platform:org.eclipse.swt.win32.win32.x86_64:3.124.200")
 }
 
 application {
@@ -162,7 +162,7 @@ tasks.jpackage {
 
     windows {
         type = ImageType.APP_IMAGE
-        winConsole = true
+        winConsole = false
         javaOptions = listOf("-Dfile.encoding=UTF-8")
     }
 }
