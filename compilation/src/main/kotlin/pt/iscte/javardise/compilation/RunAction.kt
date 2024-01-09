@@ -1,6 +1,7 @@
 package pt.iscte.javardise.compilation
 
 import com.github.javaparser.ast.Modifier
+import com.github.javaparser.ast.body.MethodDeclaration
 import pt.iscte.javardise.editor.Action
 import pt.iscte.javardise.editor.CodeEditor
 import java.io.ByteArrayOutputStream
@@ -13,13 +14,16 @@ class RunAction : Action {
 
     override val iconPath: String = "play.png"
 
+    private fun MethodDeclaration.isMain() =
+        nameAsString == "main" &&
+        modifiers.contains(Modifier.staticModifier()) &&
+                type.isVoidType &&
+                (parameters.isEmpty() || parameters.size == 1 && parameters[0].typeAsString == "String[]")
+
+
     override fun isEnabled(editor: CodeEditor): Boolean =
         compileNoOutput(editor.folder).first.isEmpty() &&
-                editor.classOnFocus?.node?.methods?.any {
-                    it.modifiers.contains(Modifier.staticModifier()) &&
-                            it.type.isVoidType &&
-                            it.nameAsString == "main"
-                } ?: false
+                editor.classOnFocus?.node?.methods?.any { it.isMain() } ?: false
 
     override fun run(editor: CodeEditor, toggle: Boolean) {
         val compilation = compileNoOutput(editor.folder)
@@ -27,18 +31,25 @@ class RunAction : Action {
 
         val mainClass = classLoader.loadClass(editor.classOnFocus?.node?.nameAsString)
         val mainMethod = mainClass.declaredMethods.find {
-            it.name == "main" && java.lang.reflect.Modifier.isStatic(it.modifiers)
+            it.name == "main" && java.lang.reflect.Modifier.isStatic(it.modifiers) && it.returnType.name == "void"
         }
-        mainMethod?.trySetAccessible()
-        val outputStream = ByteArrayOutputStream()
-        val customPrintStream = Interceptor(outputStream,editor)
-        val originalSystemOut = System.out
-        System.setOut(customPrintStream)
-        // TODO infinite loop
-        System.setProperty("user.dir", editor.folder.absolutePath)
-        editor.consoleClear()
-        mainMethod?.invoke(null)
-        System.setOut(originalSystemOut)
+
+        if(mainMethod != null) {
+            mainMethod.trySetAccessible()
+            val outputStream = ByteArrayOutputStream()
+            val customPrintStream = Interceptor(outputStream, editor)
+            val originalSystemOut = System.out
+            System.setOut(customPrintStream)
+            // TODO infinite loop
+            System.setProperty("user.dir", editor.folder.absolutePath)
+            editor.consoleClear()
+            if (mainMethod.parameters?.isEmpty() == true)
+                mainMethod.invoke(null)
+            else
+                mainMethod.invoke(null, emptyArray<String>())
+
+            System.setOut(originalSystemOut)
+        }
     }
 }
 

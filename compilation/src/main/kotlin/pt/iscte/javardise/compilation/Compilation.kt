@@ -62,6 +62,8 @@ fun compileNoOutput(folder: File) = compileNoOutput(folder.listFiles()
     ?: emptyList())
 
 fun compileNoOutput(files: List<CompilationItem>) : Pair<List<Diagnostic<*>>, Map<String, ByteArray>> {
+    if(files.isEmpty())
+        return Pair(emptyList(), emptyMap())
     val compiler: JavaCompiler = ToolProvider.getSystemJavaCompiler()
     val diagnostics = DiagnosticCollector<JavaFileObject>()
     val compilationUnits: MutableList<JavaFileObject> = mutableListOf()
