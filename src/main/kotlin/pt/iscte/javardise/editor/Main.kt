@@ -7,18 +7,27 @@ import com.github.javaparser.ast.NodeList
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration
 import com.github.javaparser.ast.observer.AstObserverAdapter
 import com.github.javaparser.ast.observer.ObservableProperty
+import com.github.javaparser.symbolsolver.JavaSymbolSolver
+import com.github.javaparser.symbolsolver.SourceFileInfoExtractor
+import com.github.javaparser.symbolsolver.resolution.typesolvers.CombinedTypeSolver
+import com.github.javaparser.symbolsolver.resolution.typesolvers.JavaParserTypeSolver
+import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeSolver
 import org.eclipse.swt.SWT
 import org.eclipse.swt.custom.CTabFolder
 import org.eclipse.swt.custom.CTabItem
 import org.eclipse.swt.custom.SashForm
 import org.eclipse.swt.events.SelectionAdapter
 import org.eclipse.swt.events.SelectionEvent
-import org.eclipse.swt.graphics.*
+import org.eclipse.swt.graphics.Font
+import org.eclipse.swt.graphics.FontData
+import org.eclipse.swt.graphics.Image
+import org.eclipse.swt.graphics.Point
 import org.eclipse.swt.layout.FillLayout
 import org.eclipse.swt.layout.GridData
 import org.eclipse.swt.layout.GridLayout
 import org.eclipse.swt.widgets.*
 import pt.iscte.javardise.Command
+import pt.iscte.javardise.CommandStack
 import pt.iscte.javardise.external.*
 import pt.iscte.javardise.isWindows
 import pt.iscte.javardise.widgets.members.ClassWidget
@@ -68,7 +77,7 @@ class CodeEditor(val display: Display, val folder: File) {
 
     private val actions: MutableMap<Action, ToolItem> = mutableMapOf()
 
-    private val commandObservers = mutableListOf<(Command?, Boolean?) -> Unit>()
+    private val commandObservers = mutableListOf<(Command?, Boolean?, CommandStack?) -> Unit>()
 
     private val settings = Settings(this)
 
@@ -98,6 +107,11 @@ class CodeEditor(val display: Display, val folder: File) {
         }
     )
 
+
+
+
+
+
     fun updateTabs() {
         tabs.items.forEach {
             val old = it.control
@@ -106,8 +120,19 @@ class CodeEditor(val display: Display, val folder: File) {
         }
     }
 
+    private fun setupSymbolSolver() {
+        val combinedTypeSolver = CombinedTypeSolver()
+        combinedTypeSolver.add(ReflectionTypeSolver())
+        combinedTypeSolver.add(JavaParserTypeSolver(folder))
+
+        val symbolSolver = JavaSymbolSolver(combinedTypeSolver)
+        StaticJavaParser.getParserConfiguration().setSymbolResolver(symbolSolver)
+    }
+
     init {
         require(folder.exists() && folder.isDirectory)
+
+        setupSymbolSolver()
 
         shell = Shell(display)
         shell.layout = GridLayout(1, false)
@@ -151,7 +176,7 @@ class CodeEditor(val display: Display, val folder: File) {
 
         handleShortcuts()
         setActionsEnabled()
-        addCommandObserver { _, _ ->
+        addCommandObserver { _, _, _ ->
             setActionsEnabled()
         }
     }
@@ -178,7 +203,7 @@ class CodeEditor(val display: Display, val folder: File) {
                             this@apply.selection.dispose()
                             // to trigger delete file event
                             commandObservers.forEach {
-                                it(null, null)
+                                it(null, null, null)
                             }
                         }
                     }
@@ -235,7 +260,11 @@ class CodeEditor(val display: Display, val folder: File) {
         ?.control?.data as? TabData)?.classWidget
 
     fun allClassWidgets() =
-        tabs.items.filter { it.control?.data is TabData }.map { (it.control.data as TabData).classWidget }
+        tabs.items.filter { it.control?.data is TabData }.map { (it.control.data as TabData).classWidget }.filterNotNull()
+
+    fun allClasses() =
+        tabs.items.filter { it.control?.data is TabData }.map { (it.control.data as TabData).model }.filterNotNull()
+
 
     fun setFileErrors(files: Set<File>) {
         tabs.items.forEach {
@@ -248,19 +277,23 @@ class CodeEditor(val display: Display, val folder: File) {
         }
     }
 
-    fun addCommandObserver(o: (Command?, Boolean?) -> Unit) {
+    fun addCommandObserver(o: (Command?, Boolean?, CommandStack?) -> Unit) {
         commandObservers.add(o)
         tabs.items.filter { (it.control.data is TabData) }
             .forEach {
-                (it.control.data as TabData).classWidget?.commandStack?.addObserver(o)
+                (it.control.data as TabData).classWidget?.commandStack?.addObserver { c: Command, undo: Boolean ->
+                    o(c, undo, (it.control.data as TabData).classWidget?.commandStack)
+                }
             }
     }
 
-    fun removeCommandObserver(o: (Command, Boolean) -> Unit) {
+    fun removeCommandObserver(o: (Command?, Boolean?, CommandStack?) -> Unit) {
         commandObservers.remove(o)
         tabs.items.filter { (it.control.data is TabData) }
             .forEach {
-                (it.control.data as TabData).classWidget?.commandStack?.removeObserver(o)
+                (it.control.data as TabData).classWidget?.commandStack?.removeObserver { c: Command, undo: Boolean ->
+                    o(c, undo, null)
+                }
             }
     }
 
@@ -416,11 +449,13 @@ class CodeEditor(val display: Display, val folder: File) {
                 saveAndSyncRanges(item.data as File, model)
             }
             commandObservers.forEach {
-                w.commandStack.addObserver(it)
+                w.commandStack.addObserver  { c: Command, undo: Boolean ->
+                    it(c, undo, w.commandStack)
+                }
             }
             // to trigger new file event
             commandObservers.forEach {
-                it(null, null)
+                it(null, null, null)
             }
 
             tab.data = TabData(file, model, w)
