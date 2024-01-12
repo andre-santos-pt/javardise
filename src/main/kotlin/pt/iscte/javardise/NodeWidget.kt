@@ -85,7 +85,7 @@ interface NodeWidget<T> {
             override fun focusLost(e: FocusEvent) {
                 if (isValid(widget.text)) {
                     action(widget.text)
-                    // widget.background = configuration.backgroundColor
+                    widget.background = configuration.backgroundColor
                 } else if (widget.text.isBlank())
                     widget.background = configuration.fillInColor
                 else if (prev != null)

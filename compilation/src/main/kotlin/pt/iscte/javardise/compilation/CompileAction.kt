@@ -49,12 +49,12 @@ class CompileAction : Action {
 
     val errorRemovers = mutableListOf<Pair<Text, () -> Unit>>()
 
-    var commandObserver: ((Command?, Boolean?) -> Unit)? = null
+    var commandObserver: ((Command?, Boolean?, CommandStack?) -> Unit)? = null
 
 
     override fun run(editor: CodeEditor, toggle: Boolean) {
         if (toggle) {
-            commandObserver = { _: Command?, _: Boolean? ->
+            commandObserver = { _: Command?, _: Boolean?, _: CommandStack? ->
                 compile(editor)
             }
             editor.addCommandObserver(commandObserver!!)

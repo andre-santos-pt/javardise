@@ -25,6 +25,8 @@ import pt.iscte.javardise.external.*
 import pt.iscte.javardise.widgets.statements.SequenceContainer
 import pt.iscte.javardise.widgets.statements.StatementWidget
 import pt.iscte.javardise.widgets.statements.addEmptyStatement
+import kotlin.reflect.KFunction
+import kotlin.reflect.KFunction1
 
 class MethodWidget(
     parent: Composite,
@@ -81,7 +83,7 @@ class MethodWidget(
             )
 
             type!!.addFocusLostAction(::isValidType) {
-                node.modifyCommand(node.typeAsString, it, node::setType)
+                node.modifyCommand(node.type, StaticJavaParser.parseType(it), node::setType)
             }
             configureInsert(type!!)
         }
@@ -285,7 +287,7 @@ class MethodWidget(
                 }
 
                 type.addFocusLostAction(::isValidType) {
-                    node.modifyCommand(node.typeAsString, it, node::setType)
+                    node.modifyCommand(node.type, StaticJavaParser.parseType(it), node::setType)
                 }
 
                 name = SimpleNameWidget(this, node)

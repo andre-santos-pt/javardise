@@ -7,6 +7,7 @@ import com.github.javaparser.ast.body.VariableDeclarator
 import com.github.javaparser.ast.expr.Expression
 import com.github.javaparser.ast.expr.SimpleName
 import com.github.javaparser.ast.observer.ObservableProperty
+import com.github.javaparser.ast.type.Type
 import org.eclipse.swt.widgets.Composite
 import pt.iscte.javardise.*
 import pt.iscte.javardise.basewidgets.TokenWidget
@@ -79,13 +80,16 @@ class FieldWidget(
         if (dec.variable.initializer.isPresent)
             addInitializer(dec.variable.initializer.get())
 
+        observeNotNullProperty<Type>(ObservableProperty.TYPE, target = dec.variable) {
+            type.set(it.toString())
+        }
 
         observeNotNullProperty<SimpleName>(
             ObservableProperty.NAME,
             target = dec.variable
         ) {
             name.set(it.id)
-            name.textWidget.widget.data = it
+            //name.textWidget.widget.data = it
         }
 
         observeProperty<Expression>(

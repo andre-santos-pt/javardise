@@ -22,6 +22,14 @@ interface Command {
     fun asString(): String = "$kind - ${target::class.simpleName} - $element"
 }
 
+interface ReplaceCommand<E> : Command {
+    override val kind: CommandKind get() = CommandKind.MODIFY
+    val newElement: E?
+}
+interface ModifyCommand<E> : ReplaceCommand<E> {
+    val setOperation: KFunction1<E, Node>
+}
+
 interface CommandStack {
     val stackSize: Int
     val stackTop: Int
@@ -86,6 +94,7 @@ interface CommandStack {
                     it(c, true)
                 }
             } catch (e: Exception) {
+                e.printStackTrace()
                 logError(e, c)
             }
         }
@@ -158,13 +167,17 @@ interface CommandStack {
             setOperation: KFunction1<E, Node>
         ): Boolean =
             if (old != new) {
-                execute(object : Command {
+                execute(object : ModifyCommand<E> {
+
                     override val target = target
                     override val kind: CommandKind = CommandKind.MODIFY
                     override val element: E? = old
+                    override val newElement: E = new
+                    override val setOperation: KFunction1<E, Node>
+                        get() = setOperation
 
                     override fun run() {
-                        setOperation(new)
+                        setOperation(newElement)
                     }
 
                     override fun undo() {
@@ -250,10 +263,10 @@ interface CommandStack {
             e: N,
             newElement: N
         ) {
-            execute(object : Command {
+            execute(object : ReplaceCommand<N> {
                 override val target = owner
-                override val kind: CommandKind = CommandKind.MODIFY
                 override val element: N = e
+                override val newElement: N = newElement
 
                 val index = list.indexOfIdentity(element)
 
