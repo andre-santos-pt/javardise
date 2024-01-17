@@ -65,6 +65,15 @@ data class TabData(
     val classWidget: ClassWidget?
 )
 
+fun setupSymbolSolver(folder: File) {
+    val combinedTypeSolver = CombinedTypeSolver()
+    combinedTypeSolver.add(ReflectionTypeSolver())
+    combinedTypeSolver.add(JavaParserTypeSolver(folder))
+
+    val symbolSolver = JavaSymbolSolver(combinedTypeSolver)
+    StaticJavaParser.getParserConfiguration().setSymbolResolver(symbolSolver)
+}
+
 
 class CodeEditor(val display: Display, val folder: File) {
     private val shell: Shell
@@ -107,11 +116,6 @@ class CodeEditor(val display: Display, val folder: File) {
         }
     )
 
-
-
-
-
-
     fun updateTabs() {
         tabs.items.forEach {
             val old = it.control
@@ -120,19 +124,11 @@ class CodeEditor(val display: Display, val folder: File) {
         }
     }
 
-    private fun setupSymbolSolver() {
-        val combinedTypeSolver = CombinedTypeSolver()
-        combinedTypeSolver.add(ReflectionTypeSolver())
-        combinedTypeSolver.add(JavaParserTypeSolver(folder))
-
-        val symbolSolver = JavaSymbolSolver(combinedTypeSolver)
-        StaticJavaParser.getParserConfiguration().setSymbolResolver(symbolSolver)
-    }
 
     init {
         require(folder.exists() && folder.isDirectory)
 
-        setupSymbolSolver()
+        setupSymbolSolver(folder)
 
         shell = Shell(display)
         shell.layout = GridLayout(1, false)

@@ -15,6 +15,9 @@ while allowing:
 - editing multiple *views* of a same model elements
 - performing commands that programmatically transform the model
 
+If you use Javardise for Academic work, please refer to the following paper:
+> André L. Santos. 2020. [Javardise: a structured code editor for programming pedagogy in Java](https://doi.org/10.1145/3397537.3397561). In Companion Proceedings of the 4th International Conference on Art, Science, and Engineering of Programming (Programming Experience Workshop PX/24).
+
 # Download
 
 A standalone distribution (no JVM required) may be obtained through the following links. This distribution includes an extension to compile Java using the SDK Compiler API.

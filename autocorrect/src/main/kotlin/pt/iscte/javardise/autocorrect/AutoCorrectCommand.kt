@@ -11,7 +11,7 @@ import com.github.javaparser.ast.type.Type
 import pt.iscte.javardise.ModifyCommand
 import kotlin.reflect.KFunction1
 
-interface AutoCorrectCommand
+sealed interface AutoCorrectCommand
 
 class AutoCorrectIdRename<T>(private val command: ModifyCommand<T>, override val newElement: T) :
     ModifyCommand<T> by command, AutoCorrectCommand {

@@ -1,6 +1,5 @@
 package pt.iscte.javardise.autocorrect
 
-import kotlin.math.max
 import kotlin.math.min
 
 fun getLevenshteinDistance(X: String, Y: String): Int {
@@ -22,16 +21,4 @@ fun getLevenshteinDistance(X: String, Y: String): Int {
         }
     }
     return T[m][n]
-}
- 
-fun findSimilarity(x: String, y: String): Double {
-    val maxLength = max(x.length, y.length)
-    return if (maxLength > 0) {
-        (maxLength * 1.0 - getLevenshteinDistance(x, y)) / maxLength * 1.0
-    } else 1.0
-}
- 
-fun main() {
-    val similarity = findSimilarity("ABABABABCCCCABABABC", "ABABABABCCCCABABR")
-    println(similarity) // 0.8421052631578947
 }

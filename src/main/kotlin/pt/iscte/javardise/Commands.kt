@@ -72,7 +72,7 @@ interface CommandStack {
     fun <N : Node> removeCommand(list: NodeList<in N>, owner: Node, e: N)
 
 
-    private open class CommandStackImpl(val workingDir: File?) : CommandStack {
+    open class CommandStackImpl(val workingDir: File?) : CommandStack {
         override val stackSize: Int get() = stack.size
         override val stackElements: List<Command> get() = stack.toList()
         private val stack = ArrayDeque<Command>()
