@@ -18,6 +18,7 @@ dependencies {
     testApi("org.junit.jupiter:junit-jupiter-api:5.9.2")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.9.2")
     api("org.junit.platform:junit-platform-suite:1.9.2")
+    implementation("org.apache.commons:commons-text:1.11.0")
     //implementation("com.google.guava:guava:33.0.0-jre")
 }
 

@@ -48,7 +48,10 @@ fun main(args: Array<String>) {
             try {
                 folder.mkdir()
             } catch (e: FileNotFoundException) {
-                System.err.println("could not create folder: ${folder.absoluteFile}")
+                MessageBox(Shell(display), SWT.ICON_ERROR).apply {
+                    text = "Error"
+                    message = "Could not create folder: ${folder.absoluteFile}"
+                }.open()
                 return;
             }
         folder
@@ -287,6 +290,7 @@ class CodeEditor(val display: Display, val folder: File) {
         commandObservers.remove(o)
         tabs.items.filter { (it.control.data is TabData) }
             .forEach {
+                // TODO BUG nao remove observador
                 (it.control.data as TabData).classWidget?.commandStack?.removeObserver { c: Command, undo: Boolean ->
                     o(c, undo, null)
                 }

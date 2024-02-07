@@ -10,6 +10,7 @@ import com.github.javaparser.ast.expr.*
 import com.github.javaparser.ast.stmt.ExpressionStmt
 import com.github.javaparser.ast.type.Type
 import com.github.javaparser.resolution.UnsolvedSymbolException
+import org.apache.commons.text.similarity.LevenshteinDistance
 import pt.iscte.javardise.*
 import pt.iscte.javardise.external.getOrNull
 import java.io.BufferedReader
@@ -57,7 +58,7 @@ fun MethodDeclaration.scope(): List<ScopeId> {
 fun findSimilarity(x: String, y: String): Double {
     val maxLength = max(x.length, y.length)
     return if (maxLength > 0) {
-        (maxLength * 1.0 - getLevenshteinDistance(x.lowercase(), y.lowercase())) / maxLength * 1.0
+        1.0 -  LevenshteinDistance().apply(x.lowercase(), y.lowercase()).toDouble() / maxLength
     } else 1.0
 }
 
@@ -65,8 +66,9 @@ fun findOption(n: NameExpr): ScopeId? = n.findMethod()?.scope()?.maxBy {
     findSimilarity(it.id, n.nameAsString)
 }
 
+const val THRESHOLD = .7
+
 class AutoCorrectHandler(val stack: CommandStack, val types: Set<String>) {
-    val THRESHOLD = .6
 
     fun checkCommand(command: Command) {
         // field declaration added (check type)
