@@ -7,6 +7,8 @@ import com.github.javaparser.ast.expr.AssignExpr
 import com.github.javaparser.ast.expr.MethodCallExpr
 import com.github.javaparser.ast.expr.NameExpr
 import com.github.javaparser.ast.expr.SimpleName
+import com.github.javaparser.ast.nodeTypes.NodeWithName
+import com.github.javaparser.ast.nodeTypes.NodeWithType
 import com.github.javaparser.ast.type.Type
 import pt.iscte.javardise.ModifyCommand
 import kotlin.reflect.KFunction1
@@ -37,6 +39,21 @@ class AutoCorrectVarType(override val target: VariableDeclarator, override val n
         setOperation(element)
     }
 }
+
+class AutoCorrectType(override val target: Node, override val newElement: Type, override val setOperation: KFunction1<Type, Node>) :
+    ModifyCommand<Type>, AutoCorrectCommand {
+    override val element: Type = (target as NodeWithType<*,*>).type
+   // override val setOperation: KFunction1<Type, Node> = target::setType
+
+    override fun run() {
+        setOperation(newElement)
+    }
+
+    override fun undo() {
+        setOperation(element)
+    }
+}
+
 
 
 class AutoCorrectMethodType(override val target: MethodDeclaration, override val newElement: Type) :

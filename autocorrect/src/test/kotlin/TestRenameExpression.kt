@@ -21,12 +21,5 @@ class TestRenameExpression : BaseTest(
         val ret = method.body.get().statements.first.get() as ReturnStmt
         stack.modifyCommand(ret, NameExpr("HOLE"), NameExpr("X"),ret::setExpression)
         Assertions.assertEquals(ReturnStmt(NameExpr("x")), method.body.get().statements.first.get())
-
-//        stack.replaceCommand(
-//            method.body.get().statements,
-//            method,
-//            method.body.get().statements.first.get(),
-//            ReturnStmt(NameExpr("X"))
-//        )
     }
 }
