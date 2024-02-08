@@ -73,8 +73,8 @@ class AutoCorrectHandler(val stack: CommandStack, val types: Set<String>) {
                 autocorrect.match(methodCall.nameAsString, lookup)?.let {
                     stack.execute(AutoCorrectIdRename(command as ModifyCommand<SimpleName>, SimpleName(it)))
                 }
-            } catch (e: UnsolvedSymbolException) {
-                e.printStackTrace()
+            } catch (_: UnsolvedSymbolException) {
+
             }
         } else {
             val methodName = methodCall.nameAsString

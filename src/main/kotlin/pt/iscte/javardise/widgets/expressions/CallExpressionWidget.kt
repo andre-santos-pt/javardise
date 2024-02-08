@@ -26,10 +26,8 @@ class CallExpressionWidget(
 
     private var scope: ExpressionWidget<*>? = null
     private var dot: FixedToken? = null
-    private var methodName: Id
+    var methodName: Id
     private val args: ExpressionListWidget<Expression, MethodCallExpr>
-
-
 
     init {
         layout = ROW_LAYOUT_H_STRING

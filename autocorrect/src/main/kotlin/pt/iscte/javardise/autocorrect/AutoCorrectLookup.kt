@@ -1,6 +1,7 @@
 package pt.iscte.javardise.autocorrect
 
 import com.github.javaparser.ast.Node
+import com.github.javaparser.ast.body.CallableDeclaration
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration
 import com.github.javaparser.ast.body.MethodDeclaration
 import com.github.javaparser.ast.expr.NameExpr
@@ -31,6 +32,25 @@ class AutoCorrectLookup(val threshold: Double = DEFAULT_THRESHOLD) {
         else null
     }
 
+    fun matchSub(id: String, list: Collection<String>): String? {
+        if(list.isEmpty() || id in list)
+            return null
+
+        val rank = list
+            .map {
+                if(it.length < id.length)
+                it
+            else
+                it.substring(id.indices)
+            }
+            .map { Pair(it, findSimilarity(id, it)) }
+            .sortedBy { it.second }
+
+        return if(rank.last().second >= threshold)
+            rank.last().first
+        else null
+    }
+
     fun findOption(n: NameExpr): ScopeId? {
         val rank = n.findMethod()?.scope()
         ?.map { Pair(it, findSimilarity(it.id, n.nameAsString)) }
@@ -38,10 +58,29 @@ class AutoCorrectLookup(val threshold: Double = DEFAULT_THRESHOLD) {
 
         return if(rank.isNullOrEmpty())
             null
-        else if(rank.last().second >= threshold)
+        else if(rank.last().first.id != n.nameAsString && rank.last().second >= threshold)
             rank.last().first
         else null
     }
+
+    fun findSubOption(n: NameExpr, idToCompare: String): ScopeId? {
+        val rank = n.findMethod()?.scope()
+            ?.map { ScopeId(
+                if(it.id.length < idToCompare.length)
+                    it.id
+                else
+                    it.id.substring(idToCompare.indices), it.type) }
+            ?.map { Pair(it, findSimilarity(it.id, idToCompare)) }
+            ?.sortedBy {it.second }
+
+        return if(rank.isNullOrEmpty())
+            null
+        else if(rank.last().first.id != idToCompare && rank.last().second >= threshold)
+            rank.last().first
+        else null
+    }
+
+
 
     private fun findSimilarity(x: String, y: String): Double {
         val maxLength = max(x.length, y.length)
@@ -60,15 +99,15 @@ fun Node.findClass(): ClassOrInterfaceDeclaration? =
     else
         null
 
-fun Node.findMethod(): MethodDeclaration? =
-    if (parentNode.getOrNull is MethodDeclaration)
-        parentNode.get() as MethodDeclaration
+fun Node.findMethod(): CallableDeclaration<*>? =
+    if (parentNode.getOrNull is CallableDeclaration<*>)
+        parentNode.get() as CallableDeclaration<*>
     else if (parentNode.isPresent)
         parentNode.get().findMethod()
     else
         null
 
-fun MethodDeclaration.scope(): List<ScopeId> {
+fun CallableDeclaration<*>.scope(): List<ScopeId> {
     val list = mutableListOf<ScopeId>()
     (parentNode.getOrNull as? ClassOrInterfaceDeclaration)?.let { c ->
         list.addAll(c.methods.map { ScopeId(it.nameAsString, ScopeId.Type.METHOD) })

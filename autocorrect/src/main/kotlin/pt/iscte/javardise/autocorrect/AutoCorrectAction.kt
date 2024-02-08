@@ -5,7 +5,7 @@ import pt.iscte.javardise.CommandStack
 import pt.iscte.javardise.editor.Action
 import pt.iscte.javardise.editor.CodeEditor
 
-val PRIMITIVE_TYPES = setOf("byte", "short", "int", "long", "float", "double", "char", "boolean")
+val PRIMITIVE_TYPES = setOf("byte", "short", "int", "long", "float", "double", "char", "boolean","void")
 
 
 class AutoCorrectAction : Action {

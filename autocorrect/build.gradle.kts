@@ -28,6 +28,7 @@ application {
         applicationDefaultJvmArgs = listOf("-XstartOnFirstThread")
 }
 
+
 tasks.withType<Jar> {
     manifest {
         attributes["Main-Class"] = application.mainClass
