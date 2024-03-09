@@ -10,6 +10,7 @@ import com.github.javaparser.ast.expr.SimpleName
 import com.github.javaparser.ast.nodeTypes.NodeWithName
 import com.github.javaparser.ast.nodeTypes.NodeWithType
 import com.github.javaparser.ast.type.Type
+import org.eclipse.swt.widgets.Display
 import pt.iscte.javardise.ModifyCommand
 import kotlin.reflect.KFunction1
 
@@ -26,24 +27,9 @@ class AutoCorrectIdRename<T>(private val command: ModifyCommand<T>, override val
     }
 }
 
-class AutoCorrectVarType(override val target: VariableDeclarator, override val newElement: Type) :
-    ModifyCommand<Type>, AutoCorrectCommand {
-    override val element: Type = target.type
-    override val setOperation: KFunction1<Type, Node> = target::setType
-
-    override fun run() {
-        setOperation(newElement)
-    }
-
-    override fun undo() {
-        setOperation(element)
-    }
-}
-
 class AutoCorrectType(override val target: Node, override val newElement: Type, override val setOperation: KFunction1<Type, Node>) :
     ModifyCommand<Type>, AutoCorrectCommand {
     override val element: Type = (target as NodeWithType<*,*>).type
-   // override val setOperation: KFunction1<Type, Node> = target::setType
 
     override fun run() {
         setOperation(newElement)
@@ -54,22 +40,6 @@ class AutoCorrectType(override val target: Node, override val newElement: Type, 
     }
 }
 
-
-
-class AutoCorrectMethodType(override val target: MethodDeclaration, override val newElement: Type) :
-    ModifyCommand<Type>, AutoCorrectCommand
-{
-    override val element: Type = target.type
-
-    override val setOperation: KFunction1<Type, Node> = target::setType
-    override fun run() {
-        setOperation(newElement)
-    }
-
-    override fun undo() {
-        setOperation(element)
-    }
-}
 
 class AutoCorrectCallScopeId(override val target: MethodCallExpr, override val newElement: NameExpr) :
     ModifyCommand<NameExpr>, AutoCorrectCommand
@@ -107,6 +77,7 @@ class AutoCorrectAssignId(override val target: AssignExpr, override val newEleme
     override val element: NameExpr = target.target as NameExpr
 
     override val setOperation: KFunction1<NameExpr, Node> = target::setTarget
+
     override fun run() {
         setOperation(newElement)
     }

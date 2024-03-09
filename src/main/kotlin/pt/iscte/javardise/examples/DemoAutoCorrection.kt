@@ -108,10 +108,11 @@ private fun setOnlineCorrection(display: Display) {
                     it.doit = false // cancela o evento
 
                     // emite um evento de tecla programaticamente
-                    val e = Event()
-                    e.type = SWT.KeyDown
-                    e.character = 's'
-                    display.post(e)
+                        val e = Event()
+                        e.type = SWT.KeyDown or SWT.KeyUp
+                        e.keyCode = 's'.code
+                        e.character = 's'
+                        display.post(e)
                 }
             }
             // TODO outros contextos

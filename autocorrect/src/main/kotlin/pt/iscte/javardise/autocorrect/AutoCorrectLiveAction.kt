@@ -91,6 +91,7 @@ class AutoCorrectLiveAction : Action {
                 }
             }
         }
+        println(t.parent)
     }
 
     private var currentWidget: Text? = null

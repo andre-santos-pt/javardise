@@ -14,6 +14,7 @@ import pt.iscte.javardise.basewidgets.FixedToken
 import pt.iscte.javardise.basewidgets.TextWidget
 import pt.iscte.javardise.basewidgets.TokenWidget
 import pt.iscte.javardise.external.*
+import kotlin.reflect.KFunction1
 
 class ExpressionListWidget<T : Expression, N : Node>(
     parent: Composite,
@@ -142,6 +143,28 @@ class ExpressionListWidget<T : Expression, N : Node>(
                         expressionList[i] = element
                     }
                 })
+
+//                owner.commandStack.execute(object : ModifyCommand<Expression> {
+//                    override val target = owner.node
+//                    override val element = exp
+//
+//                    var i: Int = -1
+//                    override fun run() {
+//                        i = expressionList.indexOfIdentity(exp) // TODO BUG illegal index
+//                        expressionList[i] = it as T
+//                    }
+//
+//                    override fun undo() {
+//                        expressionList[i] = element
+//                    }
+//
+//                    override val setOperation: KFunction1<Expression, Node>
+//                        get() = { e->
+//                            expressionList[i] = e as T
+//                        }
+//
+//                    override val newElement: Expression = it
+//                })
 
             }
         }
