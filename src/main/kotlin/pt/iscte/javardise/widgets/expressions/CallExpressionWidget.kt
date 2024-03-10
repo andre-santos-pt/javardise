@@ -11,6 +11,7 @@ import com.github.javaparser.ast.stmt.Statement
 import org.eclipse.swt.SWT
 import org.eclipse.swt.widgets.Composite
 import pt.iscte.javardise.*
+import pt.iscte.javardise.Configuration.Companion.hole
 import pt.iscte.javardise.basewidgets.FixedToken
 import pt.iscte.javardise.basewidgets.SequenceWidget
 import pt.iscte.javardise.basewidgets.TextWidget
@@ -149,29 +150,34 @@ object CallFeature : StatementFeature<ExpressionStmt, CallStatementWidget>(
         output: (Statement) -> Unit
     ) {
 
-        insert.addKeyEvent('(',
+        insert.addKeyEvent('(','.',
             precondition = {
                 insert.isAtEnd &&
                         (tryParse<NameExpr>(it) || tryParse<FieldAccessExpr>(it) || tryParse<ArrayAccessExpr>(it))
             }) {
-            var e: Expression = StaticJavaParser.parseExpression(insert.text)
 
-            output(
-                if (e is NameExpr) ExpressionStmt(
-                    MethodCallExpr(
-                        null,
-                        e.name,
-                        NodeList()
+            val e: Expression = StaticJavaParser.parseExpression(insert.text)
+            if(it.character == '(') {
+                output(
+                    if (e is NameExpr) ExpressionStmt(
+                        MethodCallExpr(
+                            null,
+                            e.name,
+                            NodeList()
+                        )
+                    )
+                    else ExpressionStmt(
+                        MethodCallExpr(
+                            (e as FieldAccessExpr).scope,
+                            e.nameAsString,
+                            NodeList()
+                        )
                     )
                 )
-                else ExpressionStmt(
-                    MethodCallExpr(
-                        (e as FieldAccessExpr).scope,
-                        e.nameAsString,
-                        NodeList()
-                    )
-                )
-            )
+            }
+            else {
+                output(ExpressionStmt(MethodCallExpr(e, Configuration.idHole(), NodeList())))
+            }
         }
     }
 }

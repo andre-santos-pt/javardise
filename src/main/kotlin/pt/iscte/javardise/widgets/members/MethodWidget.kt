@@ -97,6 +97,7 @@ class MethodWidget(
 
         observeProperty<Type>(ObservableProperty.TYPE) {
             type?.set(it?.asString())
+            type?.widget?.data = it
         }
 
         observeProperty<SimpleName>(ObservableProperty.NAME) {
@@ -287,7 +288,8 @@ class MethodWidget(
                 }
 
                 type.addFocusLostAction(::isValidType) {
-                    node.modifyCommand(node.type, StaticJavaParser.parseType(it), node::setType)
+                    val newType = StaticJavaParser.parseType(it)
+                    node.modifyCommand(node.type, newType, node::setType)
                 }
 
                 name = SimpleNameWidget(this, node)
@@ -314,6 +316,7 @@ class MethodWidget(
 
                 observeNotNullProperty<Type>(ObservableProperty.TYPE, target = node) {
                     type.set(it.asString())
+                    type.widget.data = it
                 }
                 observeNotNullProperty<SimpleName>(ObservableProperty.NAME, target = node) {
                     name.set(it.asString())

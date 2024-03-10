@@ -103,6 +103,7 @@ class VariableDeclarationWidget(
 
         observeNotNullProperty<Type>(ObservableProperty.TYPE, target = dec) {
             type.set(it.asString())
+            type.widget.data = it
         }
         observeNotNullProperty<SimpleName>(
             ObservableProperty.NAME,

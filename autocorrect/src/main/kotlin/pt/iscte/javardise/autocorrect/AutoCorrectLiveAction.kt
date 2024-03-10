@@ -2,6 +2,8 @@ package pt.iscte.javardise.autocorrect
 
 import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.expr.NameExpr
+import com.github.javaparser.ast.type.ClassOrInterfaceType
+import com.github.javaparser.ast.type.Type
 import com.github.javaparser.resolution.UnsolvedSymbolException
 import org.eclipse.swt.SWT
 import org.eclipse.swt.events.VerifyListener
@@ -11,10 +13,13 @@ import org.eclipse.swt.widgets.Text
 import pt.iscte.javardise.Command
 import pt.iscte.javardise.CommandKind
 import pt.iscte.javardise.basewidgets.TextWidget
+import pt.iscte.javardise.basewidgets.TextWidget.Companion.findAncestorOfType
 import pt.iscte.javardise.editor.Action
 import pt.iscte.javardise.editor.CodeEditor
 import pt.iscte.javardise.widgets.expressions.CallExpressionWidget
 import pt.iscte.javardise.widgets.expressions.SimpleExpressionWidget
+import pt.iscte.javardise.widgets.expressions.VariableDeclarationWidget
+import pt.iscte.javardise.widgets.members.MethodWidget
 
 
 class AutoCorrectLiveAction : Action {
@@ -33,9 +38,11 @@ class AutoCorrectLiveAction : Action {
     val autocorrect = AutoCorrectLookup()
 
     var editor: CodeEditor? = null
+    val types = PRIMITIVE_TYPES.toMutableSet()
 
     override fun init(editor: CodeEditor) {
-       this.editor = editor
+        this.editor = editor
+        editor.allClasses().mapTo(types) { it.nameAsString }
     }
 
     fun modifyText(node: Node, prevText: String, newText: String, getWidget: () -> TextWidget) {
@@ -90,8 +97,38 @@ class AutoCorrectLiveAction : Action {
                     modifyText(callExp.node, uncorrectedText, it) { callExp.methodName }
                 }
             }
+        } else if (t.data is Type) {
+            val type = t.data as Type
+            try {
+                type.resolve()
+            } catch (_: UnsolvedSymbolException) {
+                autocorrect.matchSub(uncorrectedText, types)?.let {
+                    if (t.parent is MethodWidget.ParamListWidget.ParamWidget) {
+                        modifyText(type, uncorrectedText, it) {
+                            (t.parent as MethodWidget.ParamListWidget.ParamWidget).type
+                        }
+                        e.doit = false
+                    } else {
+                        val varDec = t.findAncestorOfType<VariableDeclarationWidget>()
+                        if(varDec != null) {
+                            modifyText(type, uncorrectedText, it) {
+                                varDec.type
+                            }
+                            e.doit = false
+                        }
+                        else {
+                            val method = t.findAncestorOfType<MethodWidget>()
+                            if (method != null && method.node.isMethodDeclaration) {
+                                modifyText(type, uncorrectedText, it) {
+                                    method.type!!
+                                }
+                                e.doit = false
+                            }
+                        }
+                    }
+                }
+            }
         }
-        println(t.parent)
     }
 
     private var currentWidget: Text? = null
