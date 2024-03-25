@@ -10,12 +10,17 @@ import pt.iscte.javardise.DefaultConfiguration
 class FixedToken(parent: Composite, token: String) {
 
     val label = Label(parent, SWT.NONE)
+
     init {
         label.text = token
         label.font = parent.font
         label.background = parent.background
-        label.foreground = parent.foreground
+        label.foreground = if (token == ";" || token == ",")
+            DefaultConfiguration().foregroundColorLight
+        else
+            parent.foreground
     }
+
     override fun toString(): String = label.text
 
     fun addKeyListener(keyListener: KeyListener) = label.addKeyListener(keyListener)

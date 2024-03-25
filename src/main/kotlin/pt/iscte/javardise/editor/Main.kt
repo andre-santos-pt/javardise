@@ -2,13 +2,13 @@ package pt.iscte.javardise.editor
 
 import com.github.javaparser.ParseProblemException
 import com.github.javaparser.StaticJavaParser
+import com.github.javaparser.ast.CompilationUnit
 import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.NodeList
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration
 import com.github.javaparser.ast.observer.AstObserverAdapter
 import com.github.javaparser.ast.observer.ObservableProperty
 import com.github.javaparser.symbolsolver.JavaSymbolSolver
-import com.github.javaparser.symbolsolver.SourceFileInfoExtractor
 import com.github.javaparser.symbolsolver.resolution.typesolvers.CombinedTypeSolver
 import com.github.javaparser.symbolsolver.resolution.typesolvers.JavaParserTypeSolver
 import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeSolver
@@ -31,6 +31,7 @@ import pt.iscte.javardise.CommandStack
 import pt.iscte.javardise.external.*
 import pt.iscte.javardise.isWindows
 import pt.iscte.javardise.widgets.members.ClassWidget
+import pt.iscte.javardise.widgets.members.CompilationUnitWidget
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.PrintWriter
@@ -98,14 +99,24 @@ class CodeEditor(val display: Display, val folder: File) {
             override val name = "New file"
             override val iconPath = "new-document.png"
             override fun run(editor: CodeEditor, toggle: Boolean) {
-                editor.shell.prompt("New file", "name") {
-                    val f = File(folder, it)
-                    if (f.exists()) {
-                        editor.shell.message { label("File $f already exists.") }
-                    } else {
-                        f.createNewFile()
-                        val tab = createFileTab(f)
-                        tab.parent.selection = tab
+                editor.shell.prompt("New class", "name") { className ->
+                    if (!className.matches(Regex("([a-zA-Z_][a-zA-Z0-9_]*)(\\.[a-zA-Z_][a-zA-Z0-9_]*)*")))
+                        editor.shell.message {
+                            label("Invalid class name. Must be a valid Java identifier.")
+                        }
+                    else {
+                        val fileName = if (className.contains('.'))
+                            className.substringAfterLast('.')
+                        else
+                            className
+                        val f = File(folder, "$fileName.java")
+                        if (f.exists()) {
+                            editor.shell.message { label("File $f already exists.") }
+                        } else {
+                            f.createNewFile()
+                            val tab = createFileTab(f, className)
+                            tab.parent.selection = tab
+                        }
                     }
                 }
             }
@@ -243,11 +254,11 @@ class CodeEditor(val display: Display, val folder: File) {
         })
     }
 
-    private fun createFileTab(f: File): CTabItem {
+    private fun createFileTab(f: File, className: String? = null): CTabItem {
         val item = CTabItem(tabs, SWT.NONE)
         item.text = if (f.extension == "java") f.nameWithoutExtension else f.name
         item.image = if (f.extension == "java") javaIcon else textIcon
-        val tab = createTab(f, tabs, item)
+        val tab = createTab(f, tabs, item, className)
         item.setControl(tab)
         item.data = f
         return item
@@ -259,7 +270,8 @@ class CodeEditor(val display: Display, val folder: File) {
         ?.control?.data as? TabData)?.classWidget
 
     fun allClassWidgets() =
-        tabs.items.filter { it.control?.data is TabData }.map { (it.control.data as TabData).classWidget }.filterNotNull()
+        tabs.items.filter { it.control?.data is TabData }.map { (it.control.data as TabData).classWidget }
+            .filterNotNull()
 
     fun allClasses() =
         tabs.items.filter { it.control?.data is TabData }.map { (it.control.data as TabData).model }.filterNotNull()
@@ -387,7 +399,8 @@ class CodeEditor(val display: Display, val folder: File) {
     private fun createTab(
         file: File,
         comp: Composite,
-        item: CTabItem
+        item: CTabItem,
+        className: String? = null
     ): Composite {
         require(file.exists())
 
@@ -395,7 +408,7 @@ class CodeEditor(val display: Display, val folder: File) {
         val layout = FillLayout()
         tab.layout = layout
 
-        val model = if (file.name.endsWith(".java")) {
+        val unit = if (file.name.endsWith(".java")) {
             val typeName = if (file.name.contains('.'))
                 file.name.substring(0, file.name.lastIndexOf('.'))
             else
@@ -403,15 +416,29 @@ class CodeEditor(val display: Display, val folder: File) {
 
             try {
                 val cu = loadCompilationUnit(file)
-                val clazz = cu.findMainClass() ?: ClassOrInterfaceDeclaration(
-                    NodeList(), false, typeName
-                )
-                if (cu.findMainClass() == null) {
+                if (cu.types.isEmpty()) {
+                    val packageName = if (className?.contains('.') == true)
+                        className.substringBeforeLast('.')
+                    else
+                        null
+
+                    if (packageName != null)
+                        cu.setPackageDeclaration(packageName)
+
+                    val c = ClassOrInterfaceDeclaration(NodeList(), false, typeName)
+                    cu.addType(c)
+
                     val writer = PrintWriter(file, "UTF-8")
-                    writer.println(clazz.toString())
+                    writer.println(cu.toString())
                     writer.close()
                 }
-                clazz
+//                val clazz = cu.findMainClass() ?: ClassOrInterfaceDeclaration(
+//                    NodeList(), false, typeName
+//                )
+//                if (cu.types.isEmpty()) {
+//
+//                }
+                cu
             } catch (e: ParseProblemException) {
                 //System.err.println("Could not load: $file")
                 System.err.println(e.problems)
@@ -421,7 +448,7 @@ class CodeEditor(val display: Display, val folder: File) {
             }
         } else null
 
-        if (model == null) {
+        if (unit == null) {
             tab.data = TabData(file, null, null)
             tab.grid {
                 val src = file.readLines().joinToString(separator = "\n")
@@ -441,15 +468,16 @@ class CodeEditor(val display: Display, val folder: File) {
             }
         } else {
             val w = tab.scrollable {
-                createWidget(file.extension, it, model)
+                createWidget(file.extension, it, unit)
             }
 
+            val model = unit.findMainClass()!!
             addAutoRenameFile(model, file, item)
             w.commandStack.addObserver { cmd, _ ->
                 saveAndSyncRanges(item.data as File, model)
             }
             commandObservers.forEach {
-                w.commandStack.addObserver  { c: Command, undo: Boolean ->
+                w.commandStack.addObserver { c: Command, undo: Boolean ->
                     it(c, undo, w.commandStack)
                 }
             }
@@ -458,7 +486,7 @@ class CodeEditor(val display: Display, val folder: File) {
                 it(null, null, null)
             }
 
-            tab.data = TabData(file, model, w)
+            tab.data = TabData(file, model, w.classWidget)
 
             //addUndoScale(tab, w)
         }
@@ -534,8 +562,10 @@ class CodeEditor(val display: Display, val folder: File) {
     private fun createWidget(
         ext: String,
         parent: Composite,
-        model: ClassOrInterfaceDeclaration
-    ): ClassWidget = ClassWidget(parent, model, configuration = settings.editorConfiguration, workingDir = folder)
+        unit: CompilationUnit
+    ): CompilationUnitWidget =
+        CompilationUnitWidget(parent, unit, settings.editorConfiguration)
+    //ClassWidget(parent, model, configuration = settings.editorConfiguration, workingDir = folder)
 //        when (ext) {
 //            "sjava" -> StaticClassWidget(parent, model)
 //            "fjava" -> StaticClassWidget(

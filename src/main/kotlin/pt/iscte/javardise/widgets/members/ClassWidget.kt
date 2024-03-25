@@ -140,19 +140,10 @@ open class ClassWidget(
 
     init {
         layout = ROW_LAYOUT_H_SHRINK
-        val layout = RowLayout()
-        layout.marginTop = 10
-        layout.marginLeft = 10
-        this.layout = layout
-
-//        val insertModifier = TextWidget.create(firstRow)
-//        insertModifier.widget.layoutData = ROW_DATA_STRING
-//        configureInsert(insertModifier) {
-//            if (node.isInterface)
-//                it != Modifier.Keyword.FINAL
-//            else
-//                true
-//        }
+//        val layout = RowLayout()
+//        layout.marginTop = 10
+//        layout.marginLeft = 10
+//        this.layout = layout
 
         fun toModifier(keyword: String) =
             when(keyword) {
@@ -161,6 +152,7 @@ open class ClassWidget(
                 "abstract"-> Modifier.abstractModifier()
                 else -> throw UnsupportedOperationException()
             }
+
         val classModifiers = validModifiers.flatten().map { it.name.lowercase() }
         keyword = newKeywordWidget(firstRow,
             if (node.isInterface) "interface" else "class",
