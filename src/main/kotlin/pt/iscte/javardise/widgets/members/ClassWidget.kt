@@ -5,7 +5,9 @@ import com.github.javaparser.ast.Modifier
 import com.github.javaparser.ast.Modifier.Keyword
 import com.github.javaparser.ast.Node
 import com.github.javaparser.ast.NodeList
+import com.github.javaparser.ast.PackageDeclaration
 import com.github.javaparser.ast.body.*
+import com.github.javaparser.ast.expr.Name
 import com.github.javaparser.ast.expr.NameExpr
 import com.github.javaparser.ast.expr.SimpleName
 import com.github.javaparser.ast.observer.ObservableProperty
@@ -147,82 +149,87 @@ open class ClassWidget(
 //        this.layout = layout
 
         fun toModifier(keyword: String) =
-            when(keyword) {
+            when (keyword) {
                 "public" -> Modifier.publicModifier()
-                "final"-> Modifier.finalModifier()
-                "abstract"-> Modifier.abstractModifier()
+                "final" -> Modifier.finalModifier()
+                "abstract" -> Modifier.abstractModifier()
                 else -> throw UnsupportedOperationException()
             }
 
         val classModifiers = validModifiers.flatten().map { it.name.lowercase() }
         keyword = newKeywordWidget(firstRow,
             if (node.isInterface) "interface" else "class",
-            alternatives = { TypeTypes.values().map { it.name.lowercase() } + classModifiers}) {
-            if(classModifiers.contains(it)) {
+            alternatives = { listOf("package") + TypeTypes.values().map { it.name.lowercase() } + classModifiers }) {
+            if (it == "package") {
+                val unit = node.findCompilationUnit().get()
+                if(!unit.packageDeclaration.isPresent)
+                    unit.modifyCommand(unit.packageDeclaration.getOrNull, PackageDeclaration(Name("name")), unit::setPackageDeclaration)
+                else if(parent is CompilationUnitWidget)
+                    parent.setFocus()
+            } else if (classModifiers.contains(it)) {
+
                 if (it == "public" && !member.modifiers.contains(Modifier.publicModifier()))
                     member.modifiers.addCommand(node, toModifier(it))
                 else {
-                    if(it == "final" && !node.isInterface && !member.modifiers.contains(Modifier.finalModifier())) {
+                    if (it == "final" && !node.isInterface && !member.modifiers.contains(Modifier.finalModifier())) {
                         member.modifiers.find { it.keyword == Keyword.ABSTRACT }?.let {
                             member.modifiers.replaceCommand(node, it, Modifier.finalModifier())
                         } ?: member.modifiers.addCommand(node, Modifier.finalModifier())
-                    }
-                    else if(it == "abstract"  && !member.modifiers.contains(Modifier.abstractModifier())) {
+                    } else if (it == "abstract" && !member.modifiers.contains(Modifier.abstractModifier())) {
                         member.modifiers.find { it.keyword == Keyword.FINAL }?.let {
                             member.modifiers.replaceCommand(node, it, Modifier.abstractModifier())
                         } ?: member.modifiers.addCommand(node, Modifier.abstractModifier())
                     }
                 }
-            }
-            else
-            commandStack.execute(object : Command {
-                override val target = node
-                override val kind = CommandKind.MODIFY
-                override val element =
-                    TypeTypes.valueOf(it.uppercase()).element(node)
+            } else
+                commandStack.execute(object : Command {
+                    override val target = node
+                    override val kind = CommandKind.MODIFY
+                    override val element =
+                        TypeTypes.valueOf(it.uppercase()).element(node)
 
-                override fun run() {
-                    TypeTypes.valueOf(it.uppercase()).apply(node)
-                }
+                    override fun run() {
+                        TypeTypes.valueOf(it.uppercase()).apply(node)
+                    }
 
-                override fun undo() {
-                    TypeTypes.valueOf(it.uppercase()).applyReverse(node)
-                }
-            })
+                    override fun undo() {
+                        TypeTypes.valueOf(it.uppercase()).applyReverse(node)
+                    }
+                })
         }
         keyword.setCopySource(node)
 
         name = SimpleNameWidget(firstRow, dec)
         name.addFocusLostAction(::isValidClassType) {
-           if(node.nameAsString != it)
-            commandStack.execute(object : ModifyCommand<SimpleName> {
-                override val target: Node
-                    get() = node
+            if (node.nameAsString != it)
+                commandStack.execute(object : ModifyCommand<SimpleName> {
+                    override val target: Node
+                        get() = node
 
-                override val kind: CommandKind = CommandKind.MODIFY
+                    override val kind: CommandKind = CommandKind.MODIFY
 
-                override val element = node.name
+                    override val element = node.name
 
-                override val newElement = SimpleName(it)
+                    override val newElement = SimpleName(it)
 
-                override val setOperation: KFunction1<SimpleName, Node>
-                    get() = node::setName
+                    override val setOperation: KFunction1<SimpleName, Node>
+                        get() = node::setName
 
-                override fun run() {
-                    node.setName(it)
-                    node.constructors.forEach { c ->
-                        c.name = newElement
+                    override fun run() {
+                        node.setName(it)
+                        node.constructors.forEach { c ->
+                            c.name = newElement
+                        }
                     }
-                }
 
-                override fun undo() {
-                    node.name = element
-                    node.constructors.forEach { c ->
-                        c.name = element
+                    override fun undo() {
+                        node.name = element
+                        node.constructors.forEach { c ->
+                            c.name = element
+                        }
                     }
-                }
 
-            })
+                })
         }
         bodyWidget = SequenceWidget(
             column,
@@ -267,8 +274,8 @@ open class ClassWidget(
 
                     if (w is MethodWidget)
                         w.focusParameters()
-                    else if(w is FieldWidget)
-                       w.focusExpressionOrSemiColon()
+                    else if (w is FieldWidget)
+                        w.focusExpressionOrSemiColon()
                     else
                         w.setFocus()
                     bodyWidget.requestLayout()
@@ -316,6 +323,7 @@ open class ClassWidget(
     override fun setFocus(): Boolean {
         return keyword.setFocus()
     }
+
     /**
      * Removes a previously registered an observer.
      */
@@ -342,11 +350,13 @@ open class ClassWidget(
                 }
                 w
             }
+
             is MethodDeclaration, is ConstructorDeclaration -> {
                 val w = createMethodWidget(dec as CallableDeclaration<*>)
                 w.closingBracket.addInsert(w, bodyWidget, true)
                 w
             }
+
             is ClassOrInterfaceDeclaration -> {
                 val w = ClassWidget(
                     bodyWidget,
@@ -357,6 +367,7 @@ open class ClassWidget(
                 w.closingBracket.addInsert(w, bodyWidget, true)
                 w
             }
+
             else -> {
                 val w = UnsupportedMemberWidget(bodyWidget, dec, configuration)
                 w.widget.addDeleteListener {
@@ -490,7 +501,8 @@ open class ClassWidget(
                 cursor.addKeyEvent(SWT.SPACE) {
                     val token = cursor.text.trim()
                     if (type == null && Keyword.values().map { it.name }
-                            .contains(token.uppercase(Locale.getDefault())
+                            .contains(
+                                token.uppercase(Locale.getDefault())
                             )
                     ) {
                         modifiers.add(Modifier(Keyword.valueOf(token.uppercase(Locale.getDefault()))))
@@ -524,9 +536,9 @@ open class ClassWidget(
                     node.members.addCommand(node, newMethod, insertIndex)
                 }
                 cursor.addFocusLostAction {
-                    if(!cursor.widget.isDisposed)
+                    if (!cursor.widget.isDisposed)
                         children.forEach {
-                            if(it != cursor)
+                            if (it != cursor)
                                 it.dispose()
                         }
                 }

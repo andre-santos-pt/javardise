@@ -45,15 +45,14 @@ Javardise is built using:
 There are some core Java primitives for which there is **no editing support**, but which might be supported in the future:
 
 **structural**:
-- package declaration
 - imports
+- multiple class declarations in a single file
 - method throws directive
 - generics
 - annotations
 - implements/extends
 - enums
 - records
-- multiple class declarations in a single file
 
 **statements**:
 - try-catch

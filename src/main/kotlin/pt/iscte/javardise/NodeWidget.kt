@@ -206,7 +206,7 @@ fun <T : Node> Control.observeListUntilDispose(list: NodeList<T>, observer: List
 
 val ID = Regex("[a-zA-Z][a-zA-Z0-9_]*")
 val ID_CHARS = Regex("[a-zA-Z0-9_]")
-
+val QNAME_CHARS = Regex("[a-zA-Z0-9.]")
 val TYPE_CHARS = Regex("[a-zA-Z0-9_\\[\\]<>]")
 
 data class Validation(val ok: Boolean, val msg: String) {
@@ -287,6 +287,34 @@ class SimpleNameWidget<N : Node>(
 ) : NodeWidget<N>, Id(parent, node, ID_CHARS, { s ->
     try {
         StaticJavaParser.parseSimpleName(s)
+        Validation(true, "")
+    } catch (e: ParseProblemException) {
+        Validation(false, e.message.toString())
+    }
+}) {
+    init {
+        textWidget.widget.data = node
+        addUpdateColor(textWidget.widget)
+    }
+
+    override val control: Control
+        get() = textWidget.widget
+
+    override fun setFocusOnCreation(firstFlag: Boolean) {
+        textWidget.setFocus()
+    }
+
+    override fun isValid(): Boolean =
+        SourceVersion.isIdentifier(textWidget.text) && !SourceVersion.isKeyword(textWidget.text)
+
+}
+
+class NameWidget<N : Node>(
+    parent: Composite,
+    override val node: N
+) : NodeWidget<N>, Id(parent, node, QNAME_CHARS, { s ->
+    try {
+        StaticJavaParser.parseName(s)
         Validation(true, "")
     } catch (e: ParseProblemException) {
         Validation(false, e.message.toString())
