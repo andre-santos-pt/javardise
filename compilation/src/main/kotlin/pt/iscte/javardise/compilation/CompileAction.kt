@@ -1,6 +1,7 @@
 package pt.iscte.javardise.compilation
 
 import com.github.javaparser.Position
+import com.github.javaparser.ast.CompilationUnit
 import com.github.javaparser.ast.Node
 import org.eclipse.swt.SWT
 import org.eclipse.swt.events.DisposeListener
@@ -13,12 +14,14 @@ import org.eclipse.swt.widgets.*
 import pt.iscte.javardise.*
 import pt.iscte.javardise.editor.Action
 import pt.iscte.javardise.editor.CodeEditor
+import pt.iscte.javardise.editor.FileEvent
 import pt.iscte.javardise.external.getOrNull
 import pt.iscte.javardise.external.traverse
 import pt.iscte.javardise.widgets.expressions.*
 import pt.iscte.javardise.widgets.members.MemberWidget
 import pt.iscte.javardise.widgets.members.MethodWidget
 import pt.iscte.javardise.widgets.statements.StatementWidget
+import java.io.File
 import javax.tools.Diagnostic
 import kotlin.concurrent.thread
 
@@ -51,6 +54,7 @@ class CompileAction : Action {
 
     var commandObserver: ((Command?, Boolean?, CommandStack?) -> Unit)? = null
 
+    var fileObserver: ((File, FileEvent, CompilationUnit?) -> Unit)? = null
 
     override fun run(editor: CodeEditor, toggle: Boolean) {
         if (toggle) {
@@ -58,6 +62,12 @@ class CompileAction : Action {
                 compile(editor)
             }
             editor.addCommandObserver(commandObserver!!)
+
+            fileObserver = { _, _, _ ->
+                compile(editor)
+            }
+            editor.addFileObserver(fileObserver!!)
+
             compile(editor)
         } else {
             commandObserver?.let {
@@ -65,6 +75,9 @@ class CompileAction : Action {
                 errorRemovers.forEach { it.second() }
                 errorRemovers.clear()
                 editor.setFileErrors(emptySet())
+            }
+            fileObserver?.let {
+                editor.removeFileObserver(it)
             }
         }
     }

@@ -65,7 +65,7 @@ fun main(args: Array<String>) {
 
 data class TabData(
     val file: File,
-    val model: ClassOrInterfaceDeclaration?,
+    val unit: CompilationUnit?,
     val classWidget: ClassWidget?
 )
 
@@ -77,7 +77,9 @@ fun setupSymbolSolver(folder: File) {
     val symbolSolver = JavaSymbolSolver(combinedTypeSolver)
     StaticJavaParser.getParserConfiguration().setSymbolResolver(symbolSolver)
 }
-
+enum class FileEvent {
+    CREATE, DELETE, RENAME
+}
 
 class CodeEditor(val display: Display, val folder: File) {
     private val shell: Shell
@@ -90,7 +92,9 @@ class CodeEditor(val display: Display, val folder: File) {
 
     private val actions: MutableMap<Action, ToolItem> = mutableMapOf()
 
-    private val commandObservers = mutableListOf<(Command?, Boolean?, CommandStack?) -> Unit>()
+    private val commandObservers = mutableListOf<(Command, Boolean, CommandStack) -> Unit>()
+
+    private val fileObservers = mutableListOf<(File, FileEvent, CompilationUnit?) -> Unit>()
 
     private val settings = Settings(this)
 
@@ -189,6 +193,9 @@ class CodeEditor(val display: Display, val folder: File) {
         addCommandObserver { _, _, _ ->
             setActionsEnabled()
         }
+        addFileObserver { _, _, _ ->
+            setActionsEnabled()
+        }
     }
 
     fun consoleAppend(s: String?) {
@@ -205,16 +212,14 @@ class CodeEditor(val display: Display, val folder: File) {
             menu {
                 item("Delete") {
                     val file = this@apply.selection?.data as? File
+                    val unit = this@apply.selection?.control?.data as? CompilationUnit
                     file?.let {
                         shell.promptConfirmation(
                             "Are you sure you want to permanently delete the file ${it.name}?"
                         ) {
                             it.delete()
                             this@apply.selection.dispose()
-                            // to trigger delete file event
-                            commandObservers.forEach {
-                                it(null, null, null)
-                            }
+                            fileObservers.forEach { it(file, FileEvent.DELETE, unit) }
                         }
                     }
                 }
@@ -273,8 +278,8 @@ class CodeEditor(val display: Display, val folder: File) {
         tabs.items.filter { it.control?.data is TabData }.map { (it.control.data as TabData).classWidget }
             .filterNotNull()
 
-    fun allClasses() =
-        tabs.items.filter { it.control?.data is TabData }.map { (it.control.data as TabData).model }.filterNotNull()
+    fun allCompilationUnits() =
+        tabs.items.filter { it.control?.data is TabData }.map { (it.control.data as TabData).unit }.filterNotNull()
 
 
     fun setFileErrors(files: Set<File>) {
@@ -288,7 +293,7 @@ class CodeEditor(val display: Display, val folder: File) {
         }
     }
 
-    fun addCommandObserver(o: (Command?, Boolean?, CommandStack?) -> Unit) {
+    fun addCommandObserver(o: (Command, Boolean, CommandStack?) -> Unit) {
         commandObservers.add(o)
         tabs.items.filter { (it.control.data is TabData) }
             .forEach {
@@ -298,7 +303,7 @@ class CodeEditor(val display: Display, val folder: File) {
             }
     }
 
-    fun removeCommandObserver(o: (Command?, Boolean?, CommandStack?) -> Unit) {
+    fun removeCommandObserver(o: (Command, Boolean, CommandStack?) -> Unit) {
         commandObservers.remove(o)
         tabs.items.filter { (it.control.data is TabData) }
             .forEach {
@@ -308,6 +313,17 @@ class CodeEditor(val display: Display, val folder: File) {
                 }
             }
     }
+
+
+    fun addFileObserver(o: (File, FileEvent, CompilationUnit?) -> Unit) {
+        fileObservers.add(o)
+    }
+
+    fun removeFileObserver(o: (File, FileEvent, CompilationUnit?) -> Unit) {
+        fileObservers.remove(o)
+    }
+
+
 
     private fun invert(img: Image): Image {
         val data = img.imageData
@@ -432,12 +448,6 @@ class CodeEditor(val display: Display, val folder: File) {
                     writer.println(cu.toString())
                     writer.close()
                 }
-//                val clazz = cu.findMainClass() ?: ClassOrInterfaceDeclaration(
-//                    NodeList(), false, typeName
-//                )
-//                if (cu.types.isEmpty()) {
-//
-//                }
                 cu
             } catch (e: ParseProblemException) {
                 //System.err.println("Could not load: $file")
@@ -472,7 +482,7 @@ class CodeEditor(val display: Display, val folder: File) {
             }
 
             val model = unit.findMainClass()!!
-            addAutoRenameFile(model, file, item)
+            addAutoRenameFile(unit, file, item)
             w.commandStack.addObserver { cmd, _ ->
                 saveAndSyncRanges(item.data as File, model)
             }
@@ -482,11 +492,12 @@ class CodeEditor(val display: Display, val folder: File) {
                 }
             }
             // to trigger new file event
-            commandObservers.forEach {
-                it(null, null, null)
-            }
+//            commandObservers.forEach {
+//                it(null, null, null)
+//            }
+            fileObservers.forEach { it(file, FileEvent.CREATE, unit) }
 
-            tab.data = TabData(file, model, w.classWidget)
+            tab.data = TabData(file, unit, w.classWidget)
 
             //addUndoScale(tab, w)
         }
@@ -495,11 +506,11 @@ class CodeEditor(val display: Display, val folder: File) {
     }
 
     private fun addAutoRenameFile(
-        model: ClassOrInterfaceDeclaration,
+        unit: CompilationUnit,
         file: File,
         item: CTabItem
     ) {
-        model.register(object : AstObserverAdapter() {
+        unit.findMainClass()?.register(object : AstObserverAdapter() {
             override fun propertyChange(
                 observedNode: Node,
                 property: ObservableProperty,
@@ -513,6 +524,7 @@ class CodeEditor(val display: Display, val folder: File) {
                         file.delete()
                         item.text = newValue.toString()
                         item.data = newFile
+                        fileObservers.forEach { it(file, FileEvent.RENAME, unit) }
                     }
                 }
             }

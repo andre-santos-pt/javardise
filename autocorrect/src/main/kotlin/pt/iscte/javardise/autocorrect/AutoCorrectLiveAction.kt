@@ -42,7 +42,7 @@ class AutoCorrectLiveAction : Action {
 
     override fun init(editor: CodeEditor) {
         this.editor = editor
-        editor.allClasses().mapTo(types) { it.nameAsString }
+        editor.allCompilationUnits().flatMap { it.types }.mapTo(types) { it.nameAsString }
     }
 
     fun modifyText(node: Node, prevText: String, newText: String, getWidget: () -> TextWidget) {

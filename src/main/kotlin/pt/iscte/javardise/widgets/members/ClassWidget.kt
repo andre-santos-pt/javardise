@@ -26,6 +26,7 @@ import pt.iscte.javardise.widgets.statements.*
 import java.io.File
 import java.lang.UnsupportedOperationException
 import java.util.*
+import kotlin.reflect.KFunction1
 
 
 // TODO implements, extends
@@ -194,16 +195,23 @@ open class ClassWidget(
         name = SimpleNameWidget(firstRow, dec)
         name.addFocusLostAction(::isValidClassType) {
            if(node.nameAsString != it)
-            commandStack.execute(object : Command {
+            commandStack.execute(object : ModifyCommand<SimpleName> {
                 override val target: Node
                     get() = node
+
                 override val kind: CommandKind = CommandKind.MODIFY
+
                 override val element = node.name
+
+                override val newElement = SimpleName(it)
+
+                override val setOperation: KFunction1<SimpleName, Node>
+                    get() = node::setName
 
                 override fun run() {
                     node.setName(it)
                     node.constructors.forEach { c ->
-                        c.name = SimpleName(it)
+                        c.name = newElement
                     }
                 }
 
