@@ -207,6 +207,7 @@ fun <T : Node> Control.observeListUntilDispose(list: NodeList<T>, observer: List
 val ID = Regex("[a-zA-Z][a-zA-Z0-9_]*")
 val ID_CHARS = Regex("[a-zA-Z0-9_]")
 val QNAME_CHARS = Regex("[a-zA-Z0-9.]")
+val QNAMEA_CHARS = Regex("[a-zA-Z0-9.*]")
 val TYPE_CHARS = Regex("[a-zA-Z0-9_\\[\\]<>]")
 
 data class Validation(val ok: Boolean, val msg: String) {
@@ -311,8 +312,9 @@ class SimpleNameWidget<N : Node>(
 
 class NameWidget<N : Node>(
     parent: Composite,
-    override val node: N
-) : NodeWidget<N>, Id(parent, node, QNAME_CHARS, { s ->
+    override val node: N,
+    allowAsterics: Boolean = false
+) : NodeWidget<N>, Id(parent, node, if(allowAsterics) QNAMEA_CHARS else QNAME_CHARS, { s ->
     try {
         StaticJavaParser.parseName(s)
         Validation(true, "")
@@ -333,7 +335,7 @@ class NameWidget<N : Node>(
     }
 
     override fun isValid(): Boolean =
-        SourceVersion.isIdentifier(textWidget.text) && !SourceVersion.isKeyword(textWidget.text)
+        SourceVersion.isName(textWidget.text) && !SourceVersion.isKeyword(textWidget.text)
 
 }
 

@@ -1,11 +1,8 @@
 package pt.iscte.javardise.widgets.members
 
 import com.github.javaparser.StaticJavaParser
-import com.github.javaparser.ast.Modifier
+import com.github.javaparser.ast.*
 import com.github.javaparser.ast.Modifier.Keyword
-import com.github.javaparser.ast.Node
-import com.github.javaparser.ast.NodeList
-import com.github.javaparser.ast.PackageDeclaration
 import com.github.javaparser.ast.body.*
 import com.github.javaparser.ast.expr.Name
 import com.github.javaparser.ast.expr.NameExpr
@@ -159,13 +156,16 @@ open class ClassWidget(
         val classModifiers = validModifiers.flatten().map { it.name.lowercase() }
         keyword = newKeywordWidget(firstRow,
             if (node.isInterface) "interface" else "class",
-            alternatives = { listOf("package") + TypeTypes.values().map { it.name.lowercase() } + classModifiers }) {
+            alternatives = { listOf("package", "import") + TypeTypes.values().map { it.name.lowercase() } + classModifiers }) {
             if (it == "package") {
-                val unit = node.findCompilationUnit().get()
-                if(!unit.packageDeclaration.isPresent)
-                    unit.modifyCommand(unit.packageDeclaration.getOrNull, PackageDeclaration(Name("name")), unit::setPackageDeclaration)
+                val unit = node.findCompilationUnit().getOrNull
+                if(unit?.packageDeclaration?.isPresent == false)
+                    unit.modifyCommand(unit.packageDeclaration.getOrNull, PackageDeclaration(Configuration.qNameHole()), unit::setPackageDeclaration)
                 else if(parent is CompilationUnitWidget)
                     parent.setFocus()
+            } else if(it == "import") {
+                val unit = node.findCompilationUnit().getOrNull
+                unit?.imports?.addCommand(unit, ImportDeclaration(Configuration.qNameHole(), false, false))
             } else if (classModifiers.contains(it)) {
 
                 if (it == "public" && !member.modifiers.contains(Modifier.publicModifier()))

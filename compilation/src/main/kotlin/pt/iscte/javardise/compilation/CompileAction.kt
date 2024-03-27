@@ -100,17 +100,16 @@ class CompileAction : Action {
                     val end = Position(begin.line, begin.column + (it.endPosition - it.startPosition - 1).toInt())
                     println("$srcFile ${it.startPosition}  ${it.endPosition} ${it.code} \"$token\" $begin $end")
 
-
-                    val classWidget = editor.getClassWidget(srcFile)
-                    val w = classWidget?.findChild { c ->
+                    val unitWidget = editor.getUnitWidget(srcFile)
+                    val w = unitWidget?.findChild { c ->
                         c is Text && c.data is Node && (c.data as Node).range.getOrNull?.begin == begin
-                    } as? Text ?: classWidget?.findLastChild { c ->
+                    } as? Text ?: unitWidget?.findLastChild { c ->
                         c is Text && c.data is Node && (c.data as Node).range.getOrNull?.contains(begin) ?: false
                     } as? Text
 
                     if (w != null) {
                         newErrors.add(
-                            Pair(w, w.markError(it, classWidget?.configuration ?: DefaultConfigurationSingleton))
+                            Pair(w, w.markError(it, unitWidget?.configuration ?: DefaultConfigurationSingleton))
                         )
                     } else
                         println("widget not found - $begin - $it")
@@ -213,8 +212,8 @@ class CompileAction : Action {
     }
 
     fun CodeEditor.debugRanges() {
-        allClassWidgets().forEach {
-            it?.traverse {
+        allUnitWidgets().forEach {
+            it.traverse {
 //            if (it is ExpressionWidget<*>) {
 //                it.head.widget.toolTipText = (it.node as Node).range.getOrNull?.toString()
 //            }

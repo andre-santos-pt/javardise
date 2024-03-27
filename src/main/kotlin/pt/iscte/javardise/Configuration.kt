@@ -56,6 +56,8 @@ interface Configuration {
 
         fun idHole() = SimpleName(fillInToken)
 
+        fun qNameHole() = Name(fillInToken)
+
         fun typo(text: String): NameExpr {
             val t = NameExpr(noParseToken)
             t.setComment(LineComment(text))
@@ -68,7 +70,7 @@ interface Configuration {
 val Node.isNoParse get() = (this is NameExpr && this.name.identifier == Configuration.noParseToken) ||
         (this is SimpleName && this.identifier == Configuration.noParseToken)
 
-val Node.isFillIn get() = (this is NameExpr || this is SimpleName) && toString() == Configuration.fillInToken
+val Node.isFillIn get() = (this is NameExpr || this is SimpleName || this is Name) && toString() == Configuration.fillInToken
 
 fun nodeText(node: Node): String {
     return if (node.isNoParse) {
@@ -87,8 +89,6 @@ fun nodeText(node: Node): String {
         "null"
     else
         node.toString()
-
-
 }
 
 

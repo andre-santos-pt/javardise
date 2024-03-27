@@ -7,7 +7,7 @@ plugins {
 }
 
 group = "pt.iscte.javardise"
-version = "1.1.0"
+version = "1.2.0"
 
 val mac = System.getProperty("os.name").lowercase().contains("mac")
 val win = System.getProperty("os.name").lowercase().contains("windows")
@@ -81,7 +81,7 @@ tasks.compileJava {
 tasks {
     register<Jar>("fatJar") {
         group = "distribution"
-        archiveFileName.set("javardise-$os.jar")
+        archiveFileName.set("javardise-$os-$version.jar")
         destinationDirectory.set(layout.buildDirectory.dir("dist"))
         dependsOn.addAll(
             listOf(

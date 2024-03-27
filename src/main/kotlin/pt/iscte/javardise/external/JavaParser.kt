@@ -318,6 +318,27 @@ fun isValidSimpleName(name: String): Boolean =
         false
     }
 
+fun isValidQualifiedName(name: String) : Boolean =
+    try {
+        StaticJavaParser.parseName(name)
+        true
+    }
+    catch (_: ParseProblemException) {
+        false
+    }
+
+fun isValidImportName(name: String) : Boolean =
+    try {
+        if(name.endsWith(".*"))
+            StaticJavaParser.parseName(name.substring(0, name.length - 2))
+        else
+            StaticJavaParser.parseName(name)
+        true
+    }
+    catch (_: ParseProblemException) {
+        false
+    }
+
 
 fun isValidMethodCallScope(expression: Expression) =
     expression is NameExpr || expression is FieldAccessExpr || expression is ArrayAccessExpr || expression is MethodCallExpr

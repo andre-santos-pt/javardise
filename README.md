@@ -45,7 +45,6 @@ Javardise is built using:
 There are some core Java primitives for which there is **no editing support**, but which might be supported in the future:
 
 **structural**:
-- imports
 - multiple class declarations in a single file
 - method throws directive
 - generics

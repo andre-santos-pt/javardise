@@ -66,7 +66,7 @@ fun main(args: Array<String>) {
 data class TabData(
     val file: File,
     val unit: CompilationUnit?,
-    val classWidget: ClassWidget?
+    val unitWidget: CompilationUnitWidget?
 )
 
 fun setupSymbolSolver(folder: File) {
@@ -100,7 +100,7 @@ class CodeEditor(val display: Display, val folder: File) {
 
     private val defaultActions = listOf(
         object : Action {
-            override val name = "New file"
+            override val name = "New class"
             override val iconPath = "new-document.png"
             override fun run(editor: CodeEditor, toggle: Boolean) {
                 editor.shell.prompt("New class", "name") { className ->
@@ -270,12 +270,13 @@ class CodeEditor(val display: Display, val folder: File) {
     }
 
 
-    val classOnFocus: ClassWidget? get() = (tabs.selection?.control?.data as? TabData)?.classWidget
-    fun getClassWidget(file: File) = (tabs.items.find { it.data == file }
-        ?.control?.data as? TabData)?.classWidget
+    val classOnFocus: ClassWidget? get() = (tabs.selection?.control?.data as? TabData)?.unitWidget?.classWidget
 
-    fun allClassWidgets() =
-        tabs.items.filter { it.control?.data is TabData }.map { (it.control.data as TabData).classWidget }
+    fun getUnitWidget(file: File) = (tabs.items.find { it.data == file }
+        ?.control?.data as? TabData)?.unitWidget
+
+    fun allUnitWidgets() =
+        tabs.items.filter { it.control?.data is TabData }.map { (it.control.data as TabData).unitWidget }
             .filterNotNull()
 
     fun allCompilationUnits() =
@@ -297,8 +298,8 @@ class CodeEditor(val display: Display, val folder: File) {
         commandObservers.add(o)
         tabs.items.filter { (it.control.data is TabData) }
             .forEach {
-                (it.control.data as TabData).classWidget?.commandStack?.addObserver { c: Command, undo: Boolean ->
-                    o(c, undo, (it.control.data as TabData).classWidget?.commandStack)
+                (it.control.data as TabData).unitWidget?.commandStack?.addObserver { c: Command, undo: Boolean ->
+                    o(c, undo, (it.control.data as TabData).unitWidget?.commandStack)
                 }
             }
     }
@@ -308,7 +309,7 @@ class CodeEditor(val display: Display, val folder: File) {
         tabs.items.filter { (it.control.data is TabData) }
             .forEach {
                 // TODO BUG nao remove observador
-                (it.control.data as TabData).classWidget?.commandStack?.removeObserver { c: Command, undo: Boolean ->
+                (it.control.data as TabData).unitWidget?.commandStack?.removeObserver { c: Command, undo: Boolean ->
                     o(c, undo, null)
                 }
             }
@@ -477,18 +478,18 @@ class CodeEditor(val display: Display, val folder: File) {
                     }.moveAbove(t)
             }
         } else {
-            val w = tab.scrollable {
+            val unitWidget = tab.scrollable {
                 createWidget(file.extension, it, unit)
             }
 
             val model = unit.findMainClass()!!
             addAutoRenameFile(unit, file, item)
-            w.commandStack.addObserver { cmd, _ ->
-                saveAndSyncRanges(item.data as File, model)
+            unitWidget.commandStack.addObserver { cmd, _ ->
+                saveAndSyncRanges(item.data as File, unit)
             }
             commandObservers.forEach {
-                w.commandStack.addObserver { c: Command, undo: Boolean ->
-                    it(c, undo, w.commandStack)
+                unitWidget.commandStack.addObserver { c: Command, undo: Boolean ->
+                    it(c, undo, unitWidget.commandStack)
                 }
             }
             // to trigger new file event
@@ -497,7 +498,7 @@ class CodeEditor(val display: Display, val folder: File) {
 //            }
             fileObservers.forEach { it(file, FileEvent.CREATE, unit) }
 
-            tab.data = TabData(file, unit, w.classWidget)
+            tab.data = TabData(file, unit, unitWidget)
 
             //addUndoScale(tab, w)
         }
@@ -531,17 +532,17 @@ class CodeEditor(val display: Display, val folder: File) {
         })
     }
 
-    private fun saveAndSyncRanges(file: File, model: ClassOrInterfaceDeclaration) {
+    private fun saveAndSyncRanges(file: File, unit: CompilationUnit) {
         val writer = PrintWriter(file, "UTF-8")
-        writer.println((model.findCompilationUnit().getOrNull ?: model).toString())
+        writer.println(unit.toString())
         writer.close()
 
-        val parse = StaticJavaParser.parse(file).types.first.get()
+        val parse = StaticJavaParser.parse(file)
         val srcNodeList = mutableListOf<Node>()
         parse.accept(NodeCollectorVisitor(), srcNodeList)
 
         val modelNodeList = mutableListOf<Node>()
-        model.accept(NodeCollectorVisitor(), modelNodeList)
+        unit.accept(NodeCollectorVisitor(), modelNodeList)
 
 //        check(modelNodeList.size == srcNodeList.size) {
 //            var msg = "${modelNodeList.size} ${srcNodeList.size}"

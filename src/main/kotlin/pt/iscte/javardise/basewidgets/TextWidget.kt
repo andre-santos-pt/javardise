@@ -6,6 +6,7 @@ import org.eclipse.swt.events.*
 import org.eclipse.swt.widgets.*
 import pt.iscte.javardise.Configuration
 import pt.iscte.javardise.widgets.members.ClassWidget
+import pt.iscte.javardise.widgets.members.CompilationUnitWidget
 import pt.iscte.javardise.widgets.members.MemberWidget
 import pt.iscte.javardise.widgets.statements.IfWidget
 import pt.iscte.javardise.widgets.statements.SequenceContainer
@@ -270,6 +271,20 @@ interface TextWidget {
                                 text.traverse(SWT.TRAVERSE_TAB_PREVIOUS)
                             else
                                 text.traverse(SWT.TRAVERSE_TAB_NEXT)
+                        }
+                        else if(text.findAncestorOfType<CompilationUnitWidget.ImportWidget>() != null) {
+                            val imp = text.findAncestorOfType<CompilationUnitWidget.ImportWidget>()!!
+                            val i = imp.parent.children.indexOf(imp)
+                            if(i == 0 && e.keyCode == SWT.ARROW_UP)
+                                text.findAncestorOfType<CompilationUnitWidget>()!!.focusPackage()
+                            else if(i == imp.parent.children.lastIndex && e.keyCode == SWT.ARROW_DOWN)
+                                text.findAncestorOfType<CompilationUnitWidget>()!!.focusClass()
+                            else {
+                                if (e.keyCode == SWT.ARROW_UP)
+                                    imp.parent.children[i - 1].setFocus()
+                                else
+                                    imp.parent.children[i + 1].setFocus()
+                            }
                         }
                         else {
                             val sw =
