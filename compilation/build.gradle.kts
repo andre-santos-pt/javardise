@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "pt.iscte.javardise"
-//version = "0.1"
+version = "1.2.0"
 
 val win = System.getProperty("os.name").lowercase().contains("windows")
 

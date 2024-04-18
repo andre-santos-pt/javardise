@@ -51,7 +51,7 @@ class MethodWidget(
         if (dec is MethodDeclaration) if (dec.body.isPresent) dec.body.get() else null
         else (dec as ConstructorDeclaration).body
 
-    val paramsWidget: ParamListWidget
+    var paramsWidget: ParamListWidget?
 
     override val closingBracket: TokenWidget
 
@@ -104,14 +104,13 @@ class MethodWidget(
             name.set(it?.asString())
         }
 
-
         if (node.isConstructorDeclaration) {
             name.setReadOnly()
             name.setToolTip("Constructor name is not editable. Renaming the class modifies constructors accordingly.")
         }
         FixedToken(firstRow, "(")
         paramsWidget = ParamListWidget(firstRow, node.parameters)
-        FixedToken(firstRow, ")")
+        val paramClose = FixedToken(firstRow, ")")
 
         if (body != null) {
             bodyWidget = createBlockSequence(column, body)
@@ -121,6 +120,13 @@ class MethodWidget(
         } else
             closingBracket = TokenWidget(firstRow, ";")
 
+        observeNotNullProperty<NodeList<Parameter>>(ObservableProperty.PARAMETERS) {
+            paramsWidget?.dispose()
+            paramsWidget = ParamListWidget(firstRow, it)
+            paramsWidget?.moveAbove(paramClose.label)
+            paramsWidget?.requestLayout()
+        }
+
         observeProperty<BlockStmt>(ObservableProperty.BODY) {
             bodyWidget?.dispose()
             if(it != null) {
@@ -128,6 +134,7 @@ class MethodWidget(
                 bodyWidget?.moveAbove(closingBracket)
                 this@MethodWidget.requestLayout()
             }
+            bodyWidget?.requestLayout()
         }
 
         if(freezeSignature)
@@ -344,6 +351,6 @@ class MethodWidget(
         name.setFocus()
     }
 
-    fun focusParameters() = paramsWidget.setFocus()
+    fun focusParameters() = paramsWidget?.setFocus()
 }
 
