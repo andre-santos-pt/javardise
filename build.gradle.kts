@@ -7,7 +7,7 @@ plugins {
 }
 
 group = "pt.iscte.javardise"
-version = "1.2.0"
+version = "1.2.1"
 
 val mac = System.getProperty("os.name").lowercase().contains("mac")
 val win = System.getProperty("os.name").lowercase().contains("windows")
@@ -17,7 +17,7 @@ val os = if (mac)
 else if (win)
     "windows"
 else
-    "TODO"
+    "linux"
 
 fun resolutionSwt(
     dependencyResolveDetails: DependencyResolveDetails,
@@ -26,7 +26,7 @@ fun resolutionSwt(
     if (dependencyResolveDetails.requested.name.contains("\${osgi.platform}")) {
         val platform = if (buildGradle.mac) "cocoa.macosx.x86_64"
         else if (buildGradle.win) "win32.win32.x86_64"
-        else "TODO"
+        else "gtk.linux.x86_64"
         dependencyResolveDetails.useTarget(
             dependencyResolveDetails.requested.toString()
                 .replace("\${osgi.platform}", platform)
@@ -60,11 +60,13 @@ dependencies {
     testApi("org.junit.jupiter:junit-jupiter-api:5.9.2")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.9.2")
     api("org.junit.platform:junit-platform-suite:1.9.2")
-    api("com.github.javaparser:javaparser-symbol-solver-core:3.25.1")
+    api("com.github.javaparser:javaparser-symbol-solver-core:3.26.4")
     if (mac)
         api("org.eclipse.platform:org.eclipse.swt.cocoa.macosx.x86_64:3.124.200")
     else if (win)
         api("org.eclipse.platform:org.eclipse.swt.win32.win32.x86_64:3.124.200")
+    else
+        api("org.eclipse.platform:org.eclipse.swt.gtk.linux.x86_64:3.124.200")
 }
 
 application {
@@ -124,7 +126,7 @@ tasks {
 
 tasks.test {
     useJUnitPlatform()
-    if(!win)
+    if(mac)
         jvmArgs = listOf("-XstartOnFirstThread")
 }
 
@@ -163,6 +165,10 @@ tasks.jpackage {
     windows {
         type = ImageType.APP_IMAGE
         winConsole = false
+        javaOptions = listOf("-Dfile.encoding=UTF-8")
+    }
+
+    linux {
         javaOptions = listOf("-Dfile.encoding=UTF-8")
     }
 }
