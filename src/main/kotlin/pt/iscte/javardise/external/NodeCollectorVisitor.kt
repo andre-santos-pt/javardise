@@ -530,9 +530,9 @@ class NodeCollectorVisitor : VoidVisitorAdapter<MutableList<Node>>() {
         super.visit(n, arg)
     }
 
-    override fun visit(n: PatternExpr, arg: MutableList<Node>) {
-        arg.add(n)
-        super.visit(n, arg)
-    }
+//    override fun visit(n: PatternExpr, arg: MutableList<Node>) {
+//        arg.add(n)
+//        super.visit(n, arg)
+//    }
 }
 
