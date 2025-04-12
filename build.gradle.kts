@@ -21,11 +21,10 @@ else
 
 fun resolutionSwt(
     dependencyResolveDetails: DependencyResolveDetails,
-    buildGradle: Build_gradle
 ) {
     if (dependencyResolveDetails.requested.name.contains("\${osgi.platform}")) {
-        val platform = if (buildGradle.mac) "cocoa.macosx.x86_64"
-        else if (buildGradle.win) "win32.win32.x86_64"
+        val platform = if (os == "macos") "cocoa.macosx.x86_64"
+        else if (os == "windows") "win32.win32.x86_64"
         else "gtk.linux.x86_64"
         dependencyResolveDetails.useTarget(
             dependencyResolveDetails.requested.toString()
@@ -37,7 +36,7 @@ fun resolutionSwt(
 configurations.all {
     resolutionStrategy {
         eachDependency {
-            resolutionSwt(this, this@Build_gradle)
+            resolutionSwt(this)
         }
     }
 }
@@ -46,7 +45,7 @@ subprojects {
     configurations.all {
         resolutionStrategy {
             eachDependency {
-                resolutionSwt(this, this@Build_gradle)
+                resolutionSwt(this)
             }
         }
     }
