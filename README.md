@@ -67,11 +67,12 @@ Support for new statements can be implemented as a pluggable features (see an ex
 # Builds (requires Gradle 8.4)
 
 ## Executable JAR (requires JRE 17+)
-Run the task **fatJar** (*distribution* category) to produce a standalone executable JARs for the respective platform. This will output a JAR file like **javardise-OS.jar** stored in *build/dist*, which can be executed. This option requires a JRE installed.
+Run the task **fatJar** (*distribution* category) to produce a standalone executable JARs for the respective platform. This will output a JAR file like **javardise-OS-version.jar** stored in *build/dist*, which can be executed. This option requires a JRE installed.
 
-- Windows: ``java -jar javardise-windows.jar``
-- MacOS: ``java -XstartOnFirstThread -jar javardise-macos.jar``
-
+- Windows: ``java -jar javardise-windows-x.y.z.jar``
+- MacOS: ``java -XstartOnFirstThread -jar javardise-macos-x.y.z.jar``
+- Linux: ``java -jar javardise-linux-x.y.z.jar``
+  
 ## Standalone application (with embedded JRE)
 Run the task **jpackage** (*distribution* category) to produce an installable bundle for your operating system, without requiring Java previously installed. The output file will be stored in *build/dist*. The plugin for compilation will be packaged.
 
