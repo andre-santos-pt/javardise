@@ -1,7 +1,7 @@
 import org.panteleyev.jpackage.ImageType
 
 plugins {
-    kotlin("jvm") version "1.8.10"
+    kotlin("jvm") version "2.3.20"
     application
     id("org.panteleyev.jpackageplugin") version "1.5.1"
 }

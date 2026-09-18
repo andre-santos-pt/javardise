@@ -259,7 +259,7 @@ class CodeEditor(val display: Display, val folder: File) {
         })
     }
 
-    private fun createFileTab(f: File, className: String? = null): CTabItem {
+    fun createFileTab(f: File, className: String? = null): CTabItem {
         val item = CTabItem(tabs, SWT.NONE)
         item.text = if (f.extension == "java") f.nameWithoutExtension else f.name
         item.image = if (f.extension == "java") javaIcon else textIcon
@@ -268,7 +268,6 @@ class CodeEditor(val display: Display, val folder: File) {
         item.data = f
         return item
     }
-
 
     val classOnFocus: ClassWidget? get() = (tabs.selection?.control?.data as? TabData)?.unitWidget?.classWidget
 
@@ -282,6 +281,8 @@ class CodeEditor(val display: Display, val folder: File) {
     fun allCompilationUnits() =
         tabs.items.filter { it.control?.data is TabData }.map { (it.control.data as TabData).unit }.filterNotNull()
 
+    fun getCompilationUnit(file: File) =
+        (tabs.items.find { it.data == file }?.control?.data as? TabData)?.unit
 
     fun setFileErrors(files: Set<File>) {
         tabs.items.forEach {
@@ -413,6 +414,37 @@ class CodeEditor(val display: Display, val folder: File) {
         else
             ""
 
+    fun openTab(unit: CompilationUnit) {
+        val file = File(unit.storage.get().path.toString())
+
+        val item = CTabItem(tabs, SWT.NONE)
+        item.text = if (file.extension == "java") file.nameWithoutExtension else file.name
+        item.image = if (file.extension == "java") javaIcon else textIcon
+
+        val tab = Composite(tabs, SWT.BORDER)
+        val layout = FillLayout()
+        tab.layout = layout
+        val unitWidget = tab.scrollable {
+            createWidget("java", it, unit)
+        }
+
+        addAutoRenameFile(unit, file, item)
+        unitWidget.commandStack.addObserver { cmd, _ ->
+            saveAndSyncRanges(item.data as File, unit)
+        }
+        commandObservers.forEach {
+            unitWidget.commandStack.addObserver { c: Command, undo: Boolean ->
+                it(c, undo, unitWidget.commandStack)
+            }
+        }
+        fileObservers.forEach { it(file, FileEvent.CREATE, unit) }
+
+        tab.data = TabData(file, unit, unitWidget)
+
+        item.setControl(tab)
+        item.data = file
+    }
+
     private fun createTab(
         file: File,
         comp: Composite,
@@ -492,10 +524,6 @@ class CodeEditor(val display: Display, val folder: File) {
                     it(c, undo, unitWidget.commandStack)
                 }
             }
-            // to trigger new file event
-//            commandObservers.forEach {
-//                it(null, null, null)
-//            }
             fileObservers.forEach { it(file, FileEvent.CREATE, unit) }
 
             tab.data = TabData(file, unit, unitWidget)

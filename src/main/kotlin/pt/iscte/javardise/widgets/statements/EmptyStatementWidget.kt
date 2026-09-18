@@ -74,7 +74,7 @@ class EmptyStatementWidget(
                     override fun run() {
                         emptyIndex = parentBlock.statements.indexOf(node)
                         if (element is BlockStmt) {
-                            added.addAll(element.statements)
+                            added.addAll((element as BlockStmt).statements)
                             added.reversed().forEach {
                                 parentBlock.statements.addAfter(it, node)
                             }

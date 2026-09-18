@@ -74,10 +74,8 @@ interface SequenceContainer<T : Node> : NodeWidget<T> {
                                     element.clone(),
                                     target as Statement
                                 )
-                                body!!.asBlockStmt().statements.last.get()
-                                    .remove()
+                                body!!.asBlockStmt().statements.last().remove()
                             }
-
                         })
                         closingBracket.setFocus()
                     }

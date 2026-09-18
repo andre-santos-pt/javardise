@@ -70,4 +70,5 @@ class Settings(val editor: CodeEditor) {
         }
         w.close()
     }
+
 }

@@ -24,22 +24,23 @@ open class ExpressionStatementWidget(
     StatementWidget<ExpressionStmt>(parent, node) {
     var expression: ExpressionWidget<*>
 
-    override val tail: TokenWidget
+    val tailWidget: TokenWidget
 
+    override val tail: TokenWidget get()  = tailWidget
 
     init {
         layout = ROW_LAYOUT_H_SHRINK
         expression = createExpression(node.expression)
         expression.head.addEmptyStatement(this, parentBlock, node, false)
         expression.head.setCopySource(node)
-        tail = TokenWidget(this, ";")
-        tail.addEmptyStatement(this, parentBlock, node)
-        tail.addDelete(node, parentBlock)
+        tailWidget = TokenWidget(this, ";")
+        tailWidget.addEmptyStatement(this, parentBlock, node)
+        tailWidget.addDelete(node, parentBlock)
 
         observeNotNullProperty<Expression>(ObservableProperty.EXPRESSION) {
             expression.dispose()
             expression = createExpression(it)
-            expression.moveAbove(tail.widget)
+            expression.moveAbove(tailWidget.widget)
             expression.requestLayout()
             expression.setFocusOnCreation()
         }
@@ -72,7 +73,7 @@ open class ExpressionStatementWidget(
 
     override fun setFocusOnCreation(firstFlag: Boolean) {
         if (node.expression.isUnaryExpr)
-            tail.setFocus()
+            tailWidget.setFocus()
         else
             expression.setFocusOnCreation()
     }

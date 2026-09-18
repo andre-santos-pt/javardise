@@ -254,9 +254,9 @@ class ExpressionListWidget<T : Expression, N : Node>(
                 override fun run() {
                     val list: NodeList<Expression> =
                         if (target is ArrayInitializerExpr)
-                            target.values
+                            (target as ArrayInitializerExpr).values
                         else if (target is ArrayCreationExpr)
-                            target.initializer.get().values
+                            (target as ArrayCreationExpr).initializer.get().values
                         else
                             (target as NodeWithArguments<*>).arguments
 
@@ -268,7 +268,7 @@ class ExpressionListWidget<T : Expression, N : Node>(
 
                 override fun undo() {
                     target as NodeWithArguments<*>
-                    target.arguments.remove(element)
+                    (target as NodeWithArguments<*>).arguments.remove(element)
                 }
             })
         }

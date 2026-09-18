@@ -46,7 +46,6 @@ private fun performTransformations(model: CompilationUnit) {
 fun substituteControlBlocks(node: Node) {
     node.accept(object : VoidVisitorAdapter<Any>() {
 
-
         override fun visit(n: IfStmt, arg: Any?) {
             if (n.thenStmt !is BlockStmt)
                 n.thenStmt = if (n.thenStmt == null) BlockStmt() else BlockStmt(NodeList(n.thenStmt))
