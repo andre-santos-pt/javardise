@@ -142,6 +142,12 @@ class CodeEditor(val display: Display, val folder: File) {
         }
     }
 
+    fun createExtraComposite(): Composite {
+        return Composite(shell, SWT.BORDER).apply {
+            layout = FillLayout()
+            layoutData = GridData(GridData.FILL_BOTH)
+        }
+    }
 
     init {
         require(folder.exists() && folder.isDirectory)
@@ -414,6 +420,7 @@ class CodeEditor(val display: Display, val folder: File) {
         else
             ""
 
+    // TODO check existing
     fun openTab(unit: CompilationUnit) {
         val file = File(unit.storage.get().path.toString())
 
@@ -560,7 +567,7 @@ class CodeEditor(val display: Display, val folder: File) {
         })
     }
 
-    private fun saveAndSyncRanges(file: File, unit: CompilationUnit) {
+    fun saveAndSyncRanges(file: File, unit: CompilationUnit) {
         val writer = PrintWriter(file, "UTF-8")
         writer.println(unit.toString())
         writer.close()
