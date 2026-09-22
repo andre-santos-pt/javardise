@@ -137,3 +137,112 @@ fun Control.addMark(color: Color, text: String = ""): ICodeDecoration<Canvas> {
     return dec
 }
 
+
+fun Control.addMark2(color: Color, text: String = ""): ICodeDecoration<Control> {
+     fun paint(gc: GC) {
+        val dim = this.computeSize(SWT.DEFAULT, SWT.DEFAULT)
+        gc.foreground = color
+        gc.lineWidth = 3
+        gc.drawRectangle(0, 0, dim.x, dim.y)
+    }
+    val listener = object : PaintListener {
+        override fun paintControl(e: PaintEvent) {
+            paint(e.gc)
+        }
+    }
+
+    return object : ICodeDecoration<Control> {
+        override fun show() {
+            this@addMark2.addPaintListener(listener)
+            this@addMark2.redraw()
+        }
+
+        override fun hide() {
+            this@addMark2.removePaintListener(listener)
+            this@addMark2.redraw()
+        }
+
+        override fun delete() {
+            this@addMark2.removePaintListener(listener)
+            this@addMark2.redraw()
+        }
+
+        override fun locationHeight(): Int {
+            return 10
+        }
+
+        override val control: Control
+            get() = this@addMark2
+    }
+}
+
+
+
+fun Control.addMark3(color: Color, text: String = ""): ICodeDecoration<Control> {
+    fun paint(gc: GC) {
+        val dim = this.computeSize(SWT.DEFAULT, SWT.DEFAULT)
+        gc.foreground = color
+        gc.lineWidth = 3
+        gc.drawRectangle(0, 0, dim.x, dim.y)
+    }
+
+    val paintListener = PaintListener { e -> paint(e.gc) }
+
+    // Create popup ToolTip attached to the parent shell
+    var toolTip: ToolTip? = null
+
+    val hoverListener = Listener { event ->
+        if (text.isEmpty()) return@Listener
+
+        when (event.type) {
+            SWT.MouseEnter, SWT.MouseMove -> {
+                if (toolTip == null || toolTip!!.isDisposed) {
+                    toolTip = ToolTip(this.shell, SWT.BALLOON or SWT.ICON_INFORMATION).apply {
+                        setMessage(text)
+                        setAutoHide(true)
+                    }
+                }
+                // Display popup near bottom-left of the control
+                val loc: Point = this.toDisplay(0, this.bounds.height)
+                toolTip?.setLocation(loc)
+                toolTip?.isVisible = true
+            }
+            SWT.MouseExit -> {
+                toolTip?.isVisible = false
+            }
+        }
+    }
+
+    return object : ICodeDecoration<Control> {
+        override fun show() {
+            this@addMark3.addPaintListener(paintListener)
+            if (text.isNotEmpty()) {
+                this@addMark3.addListener(SWT.MouseEnter, hoverListener)
+                this@addMark3.addListener(SWT.MouseExit, hoverListener)
+            }
+            this@addMark3.redraw()
+        }
+
+        override fun hide() {
+            this@addMark3.removePaintListener(paintListener)
+            if (text.isNotEmpty()) {
+                this@addMark3.removeListener(SWT.MouseEnter, hoverListener)
+                this@addMark3.removeListener(SWT.MouseExit, hoverListener)
+            }
+            toolTip?.isVisible = false
+            this@addMark3.redraw()
+        }
+
+        override fun delete() {
+            hide()
+            toolTip?.dispose()
+            toolTip = null
+        }
+
+        override fun locationHeight(): Int = 10
+
+        override val control: Control
+            get() = this@addMark3
+    }
+}
+
