@@ -34,8 +34,11 @@ import pt.iscte.javardise.widgets.members.ClassWidget
 import pt.iscte.javardise.widgets.members.CompilationUnitWidget
 import java.io.File
 import java.io.FileNotFoundException
+import java.io.IOException
 import java.io.PrintWriter
+import java.nio.file.*
 import java.util.*
+import kotlin.concurrent.thread
 
 
 fun main(args: Array<String>) {
@@ -202,6 +205,7 @@ class CodeEditor(val display: Display, val folder: File) {
         addFileObserver { _, _, _ ->
             setActionsEnabled()
         }
+        //watchFolder()
     }
 
     fun consoleAppend(s: String?) {
@@ -265,7 +269,7 @@ class CodeEditor(val display: Display, val folder: File) {
         })
     }
 
-    fun createFileTab(f: File, className: String? = null): CTabItem {
+    private fun createFileTab(f: File, className: String? = null): CTabItem {
         val item = CTabItem(tabs, SWT.NONE)
         item.text = if (f.extension == "java") f.nameWithoutExtension else f.name
         item.image = if (f.extension == "java") javaIcon else textIcon
@@ -420,8 +424,12 @@ class CodeEditor(val display: Display, val folder: File) {
         else
             ""
 
-    // TODO check existing
     fun openTab(unit: CompilationUnit) {
+        val existing = tabs.items.find { (it.control.data as TabData).unit == unit }
+        if(existing != null) {
+            tabs.selection = existing
+            return
+        }
         val file = File(unit.storage.get().path.toString())
 
         val item = CTabItem(tabs, SWT.NONE)
@@ -450,6 +458,17 @@ class CodeEditor(val display: Display, val folder: File) {
 
         item.setControl(tab)
         item.data = file
+    }
+
+//    fun openTab(fileRelativeToFolder: File) {
+//        val existing = tabs.items.find { (it.control.data as TabData).file == fileRelativeToFolder }
+//        if(existing != null)
+//            tabs.selection = existing
+//    }
+
+    fun closeTab(fileRelativeToFolder: File) {
+        val existing = tabs.items.find { (it.control.data as TabData).file == fileRelativeToFolder }
+        existing?.dispose()
     }
 
     private fun createTab(
@@ -636,6 +655,50 @@ class CodeEditor(val display: Display, val folder: File) {
     //"mjava" -> MainScriptWidget(parent, model)
 //            else -> ClassWidget(parent, model, configuration = settings.editorConfiguration, workingDir = folder)
 //        }
+
+    private fun watchFolder() {
+        val directoryPath = Path.of(folder.absolutePath)
+
+        thread {
+            try {
+                val watchService = FileSystems.getDefault().newWatchService()
+
+                directoryPath.register(
+                    watchService,
+                    StandardWatchEventKinds.ENTRY_CREATE,
+                    StandardWatchEventKinds.ENTRY_DELETE,
+                    StandardWatchEventKinds.ENTRY_MODIFY
+                )
+
+                println("Watching directory: " + directoryPath)
+
+                // Start an infinite loop to listen for events
+                while (true) {
+                    val key = watchService.take() // This call is blocking
+
+                    for (event in key.pollEvents()) {
+                        val kind: WatchEvent.Kind<*>? = event.kind()
+                        val eventPath = event.context() as Path
+
+                        val file =  File(folder, eventPath.fileName.toString())
+                        Display.getDefault().syncExec {
+                            if (kind === StandardWatchEventKinds.ENTRY_CREATE) {
+                                createFileTab(file)
+                            } else if (kind === StandardWatchEventKinds.ENTRY_DELETE) {
+                                closeTab(file)
+                            }
+                        }
+                    }
+
+                    key.reset() // Reset the key to receive further events
+                }
+            } catch (e: IOException) {
+                e.printStackTrace()
+            } catch (e: InterruptedException) {
+                e.printStackTrace()
+            }
+        }
+    }
 
 
     private fun loadImage(filename: String) = Image(display, this.javaClass.classLoader.getResourceAsStream(filename))

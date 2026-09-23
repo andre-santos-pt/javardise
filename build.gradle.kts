@@ -129,6 +129,7 @@ tasks.test {
         jvmArgs = listOf("-XstartOnFirstThread")
 }
 
+
 task("copyDependencies", Copy::class) {
     from(configurations.runtimeClasspath).into(layout.buildDirectory.dir("jars"))
 }
