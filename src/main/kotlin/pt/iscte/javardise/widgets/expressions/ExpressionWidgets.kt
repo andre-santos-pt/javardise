@@ -161,7 +161,7 @@ fun <E : Expression> createExpressionWidget(
                                         updateState()
                                         editEvent(
                                             BinaryExpr(
-                                                expression,
+                                                expression.clone(),
                                                 Configuration.hole(),
                                                 it
                                             )
