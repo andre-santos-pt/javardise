@@ -11,13 +11,18 @@ version = "1.2.1"
 
 val mac = System.getProperty("os.name").lowercase().contains("mac")
 val win = System.getProperty("os.name").lowercase().contains("windows")
+val osArch = System.getProperty("os.arch").lowercase()
+val macArm = mac && (osArch.contains("aarch64") || osArch.contains("arm64"))
 
-val os = if (mac)
+val os = if(macArm)
+    "macos-aarch"
+else if (mac)
     "macos"
 else if (win)
     "windows"
 else
     "linux"
+
 
 fun resolutionSwt(
     dependencyResolveDetails: DependencyResolveDetails,
@@ -60,7 +65,9 @@ dependencies {
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.9.2")
     api("org.junit.platform:junit-platform-suite:1.9.2")
     api("com.github.javaparser:javaparser-symbol-solver-core:3.26.4")
-    if (mac)
+    if(macArm)
+        api("org.eclipse.platform:org.eclipse.swt.cocoa.macosx.aarch64:3.135.0")
+    else if (mac)
         api("org.eclipse.platform:org.eclipse.swt.cocoa.macosx.x86_64:3.135.0")
     else if (win)
         api("org.eclipse.platform:org.eclipse.swt.win32.win32.x86_64:3.135.0")
